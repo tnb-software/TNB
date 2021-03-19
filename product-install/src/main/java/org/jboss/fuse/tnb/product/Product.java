@@ -7,9 +7,11 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 
+import com.squareup.javapoet.CodeBlock;
+
 public abstract class Product implements Deployable, BeforeAllCallback, AfterAllCallback, AfterEachCallback {
-    public abstract void deployIntegration(Object route);
-    public abstract void waitForIntegration();
+    public abstract void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents);
+    public abstract void waitForIntegration(String name);
     public abstract void undeployIntegration();
 
     public void beforeAll(ExtensionContext extensionContext) throws Exception {

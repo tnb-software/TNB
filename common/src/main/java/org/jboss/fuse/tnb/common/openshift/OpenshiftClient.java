@@ -2,6 +2,8 @@ package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeoutException;
 
@@ -10,6 +12,7 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
 
 public class OpenshiftClient {
+    private static final Logger log = LoggerFactory.getLogger("OpenshiftClient");
     private static OpenShift client;
 
     public static OpenShift get() {
@@ -25,6 +28,7 @@ public class OpenshiftClient {
     }
 
     public static void createSubscription(String channel, String operatorName, String source, String subscriptionName) {
+        log.info("Creating subcription with name {}, for operator {}, channel {}, source {}", subscriptionName, operatorName, channel, source);
         if (get().operatorHub().operatorGroups().inNamespace(OpenshiftConfiguration.openshiftNamespace()).
             list().getItems().size() == 0) {
             get().operatorHub().operatorGroups().createOrReplaceWithNew()
@@ -51,6 +55,7 @@ public class OpenshiftClient {
     }
 
     public static void waitForCompletion(String name) {
+        log.info("Waiting until the install plan from subscription {} is complete", name);
         try {
             WaitUtils.waitFor(() -> {
                 Subscription subscription = get().operatorHub().subscriptions().withName(name).get();
@@ -70,6 +75,7 @@ public class OpenshiftClient {
     }
 
     public static void deleteSubscription(String name) {
+        log.info("Deleting subscription {}", name);
         Subscription subscription = get().operatorHub().subscriptions().withName(name).get();
         String csvName = subscription.getStatus().getCurrentCSV();
         //CSV being null can happen if you delete the subscription without deleting the CSV, then your new subscription is CSV-less

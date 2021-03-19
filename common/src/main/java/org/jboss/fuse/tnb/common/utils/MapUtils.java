@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.common.utils;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 public final class MapUtils {
     private MapUtils() {
@@ -13,5 +14,11 @@ public final class MapUtils {
             result.put(values[i], values[i + 1]);
         }
         return result;
+    }
+
+    public static Properties toProperties(Map<String, String> map) {
+        Properties properties = new Properties();
+        properties.putAll(map);
+        return properties;
     }
 }
