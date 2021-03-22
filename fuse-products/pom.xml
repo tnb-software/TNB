@@ -9,8 +9,8 @@
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>product-install</artifactId>
-	<name>product-install</name>
+	<artifactId>fuse-products</artifactId>
+	<name>fuse-products</name>
 
 	<properties>
 		<camel.version>3.7.0</camel.version>

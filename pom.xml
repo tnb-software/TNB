@@ -11,7 +11,7 @@
 	<modules>
 		<module>common</module>
 		<module>system-x</module>
-		<module>product-install</module>
+		<module>fuse-products</module>
 	</modules>
 
 	<properties>
