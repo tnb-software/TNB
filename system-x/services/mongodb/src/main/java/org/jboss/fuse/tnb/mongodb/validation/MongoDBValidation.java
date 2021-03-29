@@ -9,7 +9,6 @@ import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.CreateCollectionOptions;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -43,7 +42,7 @@ public class MongoDBValidation {
             Document doc = new Document();
 
             doc.append("name", "test");
-            doc.append("value", message + " at " + new Date());
+            doc.append("value", message);
 
             documents.add(doc);
         }

@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.mongodb.service;
 
 import org.jboss.fuse.tnb.common.service.Service;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.mongodb.account.MongoDBAccount;
 import org.jboss.fuse.tnb.mongodb.validation.MongoDBValidation;
 
@@ -39,7 +38,7 @@ public abstract class MongoDB implements Service {
     }
 
     public Map<String, String> containerEnvironment() {
-        return MapUtils.map(
+        return Map.of(
             "MONGODB_USERNAME", account().username(),
             "MONGODB_PASSWORD", account().password(),
             "MONGODB_DATABASE", account().database(),

@@ -9,6 +9,7 @@ import com.squareup.javapoet.MethodSpec;
 import com.squareup.javapoet.TypeName;
 import com.squareup.javapoet.TypeSpec;
 
+import javax.enterprise.context.ApplicationScoped;
 import javax.lang.model.element.Modifier;
 
 import java.io.IOException;
@@ -36,13 +37,15 @@ public final class RouteBuilderGenerator {
                 .build())
             .build();
 
-        TypeSpec routeBuilder = TypeSpec.classBuilder("MyRouteBuilder")
+        final TypeSpec.Builder typeSpecBuilder = TypeSpec.classBuilder("MyRouteBuilder")
             .addModifiers(Modifier.PUBLIC)
             .superclass(RouteBuilder.class)
-            .addMethod(configure)
-            .build();
+            .addMethod(configure);
+        if ("camelquarkus".equals(TestConfiguration.product())) {
+            typeSpecBuilder.addAnnotation(ApplicationScoped.class);
+        }
 
-        JavaFile javaFile = JavaFile.builder(TestConfiguration.appGroupId(), routeBuilder).build();
+        JavaFile javaFile = JavaFile.builder(TestConfiguration.appGroupId(), typeSpecBuilder.build()).build();
 
         try {
             if (out instanceof Appendable) {
