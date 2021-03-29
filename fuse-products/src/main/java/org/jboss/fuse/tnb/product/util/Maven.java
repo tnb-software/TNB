@@ -34,10 +34,13 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
+/**
+ * Class for invoking maven.
+ */
 public final class Maven {
-    private static final Logger log = LoggerFactory.getLogger("Maven");
-    private static Invoker invoker;
+    private static final Logger LOG = LoggerFactory.getLogger(Maven.class);
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss").withZone(ZoneId.systemDefault());
+    private static Invoker invoker;
 
     private static InvocationRequest newRequest() {
         if (invoker == null) {
@@ -46,19 +49,23 @@ public final class Maven {
         return new DefaultInvocationRequest();
     }
 
+    /**
+     * Maven invoker needs to have maven.home property set, so try to find it in multiple places.
+     */
     public static void setupMaven() {
+        LOG.info("Setting up maven");
         if (System.getProperty("maven.home") != null) {
             // Do nothing as the maven.home is what we need
             return;
         }
 
-        log.debug("M2_HOME env property is " + System.getenv("M2_HOME"));
+        LOG.debug("M2_HOME env property is " + System.getenv("M2_HOME"));
         if (System.getenv("M2_HOME") != null) {
             System.setProperty("maven.home", System.getenv("M2_HOME"));
             return;
         }
 
-        log.debug("M2_HOME system property is " + System.getProperty("M2_HOME"));
+        LOG.debug("M2_HOME system property is " + System.getProperty("M2_HOME"));
         if (System.getProperty("M2_HOME") != null) {
             System.setProperty("maven.home", System.getProperty("M2_HOME"));
             return;
@@ -71,7 +78,7 @@ public final class Maven {
                 .findFirst();
             if (mvn.isPresent()) {
                 mvnLocation = StringUtils.substringBeforeLast(mvn.get(), "bin");
-                log.debug("Using maven from {}", mvnLocation);
+                LOG.debug("Using maven from {}", mvnLocation);
                 System.setProperty("maven.home", mvnLocation);
                 break;
             }
@@ -82,6 +89,15 @@ public final class Maven {
         }
     }
 
+    /**
+     * Creates a project from archetype.
+     * @param archetypeGroupId archetype group id
+     * @param archetypeArtifactId archetype artifact id
+     * @param archetypeVersion archetype version
+     * @param appGroupId application group id
+     * @param appArtifactId application artifact id
+     * @param location path where the project will be generated
+     */
     public static void createFromArchetype(String archetypeGroupId, String archetypeArtifactId, String archetypeVersion, String appGroupId,
         String appArtifactId, File location) {
         if (!location.exists()) {
@@ -98,16 +114,37 @@ public final class Maven {
         )));
     }
 
+    /**
+     * Invokes maven.
+     * @param dir base directory
+     * @param goals maven goals
+     * @param properties properties
+     */
     public static void invoke(Path dir, List<String> goals, Properties properties) {
         invoke(dir, goals, null, properties);
     }
 
+    /**
+     * Invokes maven.
+     * @param dir base directory
+     * @param goals maven goals
+     * @param profiles maven profiles
+     * @param properties properties
+     */
     public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties) {
         String logFile = "target/maven-invocation-" + FORMATTER.format(Instant.now()) + ".log";
-        log.debug("Using {} log file for the invocation", logFile);
+        LOG.debug("Using {} log file for the invocation", logFile);
         invoke(dir, goals, profiles, properties, logFile);
     }
 
+    /**
+     * Invokes maven.
+     * @param dir base directory
+     * @param goals maven goals
+     * @param profiles maven profiles
+     * @param properties properties
+     * @param logFile log file location
+     */
     public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties, String logFile) {
         InvocationResult result;
 
@@ -119,7 +156,7 @@ public final class Maven {
             propertiesLog.append("  Properties").append("\n");
             properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
         }
-        log.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
+        LOG.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
         try {
             InvocationRequest request = newRequest()
                 .setBaseDirectory(dir.toFile())
@@ -138,12 +175,17 @@ public final class Maven {
         }
     }
 
-    public static void addComponentDependencies(Path dir, String... dependencies) {
+    /**
+     * Adds camel component dependencies to pom.xml file in a given dir.
+     * @param dir base directory
+     * @param dependencies array of camel dependencies, e.g. "slack"
+     */
+    public static void addCamelComponentDependencies(Path dir, String... dependencies) {
         if (dependencies == null || dependencies.length == 0) {
             return;
         }
         File pom = dir.resolve("pom.xml").toFile();
-        log.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom);
+        LOG.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom);
         Model model;
         try (InputStream is = new FileInputStream(pom)) {
             model = new MavenXpp3Reader().read(is);
@@ -155,6 +197,7 @@ public final class Maven {
             Dependency dep = new Dependency();
             dep.setGroupId("org.apache.camel");
             dep.setArtifactId("camel-" + dependency);
+            LOG.debug("Adding dependency {}:{}", dep.getGroupId(), dep.getArtifactId());
             model.getDependencies().add(dep);
         }
 

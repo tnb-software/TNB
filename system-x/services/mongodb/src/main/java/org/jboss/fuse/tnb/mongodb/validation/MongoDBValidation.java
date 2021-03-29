@@ -2,6 +2,8 @@ package org.jboss.fuse.tnb.mongodb.validation;
 
 import org.bson.Document;
 import org.jboss.fuse.tnb.mongodb.account.MongoDBAccount;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
@@ -14,6 +16,8 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 public class MongoDBValidation {
+    private static final Logger LOG = LoggerFactory.getLogger(MongoDBValidation.class);
+
     private final MongoClient client;
     private final MongoDBAccount account;
 
@@ -23,6 +27,7 @@ public class MongoDBValidation {
     }
 
     public void publish(String collectionName, String message, int count) {
+        LOG.info("Publishing {} messages with text {} into a collection named {}", count, message, collectionName);
         MongoDatabase database = client.getDatabase(account.database());
 
         /*
@@ -44,6 +49,7 @@ public class MongoDBValidation {
             doc.append("name", "test");
             doc.append("value", message);
 
+            LOG.debug("Created document with message {}", message);
             documents.add(doc);
         }
 
@@ -51,6 +57,7 @@ public class MongoDBValidation {
     }
 
     public List<Document> getDocuments(String collectionName) {
+        LOG.debug("Getting documents in MongoDB collection {}", collectionName);
         MongoCollection<Document> collection = client.getDatabase(account.database()).getCollection(collectionName);
         return StreamSupport.stream(collection.find().spliterator(), false).collect(Collectors.toList());
     }

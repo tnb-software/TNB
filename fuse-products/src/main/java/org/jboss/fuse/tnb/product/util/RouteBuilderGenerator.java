@@ -2,6 +2,8 @@ package org.jboss.fuse.tnb.product.util;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.squareup.javapoet.CodeBlock;
 import com.squareup.javapoet.JavaFile;
@@ -15,17 +17,37 @@ import javax.lang.model.element.Modifier;
 import java.io.IOException;
 import java.nio.file.Path;
 
+/**
+ * Dumps the javapoet's codeblock.
+ */
 public final class RouteBuilderGenerator {
+    private static final Logger LOG = LoggerFactory.getLogger(RouteBuilderGenerator.class);
+
+    /**
+     * Dumps the codeblock into a string.
+     * @param definition codeblock
+     * @return string
+     */
     public static String asString(CodeBlock definition) {
         StringBuilder out = new StringBuilder();
         create(definition, out);
         return out.toString();
     }
 
+    /**
+     * Dumps the codeblock into a file.
+     * @param definition codeblock
+     * @param location location
+     */
     public static void toFile(CodeBlock definition, Path location) {
         create(definition, location);
     }
 
+    /**
+     * Dumps the codeblock into a given object.
+     * @param definition codeblock
+     * @param out where to dump
+     */
     private static void create(CodeBlock definition, Object out) {
         MethodSpec configure = MethodSpec.methodBuilder("configure")
             .addAnnotation(Override.class)
@@ -46,6 +68,7 @@ public final class RouteBuilderGenerator {
         }
 
         JavaFile javaFile = JavaFile.builder(TestConfiguration.appGroupId(), typeSpecBuilder.build()).build();
+        LOG.debug("Generated class: \n{}", javaFile.toString());
 
         try {
             if (out instanceof Appendable) {

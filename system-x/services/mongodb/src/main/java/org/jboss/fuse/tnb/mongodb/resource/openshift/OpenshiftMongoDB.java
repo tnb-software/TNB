@@ -6,6 +6,8 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 import com.mongodb.client.MongoClient;
@@ -28,16 +30,20 @@ import io.fabric8.kubernetes.client.PortForward;
 
 @AutoService(MongoDB.class)
 public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployable {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMongoDB.class);
+
     private PortForward portForward;
 
     @Override
     public void create() {
+        LOG.info("Deploying OpenShift MongoDB");
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
             .withName("mongodb")
             .withContainerPort(port())
             .withProtocol("TCP").build());
         // @formatter:off
+        LOG.debug("Creating deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().createOrReplaceWithNew()
             .editOrNewMetadata()
               .withName(name())
@@ -73,6 +79,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
             .withTargetPort(new IntOrString(port()))
             .build());
 
+        LOG.debug("Creating service {}", name());
         OpenshiftClient.get().services().createOrReplaceWithNew()
             .editOrNewMetadata()
                 .withName(name())
@@ -86,13 +93,17 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
 
     @Override
     public void undeploy() {
+        LOG.info("Undeploying OpenShift MongoDB");
         client().close();
         try {
+            LOG.debug("Closing port-forward");
             portForward.close();
         } catch (IOException ignored) {
         }
 
+        LOG.debug("Deleting service {}", name());
         OpenshiftClient.get().services().withName(name()).delete();
+        LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
@@ -118,7 +129,9 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
     @Override
     public MongoClient client() {
         if (client == null) {
+            LOG.debug("Creating port-forward to {} for port {}", name(), port());
             portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
+            LOG.debug("Creating new MongoClient instance");
             client = MongoClients.create(replicaSetUrl().replace("@" + name(), "@localhost"));
         }
         return client;

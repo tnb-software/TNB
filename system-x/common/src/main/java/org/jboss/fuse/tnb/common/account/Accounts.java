@@ -3,6 +3,8 @@ package org.jboss.fuse.tnb.common.account;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -15,11 +17,17 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class Accounts {
+    private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
+
     private static Map<String, Map<String, String>> credentials;
     private static ObjectMapper mapper;
 
+    /**
+     * Loads the credentials file into a map.
+     */
     private static void load() {
         try (FileInputStream fs = new FileInputStream(Paths.get(TestConfiguration.credentialsFile()).toAbsolutePath().toString())) {
+            LOG.info("Loading credentials file from {}", Paths.get(TestConfiguration.credentialsFile()).toAbsolutePath());
             credentials = (Map) ((Map) new Yaml().load(fs)).get("services");
             mapper = new ObjectMapper();
             mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -39,6 +47,7 @@ public class Accounts {
             load();
         }
         try {
+            LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
             Function<Account, String> getId = Account::credentialsId;
             String credentialsId = getId.apply(accountClass.getDeclaredConstructor().newInstance());
             if (!credentials.containsKey(credentialsId)) {
