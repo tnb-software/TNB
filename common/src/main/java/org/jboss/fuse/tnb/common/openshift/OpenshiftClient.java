@@ -84,4 +84,14 @@ public class OpenshiftClient {
         }
         get().operatorHub().subscriptions().withName(name).delete();
     }
+
+    public static void waitForImageStream(String name, String tag) {
+        log.info("Waiting until the imagestream is imported");
+        try {
+            WaitUtils.waitFor(() -> OpenshiftClient.get().imageStreams().withName(name).get().getSpec().getTags().stream()
+                .anyMatch(t -> tag.equals(t.getName())), 24, 5000L);
+        } catch (TimeoutException e) {
+            e.printStackTrace();
+        }
+    }
 }

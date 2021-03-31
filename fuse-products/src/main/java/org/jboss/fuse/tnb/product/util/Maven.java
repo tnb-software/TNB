@@ -23,12 +23,14 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 
@@ -39,13 +41,12 @@ public final class Maven {
 
     private static InvocationRequest newRequest() {
         if (invoker == null) {
-            locateMaven();
             invoker = new DefaultInvoker();
         }
         return new DefaultInvocationRequest();
     }
 
-    private static void locateMaven() {
+    public static void setupMaven() {
         if (System.getProperty("maven.home") != null) {
             // Do nothing as the maven.home is what we need
             return;
@@ -79,7 +80,6 @@ public final class Maven {
         if (mvnLocation == null) {
             throw new RuntimeException("No maven found in system/environment properties nor in PATH");
         }
-
     }
 
     public static void createFromArchetype(String archetypeGroupId, String archetypeArtifactId, String archetypeVersion, String appGroupId,
@@ -89,7 +89,7 @@ public final class Maven {
                 throw new RuntimeException("Unable to create directory: " + location.getAbsolutePath());
             }
         }
-        invoke(location, null, Collections.singletonList("archetype:generate"), MapUtils.toProperties(MapUtils.map(
+        invoke(location.toPath(), Collections.singletonList("archetype:generate"), MapUtils.toProperties(Map.of(
             "archetypeGroupId", archetypeGroupId,
             "archetypeArtifactId", archetypeArtifactId,
             "archetypeVersion", archetypeVersion,
@@ -98,31 +98,34 @@ public final class Maven {
         )));
     }
 
-    public static void invoke(File location, File pomFile, List<String> goals, Properties properties) {
-        String logFile = "target/maven-invocation-" + FORMATTER.format(Instant.now()) + ".log";
-        log.debug("Using {} log file for the invocation", logFile);
-        invoke(location, pomFile, goals, properties, logFile);
+    public static void invoke(Path dir, List<String> goals, Properties properties) {
+        invoke(dir, goals, null, properties);
     }
 
-    public static void invoke(File location, File pomFile, List<String> goals, Properties properties, String logFile) {
+    public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties) {
+        String logFile = "target/maven-invocation-" + FORMATTER.format(Instant.now()) + ".log";
+        log.debug("Using {} log file for the invocation", logFile);
+        invoke(dir, goals, profiles, properties, logFile);
+    }
+
+    public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties, String logFile) {
         InvocationResult result;
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n" +
-            "  Base dir: " + location.getAbsolutePath() + "\n" +
-            "  POM file: " + (pomFile == null ? null : pomFile.getAbsolutePath()) + "\n" +
+            "  Base dir: " + dir.toAbsolutePath() + "\n" +
             "  Goals: " + goals.toString() + "\n"
         );
-        if (!properties.isEmpty()) {
+        if (properties != null && !properties.isEmpty()) {
             propertiesLog.append("  Properties").append("\n");
             properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
         }
-        log.info(propertiesLog.substring(0, propertiesLog.length() - 1));
+        log.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
         try {
             InvocationRequest request = newRequest()
-                .setBaseDirectory(location)
-                .setPomFile(pomFile)
+                .setBaseDirectory(dir.toFile())
                 .setBatchMode(true)
                 .setGoals(goals)
+                .setProfiles(profiles)
                 .setProperties(properties)
                 .setOutputHandler(s -> FileUtils.writeStringToFile(new File(logFile), s + "\n", "UTF-8", true));
             result = invoker.execute(request);
@@ -135,11 +138,12 @@ public final class Maven {
         }
     }
 
-    public static void addComponentDependencies(File pom, String... dependencies) {
+    public static void addComponentDependencies(Path dir, String... dependencies) {
         if (dependencies == null || dependencies.length == 0) {
             return;
         }
-        log.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom.getAbsolutePath());
+        File pom = dir.resolve("pom.xml").toFile();
+        log.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom);
         Model model;
         try (InputStream is = new FileInputStream(pom)) {
             model = new MavenXpp3Reader().read(is);
@@ -150,7 +154,7 @@ public final class Maven {
         for (String dependency : dependencies) {
             Dependency dep = new Dependency();
             dep.setGroupId("org.apache.camel");
-            dep.setArtifactId(dependency);
+            dep.setArtifactId("camel-" + dependency);
             model.getDependencies().add(dep);
         }
 
