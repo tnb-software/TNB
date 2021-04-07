@@ -17,9 +17,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class Quarkus extends Product {
-    private static final Logger log = LoggerFactory.getLogger(Quarkus.class);
+    private static final Logger LOG = LoggerFactory.getLogger(Quarkus.class);
+
+    /**
+     * Creates a camel-quarkus app using the quarkus-maven-plugin.
+     * @param name name of the application
+     * @param routeDefinition routebuilder class that will be placed into the app
+     * @param camelComponents necessary camel components
+     */
     public void createApp(String name, CodeBlock routeDefinition, String... camelComponents) {
-        log.info("Creating application project for integration {}", name);
+        LOG.info("Creating application project for integration {}", name);
 
         String extensions = Arrays.stream(camelComponents).map(c -> "camel-quarkus-" + c).collect(Collectors.joining(","));
         if (OpenshiftConfiguration.isOpenshift()) {

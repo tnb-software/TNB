@@ -20,14 +20,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeoutException;
 
 @AutoService(Product.class)
 public class LocalCamelQuarkus extends Quarkus {
-    private static final Logger log = LoggerFactory.getLogger("LocalCamelQuarkus");
-    private final ExecutorService executorService = Executors.newFixedThreadPool(1);
+    private static final Logger LOG = LoggerFactory.getLogger(LocalCamelQuarkus.class);
     private Path logFile;
     private Process integrationProcess;
 
@@ -44,7 +40,9 @@ public class LocalCamelQuarkus extends Quarkus {
     public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
         createApp(name, routeDefinition, camelComponents);
         logFile = TestConfiguration.appLocation().resolve(name + ".log").toAbsolutePath();
+        LOG.debug("Integration log file: " + logFile);
 
+        LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
         Maven.invoke(
             TestConfiguration.appLocation().resolve(name),
             Arrays.asList("clean", "package"),
@@ -77,6 +75,8 @@ public class LocalCamelQuarkus extends Quarkus {
         ProcessBuilder processBuilder = new ProcessBuilder(cmd);
         processBuilder.redirectOutput(logFile.toFile());
 
+        LOG.info("Starting integration {}", name);
+        LOG.debug("ProcessBuilder command: " + String.join(" ", cmd));
         try {
             integrationProcess = processBuilder.start();
         } catch (IOException e) {
@@ -88,25 +88,22 @@ public class LocalCamelQuarkus extends Quarkus {
 
     @Override
     public void waitForIntegration(String name) {
-        log.info("Waiting until integration {} is running", name);
-        try {
-            WaitUtils.waitFor(() -> {
-                try {
-                    return Files.readString(logFile).contains("started and consuming");
-                } catch (IOException e) {
-                    // Ignored as the file may not exist yet
-                }
-                return false;
-            }, 60, 1000L);
-        } catch (TimeoutException e) {
-            throw new RuntimeException("Wait for integration " + name + " failed, check " + logFile.toAbsolutePath().toString());
-        }
+        LOG.info("Waiting until integration {} is running", name);
+        WaitUtils.waitFor(() -> {
+            try {
+                return Files.readString(logFile).contains("started and consuming");
+            } catch (IOException e) {
+                // Ignored as the file may not exist yet
+            }
+            return false;
+        }, 60, 1000L, String.format("Waiting until integration %s is running", name));
     }
 
     @Override
     public void undeployIntegration() {
         if (integrationProcess != null) {
             if (integrationProcess.isAlive()) {
+                LOG.debug("Killing integration process");
                 integrationProcess.destroy();
             }
         }

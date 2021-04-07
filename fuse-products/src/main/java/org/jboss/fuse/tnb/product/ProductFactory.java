@@ -16,6 +16,10 @@ public final class ProductFactory {
     private ProductFactory() {
     }
 
+    /**
+     * Creates an instance of a given product based on system properties set.
+     * @return product instance
+     */
     public static Product create() {
         final Optional<Product> product = StreamSupport.stream(ServiceLoader.load(Product.class).spliterator(), false)
             .filter(p -> p.getClass().getSimpleName().toLowerCase().contains(TestConfiguration.product()))

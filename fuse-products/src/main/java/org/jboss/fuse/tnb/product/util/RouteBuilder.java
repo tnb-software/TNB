@@ -3,6 +3,9 @@ package org.jboss.fuse.tnb.product.util;
 import com.squareup.javapoet.ClassName;
 import com.squareup.javapoet.CodeBlock;
 
+/**
+ * Wrapper around javapoet's codeblock.
+ */
 public class RouteBuilder {
     private final CodeBlock.Builder codeBlockBuilder;
     private String from;

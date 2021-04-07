@@ -19,7 +19,7 @@ import com.google.auto.service.AutoService;
 import com.squareup.javapoet.CodeBlock;
 
 import java.util.Collections;
-import java.util.concurrent.TimeoutException;
+import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
@@ -30,7 +30,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
 public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
-    private static final Logger log = LoggerFactory.getLogger("CamelK");
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelK.class);
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withGroup("camel.apache.org")
         .withPlural("integrations")
@@ -41,10 +41,11 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
 
     @Override
     public void create() {
+        LOG.info("Deploying Camel-K");
         OpenshiftClient.createSubscription("stable", "camel-k", "community-operators", "test-camel-k");
         OpenshiftClient.waitForCompletion("test-camel-k");
         client = OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class, DoneableIntegration.class)
-                .inNamespace(OpenshiftConfiguration.openshiftNamespace());
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     @Override
@@ -53,41 +54,52 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
-        log.info("Deploying integration {} ", name);
+        LOG.info("Deploying integration {}", name);
         client.create(createIntegrationResource(name, RouteBuilderGenerator.asString(routeDefinition)));
         waitForIntegration(name);
     }
 
+    @Override
     public void waitForIntegration(String name) {
-        log.info("Waiting until integration {} is running", name);
-        try {
-            WaitUtils.waitFor(() -> {
-                Integration i = client.withName(name).get();
-                try {
-                    return "running".equalsIgnoreCase(i.getStatus().getPhase());
-                } catch (Exception ignored) {
-                    return false;
-                }
-            }, 60, 5000L);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
+        BooleanSupplier success = () -> {
+            Integration i = client.withName(name).get();
+            try {
+                return "running".equalsIgnoreCase(i.getStatus().getPhase());
+            } catch (Exception ignored) {
+                return false;
+            }
+        };
+        BooleanSupplier fail = () -> {
+            Integration i = client.withName(name).get();
+            try {
+                return "error".equalsIgnoreCase(i.getStatus().getPhase());
+            } catch (Exception ignored) {
+                return false;
+            }
+        };
+        WaitUtils.waitFor(success, fail, 5000L, String.format("Waiting until the integration %s is built", name));
 
-        try {
-            WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsReady(1)
-                .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)), 24, 5000L);
-        } catch (TimeoutException e) {
-            e.printStackTrace();
-        }
+        WaitUtils.waitFor(
+            () -> ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
+            24,
+            5000L,
+            String.format("Waiting until the pod with label %s is ready", "camel.apache.org/integration=" + name));
     }
 
+    @Override
     public void undeployIntegration() {
         for (Integration item : client.list().getItems()) {
-            log.info("Undeploying integration {}", item.getMetadata().getName());
+            LOG.info("Undeploying integration {}", item.getMetadata().getName());
             client.withName(item.getMetadata().getName()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         }
     }
 
+    /**
+     * Creates an Integration object.
+     * @param name name of the object
+     * @param routeDefinition camel route definition
+     * @return integration instance
+     */
     private Integration createIntegrationResource(String name, String routeDefinition) {
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(name);
