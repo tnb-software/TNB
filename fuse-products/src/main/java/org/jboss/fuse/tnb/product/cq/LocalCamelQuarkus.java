@@ -3,8 +3,12 @@ package org.jboss.fuse.tnb.product.cq;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.OnLocalProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
+import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.Maven;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,22 +26,15 @@ import java.util.List;
 import java.util.Map;
 
 @AutoService(Product.class)
-public class LocalCamelQuarkus extends Quarkus {
+public class LocalCamelQuarkus extends OnLocalProduct implements Quarkus {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCamelQuarkus.class);
     private Path logFile;
     private Process integrationProcess;
 
-    @Override
-    public void deploy() {
-        Maven.setupMaven();
-    }
-
-    @Override
-    public void undeploy() {
-    }
-
-    @Override
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(CreateIntegrationStep step) {
+        String name = step.getName();
+        CodeBlock routeDefinition = step.getRouteDefinition();
+        String[] camelComponents = step.getCamelComponents();
         createApp(name, routeDefinition, camelComponents);
         logFile = TestConfiguration.appLocation().resolve(name + ".log").toAbsolutePath();
         LOG.debug("Integration log file: " + logFile);
@@ -86,7 +83,6 @@ public class LocalCamelQuarkus extends Quarkus {
         waitForIntegration(name);
     }
 
-    @Override
     public void waitForIntegration(String name) {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
@@ -100,12 +96,21 @@ public class LocalCamelQuarkus extends Quarkus {
     }
 
     @Override
-    public void undeployIntegration() {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         if (integrationProcess != null) {
             if (integrationProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 integrationProcess.destroy();
             }
+        }
+    }
+
+    @Override
+    public <U extends Step> void runStep(U step) {
+        if (step instanceof CreateIntegrationStep) {
+            createIntegration((CreateIntegrationStep)step);
+        } else {
+            super.runStep(step);
         }
     }
 }

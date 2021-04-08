@@ -5,12 +5,15 @@ import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
+import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.Maven;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +37,7 @@ import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 
 @AutoService(Product.class)
-public class OpenshiftCamelQuarkus extends Quarkus implements OpenshiftDeployable {
+public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
 
     // Resources generated from quarkus maven plugin and created in openshift
@@ -46,21 +49,18 @@ public class OpenshiftCamelQuarkus extends Quarkus implements OpenshiftDeployabl
     }
 
     @Override
-    public boolean isDeployed() {
-        return true;
-    }
-
-    @Override
-    public void create() {
+    public void setupProduct() {
         Maven.setupMaven();
     }
 
     @Override
-    public void undeploy() {
+    public void teardownProduct() {
     }
 
-    @Override
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(CreateIntegrationStep step) {
+        String name = step.getName();
+        CodeBlock routeDefinition = step.getRouteDefinition();
+        String[] camelComponents = step.getCamelComponents();
         createApp(name, routeDefinition, camelComponents);
 
         LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
@@ -93,7 +93,6 @@ public class OpenshiftCamelQuarkus extends Quarkus implements OpenshiftDeployabl
         waitForIntegration(name);
     }
 
-    @Override
     public void waitForIntegration(String name) {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
@@ -106,7 +105,7 @@ public class OpenshiftCamelQuarkus extends Quarkus implements OpenshiftDeployabl
     }
 
     @Override
-    public void undeployIntegration() {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
@@ -199,5 +198,14 @@ public class OpenshiftCamelQuarkus extends Quarkus implements OpenshiftDeployabl
         final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
             .getSourceStrategy().getFrom().getName().split(":");
         OpenshiftClient.waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
+    }
+
+    @Override
+    public <U extends Step> void runStep(U step) {
+        if (step instanceof CreateIntegrationStep) {
+            createIntegration((CreateIntegrationStep)step);
+        } else {
+            super.runStep(step);
+        }
     }
 }

@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.ck.generated.DoneableIntegration;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
@@ -11,7 +12,10 @@ import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
 import org.jboss.fuse.tnb.product.ck.generated.Source;
+import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
+import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
+import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +33,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
-public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
+public class OpenshiftCamelK extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelK.class);
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withGroup("camel.apache.org")
@@ -40,7 +44,7 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     private NonNamespaceOperation<Integration, IntegrationList, DoneableIntegration, Resource<Integration, DoneableIntegration>> client;
 
     @Override
-    public void create() {
+    public void setupProduct(){
         LOG.info("Deploying Camel-K");
         OpenshiftClient.createSubscription("stable", "camel-k", "community-operators", "test-camel-k");
         OpenshiftClient.waitForCompletion("test-camel-k");
@@ -49,17 +53,16 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     @Override
-    public void undeploy() {
+    public void teardownProduct() {
         OpenshiftClient.deleteSubscription("test-camel-k");
     }
 
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
-        LOG.info("Deploying integration {}", name);
-        client.create(createIntegrationResource(name, RouteBuilderGenerator.asString(routeDefinition)));
-        waitForIntegration(name);
+    public void createIntegration(CreateIntegrationStep step) {
+        LOG.info("Creating integration {} " , step.getName());
+        client.create(createIntegrationResource(step.getName(), RouteBuilderGenerator.asString(step.getRouteDefinition())));
+        waitForIntegration(step.getName());
     }
 
-    @Override
     public void waitForIntegration(String name) {
         BooleanSupplier success = () -> {
             Integration i = client.withName(name).get();
@@ -87,7 +90,7 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     @Override
-    public void undeployIntegration() {
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
         for (Integration item : client.list().getItems()) {
             LOG.info("Undeploying integration {}", item.getMetadata().getName());
             client.withName(item.getMetadata().getName()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
@@ -117,7 +120,11 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     @Override
-    public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").size() != 0;
+    public <U extends Step> void runStep(U step) {
+        if (step instanceof CreateIntegrationStep) {
+            createIntegration((CreateIntegrationStep)step);
+        } else {
+            super.runStep(step);
+        }
     }
 }

@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.common.openshift;
 
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
@@ -16,16 +18,18 @@ public class OpenshiftClient {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
     private static OpenShift client;
 
-    public static OpenShift get() {
-        if (client == null) {
-            LOG.debug("Creating new OpenShift client");
-            client = OpenShift.get(
+    static {
+        //init client
+	LOG.debug("Creating new OpenShift client");
+        client = OpenShift.get(
                 OpenshiftConfiguration.openshiftUrl(),
                 OpenshiftConfiguration.openshiftNamespace(),
                 OpenshiftConfiguration.openshiftUsername(),
                 OpenshiftConfiguration.openshiftPassword()
-            );
-        }
+        );
+    }
+
+    public static OpenShift get() {
         return client;
     }
 
@@ -127,4 +131,16 @@ public class OpenshiftClient {
         WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
     }
 
+    public static void createTemporaryNamespace(){//TODO labels
+        String name = OpenshiftConfiguration.openshiftNamespace();
+        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).addToLabels("todo", "label").endMetadata().build();
+        LOG.info("Created namespace " + client.namespaces().create(ns));
+    }
+
+    public static Boolean deleteTemporaryNamespace(){//TODO labels
+        String name = OpenshiftConfiguration.openshiftNamespace();
+        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).addToLabels("todo", "label").endMetadata().build();
+        LOG.info("Delete namespace " + name);
+        return client.namespaces().delete(ns);
+    }
 }
