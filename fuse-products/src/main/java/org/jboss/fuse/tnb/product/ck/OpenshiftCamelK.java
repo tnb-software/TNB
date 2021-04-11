@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product.ck;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
@@ -12,10 +11,7 @@ import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
 import org.jboss.fuse.tnb.product.ck.generated.Source;
-import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
-import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,12 +53,14 @@ public class OpenshiftCamelK extends OpenshiftProduct {
         OpenshiftClient.deleteSubscription("test-camel-k");
     }
 
-    public void createIntegration(CreateIntegrationStep step) {
-        LOG.info("Creating integration {} " , step.getName());
-        client.create(createIntegrationResource(step.getName(), RouteBuilderGenerator.asString(step.getRouteDefinition())));
-        waitForIntegration(step.getName());
+    @Override
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+        LOG.info("Creating integration {}", name);
+        client.create(createIntegrationResource(name, RouteBuilderGenerator.asString(routeDefinition)));
+        waitForIntegration(name);
     }
 
+    @Override
     public void waitForIntegration(String name) {
         BooleanSupplier success = () -> {
             Integration i = client.withName(name).get();
@@ -90,9 +88,9 @@ public class OpenshiftCamelK extends OpenshiftProduct {
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws Exception {
+    public void removeIntegration() {
         for (Integration item : client.list().getItems()) {
-            LOG.info("Undeploying integration {}", item.getMetadata().getName());
+            LOG.info("Removing integration {}", item.getMetadata().getName());
             client.withName(item.getMetadata().getName()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         }
     }
@@ -119,12 +117,4 @@ public class OpenshiftCamelK extends OpenshiftProduct {
         return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"));
     }
 
-    @Override
-    public <U extends Step> void runStep(U step) {
-        if (step instanceof CreateIntegrationStep) {
-            createIntegration((CreateIntegrationStep)step);
-        } else {
-            super.runStep(step);
-        }
-    }
 }

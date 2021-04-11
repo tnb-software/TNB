@@ -23,13 +23,13 @@ public abstract class OpenshiftProduct extends Product {
     public void createTmpNamespace(){
         //new temporary namespace name is generated when OpenshiftConfiguration is firstly loaded
         if (OpenshiftConfiguration.isTemporaryNamespace()) {
-            OpenshiftClient.createTemporaryNamespace();
+            OpenshiftClient.createNamespace();
         }
     }
 
     public void deleteTmpNamespace(){
         if (OpenshiftConfiguration.isTemporaryNamespace()) {
-            OpenshiftClient.deleteTemporaryNamespace();
+            OpenshiftClient.deleteNamespace();
         }
     }
     public abstract boolean isReady();

@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.common.config;
 
-import org.jboss.fuse.tnb.common.utils.StringUtils;
+import java.util.UUID;
 
 public class OpenshiftConfiguration extends Configuration {
     private static final String OPENSHIFT_URL = "openshift.url";
@@ -11,12 +11,14 @@ public class OpenshiftConfiguration extends Configuration {
     private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
     private static boolean OPENSHIFT_IS_TEMPORARY_NAMESPACE = false;
+    private static final String NAMESPACE_PREFIX = "tnb-test-";
 
-    static {//TODO check if namespace exists (even though it is temporary - will be added creating ns also in services)
+    static {
         if ((openshiftUrl() != null) && (openshiftNamespace() == null)) {
             OPENSHIFT_IS_TEMPORARY_NAMESPACE = true;
             //generate new name for temporary namespace
-            setProperty(OPENSHIFT_NAMESPACE, StringUtils.generateTemporaryNamespaceName());
+            String random = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+            setProperty(OPENSHIFT_NAMESPACE, NAMESPACE_PREFIX + random);
         }
     }
 

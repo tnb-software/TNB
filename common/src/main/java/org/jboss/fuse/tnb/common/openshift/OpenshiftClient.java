@@ -20,7 +20,7 @@ public class OpenshiftClient {
 
     static {
         //init client
-	LOG.debug("Creating new OpenShift client");
+        LOG.debug("Creating new OpenShift client");
         client = OpenShift.get(
                 OpenshiftConfiguration.openshiftUrl(),
                 OpenshiftConfiguration.openshiftNamespace(),
@@ -131,16 +131,52 @@ public class OpenshiftClient {
         WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
     }
 
-    public static void createTemporaryNamespace(){//TODO labels
-        String name = OpenshiftConfiguration.openshiftNamespace();
-        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).addToLabels("todo", "label").endMetadata().build();
-        LOG.info("Created namespace " + client.namespaces().create(ns));
+    /**
+     * Create namespace (name obtained from system property openshift.namespace)
+     */
+    public static void createNamespace(){
+        createNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
-    public static Boolean deleteTemporaryNamespace(){//TODO labels
-        String name = OpenshiftConfiguration.openshiftNamespace();
-        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).addToLabels("todo", "label").endMetadata().build();
-        LOG.info("Delete namespace " + name);
-        return client.namespaces().delete(ns);
+    /**
+     * Create namespace with given name
+     * @param name of namespace to be created
+     */
+    public static void createNamespace(String name){
+        if ((name == null) || (name.isEmpty())) {
+            LOG.info("Skipped creating namespace, name null or empty");
+            return;
+        }
+        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).endMetadata().build();
+        if (client.namespaces().withName(name).get() == null) {
+            client.namespaces().create(ns);
+            LOG.info("Created namespace " + name);
+        } else {
+            LOG.info("Skipped creating namespace " + name + ", already exists");
+        }
+    }
+
+    /**
+     * Delete namespace (name obtained from system property openshift.namespace)
+     */
+    public static void deleteNamespace(){
+        deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
+    }
+
+    /**
+     * Delete namespace of given name
+     * @param name of namespace to be deleted
+     */
+    public static void deleteNamespace(String name){
+        if ((name == null) || (name.isEmpty())) {
+            LOG.info("Skipped deleting namespace, name null or empty");
+            return;
+        }
+        if (client.namespaces().withName(name).get() == null) {
+            LOG.info("Skipped deleting namespace " + name + ", not found");
+        } else {
+            client.namespaces().withName(name).delete();
+            LOG.info("Deleted namespace " + name);
+        }
     }
 }

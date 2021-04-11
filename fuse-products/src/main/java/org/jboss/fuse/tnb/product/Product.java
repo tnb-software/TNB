@@ -1,21 +1,20 @@
 package org.jboss.fuse.tnb.product;
 
-import org.jboss.fuse.tnb.product.steps.Step;
+import com.squareup.javapoet.CodeBlock;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 
 public abstract class Product implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
-    private static final Logger LOG = LoggerFactory.getLogger(Product.class);
-
-    public <U extends Step> void runStep(U s) {
-        LOG.error("Unsupported step " + s.getClass()); //TODO behavior in this case isn't clear yet
+    public abstract void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents);
+    public abstract void waitForIntegration(String name);
+    public abstract void removeIntegration();
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
+        removeIntegration();
     }
-
     public abstract void setupProduct();
 
     public abstract void teardownProduct();
-
 }

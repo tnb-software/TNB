@@ -10,10 +10,7 @@ import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
-import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
-import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.Maven;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,10 +54,8 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
     public void teardownProduct() {
     }
 
-    public void createIntegration(CreateIntegrationStep step) {
-        String name = step.getName();
-        CodeBlock routeDefinition = step.getRouteDefinition();
-        String[] camelComponents = step.getCamelComponents();
+    @Override
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
         createApp(name, routeDefinition, camelComponents);
 
         LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
@@ -93,6 +88,7 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
         waitForIntegration(name);
     }
 
+    @Override
     public void waitForIntegration(String name) {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
@@ -105,7 +101,7 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws Exception {
+    public void removeIntegration() {
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
@@ -198,14 +194,5 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
         final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
             .getSourceStrategy().getFrom().getName().split(":");
         OpenshiftClient.waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
-    }
-
-    @Override
-    public <U extends Step> void runStep(U step) {
-        if (step instanceof CreateIntegrationStep) {
-            createIntegration((CreateIntegrationStep)step);
-        } else {
-            super.runStep(step);
-        }
     }
 }

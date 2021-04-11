@@ -3,7 +3,7 @@ package org.jboss.fuse.tnb.product;
 import org.jboss.fuse.tnb.product.util.Maven;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-public abstract class OnLocalProduct extends Product {
+public abstract class LocalProduct extends Product {
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         setupProduct();
     }

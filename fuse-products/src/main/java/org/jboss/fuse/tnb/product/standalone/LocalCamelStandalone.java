@@ -3,13 +3,10 @@ package org.jboss.fuse.tnb.product.standalone;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-import org.jboss.fuse.tnb.product.OnLocalProduct;
+import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
-import org.jboss.fuse.tnb.product.steps.CreateIntegrationStep;
-import org.jboss.fuse.tnb.product.steps.Step;
 import org.jboss.fuse.tnb.product.util.Maven;
 import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
-import org.junit.jupiter.api.extension.ExtensionContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,15 +23,13 @@ import java.util.concurrent.Executors;
 import java.util.function.BooleanSupplier;
 
 @AutoService(Product.class)
-public class LocalCamelStandalone extends OnLocalProduct {
+public class LocalCamelStandalone extends LocalProduct {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCamelStandalone.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private Path logFile;
 
-    public void createIntegration(CreateIntegrationStep step) {
-        String name = step.getName();
-        CodeBlock routeDefinition = step.getRouteDefinition();
-        String[] camelComponents = step.getCamelComponents();
+    @Override
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
         LOG.info("Creating Camel Standalone application project");
         Maven.createFromArchetype(
             "org.apache.camel.archetypes",
@@ -64,6 +59,7 @@ public class LocalCamelStandalone extends OnLocalProduct {
         waitForIntegration(name);
     }
 
+    @Override
     public void waitForIntegration(String name) {
         BooleanSupplier success = () -> {
             try {
@@ -87,16 +83,8 @@ public class LocalCamelStandalone extends OnLocalProduct {
     }
 
     @Override
-    public void afterEach(ExtensionContext extensionContext) throws Exception {
+    public void removeIntegration() {
+        LOG.debug("Shutting down the executor service");
         executorService.shutdown();
-    }
-
-    @Override
-    public <U extends Step> void runStep(U step) {
-        if (step instanceof CreateIntegrationStep) {
-            createIntegration((CreateIntegrationStep)step);
-        } else {
-            super.runStep(step);
-        }
     }
 }
