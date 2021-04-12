@@ -1,9 +1,9 @@
 package org.jboss.fuse.tnb.product.ck;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.ck.generated.DoneableIntegration;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
@@ -29,7 +29,7 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
-public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
+public class OpenshiftCamelK extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelK.class);
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withGroup("camel.apache.org")
@@ -40,7 +40,7 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     private NonNamespaceOperation<Integration, IntegrationList, DoneableIntegration, Resource<Integration, DoneableIntegration>> client;
 
     @Override
-    public void create() {
+    public void setupProduct(){
         LOG.info("Deploying Camel-K");
         OpenshiftClient.createSubscription("stable", "camel-k", "community-operators", "test-camel-k");
         OpenshiftClient.waitForCompletion("test-camel-k");
@@ -49,12 +49,13 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     @Override
-    public void undeploy() {
+    public void teardownProduct() {
         OpenshiftClient.deleteSubscription("test-camel-k");
     }
 
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
-        LOG.info("Deploying integration {}", name);
+    @Override
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+        LOG.info("Creating integration {}", name);
         client.create(createIntegrationResource(name, RouteBuilderGenerator.asString(routeDefinition)));
         waitForIntegration(name);
     }
@@ -87,9 +88,9 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
     }
 
     @Override
-    public void undeployIntegration() {
+    public void removeIntegration() {
         for (Integration item : client.list().getItems()) {
-            LOG.info("Undeploying integration {}", item.getMetadata().getName());
+            LOG.info("Removing integration {}", item.getMetadata().getName());
             client.withName(item.getMetadata().getName()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         }
     }
@@ -116,8 +117,4 @@ public class OpenshiftCamelK extends Product implements OpenshiftDeployable {
         return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"));
     }
 
-    @Override
-    public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").size() != 0;
-    }
 }

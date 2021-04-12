@@ -2,7 +2,6 @@ package org.jboss.fuse.tnb.product;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +22,7 @@ public final class ProductFactory {
     public static Product create() {
         final Optional<Product> product = StreamSupport.stream(ServiceLoader.load(Product.class).spliterator(), false)
             .filter(p -> p.getClass().getSimpleName().toLowerCase().contains(TestConfiguration.product()))
-            .filter(p -> p instanceof OpenshiftDeployable == OpenshiftConfiguration.isOpenshift())
+                .filter(p -> p instanceof OpenshiftProduct == OpenshiftConfiguration.isOpenshift())
             .findFirst();
         if (product.isEmpty()) {
             LOG.error("No Product class implementation for {} / {} found!", TestConfiguration.product(), OpenshiftConfiguration.isOpenshift() ? "openshift" : "local");

@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.standalone;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.util.Maven;
 import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
@@ -22,22 +23,13 @@ import java.util.concurrent.Executors;
 import java.util.function.BooleanSupplier;
 
 @AutoService(Product.class)
-public class LocalCamelStandalone extends Product {
+public class LocalCamelStandalone extends LocalProduct {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCamelStandalone.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private Path logFile;
 
     @Override
-    public void deploy() {
-        Maven.setupMaven();
-    }
-
-    @Override
-    public void undeploy() {
-    }
-
-    @Override
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
         LOG.info("Creating Camel Standalone application project");
         Maven.createFromArchetype(
             "org.apache.camel.archetypes",
@@ -91,7 +83,7 @@ public class LocalCamelStandalone extends Product {
     }
 
     @Override
-    public void undeployIntegration() {
+    public void removeIntegration() {
         LOG.debug("Shutting down the executor service");
         executorService.shutdown();
     }

@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.cq;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.util.Maven;
 import org.slf4j.Logger;
@@ -22,22 +23,12 @@ import java.util.List;
 import java.util.Map;
 
 @AutoService(Product.class)
-public class LocalCamelQuarkus extends Quarkus {
+public class LocalCamelQuarkus extends LocalProduct implements Quarkus {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCamelQuarkus.class);
     private Path logFile;
     private Process integrationProcess;
 
-    @Override
-    public void deploy() {
-        Maven.setupMaven();
-    }
-
-    @Override
-    public void undeploy() {
-    }
-
-    @Override
-    public void deployIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
         createApp(name, routeDefinition, camelComponents);
         logFile = TestConfiguration.appLocation().resolve(name + ".log").toAbsolutePath();
         LOG.debug("Integration log file: " + logFile);
@@ -100,7 +91,7 @@ public class LocalCamelQuarkus extends Quarkus {
     }
 
     @Override
-    public void undeployIntegration() {
+    public void removeIntegration() {
         if (integrationProcess != null) {
             if (integrationProcess.isAlive()) {
                 LOG.debug("Killing integration process");

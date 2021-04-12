@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.common.openshift;
 
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
@@ -16,16 +18,18 @@ public class OpenshiftClient {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
     private static OpenShift client;
 
-    public static OpenShift get() {
-        if (client == null) {
-            LOG.debug("Creating new OpenShift client");
-            client = OpenShift.get(
+    static {
+        //init client
+        LOG.debug("Creating new OpenShift client");
+        client = OpenShift.get(
                 OpenshiftConfiguration.openshiftUrl(),
                 OpenshiftConfiguration.openshiftNamespace(),
                 OpenshiftConfiguration.openshiftUsername(),
                 OpenshiftConfiguration.openshiftPassword()
-            );
-        }
+        );
+    }
+
+    public static OpenShift get() {
         return client;
     }
 
@@ -127,4 +131,52 @@ public class OpenshiftClient {
         WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
     }
 
+    /**
+     * Create namespace (name obtained from system property openshift.namespace)
+     */
+    public static void createNamespace(){
+        createNamespace(OpenshiftConfiguration.openshiftNamespace());
+    }
+
+    /**
+     * Create namespace with given name
+     * @param name of namespace to be created
+     */
+    public static void createNamespace(String name){
+        if ((name == null) || (name.isEmpty())) {
+            LOG.info("Skipped creating namespace, name null or empty");
+            return;
+        }
+        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).endMetadata().build();
+        if (client.namespaces().withName(name).get() == null) {
+            client.namespaces().create(ns);
+            LOG.info("Created namespace " + name);
+        } else {
+            LOG.info("Skipped creating namespace " + name + ", already exists");
+        }
+    }
+
+    /**
+     * Delete namespace (name obtained from system property openshift.namespace)
+     */
+    public static void deleteNamespace(){
+        deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
+    }
+
+    /**
+     * Delete namespace of given name
+     * @param name of namespace to be deleted
+     */
+    public static void deleteNamespace(String name){
+        if ((name == null) || (name.isEmpty())) {
+            LOG.info("Skipped deleting namespace, name null or empty");
+            return;
+        }
+        if (client.namespaces().withName(name).get() == null) {
+            LOG.info("Skipped deleting namespace " + name + ", not found");
+        } else {
+            client.namespaces().withName(name).delete();
+            LOG.info("Deleted namespace " + name);
+        }
+    }
 }
