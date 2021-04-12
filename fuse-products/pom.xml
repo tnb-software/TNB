@@ -14,7 +14,6 @@
 
 	<properties>
 		<camel.version>3.8.0</camel.version>
-		<javapoet.version>1.13.0</javapoet.version>
 		<json.version>20210307</json.version>
 		<log4j.version>2.7</log4j.version>
 		<maven.invoker.version>3.1.0</maven.invoker.version>
@@ -26,6 +25,11 @@
 		<dependency>
 			<groupId>org.jboss.fuse.tnb</groupId>
 			<artifactId>tnb-common</artifactId>
+			<version>${project.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jboss.fuse.tnb</groupId>
+			<artifactId>system-x-customizers</artifactId>
 			<version>${project.version}</version>
 		</dependency>
 		<dependency>

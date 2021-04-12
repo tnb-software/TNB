@@ -11,12 +11,13 @@ import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
 import org.jboss.fuse.tnb.product.ck.generated.Source;
-import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
+import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.CodeBlock;
 
 import java.util.Collections;
 import java.util.function.BooleanSupplier;
@@ -54,9 +55,9 @@ public class CamelK extends OpenshiftProduct {
     }
 
     @Override
-    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
         LOG.info("Creating integration {}", name);
-        client.create(createIntegrationResource(name, RouteBuilderGenerator.asString(routeDefinition)));
+        client.create(createIntegrationResource(name, IntegrationGenerator.asString(integrationBuilder)));
         waitForIntegration(name);
     }
 

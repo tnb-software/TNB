@@ -5,12 +5,13 @@ import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.Maven;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.CodeBlock;
 
 import java.io.File;
 import java.io.IOException;
@@ -28,8 +29,8 @@ public class LocalCamelQuarkus extends LocalProduct implements Quarkus {
     private Path logFile;
     private Process integrationProcess;
 
-    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
-        createApp(name, routeDefinition, camelComponents);
+    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
+        createApp(name, integrationBuilder, camelComponents);
         logFile = TestConfiguration.appLocation().resolve(name + ".log").toAbsolutePath();
         LOG.debug("Integration log file: " + logFile);
 
