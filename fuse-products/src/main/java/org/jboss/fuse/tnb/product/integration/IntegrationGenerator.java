@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import org.apache.camel.builder.RouteBuilder;
@@ -85,7 +86,7 @@ public final class IntegrationGenerator {
 
         // For camel quarkus we add @ApplicationScoped to RouteBuilder class
         // And dump properties into application.properties
-        if ("camelquarkus".equals(TestConfiguration.product())) {
+        if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
             routeBuilderClassBuilder.addAnnotation(ApplicationScoped.class);
 
             Path applicationPropertiesPath = ((Path) out).resolve("src/main/resources/application.properties");

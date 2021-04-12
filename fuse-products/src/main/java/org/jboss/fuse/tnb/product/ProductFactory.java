@@ -25,7 +25,7 @@ public final class ProductFactory {
      */
     public static <P extends Product> P create(Class<P> clazz) {
         final Optional<Product> product = StreamSupport.stream(ServiceLoader.load(Product.class).spliterator(), false)
-            .filter(p -> p.getClass().getSimpleName().toLowerCase().contains(TestConfiguration.product()))
+            .filter(p -> p.getClass().getSimpleName().toLowerCase().contains(TestConfiguration.product().getValue()))
             .filter(p -> p instanceof OpenshiftProduct == OpenshiftConfiguration.isOpenshift())
             .findFirst();
         if (product.isEmpty()) {

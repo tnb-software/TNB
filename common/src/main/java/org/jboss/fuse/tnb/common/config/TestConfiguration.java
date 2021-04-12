@@ -1,7 +1,10 @@
 package org.jboss.fuse.tnb.common.config;
 
+import org.jboss.fuse.tnb.common.product.ProductType;
+
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 
 public class TestConfiguration extends Configuration {
     public static final String CAMEL_VERSION = "camel.version";
@@ -18,8 +21,9 @@ public class TestConfiguration extends Configuration {
         return getProperty(CAMEL_VERSION);
     }
 
-    public static String product() {
-        return getProperty(PRODUCT);
+    public static ProductType product() {
+        return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
+            .orElseThrow(() -> new IllegalArgumentException(String.format("Unable to find enum for system property %s = %s", PRODUCT, getProperty(PRODUCT))));
     }
 
     public static String credentialsFile() {

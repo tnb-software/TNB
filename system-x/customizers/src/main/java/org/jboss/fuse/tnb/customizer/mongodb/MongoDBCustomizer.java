@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.customizer.mongodb;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import com.squareup.javapoet.AnnotationSpec;
@@ -21,7 +22,7 @@ public class MongoDBCustomizer extends Customizer {
 
     @Override
     public void customize() {
-        if ("camelquarkus".equals(TestConfiguration.product())) {
+        if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
             customizeForQuarkus();
         } else {
             customizeDefault();
