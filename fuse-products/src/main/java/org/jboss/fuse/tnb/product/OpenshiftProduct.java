@@ -3,9 +3,8 @@ package org.jboss.fuse.tnb.product;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-import org.junit.jupiter.api.extension.ExtensionContext;
 
-import java.util.concurrent.TimeoutException;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 public abstract class OpenshiftProduct extends Product {
 

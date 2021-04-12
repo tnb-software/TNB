@@ -13,7 +13,6 @@
 	<name>fuse-products</name>
 
 	<properties>
-		<camel.version>3.7.0</camel.version>
 		<camel.version>3.8.0</camel.version>
 		<javapoet.version>1.13.0</javapoet.version>
 		<json.version>20210307</json.version>

@@ -23,8 +23,8 @@ import java.util.concurrent.Executors;
 import java.util.function.BooleanSupplier;
 
 @AutoService(Product.class)
-public class LocalCamelStandalone extends LocalProduct {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalCamelStandalone.class);
+public class CamelStandalone extends LocalProduct {
+    private static final Logger LOG = LoggerFactory.getLogger(CamelStandalone.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private Path logFile;
 

@@ -29,8 +29,8 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
-public class OpenshiftCamelK extends OpenshiftProduct {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelK.class);
+public class CamelK extends OpenshiftProduct {
+    private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withGroup("camel.apache.org")
         .withPlural("integrations")
