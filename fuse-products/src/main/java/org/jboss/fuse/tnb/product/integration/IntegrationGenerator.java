@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
+import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import org.apache.camel.builder.RouteBuilder;
@@ -21,24 +22,24 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Properties;
-import java.util.stream.Collectors;
 
 /**
- * Dumps the javapoet's codeblock.
+ * Dumps the IntegrationBuilder class into a given object.
  */
 public final class IntegrationGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationGenerator.class);
 
     /**
-     * Dumps the codeblock into a string.
+     * Dumps the codeblock into a integration data object.
      *
      * @param integrationBuilder integration builder instance
-     * @return string
+     * @return integration data instance
      */
-    public static String asString(IntegrationBuilder integrationBuilder) {
+    public static IntegrationData toIntegrationData(IntegrationBuilder integrationBuilder) {
         StringBuilder out = new StringBuilder();
-        create(integrationBuilder, out);
-        return out.toString();
+        Properties properties = new Properties();
+        create(integrationBuilder, properties, out);
+        return new IntegrationData(out.toString(), properties);
     }
 
     /**
@@ -52,12 +53,22 @@ public final class IntegrationGenerator {
     }
 
     /**
-     * Dumps the codeblock into a given object.
+     * Dumps the integrationbuilder into a given object.
      *
      * @param integrationBuilder integration builder instance
      * @param out where to dump
      */
     private static void create(IntegrationBuilder integrationBuilder, Object out) {
+        create(integrationBuilder, null, out);
+    }
+
+    /**
+     * Dumps the integrationbuilder into a given object with populating the properties file.
+     *
+     * @param integrationBuilder integration builder instance
+     * @param out where to dump
+     */
+    private static void create(IntegrationBuilder integrationBuilder, Properties properties, Object out) {
         final MethodSpec.Builder configureMethodBuilder = MethodSpec.methodBuilder("configure")
             .addAnnotation(Override.class)
             .returns(TypeName.VOID)
@@ -68,12 +79,14 @@ public final class IntegrationGenerator {
             .addModifiers(Modifier.PUBLIC)
             .superclass(RouteBuilder.class);
 
-        final Properties applicationProperties = new Properties();
+        if (properties == null) {
+            properties = new Properties();
+        }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setConfigureMethodBuilder(configureMethodBuilder);
             customizer.setRouteBuilderClassBuilder(routeBuilderClassBuilder);
-            customizer.setApplicationProperties(applicationProperties);
+            customizer.setApplicationProperties(properties);
             customizer.customize();
         }
 
@@ -90,8 +103,7 @@ public final class IntegrationGenerator {
             routeBuilderClassBuilder.addAnnotation(ApplicationScoped.class);
 
             Path applicationPropertiesPath = ((Path) out).resolve("src/main/resources/application.properties");
-            String applicationPropertiesContent = applicationProperties.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue())
-                .collect(Collectors.joining("\n"));
+            String applicationPropertiesContent = MapUtils.propertiesToString(properties);
             LOG.debug("Application properties:\n{}", applicationPropertiesContent);
             try {
                 // Properties#store() escapes stuff by default, so construct the property file manually

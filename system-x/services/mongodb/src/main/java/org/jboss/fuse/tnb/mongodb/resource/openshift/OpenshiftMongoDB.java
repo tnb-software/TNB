@@ -1,11 +1,13 @@
 package org.jboss.fuse.tnb.mongodb.resource.openshift;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -59,7 +61,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
                     .editOrNewSpec()
                         .addNewContainer()
                             .withName(name())
-                            .withImage(image())
+                            .withImage(SystemXConfiguration.mongoDbImage())
                             .addAllToPorts(ports)
                             .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null)).collect(Collectors.toList()))
                         .endContainer()
@@ -113,7 +115,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
     public boolean isReady() {
         return ResourceFunctions.areExactlyNPodsReady(1)
             .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.get().getPodLog(name()).contains("transition to primary complete; database writes are now permitted");
+            && OpenshiftClient.get().getPodLog(name()).contains("Transition to primary complete; database writes are now permitted");
     }
 
     @Override
@@ -123,7 +125,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
 
     @Override
     public String name() {
-        return "mongodb36";
+        return "mongodb";
     }
 
     @Override

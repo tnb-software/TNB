@@ -13,7 +13,7 @@ public class MongoContainer extends GenericContainer<MongoContainer> {
         this.port = port;
         withExposedPorts(port);
         withEnv(env);
-        waitingFor(Wait.forLogMessage(".*transition to primary complete.*", 1));
+        waitingFor(Wait.forLogMessage(".*Transition to primary complete.*", 1));
     }
 
     public int getPort() {

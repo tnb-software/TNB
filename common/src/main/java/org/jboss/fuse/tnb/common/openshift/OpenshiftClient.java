@@ -1,16 +1,18 @@
 package org.jboss.fuse.tnb.common.openshift;
 
-import io.fabric8.kubernetes.api.model.Namespace;
-import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.OpenShift;
+import io.fabric8.kubernetes.api.model.Namespace;
+import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
 
@@ -178,5 +180,19 @@ public class OpenshiftClient {
             client.namespaces().withName(name).delete();
             LOG.info("Deleted namespace " + name);
         }
+    }
+
+    /**
+     * Creates a config map with given name and data.
+     * @param name configmap name
+     * @param data map with data
+     */
+    public static void createConfigMap(String name, Map<String, String> data) {
+        client.configMaps().withName(name).createOrReplaceWithNew()
+            .withNewMetadata()
+                .withName(name)
+            .endMetadata()
+            .withData(data)
+            .done();
     }
 }
