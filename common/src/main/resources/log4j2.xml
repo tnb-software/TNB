@@ -1,9 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
+	<Properties>
+		<Property name="log_level">${sys:log4j.level:-INFO}</Property>
+	</Properties>
 	<Appenders>
 		<Console name="Console" target="SYSTEM_OUT">
 			<PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} %logger{1}:%L - %msg%n"/>
-			<ThresholdFilter level="INFO"/>
+			<ThresholdFilter level="${log_level}"/>
 		</Console>
 		<File name="Logfile" fileName="target/tests.log">
 			<PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} %logger{1}:%L - %msg%n"/>
