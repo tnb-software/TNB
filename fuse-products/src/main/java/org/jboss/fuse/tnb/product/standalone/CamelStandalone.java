@@ -64,7 +64,8 @@ public class CamelStandalone extends LocalProduct {
     public void waitForIntegration(String name) {
         BooleanSupplier success = () -> {
             try {
-                return Files.readString(logFile).contains("started and consuming");
+                String content = Files.readString(logFile);
+                return content.contains("started in") || content.contains("started and consuming");
             } catch (IOException e) {
                 // Ignored as the file may not exist yet
             }

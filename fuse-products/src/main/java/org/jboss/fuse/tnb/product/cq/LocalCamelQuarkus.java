@@ -40,9 +40,7 @@ public class LocalCamelQuarkus extends LocalProduct implements Quarkus {
             Arrays.asList("clean", "package"),
             TestConfiguration.isQuarkusNative() ? Collections.singletonList("native") : null,
             MapUtils.toProperties(Map.of(
-                "skipTests", "true",
-                // todo: tmp due to issue with mongodb in 3.8.0 camel
-                "quarkus.platform.version", "1.11.6.Final"
+                "skipTests", "true"
                 )
             )
         );
@@ -54,9 +52,7 @@ public class LocalCamelQuarkus extends LocalProduct implements Quarkus {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
         } else {
             cmd.addAll(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
-            // todo: tmp due to issue with mongodb in 3.8.0 camel
-            //fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
-            fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toAbsolutePath().toString();
+            fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
         }
         cmd.add(fileName);
 
@@ -83,7 +79,9 @@ public class LocalCamelQuarkus extends LocalProduct implements Quarkus {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
             try {
-                return Files.readString(logFile).contains("started and consuming");
+                String content = Files.readString(logFile);
+                // new style in 3.9 camel
+                return content.contains("started in") || content.contains("started and consuming");
             } catch (IOException e) {
                 // Ignored as the file may not exist yet
             }
