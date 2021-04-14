@@ -1,21 +1,22 @@
 package org.jboss.fuse.tnb.product.cq;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.Maven;
+
+import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.CodeBlock;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -55,8 +56,8 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
     }
 
     @Override
-    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
-        createApp(name, routeDefinition, camelComponents);
+    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
+        createApp(name, integrationBuilder, camelComponents);
 
         LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
         Maven.invoke(

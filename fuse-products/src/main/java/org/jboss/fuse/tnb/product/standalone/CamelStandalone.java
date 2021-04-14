@@ -5,13 +5,14 @@ import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.util.Maven;
-import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.squareup.javapoet.CodeBlock;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -23,13 +24,13 @@ import java.util.concurrent.Executors;
 import java.util.function.BooleanSupplier;
 
 @AutoService(Product.class)
-public class LocalCamelStandalone extends LocalProduct {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalCamelStandalone.class);
+public class CamelStandalone extends LocalProduct {
+    private static final Logger LOG = LoggerFactory.getLogger(CamelStandalone.class);
     private final ExecutorService executorService = Executors.newFixedThreadPool(1);
     private Path logFile;
 
     @Override
-    public void createIntegration(String name, CodeBlock routeDefinition, String... camelComponents) {
+    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
         LOG.info("Creating Camel Standalone application project");
         Maven.createFromArchetype(
             "org.apache.camel.archetypes",
@@ -40,7 +41,7 @@ public class LocalCamelStandalone extends LocalProduct {
             TestConfiguration.appLocation().toFile()
         );
 
-        RouteBuilderGenerator.toFile(routeDefinition, TestConfiguration.appLocation().resolve(name).resolve("src/main/java"));
+        IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
         Maven.addCamelComponentDependencies(TestConfiguration.appLocation().resolve(name), camelComponents);
 

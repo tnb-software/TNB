@@ -3,13 +3,12 @@ package org.jboss.fuse.tnb.product.cq;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
-import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.util.Maven;
-import org.jboss.fuse.tnb.product.util.RouteBuilderGenerator;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.squareup.javapoet.CodeBlock;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,7 +23,7 @@ public interface Quarkus {
      * @param routeDefinition routebuilder class that will be placed into the app
      * @param camelComponents necessary camel components
      */
-    default public void createApp(String name, CodeBlock routeDefinition, String... camelComponents) {
+    default void createApp(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
         Logger LOG = LoggerFactory.getLogger(Quarkus.class);
         LOG.info("Creating application project for integration {}", name);
 
@@ -42,6 +41,6 @@ public interface Quarkus {
             ))
         );
 
-        RouteBuilderGenerator.toFile(routeDefinition, TestConfiguration.appLocation().resolve(name).resolve("src/main/java"));
+        IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
     }
 }
