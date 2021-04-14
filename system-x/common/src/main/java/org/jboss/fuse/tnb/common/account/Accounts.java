@@ -43,17 +43,24 @@ public class Accounts {
      * @return new instance of given class
      */
     public static <T extends Account> T get(Class<T> accountClass) {
-        if (credentials == null) {
-            load();
-        }
+
         try {
-            LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
             Function<Account, String> getId = Account::credentialsId;
-            String credentialsId = getId.apply(accountClass.getDeclaredConstructor().newInstance());
-            if (!credentials.containsKey(credentialsId)) {
-                fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
+            T instance = accountClass.getDeclaredConstructor().newInstance();
+            String credentialsId = getId.apply(instance);
+            if (credentialsId == null) {
+                LOG.debug("Initialization of {}. No credentials loading needed.", accountClass.getSimpleName());
+                return instance;
+            } else {
+                LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
+                if (credentials == null) {
+                    load();
+                }
+                if (!credentials.containsKey(credentialsId)) {
+                    fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
+                }
+                return accountClass.cast(mapper.convertValue(credentials.get(credentialsId), accountClass));
             }
-            return accountClass.cast(mapper.convertValue(credentials.get(credentialsId), accountClass));
         } catch (Exception e) {
             fail("Unable to create instance of " + accountClass.getName() + " class: ", e);
         }

@@ -3,14 +3,14 @@ package org.jboss.fuse.tnb.mongodb.account;
 import org.jboss.fuse.tnb.common.account.Account;
 
 public class MongoDBAccount implements Account {
-    private String username;
-    private String password;
-    private String database;
+    private String username = "user";
+    private String password = "user";
+    private String database = "sampledb";
     private String replicaSetUrl;
-    private String replicaSetName;
-    private String replicaSetMode;
-    private String replicaSetKey;
-    private String rootPassword;
+    private String replicaSetName = "rs0";
+    private String replicaSetMode = "primary";
+    private String replicaSetKey = "replica";
+    private String rootPassword = "admin";
 
     public void setUsername(String username) {
         this.username = username;
