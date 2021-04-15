@@ -66,13 +66,12 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
             TestConfiguration.isQuarkusNative() ? Collections.singletonList("native") : null,
             MapUtils.toProperties(Map.of(
                 "skipTests", "true",
-                // todo: tmp due to issue with mongodb in 3.8.0 camel
-                "quarkus.platform.version", "1.11.6.Final",
                 "quarkus.native.container-build", "true"
             ))
         );
 
-        Path openshiftResources = TestConfiguration.appLocation().resolve(name).resolve("target/kubernetes/openshift.yml");
+        Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
+        Path openshiftResources = integrationTarget.resolve("target/kubernetes/openshift.yml");
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
             LOG.info("Creating openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
             createdResources = OpenshiftClient.get().load(is).createOrReplace();
@@ -82,9 +81,7 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
 
         waitForImageStream(name);
 
-        // for non-native with >= 1.12 quarkus
-        // filePath = createTar(name, integrationTarget.resolve("quarkus-app"));
-        Path filePath = createTar(prepareS2iBuildDirectory(name));
+        Path filePath = createTar(integrationTarget.resolve("quarkus-app"));
         OpenshiftClient.doS2iBuild(name, filePath);
         waitForIntegration(name);
     }

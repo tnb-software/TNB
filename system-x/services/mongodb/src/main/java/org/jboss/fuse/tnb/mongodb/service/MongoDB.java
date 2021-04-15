@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.mongodb.account.MongoDBAccount;
 import org.jboss.fuse.tnb.mongodb.validation.MongoDBValidation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,7 +21,6 @@ public abstract class MongoDB implements Service {
 
     public MongoDBAccount account() {
         if (account == null) {
-            LOG.debug("Creating new MongoDB account");
             account = Accounts.get(MongoDBAccount.class);
         }
         return account;
@@ -52,9 +52,5 @@ public abstract class MongoDB implements Service {
 
     public int port() {
         return 27017;
-    }
-
-    public String image() {
-        return "quay.io/bitnami/mongodb:3.6.16";
     }
 }

@@ -1,9 +1,11 @@
 package org.jboss.fuse.tnb.mongodb.resource.local;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
+import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,7 +21,7 @@ public class LocalMongoDB extends MongoDB implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting MongoDB container");
-        container = new MongoContainer(image(), port(), containerEnvironment());
+        container = new MongoContainer(SystemXConfiguration.mongoDbImage(), port(), containerEnvironment());
         container.start();
         LOG.info("MongoDB container started");
     }

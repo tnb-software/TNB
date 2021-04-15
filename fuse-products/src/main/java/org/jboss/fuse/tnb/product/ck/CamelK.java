@@ -2,9 +2,11 @@ package org.jboss.fuse.tnb.product.ck;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.ck.generated.Configuration;
 import org.jboss.fuse.tnb.product.ck.generated.DoneableIntegration;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
@@ -12,6 +14,7 @@ import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
 import org.jboss.fuse.tnb.product.ck.generated.Source;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 
 import org.slf4j.Logger;
@@ -20,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.util.Collections;
+import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -57,7 +61,14 @@ public class CamelK extends OpenshiftProduct {
     @Override
     public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
         LOG.info("Creating integration {}", name);
-        client.create(createIntegrationResource(name, IntegrationGenerator.asString(integrationBuilder)));
+        IntegrationData data = IntegrationGenerator.toIntegrationData(integrationBuilder);
+
+        // If there are any properties set, create a config map with the same map as the integration
+        if (!data.getProperties().isEmpty()) {
+            OpenshiftClient.createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(data.getProperties())));
+        }
+
+        client.create(createIntegrationResource(name, data));
         waitForIntegration(name);
     }
 
@@ -97,19 +108,28 @@ public class CamelK extends OpenshiftProduct {
     }
 
     /**
-     * Creates an Integration object.
+     * Creates an Integration object in OpenShift.
      * @param name name of the object
-     * @param routeDefinition camel route definition
+     * @param integrationData integration data object
      * @return integration instance
      */
-    private Integration createIntegrationResource(String name, String routeDefinition) {
+    private Integration createIntegrationResource(String name, IntegrationData integrationData) {
         ObjectMeta metadata = new ObjectMeta();
         metadata.setName(name);
+
         IntegrationSpec spec = new IntegrationSpec();
+
+        // if there are any properties set, use the configmap in the integration's configuration
+        if (!integrationData.getProperties().isEmpty()) {
+            Configuration config = new Configuration("configmap", name);
+            spec.setConfiguration(Collections.singletonList(config));
+        }
+
         Source source = new Source();
         source.setName("MyRouteBuilder.java");
-        source.setContent("// camel-k: language=java\n" + routeDefinition);
+        source.setContent("// camel-k: language=java\n" + integrationData.getIntegration());
         spec.setSources(Collections.singletonList(source));
+
         return new Integration("camel.apache.org/v1", "Integration", metadata, spec, new IntegrationStatus());
     }
 
@@ -117,5 +137,4 @@ public class CamelK extends OpenshiftProduct {
     public boolean isReady() {
         return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"));
     }
-
 }

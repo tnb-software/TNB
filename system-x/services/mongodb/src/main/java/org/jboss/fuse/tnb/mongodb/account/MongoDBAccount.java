@@ -11,6 +11,7 @@ public class MongoDBAccount implements Account {
     private String replicaSetMode = "primary";
     private String replicaSetKey = "replica";
     private String rootPassword = "admin";
+    private String clientBeanName = "camelMongoClient";
 
     public void setUsername(String username) {
         this.username = username;
@@ -74,5 +75,13 @@ public class MongoDBAccount implements Account {
 
     public String rootPassword() {
         return rootPassword;
+    }
+
+    public String clientBeanName() {
+        return clientBeanName;
+    }
+
+    public void setClientBeanName(String clientBeanName) {
+        this.clientBeanName = clientBeanName;
     }
 }
