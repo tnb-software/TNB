@@ -43,7 +43,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "1.13.1.Final");
+        return getProperty(QUARKUS_VERSION, "1.11.5.Final");
     }
 
     public static boolean isQuarkusNative() {

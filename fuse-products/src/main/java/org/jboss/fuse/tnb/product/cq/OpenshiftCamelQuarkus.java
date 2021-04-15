@@ -1,45 +1,25 @@
 package org.jboss.fuse.tnb.product.cq;
 
-import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
+import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.cq.application.OpenshiftQuarkusApp;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.Maven;
 
-import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
-import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.SimpleFileVisitor;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
-
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 
 @AutoService(Product.class)
-public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
+public class OpenshiftCamelQuarkus extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
-
-    // Resources generated from quarkus maven plugin and created in openshift
-    private List<HasMetadata> createdResources;
+    private App app;
 
     @Override
     public boolean isReady() {
@@ -56,37 +36,13 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
     }
 
     @Override
-    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        createApp(name, integrationBuilder, camelComponents);
-
-        LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
-        Maven.invoke(
-            TestConfiguration.appLocation().resolve(name),
-            Arrays.asList("clean", "package"),
-            TestConfiguration.isQuarkusNative() ? Collections.singletonList("native") : null,
-            MapUtils.toProperties(Map.of(
-                "skipTests", "true",
-                "quarkus.native.container-build", "true"
-            ))
-        );
-
-        Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
-        Path openshiftResources = integrationTarget.resolve("target/kubernetes/openshift.yml");
-        try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
-            LOG.info("Creating openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
-            createdResources = OpenshiftClient.get().load(is).createOrReplace();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read openshift.yml resource: ", e);
-        }
-
-        waitForImageStream(name);
-
-        Path filePath = createTar(integrationTarget.resolve("quarkus-app"));
-        OpenshiftClient.doS2iBuild(name, filePath);
-        waitForIntegration(name);
+    public App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
+        app = new OpenshiftQuarkusApp(name, integrationBuilder, camelComponents);
+        app.start();
+        app.waitUntilReady();
+        return app;
     }
 
-    @Override
     public void waitForIntegration(String name) {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
@@ -100,97 +56,6 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct implements Quarkus {
 
     @Override
     public void removeIntegration() {
-        LOG.info("Undeploying integration resources");
-        for (HasMetadata createdResource : createdResources) {
-            LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
-            OpenshiftClient.get().resource(createdResource).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-        }
-    }
-
-    /**
-     * Copies necessary files into a new temporary directory and returns its path.
-     * @param name integration name
-     * @return path to a new directory
-     */
-    private Path prepareS2iBuildDirectory(String name) {
-        LOG.debug("Preparing s2i directory");
-        final Path directory;
-        try {
-            directory = Files.createTempDirectory(TestConfiguration.appLocation(), "app");
-            LOG.debug("s2i directory: {}", directory.toAbsolutePath());
-            if (TestConfiguration.isQuarkusNative()) {
-                FileUtils.copyFile(
-                    TestConfiguration.appLocation().resolve(name).resolve("target").resolve(name + "-1.0.0-SNAPSHOT-runner").toFile(),
-                    directory.resolve(name + "-1.0.0-SNAPSHOT-runner").toFile()
-                );
-            } else {
-                FileUtils
-                    .copyDirectory(TestConfiguration.appLocation().resolve(name).resolve("target/lib").toFile(), directory.resolve("lib").toFile());
-                FileUtils.copyFile(
-                    TestConfiguration.appLocation().resolve(name).resolve("target").resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toFile(),
-                    directory.resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toFile()
-                );
-            }
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to prepare s2i build directory: ", e);
-        }
-        return directory;
-    }
-
-    /**
-     * Creates a new tar file from given directory.
-     * @param dir path to the directory
-     * @return path to the tar file
-     */
-    private Path createTar(Path dir) {
-        Path output;
-        try {
-            output = Files.createTempFile(TestConfiguration.appLocation(), "tar", "");
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create temp file: ", e);
-        }
-        try (TarArchiveOutputStream archive = new TarArchiveOutputStream(Files.newOutputStream(output))) {
-            archive.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
-
-            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                    if (attributes.isSymbolicLink()) {
-                        return FileVisitResult.CONTINUE;
-                    }
-                    Path targetFile = dir.relativize(file);
-                    try {
-                        TarArchiveEntry tarEntry = new TarArchiveEntry(file.toFile(), targetFile.toString());
-                        archive.putArchiveEntry(tarEntry);
-                        Files.copy(file, archive);
-                        archive.closeArchiveEntry();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
-                    }
-
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
-
-            archive.finish();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to create tar file: ", e);
-        }
-        return output;
-    }
-
-    /**
-     * Parses the needed imagestream:tag from the build config and waits until the imagestream contains that tag.
-     * @param bcName buildconfig name
-     */
-    private void waitForImageStream(String bcName) {
-        final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
-            .getSourceStrategy().getFrom().getName().split(":");
-        OpenshiftClient.waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
+        app.stop();
     }
 }

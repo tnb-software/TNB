@@ -1,56 +1,29 @@
 package org.jboss.fuse.tnb.product.ck;
 
-import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
-import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
-import org.jboss.fuse.tnb.product.ck.generated.Configuration;
-import org.jboss.fuse.tnb.product.ck.generated.DoneableIntegration;
-import org.jboss.fuse.tnb.product.ck.generated.Integration;
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
-import org.jboss.fuse.tnb.product.ck.generated.Source;
+import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.ck.application.CamelKApp;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationData;
-import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Collections;
-import java.util.Map;
-import java.util.function.BooleanSupplier;
-
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
 public class CamelK extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
-    private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
-        .withGroup("camel.apache.org")
-        .withPlural("integrations")
-        .withScope("Namespaced")
-        .withVersion("v1")
-        .build();
-    private NonNamespaceOperation<Integration, IntegrationList, DoneableIntegration, Resource<Integration, DoneableIntegration>> client;
+    private App app;
 
     @Override
     public void setupProduct(){
         LOG.info("Deploying Camel-K");
         OpenshiftClient.createSubscription("stable", "camel-k", "community-operators", "test-camel-k");
         OpenshiftClient.waitForCompletion("test-camel-k");
-        client = OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class, DoneableIntegration.class)
-            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     @Override
@@ -59,78 +32,16 @@ public class CamelK extends OpenshiftProduct {
     }
 
     @Override
-    public void createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        LOG.info("Creating integration {}", name);
-        IntegrationData data = IntegrationGenerator.toIntegrationData(integrationBuilder);
-
-        // If there are any properties set, create a config map with the same map as the integration
-        if (!data.getProperties().isEmpty()) {
-            OpenshiftClient.createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(data.getProperties())));
-        }
-
-        client.create(createIntegrationResource(name, data));
-        waitForIntegration(name);
-    }
-
-    @Override
-    public void waitForIntegration(String name) {
-        BooleanSupplier success = () -> {
-            Integration i = client.withName(name).get();
-            try {
-                return "running".equalsIgnoreCase(i.getStatus().getPhase());
-            } catch (Exception ignored) {
-                return false;
-            }
-        };
-        BooleanSupplier fail = () -> {
-            Integration i = client.withName(name).get();
-            try {
-                return "error".equalsIgnoreCase(i.getStatus().getPhase());
-            } catch (Exception ignored) {
-                return false;
-            }
-        };
-        WaitUtils.waitFor(success, fail, 5000L, String.format("Waiting until the integration %s is built", name));
-
-        WaitUtils.waitFor(
-            () -> ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
-            24,
-            5000L,
-            String.format("Waiting until the pod with label %s is ready", "camel.apache.org/integration=" + name));
+    public App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
+        app = new CamelKApp(name, integrationBuilder);
+        app.start();
+        app.waitUntilReady();
+        return app;
     }
 
     @Override
     public void removeIntegration() {
-        for (Integration item : client.list().getItems()) {
-            LOG.info("Removing integration {}", item.getMetadata().getName());
-            client.withName(item.getMetadata().getName()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-        }
-    }
-
-    /**
-     * Creates an Integration object in OpenShift.
-     * @param name name of the object
-     * @param integrationData integration data object
-     * @return integration instance
-     */
-    private Integration createIntegrationResource(String name, IntegrationData integrationData) {
-        ObjectMeta metadata = new ObjectMeta();
-        metadata.setName(name);
-
-        IntegrationSpec spec = new IntegrationSpec();
-
-        // if there are any properties set, use the configmap in the integration's configuration
-        if (!integrationData.getProperties().isEmpty()) {
-            Configuration config = new Configuration("configmap", name);
-            spec.setConfiguration(Collections.singletonList(config));
-        }
-
-        Source source = new Source();
-        source.setName("MyRouteBuilder.java");
-        source.setContent("// camel-k: language=java\n" + integrationData.getIntegration());
-        spec.setSources(Collections.singletonList(source));
-
-        return new Integration("camel.apache.org/v1", "Integration", metadata, spec, new IntegrationStatus());
+        app.stop();
     }
 
     @Override
