@@ -26,8 +26,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     // Resources generated from quarkus maven plugin and created in openshift
     private List<HasMetadata> createdResources;
 
-    public OpenshiftQuarkusApp(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        super(name, integrationBuilder, camelComponents);
+    public OpenshiftQuarkusApp(IntegrationBuilder integrationBuilder) {
+        super(integrationBuilder);
     }
 
     @Override

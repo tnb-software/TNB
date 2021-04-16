@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 
 
 public abstract class Product implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
-    public abstract App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents);
+    public abstract App createIntegration(IntegrationBuilder integrationBuilder);
 
     public abstract void removeIntegration();
 

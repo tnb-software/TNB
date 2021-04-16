@@ -16,8 +16,8 @@ public class LocalCamelQuarkus extends LocalProduct {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCamelQuarkus.class);
     private App app;
 
-    public App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        app = new LocalQuarkusApp(name, integrationBuilder, camelComponents);
+    public App createIntegration(IntegrationBuilder integrationBuilder) {
+        app = new LocalQuarkusApp(integrationBuilder);
         app.start();
         app.waitUntilReady();
         return app;

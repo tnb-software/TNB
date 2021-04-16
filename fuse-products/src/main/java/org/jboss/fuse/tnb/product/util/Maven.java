@@ -169,15 +169,16 @@ public final class Maven {
 
     /**
      * Adds camel component dependencies to pom.xml file in a given dir.
+     *
      * @param dir base directory
      * @param dependencies array of camel dependencies, e.g. "slack"
      */
-    public static void addCamelComponentDependencies(Path dir, String... dependencies) {
-        if (dependencies == null || dependencies.length == 0) {
+    public static void addCamelComponentDependencies(Path dir, List<String> dependencies) {
+        if (dependencies == null || dependencies.isEmpty()) {
             return;
         }
         File pom = dir.resolve("pom.xml").toFile();
-        LOG.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom);
+        LOG.info("Adding {} as dependencies to {}", dependencies.toString(), pom);
         Model model;
         try (InputStream is = new FileInputStream(pom)) {
             model = new MavenXpp3Reader().read(is);

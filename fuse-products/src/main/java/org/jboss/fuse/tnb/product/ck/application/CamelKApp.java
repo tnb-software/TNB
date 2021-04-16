@@ -42,8 +42,8 @@ public class CamelKApp extends App {
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private final IntegrationData integrationData;
 
-    public CamelKApp(String name, IntegrationBuilder integrationBuilder) {
-        super(name);
+    public CamelKApp(IntegrationBuilder integrationBuilder) {
+        super(integrationBuilder.getIntegrationName());
         integrationData = IntegrationGenerator.toIntegrationData(integrationBuilder);
 
         // If there are any properties set, create a config map with the same map as the integration

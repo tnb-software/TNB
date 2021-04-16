@@ -13,8 +13,8 @@ public class CamelStandalone extends LocalProduct {
     private App app;
 
     @Override
-    public App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        app = new StandaloneApp(name, integrationBuilder, camelComponents);
+    public App createIntegration(IntegrationBuilder integrationBuilder) {
+        app = new StandaloneApp(integrationBuilder);
         app.start();
         app.waitUntilReady();
         return app;

@@ -32,8 +32,8 @@ public class CamelK extends OpenshiftProduct {
     }
 
     @Override
-    public App createIntegration(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        app = new CamelKApp(name, integrationBuilder);
+    public App createIntegration(IntegrationBuilder integrationBuilder) {
+        app = new CamelKApp(integrationBuilder);
         app.start();
         app.waitUntilReady();
         return app;

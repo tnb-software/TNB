@@ -19,8 +19,8 @@ public class LocalQuarkusApp extends QuarkusApp {
     private final Path logFile;
     private Process appProcess;
 
-    public LocalQuarkusApp(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        super(name, integrationBuilder, camelComponents);
+    public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
+        super(integrationBuilder);
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
     }
 

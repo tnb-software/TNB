@@ -11,18 +11,17 @@ import org.jboss.fuse.tnb.product.util.Maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
 
-    public QuarkusApp(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        super(name);
+    public QuarkusApp(IntegrationBuilder integrationBuilder) {
+        super(integrationBuilder.getIntegrationName());
         LOG.info("Creating Camel Quarkus application project for integration {}", name);
 
-        String extensions = Arrays.stream(camelComponents).map(c -> "camel-quarkus-" + c).collect(Collectors.joining(","));
+        String extensions = integrationBuilder.getCamelDependencies().stream().map(c -> "camel-quarkus-" + c).collect(Collectors.joining(","));
         if (OpenshiftConfiguration.isOpenshift()) {
             extensions += ",openshift";
         }

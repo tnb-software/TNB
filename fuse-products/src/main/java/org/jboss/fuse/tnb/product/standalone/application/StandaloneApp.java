@@ -21,8 +21,8 @@ public class StandaloneApp extends App {
     private BuildRequest buildRequest;
     boolean isRunning = true;
 
-    public StandaloneApp(String name, IntegrationBuilder integrationBuilder, String... camelComponents) {
-        super(name);
+    public StandaloneApp(IntegrationBuilder integrationBuilder) {
+        super(integrationBuilder.getIntegrationName());
 
         LOG.info("Creating Camel Standalone application project for integration {}", name);
         Maven.createFromArchetype(
@@ -36,7 +36,7 @@ public class StandaloneApp extends App {
 
         IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
-        Maven.addCamelComponentDependencies(TestConfiguration.appLocation().resolve(name), camelComponents);
+        Maven.addCamelComponentDependencies(TestConfiguration.appLocation().resolve(name), integrationBuilder.getCamelDependencies());
     }
 
     @Override
