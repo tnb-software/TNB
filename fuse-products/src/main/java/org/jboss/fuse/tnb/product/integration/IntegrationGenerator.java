@@ -91,7 +91,7 @@ public final class IntegrationGenerator {
         }
 
         final MethodSpec configureMethod = configureMethodBuilder.addCode(CodeBlock.builder()
-            .add(integrationBuilder.build())
+            .add(integrationBuilder.getCodeBlock())
             .build())
             .build();
 

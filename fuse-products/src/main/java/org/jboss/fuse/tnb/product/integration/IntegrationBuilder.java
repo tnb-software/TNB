@@ -16,10 +16,16 @@ import java.util.List;
  */
 public class IntegrationBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
+    private final String integrationName;
     private final CodeBlock.Builder codeBlockBuilder = CodeBlock.builder();
     private String from;
     private final List<String> to = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
+    private final List<String> camelDependencies = new ArrayList<>();
+
+    public IntegrationBuilder(String integrationName) {
+        this.integrationName = integrationName;
+    }
 
     public IntegrationBuilder from(String from) {
         if (this.from != null) {
@@ -39,11 +45,24 @@ public class IntegrationBuilder {
         return this;
     }
 
+    public IntegrationBuilder camelDependencies(String... dependencies) {
+        this.camelDependencies.addAll(Arrays.asList(dependencies));
+        return this;
+    }
+
+    public String getIntegrationName() {
+        return integrationName;
+    }
+
     public List<Customizer> getCustomizers() {
         return customizers;
     }
 
-    public CodeBlock build() {
+    public List<String> getCamelDependencies() {
+        return camelDependencies;
+    }
+
+    public CodeBlock getCodeBlock() {
         StringBuilder sb = new StringBuilder("from($S)");
         to.forEach(to -> sb.append(".to($S)"));
         List<Object> args = new ArrayList<>();

@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.util;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -13,7 +12,6 @@ import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,12 +21,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -39,7 +34,6 @@ import java.util.Properties;
  */
 public final class Maven {
     private static final Logger LOG = LoggerFactory.getLogger(Maven.class);
-    private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss").withZone(ZoneId.systemDefault());
     private static Invoker invoker;
 
     private static InvocationRequest newRequest() {
@@ -105,51 +99,33 @@ public final class Maven {
                 throw new RuntimeException("Unable to create directory: " + location.getAbsolutePath());
             }
         }
-        invoke(location.toPath(), Collections.singletonList("archetype:generate"), MapUtils.toProperties(Map.of(
-            "archetypeGroupId", archetypeGroupId,
-            "archetypeArtifactId", archetypeArtifactId,
-            "archetypeVersion", archetypeVersion,
-            "groupId", appGroupId,
-            "artifactId", appArtifactId
-        )));
+        invoke(new BuildRequest.Builder()
+            .withBaseDirectory(location)
+            .withGoals("archetype:generate")
+            .withProperties(Map.of(
+                "archetypeGroupId", archetypeGroupId,
+                "archetypeArtifactId", archetypeArtifactId,
+                "archetypeVersion", archetypeVersion,
+                "groupId", appGroupId,
+                "artifactId", appArtifactId))
+            .build()
+        );
     }
 
     /**
      * Invokes maven.
-     * @param dir base directory
-     * @param goals maven goals
-     * @param properties properties
+     *
+     * @param buildRequest MavenRequest class instance
      */
-    public static void invoke(Path dir, List<String> goals, Properties properties) {
-        invoke(dir, goals, null, properties);
-    }
-
-    /**
-     * Invokes maven.
-     * @param dir base directory
-     * @param goals maven goals
-     * @param profiles maven profiles
-     * @param properties properties
-     */
-    public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties) {
-        String logFile = "target/maven-invocation-" + FORMATTER.format(Instant.now()) + ".log";
-        LOG.debug("Using {} log file for the invocation", logFile);
-        invoke(dir, goals, profiles, properties, logFile);
-    }
-
-    /**
-     * Invokes maven.
-     * @param dir base directory
-     * @param goals maven goals
-     * @param profiles maven profiles
-     * @param properties properties
-     * @param logFile log file location
-     */
-    public static void invoke(Path dir, List<String> goals, List<String> profiles, Properties properties, String logFile) {
+    public static void invoke(BuildRequest buildRequest) {
         InvocationResult result;
 
+        File dir = buildRequest.getBaseDirectory();
+        Properties properties = buildRequest.getProperties();
+        List<String> goals = buildRequest.getGoals();
+
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n" +
-            "  Base dir: " + dir.toAbsolutePath() + "\n" +
+            "  Base dir: " + dir.getAbsolutePath() + "\n" +
             "  Goals: " + goals.toString() + "\n"
         );
         if (properties != null && !properties.isEmpty()) {
@@ -157,35 +133,52 @@ public final class Maven {
             properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
         }
         LOG.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
+
         try {
             InvocationRequest request = newRequest()
-                .setBaseDirectory(dir.toFile())
+                .setBaseDirectory(dir)
                 .setBatchMode(true)
                 .setGoals(goals)
-                .setProfiles(profiles)
+                .setProfiles(buildRequest.getProfiles())
                 .setProperties(properties)
-                .setOutputHandler(s -> FileUtils.writeStringToFile(new File(logFile), s + "\n", "UTF-8", true));
+                .setOutputHandler(buildRequest.getOutputHandler());
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);
+        } finally {
+            if (buildRequest.shouldCreateLogFile()) {
+                Path logFile = buildRequest.getLogFile();
+                LOG.debug("Writing maven invocation log to file {}", logFile);
+                try {
+                    Files.write(logFile, buildRequest.getOutputHandler().getOutput().getBytes());
+                } catch (IOException e) {
+                    LOG.warn("Unable to create log file: " + e);
+                }
+            }
         }
 
         if (result.getExitCode() != 0) {
-            throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check " + logFile + " for more details");
+            if (buildRequest.shouldCreateLogFile()) {
+                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check "
+                    + buildRequest.getLogFile() + " for more details");
+            } else {
+                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode());
+            }
         }
     }
 
     /**
      * Adds camel component dependencies to pom.xml file in a given dir.
+     *
      * @param dir base directory
      * @param dependencies array of camel dependencies, e.g. "slack"
      */
-    public static void addCamelComponentDependencies(Path dir, String... dependencies) {
-        if (dependencies == null || dependencies.length == 0) {
+    public static void addCamelComponentDependencies(Path dir, List<String> dependencies) {
+        if (dependencies == null || dependencies.isEmpty()) {
             return;
         }
         File pom = dir.resolve("pom.xml").toFile();
-        LOG.info("Adding {} as dependencies to {}", Arrays.toString(dependencies), pom);
+        LOG.info("Adding {} as dependencies to {}", dependencies.toString(), pom);
         Model model;
         try (InputStream is = new FileInputStream(pom)) {
             model = new MavenXpp3Reader().read(is);
