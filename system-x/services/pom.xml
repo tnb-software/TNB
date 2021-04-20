@@ -13,8 +13,10 @@
 	<packaging>pom</packaging>
 
 	<modules>
+		<module>aws-common</module>
 		<module>mongodb</module>
 		<module>slack</module>
+		<module>sqs</module>
 	</modules>
 
 	<dependencies>

@@ -6,6 +6,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.squareup.javapoet.CodeBlock;
+import com.squareup.javapoet.TypeSpec;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -41,6 +42,11 @@ public class IntegrationBuilder {
 
     public IntegrationBuilder log(String log) {
         codeBlockBuilder.add(".log($S)", log);
+        return this;
+    }
+
+    public IntegrationBuilder process(TypeSpec processor) {
+        codeBlockBuilder.add(".process($L)", processor);
         return this;
     }
 

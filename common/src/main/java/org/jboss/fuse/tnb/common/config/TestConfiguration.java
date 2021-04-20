@@ -4,6 +4,8 @@ import org.jboss.fuse.tnb.common.product.ProductType;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 
 public class TestConfiguration extends Configuration {
@@ -13,6 +15,7 @@ public class TestConfiguration extends Configuration {
     public static final String CREDENTIALS_FILE = "test.credentials.file";
     public static final String APP_GROUP_ID = "test.app.group.id";
     public static final String APP_LOCATION = "app.location";
+    public static final String TEST_WAIT_TIME = "test.wait.time";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
@@ -48,5 +51,9 @@ public class TestConfiguration extends Configuration {
 
     public static boolean isQuarkusNative() {
         return getBoolean(QUARKUS_NATIVE_BUILD);
+    }
+
+    public static Duration testWaitTime() {
+        return Duration.of(getInteger(TEST_WAIT_TIME, 60), ChronoUnit.SECONDS);
     }
 }
