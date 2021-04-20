@@ -16,27 +16,31 @@ import java.util.List;
  */
 public class IntegrationBuilder {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
-    private final String integrationName;
     private final CodeBlock.Builder codeBlockBuilder = CodeBlock.builder();
-    private String from;
-    private final List<String> to = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<String> camelDependencies = new ArrayList<>();
+    private String integrationName;
 
     public IntegrationBuilder(String integrationName) {
         this.integrationName = integrationName;
     }
 
     public IntegrationBuilder from(String from) {
-        if (this.from != null) {
+        if (!codeBlockBuilder.isEmpty()) {
             LOG.warn("Multiple routes are not supported yet!");
+            // Technically, the only thing needed here should be to add a missing semicolon to end the previous route
         }
-        this.from = from;
+        codeBlockBuilder.add("from($S)", from);
         return this;
     }
 
     public IntegrationBuilder to(String to) {
-        this.to.add(to);
+        codeBlockBuilder.add(".to($S)", to);
+        return this;
+    }
+
+    public IntegrationBuilder log(String log) {
+        codeBlockBuilder.add(".log($S)", log);
         return this;
     }
 
@@ -46,7 +50,12 @@ public class IntegrationBuilder {
     }
 
     public IntegrationBuilder camelDependencies(String... dependencies) {
-        this.camelDependencies.addAll(Arrays.asList(dependencies));
+        camelDependencies.addAll(Arrays.asList(dependencies));
+        return this;
+    }
+
+    public IntegrationBuilder name(String name) {
+        this.integrationName = name;
         return this;
     }
 
@@ -63,11 +72,9 @@ public class IntegrationBuilder {
     }
 
     public CodeBlock getCodeBlock() {
-        StringBuilder sb = new StringBuilder("from($S)");
-        to.forEach(to -> sb.append(".to($S)"));
-        List<Object> args = new ArrayList<>();
-        args.add(from);
-        args.addAll(to);
-        return this.codeBlockBuilder.addStatement(sb.toString(), args.toArray()).build();
+        if (!codeBlockBuilder.toString().endsWith(";")) {
+            codeBlockBuilder.add(";");
+        }
+        return codeBlockBuilder.build();
     }
 }
