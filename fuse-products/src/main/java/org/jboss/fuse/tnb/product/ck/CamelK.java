@@ -20,7 +20,7 @@ public class CamelK extends OpenshiftProduct {
     private App app;
 
     @Override
-    public void setupProduct(){
+    public void setupProduct() {
         LOG.info("Deploying Camel-K");
         OpenshiftClient.createSubscription("stable", "camel-k", "community-operators", "test-camel-k");
         OpenshiftClient.waitForCompletion("test-camel-k");

@@ -24,10 +24,10 @@ public class OpenshiftClient {
         //init client
         LOG.debug("Creating new OpenShift client");
         client = OpenShift.get(
-                OpenshiftConfiguration.openshiftUrl(),
-                OpenshiftConfiguration.openshiftNamespace(),
-                OpenshiftConfiguration.openshiftUsername(),
-                OpenshiftConfiguration.openshiftPassword()
+            OpenshiftConfiguration.openshiftUrl(),
+            OpenshiftConfiguration.openshiftNamespace(),
+            OpenshiftConfiguration.openshiftUsername(),
+            OpenshiftConfiguration.openshiftPassword()
         );
     }
 
@@ -37,6 +37,7 @@ public class OpenshiftClient {
 
     /**
      * Creates the operatorgroup and subscription.
+     *
      * @param channel operatorhub channel
      * @param operatorName operator name
      * @param source operator catalog source
@@ -49,23 +50,23 @@ public class OpenshiftClient {
             list().getItems().size() == 0) {
             get().operatorHub().operatorGroups().createOrReplaceWithNew()
                 .withNewMetadata()
-                    .withName(subscriptionName)
+                .withName(subscriptionName)
                 .endMetadata()
                 .withNewSpec()
-                    .withTargetNamespaces(OpenshiftConfiguration.openshiftNamespace())
+                .withTargetNamespaces(OpenshiftConfiguration.openshiftNamespace())
                 .endSpec()
                 .done();
         }
 
         get().operatorHub().subscriptions().createOrReplaceWithNew()
             .editOrNewMetadata()
-                .withName(subscriptionName)
+            .withName(subscriptionName)
             .endMetadata()
             .withNewSpec()
-                .withName(operatorName)
-                .withChannel(channel)
-                .withSource(source)
-                .withSourceNamespace("openshift-marketplace")
+            .withName(operatorName)
+            .withChannel(channel)
+            .withSource(source)
+            .withSourceNamespace("openshift-marketplace")
             .endSpec()
             .done();
     }
@@ -92,6 +93,7 @@ public class OpenshiftClient {
 
     /**
      * Deletes the operatorgroup subscription.
+     *
      * @param name subscription name
      */
     public static void deleteSubscription(String name) {
@@ -107,6 +109,7 @@ public class OpenshiftClient {
 
     /**
      * Waits until the image stream is populated with given tag.
+     *
      * @param name imagestream name
      * @param tag imagestream tag
      */
@@ -117,6 +120,7 @@ public class OpenshiftClient {
 
     /**
      * Starts a new s2i build from a given file.
+     *
      * @param name buildconfig name
      * @param filePath path to the file
      */
@@ -136,15 +140,16 @@ public class OpenshiftClient {
     /**
      * Create namespace (name obtained from system property openshift.namespace)
      */
-    public static void createNamespace(){
+    public static void createNamespace() {
         createNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     /**
      * Create namespace with given name
+     *
      * @param name of namespace to be created
      */
-    public static void createNamespace(String name){
+    public static void createNamespace(String name) {
         if ((name == null) || (name.isEmpty())) {
             LOG.info("Skipped creating namespace, name null or empty");
             return;
@@ -161,15 +166,16 @@ public class OpenshiftClient {
     /**
      * Delete namespace (name obtained from system property openshift.namespace)
      */
-    public static void deleteNamespace(){
+    public static void deleteNamespace() {
         deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     /**
      * Delete namespace of given name
+     *
      * @param name of namespace to be deleted
      */
-    public static void deleteNamespace(String name){
+    public static void deleteNamespace(String name) {
         if ((name == null) || (name.isEmpty())) {
             LOG.info("Skipped deleting namespace, name null or empty");
             return;
@@ -184,13 +190,14 @@ public class OpenshiftClient {
 
     /**
      * Creates a config map with given name and data.
+     *
      * @param name configmap name
      * @param data map with data
      */
     public static void createConfigMap(String name, Map<String, String> data) {
         client.configMaps().withName(name).createOrReplaceWithNew()
             .withNewMetadata()
-                .withName(name)
+            .withName(name)
             .endMetadata()
             .withData(data)
             .done();

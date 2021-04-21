@@ -18,7 +18,7 @@ The code style is in the [EditorConfig](https://editorconfig.org/) [file](.edito
 
 - Enable `EditorConfig` plugin if it is not already enabled
 - Go to `Settings` -> `Editor` -> `Code Style`
-  - check `Enable EditorConfig support` if not already enabled
-  - in `Formatter Control` check `Enable formatter markers in comments` if not already enabled
-- `Optional`: you can also use the [Save Actions](https://plugins.jetbrains.com/plugin/7642-save-actions) plugin
-  to automatically reformat the code and imports on each save
+    - check `Enable EditorConfig support` if not already enabled
+    - in `Formatter Control` check `Enable formatter markers in comments` if not already enabled
+- `Optional`: you can also use the [Save Actions](https://plugins.jetbrains.com/plugin/7642-save-actions) plugin to automatically reformat the code
+  and imports on each save

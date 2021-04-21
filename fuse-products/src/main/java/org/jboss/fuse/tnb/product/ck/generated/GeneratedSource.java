@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -18,9 +17,8 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
-
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -38,65 +36,64 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class GeneratedSource implements KubernetesResource
-{
+public class GeneratedSource implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("compression")
     @JsonPropertyDescription("")
     private Boolean compression;
     /**
-     * 
+     *
      */
     @JsonProperty("content")
     @JsonPropertyDescription("")
     private String content;
     /**
-     * 
+     *
      */
     @JsonProperty("contentKey")
     @JsonPropertyDescription("")
     private String contentKey;
     /**
-     * 
+     *
      */
     @JsonProperty("contentRef")
     @JsonPropertyDescription("")
     private String contentRef;
     /**
-     * 
+     *
      */
     @JsonProperty("interceptors")
     @JsonPropertyDescription("")
     private List<String> interceptors = new ArrayList<String>();
     /**
-     * 
+     *
      */
     @JsonProperty("language")
     @JsonPropertyDescription("")
     private String language;
     /**
-     * 
+     *
      */
     @JsonProperty("loader")
     @JsonPropertyDescription("")
     private String loader;
     /**
-     * 
+     *
      */
     @JsonProperty("name")
     @JsonPropertyDescription("")
     private String name;
     /**
-     * 
+     *
      */
     @JsonProperty("property-names")
     @JsonPropertyDescription("")
     private List<String> propertyNames = new ArrayList<String>();
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     @JsonPropertyDescription("")
@@ -106,13 +103,11 @@ public class GeneratedSource implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public GeneratedSource() {
     }
 
     /**
-     * 
      * @param contentKey
      * @param loader
      * @param propertyNames
@@ -124,7 +119,8 @@ public class GeneratedSource implements KubernetesResource
      * @param contentRef
      * @param interceptors
      */
-    public GeneratedSource(Boolean compression, String content, String contentKey, String contentRef, List<String> interceptors, String language, String loader, String name, List<String> propertyNames, String type) {
+    public GeneratedSource(Boolean compression, String content, String contentKey, String contentRef, List<String> interceptors, String language,
+        String loader, String name, List<String> propertyNames, String type) {
         super();
         this.compression = compression;
         this.content = content;
@@ -139,7 +135,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("compression")
     public Boolean getCompression() {
@@ -147,7 +143,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("compression")
     public void setCompression(Boolean compression) {
@@ -155,7 +151,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("content")
     public String getContent() {
@@ -163,7 +159,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("content")
     public void setContent(String content) {
@@ -171,7 +167,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("contentKey")
     public String getContentKey() {
@@ -179,7 +175,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("contentKey")
     public void setContentKey(String contentKey) {
@@ -187,7 +183,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("contentRef")
     public String getContentRef() {
@@ -195,7 +191,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("contentRef")
     public void setContentRef(String contentRef) {
@@ -203,7 +199,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("interceptors")
     public List<String> getInterceptors() {
@@ -211,7 +207,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("interceptors")
     public void setInterceptors(List<String> interceptors) {
@@ -219,7 +215,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("language")
     public String getLanguage() {
@@ -227,7 +223,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("language")
     public void setLanguage(String language) {
@@ -235,7 +231,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("loader")
     public String getLoader() {
@@ -243,7 +239,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("loader")
     public void setLoader(String loader) {
@@ -251,7 +247,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("name")
     public String getName() {
@@ -259,7 +255,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("name")
     public void setName(String name) {
@@ -267,7 +263,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("property-names")
     public List<String> getPropertyNames() {
@@ -275,7 +271,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("property-names")
     public void setPropertyNames(List<String> propertyNames) {
@@ -283,7 +279,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public String getType() {
@@ -291,7 +287,7 @@ public class GeneratedSource implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public void setType(String type) {
@@ -307,5 +303,4 @@ public class GeneratedSource implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

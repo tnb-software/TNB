@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.common.service;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import java.util.stream.StreamSupport;
 
 public class ServiceFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceFactory.class);
+
     /**
      * Returns an instance of subclass of given type. If there is just one implementation, it returns that one, otherwise it will return
      * a specific implementation for given environment (local / openshift)

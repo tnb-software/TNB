@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -19,7 +18,7 @@ import java.util.Map;
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -38,71 +37,70 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class IntegrationSpec implements KubernetesResource
-{
+public class IntegrationSpec implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("configuration")
     @JsonPropertyDescription("")
     private List<Configuration> configuration = new ArrayList<Configuration>();
     /**
-     * 
+     *
      */
     @JsonProperty("dependencies")
     @JsonPropertyDescription("")
     private List<String> dependencies = new ArrayList<String>();
     /**
-     * 
+     *
      */
     @JsonProperty("flows")
     @JsonPropertyDescription("")
     private List<Flow> flows = new ArrayList<Flow>();
     /**
-     * 
+     *
      */
     @JsonProperty("kit")
     @JsonPropertyDescription("")
     private String kit;
     /**
-     * 
+     *
      */
     @JsonProperty("profile")
     @JsonPropertyDescription("")
     private String profile;
     /**
-     * 
+     *
      */
     @JsonProperty("replicas")
     @JsonPropertyDescription("")
     private Integer replicas;
     /**
-     * 
+     *
      */
     @JsonProperty("repositories")
     @JsonPropertyDescription("")
     private List<String> repositories = new ArrayList<String>();
     /**
-     * 
+     *
      */
     @JsonProperty("resources")
     @JsonPropertyDescription("")
     private List<Resource> resources = new ArrayList<Resource>();
     /**
-     * 
+     *
      */
     @JsonProperty("serviceAccountName")
     @JsonPropertyDescription("")
     private String serviceAccountName;
     /**
-     * 
+     *
      */
     @JsonProperty("sources")
     @JsonPropertyDescription("")
     private List<Source> sources = new ArrayList<Source>();
     /**
-     * 
+     *
      */
     @JsonProperty("traits")
     @JsonPropertyDescription("")
@@ -112,13 +110,11 @@ public class IntegrationSpec implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public IntegrationSpec() {
     }
 
     /**
-     * 
      * @param traits
      * @param sources
      * @param configuration
@@ -131,7 +127,8 @@ public class IntegrationSpec implements KubernetesResource
      * @param resources
      * @param dependencies
      */
-    public IntegrationSpec(List<Configuration> configuration, List<String> dependencies, List<Flow> flows, String kit, String profile, Integer replicas, List<String> repositories, List<Resource> resources, String serviceAccountName, List<Source> sources, Traits traits) {
+    public IntegrationSpec(List<Configuration> configuration, List<String> dependencies, List<Flow> flows, String kit, String profile,
+        Integer replicas, List<String> repositories, List<Resource> resources, String serviceAccountName, List<Source> sources, Traits traits) {
         super();
         this.configuration = configuration;
         this.dependencies = dependencies;
@@ -147,7 +144,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("configuration")
     public List<Configuration> getConfiguration() {
@@ -155,7 +152,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("configuration")
     public void setConfiguration(List<Configuration> configuration) {
@@ -163,7 +160,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("dependencies")
     public List<String> getDependencies() {
@@ -171,7 +168,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("dependencies")
     public void setDependencies(List<String> dependencies) {
@@ -179,7 +176,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("flows")
     public List<Flow> getFlows() {
@@ -187,7 +184,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("flows")
     public void setFlows(List<Flow> flows) {
@@ -195,7 +192,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("kit")
     public String getKit() {
@@ -203,7 +200,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("kit")
     public void setKit(String kit) {
@@ -211,7 +208,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("profile")
     public String getProfile() {
@@ -219,7 +216,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("profile")
     public void setProfile(String profile) {
@@ -227,7 +224,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("replicas")
     public Integer getReplicas() {
@@ -235,7 +232,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("replicas")
     public void setReplicas(Integer replicas) {
@@ -243,7 +240,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("repositories")
     public List<String> getRepositories() {
@@ -251,7 +248,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("repositories")
     public void setRepositories(List<String> repositories) {
@@ -259,7 +256,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("resources")
     public List<Resource> getResources() {
@@ -267,7 +264,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("resources")
     public void setResources(List<Resource> resources) {
@@ -275,7 +272,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("serviceAccountName")
     public String getServiceAccountName() {
@@ -283,7 +280,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("serviceAccountName")
     public void setServiceAccountName(String serviceAccountName) {
@@ -291,7 +288,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("sources")
     public List<Source> getSources() {
@@ -299,7 +296,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("sources")
     public void setSources(List<Source> sources) {
@@ -307,7 +304,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("traits")
     public Traits getTraits() {
@@ -315,7 +312,7 @@ public class IntegrationSpec implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("traits")
     public void setTraits(Traits traits) {
@@ -331,5 +328,4 @@ public class IntegrationSpec implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

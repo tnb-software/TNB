@@ -90,6 +90,7 @@ public class CamelKApp extends App {
 
     /**
      * Creates an Integration object in OpenShift.
+     *
      * @param name name of the object
      * @param integrationData integration data object
      * @return integration instance

@@ -26,7 +26,8 @@ public class TestConfiguration extends Configuration {
 
     public static ProductType product() {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
-            .orElseThrow(() -> new IllegalArgumentException(String.format("Unable to find enum for system property %s = %s", PRODUCT, getProperty(PRODUCT))));
+            .orElseThrow(
+                () -> new IllegalArgumentException(String.format("Unable to find enum for system property %s = %s", PRODUCT, getProperty(PRODUCT))));
     }
 
     public static String credentialsFile() {

@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -16,9 +15,8 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
-
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -28,17 +26,16 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class Configuration implements KubernetesResource
-{
+public class Configuration implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     @JsonPropertyDescription("")
     private String type;
     /**
-     * 
+     *
      */
     @JsonProperty("value")
     @JsonPropertyDescription("")
@@ -48,13 +45,11 @@ public class Configuration implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public Configuration() {
     }
 
     /**
-     * 
      * @param type
      * @param value
      */
@@ -65,7 +60,7 @@ public class Configuration implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public String getType() {
@@ -73,7 +68,7 @@ public class Configuration implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public void setType(String type) {
@@ -81,7 +76,7 @@ public class Configuration implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("value")
     public String getValue() {
@@ -89,7 +84,7 @@ public class Configuration implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("value")
     public void setValue(String value) {
@@ -105,5 +100,4 @@ public class Configuration implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

@@ -85,6 +85,7 @@ public final class Maven {
 
     /**
      * Creates a project from archetype.
+     *
      * @param archetypeGroupId archetype group id
      * @param archetypeArtifactId archetype artifact id
      * @param archetypeVersion archetype version

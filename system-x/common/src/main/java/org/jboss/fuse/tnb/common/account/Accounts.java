@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.common.account;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.yaml.snakeyaml.Yaml;
@@ -38,6 +39,7 @@ public class Accounts {
 
     /**
      * Create the instance of given account class with values populated from the credentials.
+     *
      * @param accountClass account class to create instance of
      * @param <T> return type
      * @return new instance of given class

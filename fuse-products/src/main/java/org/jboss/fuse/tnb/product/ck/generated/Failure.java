@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -16,9 +15,8 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
-
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -29,23 +27,22 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class Failure implements KubernetesResource
-{
+public class Failure implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     @JsonPropertyDescription("")
     private String reason;
     /**
-     * 
+     *
      */
     @JsonProperty("recovery")
     @JsonPropertyDescription("")
     private Recovery recovery;
     /**
-     * 
+     *
      */
     @JsonProperty("time")
     @JsonPropertyDescription("")
@@ -55,13 +52,11 @@ public class Failure implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public Failure() {
     }
 
     /**
-     * 
      * @param reason
      * @param recovery
      * @param time
@@ -74,7 +69,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     public String getReason() {
@@ -82,7 +77,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     public void setReason(String reason) {
@@ -90,7 +85,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("recovery")
     public Recovery getRecovery() {
@@ -98,7 +93,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("recovery")
     public void setRecovery(Recovery recovery) {
@@ -106,7 +101,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("time")
     public String getTime() {
@@ -114,7 +109,7 @@ public class Failure implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("time")
     public void setTime(String time) {
@@ -130,5 +125,4 @@ public class Failure implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

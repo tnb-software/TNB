@@ -84,6 +84,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     /**
      * Parses the needed imagestream:tag from the build config and waits until the imagestream contains that tag.
+     *
      * @param bcName buildconfig name
      */
     private void waitForImageStream(String bcName) {

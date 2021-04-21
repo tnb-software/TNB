@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -16,9 +15,8 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
-
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -32,41 +30,40 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class Condition implements KubernetesResource
-{
+public class Condition implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("lastTransitionTime")
     @JsonPropertyDescription("")
     private String lastTransitionTime;
     /**
-     * 
+     *
      */
     @JsonProperty("lastUpdateTime")
     @JsonPropertyDescription("")
     private String lastUpdateTime;
     /**
-     * 
+     *
      */
     @JsonProperty("message")
     @JsonPropertyDescription("")
     private String message;
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     @JsonPropertyDescription("")
     private String reason;
     /**
-     * 
+     *
      */
     @JsonProperty("status")
     @JsonPropertyDescription("")
     private String status;
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     @JsonPropertyDescription("")
@@ -76,13 +73,11 @@ public class Condition implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public Condition() {
     }
 
     /**
-     * 
      * @param reason
      * @param lastTransitionTime
      * @param message
@@ -101,7 +96,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("lastTransitionTime")
     public String getLastTransitionTime() {
@@ -109,7 +104,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("lastTransitionTime")
     public void setLastTransitionTime(String lastTransitionTime) {
@@ -117,7 +112,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("lastUpdateTime")
     public String getLastUpdateTime() {
@@ -125,7 +120,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("lastUpdateTime")
     public void setLastUpdateTime(String lastUpdateTime) {
@@ -133,7 +128,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("message")
     public String getMessage() {
@@ -141,7 +136,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("message")
     public void setMessage(String message) {
@@ -149,7 +144,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     public String getReason() {
@@ -157,7 +152,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("reason")
     public void setReason(String reason) {
@@ -165,7 +160,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("status")
     public String getStatus() {
@@ -173,7 +168,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("status")
     public void setStatus(String status) {
@@ -181,7 +176,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public String getType() {
@@ -189,7 +184,7 @@ public class Condition implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("type")
     public void setType(String type) {
@@ -205,5 +200,4 @@ public class Condition implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

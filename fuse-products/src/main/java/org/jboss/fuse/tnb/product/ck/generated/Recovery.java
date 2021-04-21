@@ -1,4 +1,3 @@
-
 package org.jboss.fuse.tnb.product.ck.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
@@ -16,9 +15,8 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
-
 /**
- * 
+ *
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
@@ -29,23 +27,22 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class Recovery implements KubernetesResource
-{
+public class Recovery implements KubernetesResource {
 
     /**
-     * 
+     *
      */
     @JsonProperty("attempt")
     @JsonPropertyDescription("")
     private Integer attempt;
     /**
-     * 
+     *
      */
     @JsonProperty("attemptMax")
     @JsonPropertyDescription("")
     private Integer attemptMax;
     /**
-     * 
+     *
      */
     @JsonProperty("attemptTime")
     @JsonPropertyDescription("")
@@ -55,13 +52,11 @@ public class Recovery implements KubernetesResource
 
     /**
      * No args constructor for use in serialization
-     * 
      */
     public Recovery() {
     }
 
     /**
-     * 
      * @param attemptTime
      * @param attemptMax
      * @param attempt
@@ -74,7 +69,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attempt")
     public Integer getAttempt() {
@@ -82,7 +77,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attempt")
     public void setAttempt(Integer attempt) {
@@ -90,7 +85,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attemptMax")
     public Integer getAttemptMax() {
@@ -98,7 +93,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attemptMax")
     public void setAttemptMax(Integer attemptMax) {
@@ -106,7 +101,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attemptTime")
     public String getAttemptTime() {
@@ -114,7 +109,7 @@ public class Recovery implements KubernetesResource
     }
 
     /**
-     * 
+     *
      */
     @JsonProperty("attemptTime")
     public void setAttemptTime(String attemptTime) {
@@ -130,5 +125,4 @@ public class Recovery implements KubernetesResource
     public void setAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
     }
-
 }

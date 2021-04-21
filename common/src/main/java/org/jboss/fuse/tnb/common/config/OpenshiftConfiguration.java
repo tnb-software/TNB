@@ -49,5 +49,4 @@ public class OpenshiftConfiguration extends Configuration {
     public static boolean isTemporaryNamespace() {
         return OPENSHIFT_IS_TEMPORARY_NAMESPACE;
     }
-
 }

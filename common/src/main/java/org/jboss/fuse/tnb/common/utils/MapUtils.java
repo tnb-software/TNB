@@ -7,6 +7,7 @@ import java.util.stream.Collectors;
 public final class MapUtils {
     /**
      * Creates a Properties file from a given map.
+     *
      * @param map map
      * @return properties instance
      */
@@ -18,6 +19,7 @@ public final class MapUtils {
 
     /**
      * Dumps the properties as new-line separated string of key=value.
+     *
      * @param properties properties
      * @return string
      */

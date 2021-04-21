@@ -19,17 +19,18 @@ public abstract class OpenshiftProduct extends Product {
         deleteTmpNamespace();//if namespace was temporary, delete it (TODO: check if it wasn't deleted yet)
     }
 
-    public void createTmpNamespace(){
+    public void createTmpNamespace() {
         //new temporary namespace name is generated when OpenshiftConfiguration is firstly loaded
         if (OpenshiftConfiguration.isTemporaryNamespace()) {
             OpenshiftClient.createNamespace();
         }
     }
 
-    public void deleteTmpNamespace(){
+    public void deleteTmpNamespace() {
         if (OpenshiftConfiguration.isTemporaryNamespace()) {
             OpenshiftClient.deleteNamespace();
         }
     }
+
     public abstract boolean isReady();
 }

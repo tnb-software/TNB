@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.slack.validation;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.jboss.fuse.tnb.slack.account.SlackAccount;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

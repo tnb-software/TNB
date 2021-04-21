@@ -3,10 +3,12 @@
 This module contains the logic for working with supported fuse products on both `local machine` and `OpenShift`.
 
 For each product there are two main areas covered:
+
 - deployment - deploying and undeploying product (where applicable)
 - integrations - creating, starting, stopping of integrations
 
-The integration code is generated from a "meta" class [IntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/IntegrationBuilder.java)
+The integration code is generated from a "meta"
+class [IntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/IntegrationBuilder.java)
 and 0..x [Customizer](../system-x/customizers/src/main/java/org/jboss/fuse/tnb/customizer/Customizer.java)s for given system-x services using
 the [javapoet](https://github.com/square/javapoet) framework.
 
@@ -21,8 +23,8 @@ The integrations are created differently for each product:
 - `camel-k`:
     - the `integration code` is dumped as a `String` and the integration is created as the `Integration` object in OpenShift
 
-All products are implementing [JUnit 5 extensions](https://junit.org/junit5/docs/current/user-guide/#extensions) so creating
-a fuse product in your test is as simple as adding following piece of code:
+All products are implementing [JUnit 5 extensions](https://junit.org/junit5/docs/current/user-guide/#extensions) so creating a fuse product in your
+test is as simple as adding following piece of code:
 
 ```java
 @RegisterExtension

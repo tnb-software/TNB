@@ -13,6 +13,7 @@ public final class ProductFactory {
 
     /**
      * Creates an instance of a given product based on system properties set.
+     *
      * @return product instance
      */
     public static Product create() {
@@ -21,6 +22,7 @@ public final class ProductFactory {
 
     /**
      * Creates an instance of a given product based on system properties set and returns the class specified as a parameter.
+     *
      * @return product instance as given class
      */
     public static <P extends Product> P create(Class<P> clazz) {

@@ -24,6 +24,7 @@ public final class WaitUtils {
 
     /**
      * Sleeps for a given time.
+     *
      * @param timeout timeout
      */
     public static void sleep(long timeout) {
@@ -35,6 +36,7 @@ public final class WaitUtils {
 
     /**
      * Waits until the check return true.
+     *
      * @param check booleansupplier instance
      * @param logMessage log message that will be printed out before waiting
      * @throws TimeoutException when the check isn't true after the time expires
@@ -45,6 +47,7 @@ public final class WaitUtils {
 
     /**
      * Waits until the check return true.
+     *
      * @param resourceCheck booleansupplier instance
      * @param retries number of retires
      * @param waitTime wait time between the retries
@@ -72,6 +75,7 @@ public final class WaitUtils {
 
     /**
      * Waits until the check or fail condition return true.
+     *
      * @param check booleansupplier instance
      * @param fail booleansupplier instance
      * @param timeout wait time between the retries

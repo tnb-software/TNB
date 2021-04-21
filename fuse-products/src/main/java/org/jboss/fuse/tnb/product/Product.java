@@ -8,7 +8,6 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-
 public abstract class Product implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
     public abstract App createIntegration(IntegrationBuilder integrationBuilder);
 

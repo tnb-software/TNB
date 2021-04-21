@@ -1,11 +1,12 @@
 package org.jboss.fuse.tnb.slack.service;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.slack.account.SlackAccount;
 import org.jboss.fuse.tnb.slack.validation.SlackValidation;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
