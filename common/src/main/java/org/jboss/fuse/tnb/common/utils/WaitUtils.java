@@ -1,14 +1,23 @@
 package org.jboss.fuse.tnb.common.utils;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.exception.FailureConditionMetException;
 import org.jboss.fuse.tnb.common.exception.TimeoutException;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
+import java.time.Instant;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
 
 public final class WaitUtils {
     private static final Logger LOG = LoggerFactory.getLogger(WaitUtils.class);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(1);
 
     private WaitUtils() {
     }
@@ -82,5 +91,42 @@ public final class WaitUtils {
             }
         }
         LOG.debug("Done waiting");
+    }
+
+    /**
+     * Runs the given callable and aborts its execution if it takes too long.
+     *
+     * @param callable callable to run
+     * @param <T> return type
+     * @return callable result or TimeoutException
+     */
+    public static <T> T withTimeout(Callable<T> callable) {
+        return withTimeout(callable, TestConfiguration.testWaitTime());
+    }
+
+    /**
+     * Runs the given callable and aborts its execution if it takes too long.
+     *
+     * @param callable callable to run
+     * @param waitTime wait time
+     * @param <T> return type
+     * @return callable result or TimeoutException
+     */
+    public static <T> T withTimeout(Callable<T> callable, Duration waitTime) {
+        Instant end = Instant.now().plus(waitTime);
+        final Future<T> future = EXECUTOR_SERVICE.submit(callable);
+        while (Instant.now().isBefore(end) && !future.isDone()) {
+            sleep(100L);
+        }
+        if (!future.isDone()) {
+            future.cancel(true);
+            throw new TimeoutException("Timeout exceeded");
+        } else {
+            try {
+                return future.get();
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to get callable result: ", e);
+            }
+        }
     }
 }
