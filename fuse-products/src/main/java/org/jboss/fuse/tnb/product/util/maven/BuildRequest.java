@@ -27,12 +27,7 @@ public class BuildRequest {
     private List<String> profiles = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
     private MavenOutputHandler outputHandler = new MavenStringOutputHandler();
-    private boolean createLogFile = true;
     private Path logFile;
-
-    private BuildRequest() {
-        logFile = TestConfiguration.appLocation().resolve("maven-invocation-" + FORMATTER.format(Instant.now()) + ".log");
-    }
 
     public File getBaseDirectory() {
         return baseDirectory;
@@ -72,14 +67,6 @@ public class BuildRequest {
 
     public void setOutputHandler(MavenOutputHandler outputHandler) {
         this.outputHandler = outputHandler;
-    }
-
-    public boolean shouldCreateLogFile() {
-        return createLogFile;
-    }
-
-    public void setCreateLogFile(boolean createLogFile) {
-        this.createLogFile = createLogFile;
     }
 
     public Path getLogFile() {
@@ -122,29 +109,17 @@ public class BuildRequest {
             return this;
         }
 
-        public Builder withOutputHandler(MavenFileOutputHandler handler) {
-            request.setOutputHandler(handler);
-            return this;
-        }
-
-        public Builder withCreateLogFile(boolean create) {
-            request.setCreateLogFile(create);
-            return this;
-        }
-
         public Builder withLogFile(Path logFile) {
             request.setLogFile(logFile);
             return this;
         }
 
         public BuildRequest build() {
-            if(request.createLogFile) {
-                try {
-                    request.setOutputHandler(new MavenFileOutputHandler(request.getLogFile()));
+            try {
+                    request.setOutputHandler(request.getLogFile() == null ? new MavenStringOutputHandler() : new MavenFileOutputHandler(request.getLogFile()));
                 } catch (IOException e) {
                     throw new RuntimeException("Can't create the log file", e);
                 }
-            }
 
             return request;
         }

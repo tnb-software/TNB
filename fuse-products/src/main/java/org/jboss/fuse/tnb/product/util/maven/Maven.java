@@ -157,7 +157,7 @@ public final class Maven {
         }
 
         if (result.getExitCode() != 0) {
-            if (buildRequest.shouldCreateLogFile()) {
+            if (buildRequest.getLogFile() != null) {
                 throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check "
                     + buildRequest.getLogFile() + " for more details");
             } else {

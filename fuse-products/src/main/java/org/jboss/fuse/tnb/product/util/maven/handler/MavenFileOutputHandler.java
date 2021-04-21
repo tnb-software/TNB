@@ -27,6 +27,7 @@ public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
         in.println(s);
     }
 
+    @Override
     public Reader getOutput() {
         try {
             return new FileReader(file.toFile());

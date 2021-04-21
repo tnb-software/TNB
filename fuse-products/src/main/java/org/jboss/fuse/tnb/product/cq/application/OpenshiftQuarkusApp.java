@@ -80,7 +80,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public Reader getLogs() {
-        return OpenshiftClient.get().getPodLogReader(OpenshiftClient.get().getPod(name));
+        return OpenshiftClient.get().getPodLogReader(OpenshiftClient.get().getAnyPod(name));
     }
 
     /**
