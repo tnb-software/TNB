@@ -7,7 +7,7 @@ import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.cq.application.OpenshiftQuarkusApp;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.util.Maven;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

@@ -16,12 +16,12 @@ import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Reader;
 import java.util.Collections;
 import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -78,9 +78,8 @@ public class CamelKApp extends App {
     }
 
     @Override
-    public String getLogs() {
-        Pod p = OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name).get(0);
-        return OpenshiftClient.getLogs(p);
+    public Reader getLogs() {
+        return OpenshiftClient.get().getPodLogReader(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name).get(0));
     }
 
     /**

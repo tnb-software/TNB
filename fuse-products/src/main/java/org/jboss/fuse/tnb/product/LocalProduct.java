@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product;
 
-import org.jboss.fuse.tnb.product.util.Maven;
-
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 public abstract class LocalProduct extends Product {

@@ -8,7 +8,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -58,8 +61,12 @@ public class LocalQuarkusApp extends QuarkusApp {
     }
 
     @Override
-    public String getLogs() {
-        return IOUtils.readFile(logFile);
+    public Reader getLogs() {
+        try {
+            return new FileReader(logFile.toFile());
+        } catch (FileNotFoundException e) {
+            throw new RuntimeException("Can't find the log file", e);
+        }
     }
 
     private List<String> getCommand() {

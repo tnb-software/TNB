@@ -5,8 +5,8 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
-import org.jboss.fuse.tnb.product.util.BuildRequest;
-import org.jboss.fuse.tnb.product.util.Maven;
+import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

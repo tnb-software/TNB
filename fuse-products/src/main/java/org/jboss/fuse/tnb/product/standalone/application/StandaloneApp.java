@@ -5,12 +5,13 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
-import org.jboss.fuse.tnb.product.util.BuildRequest;
-import org.jboss.fuse.tnb.product.util.Maven;
+import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Reader;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -60,7 +61,6 @@ public class StandaloneApp extends App {
 
     @Override
     public void stop() {
-        IOUtils.writeFile(buildRequest.getLogFile(), buildRequest.getOutputHandler().getOutput());
         executorService.shutdown();
     }
 
@@ -75,7 +75,7 @@ public class StandaloneApp extends App {
     }
 
     @Override
-    public String getLogs() {
+    public Reader getLogs() {
         return buildRequest.getOutputHandler().getOutput();
     }
 }

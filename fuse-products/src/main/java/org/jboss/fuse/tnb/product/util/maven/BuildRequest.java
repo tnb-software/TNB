@@ -1,9 +1,13 @@
-package org.jboss.fuse.tnb.product.util;
+package org.jboss.fuse.tnb.product.util.maven;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
+import org.jboss.fuse.tnb.product.util.maven.handler.MavenOutputHandler;
+import org.jboss.fuse.tnb.product.util.maven.handler.MavenStringOutputHandler;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -22,7 +26,7 @@ public class BuildRequest {
     private List<String> goals = new ArrayList<>();
     private List<String> profiles = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
-    private MavenOutputHandler outputHandler = new MavenOutputHandler();
+    private MavenOutputHandler outputHandler = new MavenStringOutputHandler();
     private boolean createLogFile = true;
     private Path logFile;
 
@@ -118,7 +122,7 @@ public class BuildRequest {
             return this;
         }
 
-        public Builder withOutputHandler(MavenOutputHandler handler) {
+        public Builder withOutputHandler(MavenFileOutputHandler handler) {
             request.setOutputHandler(handler);
             return this;
         }
@@ -134,6 +138,14 @@ public class BuildRequest {
         }
 
         public BuildRequest build() {
+            if(request.createLogFile) {
+                try {
+                    request.setOutputHandler(new MavenFileOutputHandler(request.getLogFile()));
+                } catch (IOException e) {
+                    throw new RuntimeException("Can't create the log file", e);
+                }
+            }
+
             return request;
         }
     }
