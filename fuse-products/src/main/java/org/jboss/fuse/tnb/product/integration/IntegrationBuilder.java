@@ -45,6 +45,11 @@ public class IntegrationBuilder {
         return this;
     }
 
+    public ExpressionClause setBody() {
+        codeBlockBuilder.add(".setBody()");
+        return new ExpressionClause(codeBlockBuilder);
+    }
+
     public IntegrationBuilder process(TypeSpec processor) {
         codeBlockBuilder.add(".process($L)", processor);
         return this;
@@ -82,5 +87,18 @@ public class IntegrationBuilder {
             codeBlockBuilder.add(";");
         }
         return codeBlockBuilder.build();
+    }
+
+    public class ExpressionClause {
+        CodeBlock.Builder codeBlock;
+
+        public ExpressionClause(CodeBlock.Builder codeBlock) {
+            this.codeBlock = codeBlock;
+        }
+
+        public IntegrationBuilder constant(String constant) {
+            codeBlockBuilder.add(".constant($S)", constant);
+            return IntegrationBuilder.this;
+        }
     }
 }
