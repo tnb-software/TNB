@@ -4,13 +4,11 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.application.App;
-import org.jboss.fuse.tnb.product.ck.generated.Configuration;
-import org.jboss.fuse.tnb.product.ck.generated.DoneableIntegration;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationStatus;
-import org.jboss.fuse.tnb.product.ck.generated.Source;
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -23,22 +21,18 @@ import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
-    private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT = new CustomResourceDefinitionContext.Builder()
-        .withGroup("camel.apache.org")
-        .withPlural("integrations")
-        .withScope("Namespaced")
-        .withVersion("v1")
-        .build();
+    private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT =
+        CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT);
 
-    private final NonNamespaceOperation<Integration, IntegrationList, DoneableIntegration, Resource<Integration, DoneableIntegration>> client =
-        OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class, DoneableIntegration.class)
+    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> client =
+        OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private final IntegrationData integrationData;
 
@@ -85,7 +79,8 @@ public class CamelKApp extends App {
 
     @Override
     public String getLogs() {
-        return OpenshiftClient.get().getPodLog(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name).get(0));
+        Pod p = OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name).get(0);
+        return OpenshiftClient.getLogs(p);
     }
 
     /**
@@ -96,22 +91,23 @@ public class CamelKApp extends App {
      * @return integration instance
      */
     private Integration createIntegrationResource(String name, IntegrationData integrationData) {
-        ObjectMeta metadata = new ObjectMeta();
-        metadata.setName(name);
+        IntegrationSpec.Source issrc = new IntegrationSpec.Source();
+        issrc.setName("MyRouteBuilder.java");
+        issrc.setContent("// camel-k: language=java\n" + integrationData.getIntegration());
 
-        IntegrationSpec spec = new IntegrationSpec();
+        IntegrationSpec is = new IntegrationSpec();
+        is.setSources(Collections.singletonList(issrc));
 
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationData.getProperties().isEmpty()) {
-            Configuration config = new Configuration("configmap", name);
-            spec.setConfiguration(Collections.singletonList(config));
+            IntegrationSpec.Configuration isc = new IntegrationSpec.Configuration("configmap", name);
+            is.setConfiguration(Collections.singletonList(isc));
         }
 
-        Source source = new Source();
-        source.setName("MyRouteBuilder.java");
-        source.setContent("// camel-k: language=java\n" + integrationData.getIntegration());
-        spec.setSources(Collections.singletonList(source));
+        Integration integration = new Integration.Builder()
+            .name(name)
+            .build(is);
 
-        return new Integration("camel.apache.org/v1", "Integration", metadata, spec, new IntegrationStatus());
+        return integration;
     }
 }

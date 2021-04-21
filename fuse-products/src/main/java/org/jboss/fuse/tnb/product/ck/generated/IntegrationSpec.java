@@ -1,331 +1,357 @@
+
 package org.jboss.fuse.tnb.product.ck.generated;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.ArrayList;
+import io.fabric8.kubernetes.api.model.KubernetesResource;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import io.fabric8.kubernetes.api.model.KubernetesResource;
-
-/**
- *
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-    "configuration",
-    "dependencies",
-    "flows",
-    "kit",
-    "profile",
-    "replicas",
-    "repositories",
-    "resources",
-    "serviceAccountName",
-    "sources",
-    "traits"
-})
+@JsonPropertyOrder({"replicas", "flows", "sources", "resources", "kit", "dependencies", "profile", "traits",
+    "configuration", "repositories", "serviceAccountName"})
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
 public class IntegrationSpec implements KubernetesResource {
 
-    /**
-     *
-     */
-    @JsonProperty("configuration")
-    @JsonPropertyDescription("")
-    private List<Configuration> configuration = new ArrayList<Configuration>();
-    /**
-     *
-     */
-    @JsonProperty("dependencies")
-    @JsonPropertyDescription("")
-    private List<String> dependencies = new ArrayList<String>();
-    /**
-     *
-     */
-    @JsonProperty("flows")
-    @JsonPropertyDescription("")
-    private List<Flow> flows = new ArrayList<Flow>();
-    /**
-     *
-     */
-    @JsonProperty("kit")
-    @JsonPropertyDescription("")
-    private String kit;
-    /**
-     *
-     */
-    @JsonProperty("profile")
-    @JsonPropertyDescription("")
-    private String profile;
-    /**
-     *
-     */
     @JsonProperty("replicas")
-    @JsonPropertyDescription("")
     private Integer replicas;
-    /**
-     *
-     */
-    @JsonProperty("repositories")
-    @JsonPropertyDescription("")
-    private List<String> repositories = new ArrayList<String>();
-    /**
-     *
-     */
-    @JsonProperty("resources")
-    @JsonPropertyDescription("")
-    private List<Resource> resources = new ArrayList<Resource>();
-    /**
-     *
-     */
-    @JsonProperty("serviceAccountName")
-    @JsonPropertyDescription("")
-    private String serviceAccountName;
-    /**
-     *
-     */
+    @JsonProperty("flows")
+    private List<Map<String, Object>> flows;
     @JsonProperty("sources")
-    @JsonPropertyDescription("")
-    private List<Source> sources = new ArrayList<Source>();
-    /**
-     *
-     */
+    private List<Source> sources;
+    @JsonProperty("resources")
+    private List<Resource> resources;
+    @JsonProperty("kit")
+    private String kit;
+    @JsonProperty("dependencies")
+    private List<String> dependencies;
+    @JsonProperty("profile")
+    private String profile;
     @JsonProperty("traits")
-    @JsonPropertyDescription("")
-    private Traits traits;
-    @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
-
-    /**
-     * No args constructor for use in serialization
-     */
-    public IntegrationSpec() {
-    }
-
-    /**
-     * @param traits
-     * @param sources
-     * @param configuration
-     * @param flows
-     * @param repositories
-     * @param replicas
-     * @param serviceAccountName
-     * @param kit
-     * @param profile
-     * @param resources
-     * @param dependencies
-     */
-    public IntegrationSpec(List<Configuration> configuration, List<String> dependencies, List<Flow> flows, String kit, String profile,
-        Integer replicas, List<String> repositories, List<Resource> resources, String serviceAccountName, List<Source> sources, Traits traits) {
-        super();
-        this.configuration = configuration;
-        this.dependencies = dependencies;
-        this.flows = flows;
-        this.kit = kit;
-        this.profile = profile;
-        this.replicas = replicas;
-        this.repositories = repositories;
-        this.resources = resources;
-        this.serviceAccountName = serviceAccountName;
-        this.sources = sources;
-        this.traits = traits;
-    }
-
-    /**
-     *
-     */
+    private Map<String, TraitConfig> traits;
     @JsonProperty("configuration")
-    public List<Configuration> getConfiguration() {
-        return configuration;
-    }
+    private List<Configuration> configuration;
+    @JsonProperty("repositories")
+    private List<String> repositories;
+    @JsonProperty("serviceAccountName")
+    private String serviceAccountName;
 
-    /**
-     *
-     */
-    @JsonProperty("configuration")
-    public void setConfiguration(List<Configuration> configuration) {
-        this.configuration = configuration;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("dependencies")
-    public List<String> getDependencies() {
-        return dependencies;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("dependencies")
-    public void setDependencies(List<String> dependencies) {
-        this.dependencies = dependencies;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("flows")
-    public List<Flow> getFlows() {
-        return flows;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("flows")
-    public void setFlows(List<Flow> flows) {
-        this.flows = flows;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("kit")
-    public String getKit() {
-        return kit;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("kit")
-    public void setKit(String kit) {
-        this.kit = kit;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("profile")
-    public String getProfile() {
-        return profile;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("profile")
-    public void setProfile(String profile) {
-        this.profile = profile;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("replicas")
     public Integer getReplicas() {
         return replicas;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("replicas")
     public void setReplicas(Integer replicas) {
         this.replicas = replicas;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("repositories")
-    public List<String> getRepositories() {
-        return repositories;
+    public List<Map<String, Object>> getFlows() {
+        return flows;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("repositories")
-    public void setRepositories(List<String> repositories) {
-        this.repositories = repositories;
+    public void setFlows(List<Map<String, Object>> flows) {
+        this.flows = flows;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("resources")
-    public List<Resource> getResources() {
-        return resources;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("resources")
-    public void setResources(List<Resource> resources) {
-        this.resources = resources;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("serviceAccountName")
-    public String getServiceAccountName() {
-        return serviceAccountName;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("serviceAccountName")
-    public void setServiceAccountName(String serviceAccountName) {
-        this.serviceAccountName = serviceAccountName;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("sources")
     public List<Source> getSources() {
         return sources;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("sources")
     public void setSources(List<Source> sources) {
         this.sources = sources;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("traits")
-    public Traits getTraits() {
+    public List<Resource> getResources() {
+        return resources;
+    }
+
+    public void setResources(List<Resource> resources) {
+        this.resources = resources;
+    }
+
+    public String getKit() {
+        return kit;
+    }
+
+    public void setKit(String kit) {
+        this.kit = kit;
+    }
+
+    public List<String> getDependencies() {
+        return dependencies;
+    }
+
+    public void setDependencies(List<String> dependencies) {
+        this.dependencies = dependencies;
+    }
+
+    public String getProfile() {
+        return profile;
+    }
+
+    public void setProfile(String profile) {
+        this.profile = profile;
+    }
+
+    public Map<String, TraitConfig> getTraits() {
         return traits;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("traits")
-    public void setTraits(Traits traits) {
+    public void setTraits(Map<String, TraitConfig> traits) {
         this.traits = traits;
     }
 
-    @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
+    public List<Configuration> getConfiguration() {
+        return configuration;
     }
 
-    @JsonAnySetter
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
+    public void setConfiguration(List<Configuration> configuration) {
+        this.configuration = configuration;
+    }
+
+    public List<String> getRepositories() {
+        return repositories;
+    }
+
+    public void setRepositories(List<String> repositories) {
+        this.repositories = repositories;
+    }
+
+    public String getServiceAccountName() {
+        return serviceAccountName;
+    }
+
+    public void setServiceAccountName(String serviceAccountName) {
+        this.serviceAccountName = serviceAccountName;
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"type", "value"})
+    public static class Configuration {
+        @JsonProperty("type")
+        private String type;
+        @JsonProperty("value")
+        private String value;
+
+        public Configuration() {
+            super();
+        }
+
+        public Configuration(String type, String value) {
+            this.type = type;
+            this.value = value;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getValue() {
+            return value;
+        }
+
+        public void setValue(String defaultValue) {
+            this.value = value;
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"configuration"})
+    public static class TraitConfig {
+        @JsonProperty("configuration")
+        private Map<String, String> configuration;
+
+        public TraitConfig() {
+            super();
+        }
+
+        public TraitConfig(String key, String value) {
+            this.configuration = new HashMap<>();
+            add(key, value);
+        }
+
+        public Map<String, String> getConfiguration() {
+            return configuration;
+        }
+
+        public void setConfiguration(Map<String, String> configuration) {
+            this.configuration = configuration;
+        }
+
+        public void add(String key, String value) {
+            this.configuration.put(key, value);
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"language", "loader", "type", "name", "content", "contentRef", "contentKey", "compression",
+        "property-names", "interceptors"})
+    public static class Source extends DataSpec {
+        @JsonProperty("language")
+        private String language;
+        @JsonProperty("loader")
+        private String loader;
+        @JsonProperty("type")
+        private String type;
+        @JsonProperty("interceptors")
+        private List<String> interceptors;
+        @JsonProperty("property-names")
+        private List<String> propertyNames;
+
+        public Source() {
+            super();
+        }
+
+        public Source(String name, String content) {
+            super(name, content);
+        }
+
+        public String getLanguage() {
+            return language;
+        }
+
+        public void setLanguage(String language) {
+            this.language = language;
+        }
+
+        public String getLoader() {
+            return loader;
+        }
+
+        public void setLoader(String loader) {
+            this.loader = loader;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public List<String> getInterceptors() {
+            return interceptors;
+        }
+
+        public void setInterceptors(List<String> interceptors) {
+            this.interceptors = interceptors;
+        }
+
+        public List<String> getPropertyNames() {
+            return propertyNames;
+        }
+
+        public void setPropertyNames(List<String> propertyNames) {
+            this.propertyNames = propertyNames;
+        }
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    @JsonPropertyOrder({"type", "mountPath", "name", "content", "contentRef", "contentKey", "compression"})
+    public static class Resource extends DataSpec {
+        @JsonProperty("type")
+        private String type;
+        @JsonProperty("mountPath")
+        private String mountPath;
+
+        public Resource() {
+            super();
+        }
+
+        public Resource(String type, String mountPath, String name, String content) {
+            super(name, content);
+            this.mountPath = mountPath;
+            this.type = type;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
+        }
+
+        public String getMountPath() {
+            return mountPath;
+        }
+
+        public void setMountPath(String mountPath) {
+            this.mountPath = mountPath;
+        }
+    }
+
+    private static class DataSpec {
+        @JsonProperty("name")
+        private String name;
+        @JsonProperty("content")
+        private String content;
+        @JsonProperty("contentRef")
+        private String contentRef;
+        @JsonProperty("contentKey")
+        private String contentKey;
+        @JsonProperty("compression")
+        private String compression;
+
+        public DataSpec() {
+            super();
+        }
+
+        public DataSpec(String name, String content) {
+            this.content = content;
+            this.name = name;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getContentRef() {
+            return contentRef;
+        }
+
+        public void setContentRef(String contentRef) {
+            this.contentRef = contentRef;
+        }
+
+        public String getContentKey() {
+            return contentKey;
+        }
+
+        public void setContentKey(String contentKey) {
+            this.contentKey = contentKey;
+        }
+
+        public String getCompression() {
+            return compression;
+        }
+
+        public void setCompression(String compression) {
+            this.compression = compression;
+        }
     }
 }

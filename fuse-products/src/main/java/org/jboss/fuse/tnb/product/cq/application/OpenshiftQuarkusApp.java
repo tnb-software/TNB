@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
+import io.fabric8.kubernetes.api.model.Pod;
+
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
@@ -79,7 +81,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public String getLogs() {
-        return OpenshiftClient.get().getPodLog(name);
+        Pod p = OpenshiftClient.get().getAnyPod(name);
+        return (p != null) ? OpenshiftClient.getLogs(p) : "";
     }
 
     /**

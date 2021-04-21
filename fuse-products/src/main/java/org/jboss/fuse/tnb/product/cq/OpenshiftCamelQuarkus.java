@@ -47,7 +47,8 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct {
         LOG.info("Waiting until integration {} is running", name);
         WaitUtils.waitFor(() -> {
             if (ResourceFunctions.areExactlyNPodsRunning(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name))) {
-                return OpenshiftClient.get().getPodLog(name).contains("started and consuming");
+                return OpenshiftClient.getLogs(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0))
+                    .contains("started and consuming");
             } else {
                 return false;
             }

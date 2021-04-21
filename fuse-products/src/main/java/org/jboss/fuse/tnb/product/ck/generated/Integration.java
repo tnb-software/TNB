@@ -1,180 +1,86 @@
+
 package org.jboss.fuse.tnb.product.ck.generated;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyDescription;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
-import java.util.HashMap;
+import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.model.annotation.Group;
+import io.fabric8.kubernetes.model.annotation.Version;
+
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
+
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import io.fabric8.kubernetes.api.model.Namespaced;
-import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.client.CustomResource;
-
-/**
- *
- */
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-    "apiVersion",
-    "kind",
-    "metadata",
-    "spec",
-    "status"
-})
-@JsonDeserialize(
-    using = JsonDeserializer.None.class
-)
-public class Integration extends CustomResource implements Namespaced {
+@Group(CamelKSupport.CAMELK_CRD_GROUP)
+@Version(CamelKSettings.API_VERSION_DEFAULT)
+public class Integration extends CustomResource<IntegrationSpec, IntegrationStatus> {
 
-    /**
-     *
-     */
-    @JsonProperty("apiVersion")
-    @JsonPropertyDescription("")
-    private String apiVersion = "camel.apache.org/v1";
-    /**
-     *
-     */
-    @JsonProperty("kind")
-    @JsonPropertyDescription("")
-    private String kind = "Integration";
-    /**
-     *
-     */
-    @JsonProperty("metadata")
-    @JsonPropertyDescription("")
-    private ObjectMeta metadata;
-    /**
-     *
-     */
-    @JsonProperty("spec")
-    @JsonPropertyDescription("")
-    private IntegrationSpec spec;
-    /**
-     *
-     */
-    @JsonProperty("status")
-    @JsonPropertyDescription("")
-    private IntegrationStatus status;
-    @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
-
-    /**
-     * No args constructor for use in serialization
-     */
     public Integration() {
-    }
-
-    /**
-     * @param metadata
-     * @param apiVersion
-     * @param kind
-     * @param spec
-     * @param status
-     */
-    public Integration(String apiVersion, String kind, ObjectMeta metadata, IntegrationSpec spec, IntegrationStatus status) {
         super();
-        this.apiVersion = apiVersion;
-        this.kind = kind;
-        this.metadata = metadata;
-        this.spec = spec;
-        this.status = status;
+        this.status = null;
     }
 
-    /**
-     *
-     */
-    @JsonProperty("apiVersion")
+    @Override
     public String getApiVersion() {
-        return apiVersion;
+        return CamelKSupport.CAMELK_CRD_GROUP + "/" + CamelKSettings.getApiVersion();
     }
 
     /**
-     *
+     * Fluent builder
      */
-    @JsonProperty("apiVersion")
-    public void setApiVersion(String apiVersion) {
-        this.apiVersion = apiVersion;
-    }
+    public static class Builder {
+        private Map<String, IntegrationSpec.TraitConfig> traits;
+        private List<String> dependencies;
+        private List<IntegrationSpec.Configuration> configuration;
+        private String source;
+        private String name;
 
-    /**
-     *
-     */
-    @JsonProperty("kind")
-    public String getKind() {
-        return kind;
-    }
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("kind")
-    public void setKind(String kind) {
-        this.kind = kind;
-    }
+        public Builder source(String source) {
+            this.source = source;
+            return this;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("metadata")
-    public ObjectMeta getMetadata() {
-        return metadata;
-    }
+        public Builder dependencies(List<String> dependencies) {
+            this.dependencies = Collections.unmodifiableList(dependencies);
+            return this;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("metadata")
-    public void setMetadata(ObjectMeta metadata) {
-        this.metadata = metadata;
-    }
+        public Builder traits(Map<String, IntegrationSpec.TraitConfig> traits) {
+            this.traits = Collections.unmodifiableMap(traits);
+            return this;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("spec")
-    public IntegrationSpec getSpec() {
-        return spec;
-    }
+        public Builder configuration(List<IntegrationSpec.Configuration> configuration) {
+            this.configuration = Collections.unmodifiableList(configuration);
+            return this;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("spec")
-    public void setSpec(IntegrationSpec spec) {
-        this.spec = spec;
-    }
+        public Integration build() {
+            Integration i = new Integration();
+            String metadataName = name.contains(".") ? name.substring(0, name.indexOf(".")) : name;
+            i.getMetadata().setName(metadataName);
+            i.getSpec().setSources(Collections.singletonList(new IntegrationSpec.Source(name, source)));
+            i.getSpec().setDependencies(dependencies);
+            i.getSpec().setTraits(traits);
+            i.getSpec().setConfiguration(configuration);
+            return i;
+        }
 
-    /**
-     *
-     */
-    @JsonProperty("status")
-    public IntegrationStatus getStatus() {
-        return status;
-    }
-
-    /**
-     *
-     */
-    @JsonProperty("status")
-    public void setStatus(IntegrationStatus status) {
-        this.status = status;
-    }
-
-    @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
-    }
-
-    @JsonAnySetter
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
+        public Integration build(IntegrationSpec integrationSpec) {
+            Integration i = new Integration();
+            i.spec = integrationSpec;
+            String metadataName = name.contains(".") ? name.substring(0, name.indexOf(".")) : name;
+            i.getMetadata().setName(metadataName);
+            return i;
+        }
     }
 }

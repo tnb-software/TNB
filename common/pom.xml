@@ -16,9 +16,15 @@
 		<maven.compiler.source>11</maven.compiler.source>
 		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<kubernetes.client.version>5.3.0</kubernetes.client.version>
 	</properties>
 
 	<dependencies>
+		<dependency>
+			<groupId>io.fabric8</groupId>
+			<artifactId>openshift-client</artifactId>
+			<version>${kubernetes.client.version}</version>
+		</dependency>
 		<dependency>
 			<groupId>cz.xtf</groupId>
 			<artifactId>core</artifactId>
