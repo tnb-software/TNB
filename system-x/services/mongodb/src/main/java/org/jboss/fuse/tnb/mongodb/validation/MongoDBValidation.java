@@ -41,7 +41,7 @@ public class MongoDBValidation {
         if (count == -1) {
             return StreamSupport.stream(collection.find().spliterator(), false).collect(Collectors.toList());
         } else {
-            WaitUtils.waitFor(() -> collection.countDocuments() < count, "Waiting until MongoDB has at least " + count + " documents");
+            WaitUtils.waitFor(() -> collection.countDocuments() >= count, "Waiting until MongoDB has at least " + count + " documents");
             return StreamSupport.stream(collection.find().spliterator(), false).limit(count).collect(Collectors.toList());
         }
     }
