@@ -1,5 +1,9 @@
 package org.jboss.fuse.tnb.mongodb.resource.openshift;
 
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
+
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
@@ -46,7 +50,8 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
             .withProtocol("TCP").build());
         // @formatter:off
         LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplaceWithNew()
+        OpenshiftClient.get().deploymentConfigs().createOrReplace(
+          new DeploymentConfigBuilder()
             .editOrNewMetadata()
               .withName(name())
               .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -71,7 +76,8 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
                     .withType("ConfigChange")
                 .endTrigger()
             .endSpec()
-            .done();
+            .build()
+        );
 
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
@@ -82,14 +88,16 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
             .build());
 
         LOG.debug("Creating service {}", name());
-        OpenshiftClient.get().services().createOrReplaceWithNew()
+        OpenshiftClient.get().services().createOrReplace(
+          new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpecLike(serviceSpecBuilder.build())
             .endSpec()
-            .done();
+            .build()
+        );
         // @formatter:on
     }
 
@@ -113,9 +121,11 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.get().getPodLog(name()).contains("Transition to primary complete; database writes are now permitted");
+        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
+        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
+            return OpenshiftClient.getLogs(pods.get(0)).contains("Transition to primary complete; database writes are now permitted");
+        }
+        return false;
     }
 
     @Override

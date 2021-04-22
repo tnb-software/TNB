@@ -11,27 +11,42 @@ import java.util.Map;
 import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.OpenShift;
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.dsl.ContainerResource;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroup;
+import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
+import io.fabric8.openshift.client.OpenShiftConfig;
+import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
-public class OpenshiftClient {
+public class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
-    private static OpenShift client;
+    private static OpenshiftClient client;
 
     static {
-        //init client
-        LOG.debug("Creating new OpenShift client");
-        client = OpenShift.get(
-            OpenshiftConfiguration.openshiftUrl(),
-            OpenshiftConfiguration.openshiftNamespace(),
-            OpenshiftConfiguration.openshiftUsername(),
-            OpenshiftConfiguration.openshiftPassword()
-        );
+        LOG.info("Creating new OpenShift client");
+        OpenShiftConfig openShiftConfig = new OpenShiftConfigBuilder()
+            .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
+            .withTrustCerts(true)
+            .withNamespace(OpenshiftConfiguration.openshiftNamespace())
+            .withUsername(OpenshiftConfiguration.openshiftUsername())
+            .withPassword(OpenshiftConfiguration.openshiftPassword())
+            .build();
+        client = new OpenshiftClient(openShiftConfig);
     }
 
-    public static OpenShift get() {
+    private OpenshiftClient(OpenShiftConfig openShiftConfig) {
+        super(openShiftConfig);
+    }
+
+    public static OpenshiftClient get() {
         return client;
     }
 
@@ -48,17 +63,18 @@ public class OpenshiftClient {
         LOG.debug("Creating operator group {}", subscriptionName);
         if (get().operatorHub().operatorGroups().inNamespace(OpenshiftConfiguration.openshiftNamespace()).
             list().getItems().size() == 0) {
-            get().operatorHub().operatorGroups().createOrReplaceWithNew()
+            OperatorGroup og = new OperatorGroupBuilder()
                 .withNewMetadata()
                 .withName(subscriptionName)
                 .endMetadata()
                 .withNewSpec()
                 .withTargetNamespaces(OpenshiftConfiguration.openshiftNamespace())
                 .endSpec()
-                .done();
+                .build();
+            client.operatorHub().operatorGroups().createOrReplace(og);
         }
 
-        get().operatorHub().subscriptions().createOrReplaceWithNew()
+        Subscription s = new SubscriptionBuilder()
             .editOrNewMetadata()
             .withName(subscriptionName)
             .endMetadata()
@@ -68,7 +84,8 @@ public class OpenshiftClient {
             .withSource(source)
             .withSourceNamespace("openshift-marketplace")
             .endSpec()
-            .done();
+            .build();
+        client.operatorHub().subscriptions().createOrReplace(s);
     }
 
     /**
@@ -195,11 +212,26 @@ public class OpenshiftClient {
      * @param data map with data
      */
     public static void createConfigMap(String name, Map<String, String> data) {
-        client.configMaps().withName(name).createOrReplaceWithNew()
-            .withNewMetadata()
-            .withName(name)
-            .endMetadata()
-            .withData(data)
-            .done();
+        client.configMaps().withName(name).createOrReplace(
+            new ConfigMapBuilder()
+                .withNewMetadata()
+                .withName(name)
+                .endMetadata()
+                .withData(data)
+                .build()
+        );
+    }
+
+    /**
+     * Get log of pod (alternative to OpenShift instance method getPodLog())
+     *
+     * @param p the pod
+     * @return log of the pod
+     */
+    public static String getLogs(Pod p) {
+        PodResource<Pod> pr = OpenshiftClient.get().pods().withName(p.getMetadata().getName());
+        Container c = OpenshiftClient.get().getAnyContainer(p);
+        ContainerResource cr = pr.inContainer(c.getName());
+        return cr.getLog();
     }
 }
