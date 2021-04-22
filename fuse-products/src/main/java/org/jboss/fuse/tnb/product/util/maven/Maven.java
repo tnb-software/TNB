@@ -147,11 +147,11 @@ public final class Maven {
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);
         } finally {
-            if(buildRequest.getOutputHandler() instanceof Closeable) {
+            if (buildRequest.getOutputHandler() instanceof Closeable) {
                 try {
                     ((Closeable) buildRequest.getOutputHandler()).close();
                 } catch (IOException e) {
-                    throw  new RuntimeException("Can't close log file stream", e);
+                    throw new RuntimeException("Can't close log file stream", e);
                 }
             }
         }

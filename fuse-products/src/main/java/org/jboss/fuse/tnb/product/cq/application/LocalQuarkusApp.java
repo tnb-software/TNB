@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 
 import org.slf4j.Logger;

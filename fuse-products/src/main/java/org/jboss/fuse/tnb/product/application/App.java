@@ -30,9 +30,9 @@ public abstract class App {
     }
 
     protected boolean isCamelStarted() {
-        try(BufferedReader logs = new BufferedReader(getLogs())) {
-           return logs.lines().anyMatch(s -> LOG_STARTED_REGEX.matcher(s).find());
-        }catch (Exception e) {
+        try (BufferedReader logs = new BufferedReader(getLogs())) {
+            return logs.lines().anyMatch(s -> LOG_STARTED_REGEX.matcher(s).find());
+        } catch (Exception e) {
             throw new RuntimeException("Can't read application log", e);
         }
     }

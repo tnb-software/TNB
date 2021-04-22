@@ -8,7 +8,7 @@ public class MavenStringOutputHandler implements MavenOutputHandler {
     private final StringBuilder stringBuilder = new StringBuilder();
 
     @Override
-    public void consumeLine(String s){
+    public void consumeLine(String s) {
         stringBuilder.append(s);
     }
 

@@ -1,15 +1,11 @@
 package org.jboss.fuse.tnb.product.util.maven.handler;
 
-import org.apache.maven.shared.invoker.InvocationOutputHandler;
-
 import java.io.Closeable;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Path;
 
 public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {

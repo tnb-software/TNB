@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.util.maven;
 
-import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenOutputHandler;
@@ -9,7 +8,6 @@ import org.jboss.fuse.tnb.product.util.maven.handler.MavenStringOutputHandler;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -116,10 +114,11 @@ public class BuildRequest {
 
         public BuildRequest build() {
             try {
-                    request.setOutputHandler(request.getLogFile() == null ? new MavenStringOutputHandler() : new MavenFileOutputHandler(request.getLogFile()));
-                } catch (IOException e) {
-                    throw new RuntimeException("Can't create the log file", e);
-                }
+                request.setOutputHandler(
+                    request.getLogFile() == null ? new MavenStringOutputHandler() : new MavenFileOutputHandler(request.getLogFile()));
+            } catch (IOException e) {
+                throw new RuntimeException("Can't create the log file", e);
+            }
 
             return request;
         }
