@@ -1,10 +1,11 @@
 package org.jboss.fuse.tnb.log.validation;
 
 import java.io.BufferedReader;
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
 
-public class LogValidation {
+public class LogValidation implements Closeable {
     private Reader r;
 
     public LogValidation(Reader r) {
@@ -12,10 +13,11 @@ public class LogValidation {
     }
 
     public boolean checkMessage(String message) {
-        try (BufferedReader br = new BufferedReader(r)) {
-            return br.lines().anyMatch(s -> s.contains(message));
-        } catch (IOException e) {
-            throw new RuntimeException("Can't read application log.");
-        }
+        return new BufferedReader(r).lines().anyMatch(s -> s.contains(message));
+    }
+
+    @Override
+    public void close() throws IOException {
+        r.close();
     }
 }
