@@ -10,6 +10,9 @@ import java.util.Arrays;
 
 public class TestConfiguration extends Configuration {
     public static final String CAMEL_VERSION = "camel.version";
+    public static final String CAMEL_QUARKUS_VERSION = "camel.quarkus.version";
+    // Version for com.redhat.quarkus:quarkus-product-bom needed for running productized camel-quarkus
+    public static final String QUARKUS_PRODUCT_BOM_VERSION = "redhat.quarkus.version";
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
@@ -22,6 +25,14 @@ public class TestConfiguration extends Configuration {
 
     public static String camelVersion() {
         return getProperty(CAMEL_VERSION);
+    }
+
+    public static String camelQuarkusVersion() {
+        return getProperty(CAMEL_QUARKUS_VERSION, "1.6.0");
+    }
+
+    public static String quarkusProductBomVersion() {
+        return getProperty(QUARKUS_PRODUCT_BOM_VERSION, "1.11.6.Final-redhat-00001");
     }
 
     public static ProductType product() {

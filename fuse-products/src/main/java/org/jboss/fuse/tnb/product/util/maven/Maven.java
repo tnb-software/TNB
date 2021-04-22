@@ -178,13 +178,8 @@ public final class Maven {
         }
         File pom = dir.resolve("pom.xml").toFile();
         LOG.info("Adding {} as dependencies to {}", dependencies.toString(), pom);
-        Model model;
-        try (InputStream is = new FileInputStream(pom)) {
-            model = new MavenXpp3Reader().read(is);
-        } catch (IOException | XmlPullParserException e) {
-            throw new RuntimeException("Unable to load POM " + pom.getAbsolutePath(), e);
-        }
 
+        Model model = loadPom(pom);
         for (String dependency : dependencies) {
             Dependency dep = new Dependency();
             dep.setGroupId("org.apache.camel");
@@ -193,6 +188,32 @@ public final class Maven {
             model.getDependencies().add(dep);
         }
 
+        writePom(pom, model);
+    }
+
+    /**
+     * Loads the given pom file.
+     *
+     * @param pom pom file
+     * @return model
+     */
+    public static Model loadPom(File pom) {
+        Model model;
+        try (InputStream is = new FileInputStream(pom)) {
+            model = new MavenXpp3Reader().read(is);
+        } catch (IOException | XmlPullParserException e) {
+            throw new RuntimeException("Unable to load POM " + pom.getAbsolutePath(), e);
+        }
+        return model;
+    }
+
+    /**
+     * Writes the maven model to a given pom file.
+     *
+     * @param pom pom file
+     * @param model model
+     */
+    public static void writePom(File pom, Model model) {
         try (OutputStream os = new FileOutputStream(pom)) {
             new MavenXpp3Writer().write(os, model);
         } catch (IOException e) {
