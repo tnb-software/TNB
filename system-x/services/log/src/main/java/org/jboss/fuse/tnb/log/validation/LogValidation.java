@@ -13,7 +13,7 @@ public class LogValidation {
 
     public boolean checkMessage(String message) {
         try (BufferedReader br = new BufferedReader(r)) {
-            return br.lines().anyMatch(s -> message.matches(s));
+            return br.lines().anyMatch(s -> s.contains(message));
         } catch (IOException e) {
             throw new RuntimeException("Can't read application log.");
         }
