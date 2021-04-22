@@ -45,7 +45,6 @@ public class Accounts {
      * @return new instance of given class
      */
     public static <T extends Account> T get(Class<T> accountClass) {
-
         try {
             Function<Account, String> getId = Account::credentialsId;
             T instance = accountClass.getDeclaredConstructor().newInstance();
@@ -61,7 +60,7 @@ public class Accounts {
                 if (!credentials.containsKey(credentialsId)) {
                     fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
                 }
-                return accountClass.cast(mapper.convertValue(credentials.get(credentialsId), accountClass));
+                return accountClass.cast(mapper.convertValue(((Map) credentials.get(credentialsId)).get("credentials"), accountClass));
             }
         } catch (Exception e) {
             fail("Unable to create instance of " + accountClass.getName() + " class: ", e);
