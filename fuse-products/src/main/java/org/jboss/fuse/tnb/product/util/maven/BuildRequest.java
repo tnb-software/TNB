@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.util.maven;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenOutputHandler;
@@ -8,6 +9,7 @@ import org.jboss.fuse.tnb.product.util.maven.handler.MavenStringOutputHandler;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -24,8 +26,12 @@ public class BuildRequest {
     private List<String> goals = new ArrayList<>();
     private List<String> profiles = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
-    private MavenOutputHandler outputHandler = new MavenStringOutputHandler();
+    private MavenOutputHandler outputHandler;
     private Path logFile;
+
+    private BuildRequest() {
+        logFile = TestConfiguration.appLocation().resolve("maven-invocation-" + FORMATTER.format(Instant.now()) + ".log");
+    }
 
     public File getBaseDirectory() {
         return baseDirectory;
