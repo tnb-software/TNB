@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.product.util;
+package org.jboss.fuse.tnb.product.util.maven;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
@@ -15,13 +15,13 @@ import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
@@ -147,19 +147,17 @@ public final class Maven {
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);
         } finally {
-            if (buildRequest.shouldCreateLogFile()) {
-                Path logFile = buildRequest.getLogFile();
-                LOG.debug("Writing maven invocation log to file {}", logFile);
+            if (buildRequest.getOutputHandler() instanceof Closeable) {
                 try {
-                    Files.write(logFile, buildRequest.getOutputHandler().getOutput().getBytes());
+                    ((Closeable) buildRequest.getOutputHandler()).close();
                 } catch (IOException e) {
-                    LOG.warn("Unable to create log file: " + e);
+                    throw new RuntimeException("Can't close log file stream", e);
                 }
             }
         }
 
         if (result.getExitCode() != 0) {
-            if (buildRequest.shouldCreateLogFile()) {
+            if (buildRequest.getLogFile() != null) {
                 throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check "
                     + buildRequest.getLogFile() + " for more details");
             } else {
