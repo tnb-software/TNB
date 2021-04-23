@@ -94,11 +94,6 @@ public abstract class QuarkusApp extends App {
         boms.add(camelQuarkusBom);
         model.getDependencyManagement().setDependencies(boms);
 
-        // Remove quarkus-resteasy to avoid starting a http server
-        model.setDependencies(
-            model.getDependencies().stream().filter(d -> !"quarkus-resteasy".equals(d.getArtifactId())).collect(Collectors.toList())
-        );
-
         Maven.writePom(pom, model);
     }
 }
