@@ -58,8 +58,10 @@ public class OpenshiftClient extends OpenShift {
      * @param source operator catalog source
      * @param subscriptionName name of the subscription
      */
-    public static void createSubscription(String channel, String operatorName, String source, String subscriptionName) {
-        LOG.info("Creating subcription with name {}, for operator {}, channel {}, source {}", subscriptionName, operatorName, channel, source);
+    public static void createSubscription(String channel, String operatorName, String source, String subscriptionName,
+        String subscriptionSourceNamespace) {
+        LOG.info("Creating subcription with name {}, for operator {}, channel {}, source {} in {}", subscriptionName, operatorName, channel, source,
+            subscriptionSourceNamespace);
         LOG.debug("Creating operator group {}", subscriptionName);
         if (get().operatorHub().operatorGroups().inNamespace(OpenshiftConfiguration.openshiftNamespace()).
             list().getItems().size() == 0) {
@@ -82,7 +84,7 @@ public class OpenshiftClient extends OpenShift {
             .withName(operatorName)
             .withChannel(channel)
             .withSource(source)
-            .withSourceNamespace("openshift-marketplace")
+            .withSourceNamespace(subscriptionSourceNamespace)
             .endSpec()
             .build();
         client.operatorHub().subscriptions().createOrReplace(s);
