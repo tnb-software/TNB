@@ -5,31 +5,28 @@
 
 	<parent>
 		<groupId>org.jboss.fuse.tnb</groupId>
-		<artifactId>system-x-parent</artifactId>
+		<artifactId>system-x-services</artifactId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 
-	<artifactId>system-x-customizers</artifactId>
+	<artifactId>system-x-google</artifactId>
+	<name>system-x-google</name>
 
 	<properties>
+		<google-api.client.version>1.23.0</google-api.client.version>
 		<google-sheets.client.version>v4-rev493-1.23.0</google-sheets.client.version>
 	</properties>
 
 	<dependencies>
 		<dependency>
-			<groupId>org.jboss.fuse.tnb</groupId>
-			<artifactId>tnb-common</artifactId>
-			<version>${project.version}</version>
+			<groupId>com.google.api-client</groupId>
+			<artifactId>google-api-client</artifactId>
+			<version>${google-api.client.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>org.jboss.fuse.tnb</groupId>
-			<artifactId>system-x-common</artifactId>
-			<version>${project.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.squareup</groupId>
-			<artifactId>javapoet</artifactId>
-			<version>${javapoet.version}</version>
+			<groupId>com.google.oauth-client</groupId>
+			<artifactId>google-oauth-client-jetty</artifactId>
+			<version>${google-api.client.version}</version>
 		</dependency>
 		<dependency>
 			<groupId>com.google.apis</groupId>

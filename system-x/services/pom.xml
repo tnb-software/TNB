@@ -14,6 +14,7 @@
 
 	<modules>
 		<module>aws-common</module>
+		<module>google</module>
 		<module>log</module>
 		<module>mongodb</module>
 		<module>slack</module>
