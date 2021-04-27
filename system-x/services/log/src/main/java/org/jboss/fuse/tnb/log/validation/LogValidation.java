@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
 import java.io.Reader;
+import java.util.regex.Pattern;
 
 public class LogValidation implements Closeable {
     private Reader r;
@@ -14,6 +15,11 @@ public class LogValidation implements Closeable {
 
     public boolean checkMessage(String message) {
         return new BufferedReader(r).lines().anyMatch(s -> s.contains(message));
+    }
+
+    public boolean messageRegexCheck(String regex) {
+        Pattern p = Pattern.compile(regex);
+        return new BufferedReader(r).lines().anyMatch(s -> p.matcher(s).matches());
     }
 
     @Override

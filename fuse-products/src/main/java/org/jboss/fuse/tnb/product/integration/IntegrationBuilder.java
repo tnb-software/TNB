@@ -50,6 +50,11 @@ public class IntegrationBuilder {
         return new ExpressionClause(codeBlockBuilder);
     }
 
+    public IntegrationBuilder setHeader(String key, String value) {
+        codeBlockBuilder.add(".setHeader($S, constant($S))", key, value);
+        return this;
+    }
+
     public IntegrationBuilder process(TypeSpec processor) {
         codeBlockBuilder.add(".process($L)", processor);
         return this;
