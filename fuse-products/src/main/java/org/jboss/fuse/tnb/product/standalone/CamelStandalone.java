@@ -22,6 +22,8 @@ public class CamelStandalone extends LocalProduct {
 
     @Override
     public void removeIntegration() {
-        app.stop();
+        if (app != null) {
+            app.stop();
+        }
     }
 }

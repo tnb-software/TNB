@@ -46,6 +46,16 @@ public class CamelKApp extends App {
         }
     }
 
+    /**
+     * Integration built from kameletbinding
+     *
+     * @param integrationName name of kameletbinding
+     */
+    public CamelKApp(String integrationName) {
+        super(integrationName);
+        integrationData = null;
+    }
+
     @Override
     public void start() {
         client.create(createIntegrationResource(name, integrationData));
