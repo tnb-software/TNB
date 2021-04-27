@@ -1,0 +1,124 @@
+package org.jboss.fuse.tnb.product.ck.generated;
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
+import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
+import org.jboss.fuse.tnb.product.ck.utils.KubernetesSupport;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import io.fabric8.kubernetes.client.CustomResource;
+import io.fabric8.kubernetes.model.annotation.Group;
+import io.fabric8.kubernetes.model.annotation.Version;
+
+/**
+ * 
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Group(CamelKSupport.CAMELK_CRD_GROUP)
+@Version(CamelKSettings.KAMELET_API_VERSION_DEFAULT)
+public class Kamelet extends CustomResource<KameletSpec, KameletStatus> {
+
+    public Kamelet() {
+        super();
+        this.status = null;
+        this.spec = new KameletSpec();
+    }
+
+    @Override
+    public String getApiVersion() {
+        return CamelKSupport.CAMELK_CRD_GROUP + "/" + CamelKSettings.getKameletApiVersion();
+    }
+
+    /**
+     * Fluent builder
+     */
+    public static class Builder {
+        private String name;
+        private String flow;
+        private KameletSpec.Definition definition = new KameletSpec.Definition();
+        private Map<String, KameletSpec.TypeSpec> types = new HashMap<>();
+        private List<String> dependencies = new ArrayList<>();
+        private KameletSpec.Source source;
+
+        public Builder name(String name) {
+            this.name = name;
+            definition.setTitle(name);
+            return this;
+        }
+
+        public Builder definition(KameletSpec.Definition definition) {
+            this.definition = definition;
+            return this;
+        }
+
+        public Builder source(String name, String language, String content) {
+            this.source = new KameletSpec.Source(name + "." + language, content);
+            return this;
+        }
+
+        public Builder source(String name, String content) {
+            this.source = new KameletSpec.Source(name, content);
+            return this;
+        }
+
+        public Builder flow(String flow) {
+            this.flow = flow;
+            return this;
+        }
+
+        public Builder dependencies(List<String> dependencies) {
+            this.dependencies = Collections.unmodifiableList(dependencies);
+            return this;
+        }
+
+        public Builder types(Map<String, KameletSpec.TypeSpec> types) {
+            this.types.putAll(types);
+            return this;
+        }
+
+        public Builder addType(String slot, String mediaType) {
+            this.types.put(slot, new KameletSpec.TypeSpec(mediaType));
+            return this;
+        }
+
+        public Kamelet build() {
+            Kamelet kamelet = new Kamelet();
+            kamelet.getMetadata().setName(name);
+            kamelet.getSpec().setDefinition(definition);
+
+            if (flow != null && !flow.isEmpty()) {
+                kamelet.getSpec().setFlow(KubernetesSupport.yaml().load(flow));
+            }
+
+            if (source != null) {
+                kamelet.getSpec().setSources(Collections.singletonList(source));
+            }
+
+            kamelet.getSpec().setDependencies(dependencies);
+            kamelet.getSpec().setTypes(types);
+            return kamelet;
+        }
+    }
+}

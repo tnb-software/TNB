@@ -22,8 +22,14 @@ public class LogValidation implements Closeable {
         return new BufferedReader(r).lines().anyMatch(s -> p.matcher(s).matches());
     }
 
+    public boolean checkMessage(String message, int skipLines) {
+        return new BufferedReader(r).lines().skip(skipLines).anyMatch(s -> s.contains(message));
+    }
+
     @Override
     public void close() throws IOException {
-        r.close();
+        if (r != null) {
+            r.close();
+        }
     }
 }

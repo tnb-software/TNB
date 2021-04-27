@@ -29,6 +29,8 @@ public class LocalCamelQuarkus extends LocalProduct {
 
     @Override
     public void removeIntegration() {
-        app.stop();
+        if (app != null) {
+            app.stop();
+        }
     }
 }
