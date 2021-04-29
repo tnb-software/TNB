@@ -24,7 +24,11 @@ public final class MapUtils {
      * @return string
      */
     public static String propertiesToString(Properties properties) {
-        return properties.entrySet().stream().map(entry -> entry.getKey() + "=" + entry.getValue())
-            .collect(Collectors.joining("\n"));
+        return propertiesToString(properties, "");
+    }
+
+    public static String propertiesToString(Properties properties, String prefix) {
+        return properties.entrySet().stream().map(entry -> prefix + entry.getKey() + "=" + entry.getValue())
+            .collect(Collectors.joining(System.lineSeparator()));
     }
 }

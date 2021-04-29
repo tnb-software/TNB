@@ -1,12 +1,6 @@
 package org.jboss.fuse.tnb.product.ck;
 
-import com.google.auto.service.AutoService;
-
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
-
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SUBSCRIPTION_NAME;
 
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
@@ -22,15 +16,23 @@ import org.jboss.fuse.tnb.product.ck.generated.KameletList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SUBSCRIPTION_NAME;
+import com.google.auto.service.AutoService;
+
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
+
+import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Product.class)
 public class CamelK extends OpenshiftProduct implements KameletOps {
@@ -212,5 +214,22 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public KameletBinding getKameletBindingByName(String name) {
         return kameletBindingClient.withName(name).get();
+    }
+
+    /**
+     * Create and label secret from credentials to kamelet
+     * @param kameletName name of kamelet
+     * @param credentials credentials required by kamelet
+     */
+    public void createApplicationPropertiesSecretForKamelet(String kameletName, Properties credentials) {
+        String prefix = "camel.kamelet." + kameletName + "." + kameletName + ".";
+        Map<String, String> labels = new LinkedHashMap<>();
+        labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet", kameletName);
+        labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet.configuration", kameletName);
+        OpenshiftClient.createApplicationPropertiesSecret(kameletName + "." + kameletName, credentials, labels, prefix);
+    }
+
+    public void deleteSecretForKamelet(String kameletName) {
+        OpenshiftClient.deleteSecret(kameletName + "." + kameletName);
     }
 }

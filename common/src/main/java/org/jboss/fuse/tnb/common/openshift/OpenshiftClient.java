@@ -1,13 +1,18 @@
 package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.OpenShift;
@@ -16,6 +21,8 @@ import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroup;
@@ -235,5 +242,27 @@ public class OpenshiftClient extends OpenShift {
         Container c = OpenshiftClient.get().getAnyContainer(p);
         ContainerResource cr = pr.inContainer(c.getName());
         return cr.getLog();
+    }
+
+    /**
+     * @param name of secret to be created
+     * @param credentials of service from credentials.yaml
+     * @param labels default null
+     * @param prefix default null, prefix which should be prepended to keys in credentials (<prefix>key=value)
+     * @return created secret
+     */
+    public static Secret createApplicationPropertiesSecret(String name, Properties credentials, Map<String, String> labels, String prefix) {
+        String credentialsString = MapUtils.propertiesToString(credentials, Optional.ofNullable(prefix).orElse(""));
+        String dataFileName = (name.indexOf(".") != -1) ? name.substring(0, name.indexOf(".")) : name;
+        Secret secret = new SecretBuilder()
+            .withStringData(Collections.singletonMap(dataFileName + ".properties", credentialsString)).withNewMetadata()
+            .withName(name)
+            .addToLabels(labels)
+            .endMetadata().build();
+        return client.secrets().createOrReplace(secret);
+    }
+
+    public static void deleteSecret(String name) {
+        client.secrets().withName(name).delete();
     }
 }

@@ -15,12 +15,13 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.Function;
 
 public class Accounts {
     private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
 
-    private static Map<String, Map<String, String>> credentials;
+    private static Map<String, Map<String, Object>> credentials;
     private static ObjectMapper mapper;
 
     /**
@@ -66,5 +67,18 @@ public class Accounts {
             fail("Unable to create instance of " + accountClass.getName() + " class: ", e);
         }
         return null;
+    }
+
+    public static Properties getCredentialsOfService(String credentialsId) {
+        if (credentials == null) {
+            load();
+        }
+        if (!credentials.containsKey(credentialsId)) {
+            fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
+        }
+        Properties credentialsIdProps = new Properties();
+        Map<String, Object> credentialsIdMap = (Map<String, Object>) credentials.get(credentialsId).get("credentials");
+        credentialsIdProps.putAll(credentialsIdMap);
+        return credentialsIdProps;
     }
 }
