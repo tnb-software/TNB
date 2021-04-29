@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.ck.application;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
@@ -65,6 +66,9 @@ public class CamelKApp extends App {
     public void stop() {
         LOG.info("Removing integration {}", name);
         client.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
+                .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
+            "Waiting until the integration " + name + " is undeployed");
     }
 
     @Override
