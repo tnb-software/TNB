@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.ck;
 
 import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SUBSCRIPTION_NAME;
 
+import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
@@ -37,15 +38,14 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 @AutoService(Product.class)
 public class CamelK extends OpenshiftProduct implements KameletOps {
     private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
-    private App app;
-    private static OpenshiftClient client = OpenshiftClient.get();
-    private static CustomResourceDefinitionContext kameletCtx = CamelKSupport.kameletCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-    private static CustomResourceDefinitionContext kameletBindingCtx =
+    private static final CustomResourceDefinitionContext KAMELET_CONTEXT =
+        CamelKSupport.kameletCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
+    private static final CustomResourceDefinitionContext KAMELET_BINDING_CONTEXT =
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-    private static final NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>>
-        kameletClient = client.customResources(kameletCtx, Kamelet.class, KameletList.class).inNamespace(client.getNamespace());
-    private static final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient =
-        client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
+
+    private App app;
+    private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
+    private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
 
     @Override
     public void setupProduct() {
@@ -62,6 +62,13 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(), SUBSCRIPTION_NAME,
                 config.subscriptionSourceNamespace());
         OpenshiftClient.waitForCompletion(SUBSCRIPTION_NAME);
+
+        // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
+        // and then the desired one is returned
+        kameletClient = OpenshiftClient.get().customResources(KAMELET_CONTEXT, Kamelet.class, KameletList.class)
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
+        kameletBindingClient = OpenshiftClient.get().customResources(KAMELET_BINDING_CONTEXT, KameletBinding.class, KameletBindingList.class)
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     @Override
