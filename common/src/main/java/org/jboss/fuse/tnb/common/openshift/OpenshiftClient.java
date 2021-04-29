@@ -158,7 +158,6 @@ public class OpenshiftClient extends OpenShift {
         BooleanSupplier fail = () -> "failed".equalsIgnoreCase(OpenshiftClient.get()
             .getBuild(name + "-" + OpenshiftClient.get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
 
-        LOG.info("Waiting until the build completes");
         WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
     }
 

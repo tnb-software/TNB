@@ -1,15 +1,6 @@
-package org.jboss.fuse.tnb.ftp.resource.openshift;
+package org.jboss.fuse.tnb.sftp.openshift;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-
-import io.fabric8.kubernetes.api.model.Pod;
-
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-
-import net.schmizz.sshj.sftp.SFTPClient;
-
-import org.apache.commons.net.ftp.FTP;
+import io.fabric8.kubernetes.api.model.EnvVarBuilder;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
@@ -17,22 +8,16 @@ import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-import org.jboss.fuse.tnb.ftp.service.Ftp;
+import org.jboss.fuse.tnb.sftp.service.Sftp;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -40,46 +25,57 @@ import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.openshift.api.model.SecurityContextConstraints;
+import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.sftp.SFTPClient;
+import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 
-@AutoService(Ftp.class)
-public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftFtp.class);
+@AutoService(Sftp.class)
+public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSftp.class);
 
-    private FTPClient client;
+    public static final int LOCAL_PORT = 3322;
 
-    private List<PortForward> portForwards = new ArrayList<>();
-
-    public static final int FTP_COMMAND_PORT = 2121;
-    public static final int FTP_DATA_PORT_START = 2122;
-    public static final int FTP_DATA_PORT_END = 2130;
+    private SFTPClient client;
+    private PortForward portForward;
 
     @Override
     public void create() {
 
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
-            .withName("ftp-cmd")
+            .withName("sftp")
             .withContainerPort(port())
             .withProtocol("TCP").build());
 
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
-            ContainerPort containerPort = new ContainerPortBuilder()
-                .withName("ftp-data-" + dataPort)
-                .withContainerPort(dataPort)
-                .withProtocol("TCP")
-                .build();
-            ports.add(containerPort);
-        }
+        String sa = name() + "-sa";
+        OpenshiftClient.get().serviceAccounts()
+            .createOrReplace(new ServiceAccountBuilder()
+                .withNewMetadata()
+                .withName(sa)
+                .endMetadata()
+                .build()
+            );
+
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName("anyuid").edit();
+        scc.getUsers().add("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + sa);
+        OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
             new DeploymentBuilder()
                 .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                .addToAnnotations("openshift.io/scc", "anyuid")
                 .endMetadata()
                 .editOrNewSpec()
                 .editOrNewSelector()
@@ -91,9 +87,16 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
                 .editOrNewSpec()
+                .withServiceAccount(sa)
                 .addNewContainer()
-                .withName(name()).withImage(SystemXConfiguration.ftpImage()).addAllToPorts(ports)
-                .withEnv(new EnvVar("FTP_USERNAME", account().username(), null), new EnvVar("FTP_PASSWORD", account().password(), null))
+                .withName(name()).withImage(SystemXConfiguration.sftpImage()).addAllToPorts(ports)
+                .withImagePullPolicy("IfNotPresent")
+                .withEnv(new EnvVar("SFTP_USERS", containerEnvironment().get("SFTP_USERS"), null))
+                .editOrNewSecurityContext()
+                .editOrNewCapabilities()
+                .addNewAdd("SYS_CHROOT")
+                .endCapabilities()
+                .endSecurityContext()
                 .endContainer()
                 .endSpec()
                 .endTemplate()
@@ -104,18 +107,10 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
         serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName("ftp-cmd")
+            .withName("sftp")
             .withPort(port())
             .withTargetPort(new IntOrString(port()))
             .build());
-
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
-            serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-                .withName("ftp-data-" + dataPort)
-                .withPort(dataPort)
-                .withTargetPort(new IntOrString(dataPort))
-                .build());
-        }
 
         OpenshiftClient.get().services().createOrReplace(
             new ServiceBuilder()
@@ -132,13 +127,8 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift ftp");
-        try {
-            client().disconnect();
-        } catch (IOException ignored) {
-        }
-        for (PortForward portForward : portForwards) {
-            IOUtils.closeQuietly(portForward);
-        }
+        IOUtils.closeQuietly(client);
+        IOUtils.closeQuietly(portForward);
 
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
@@ -151,7 +141,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
         return ResourceFunctions.areExactlyNPodsReady(1)
             .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
             && OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            .contains("event=Starting");
+            .contains("Server listening on");
     }
 
     @Override
@@ -161,13 +151,13 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
 
     @Override
     public String name() {
-        return "ftp";
+        return "sftp";
     }
 
     @Override
-    public FTPClient client() {
+    public SFTPClient client() {
         if (client == null) {
-            setupPortForwards();
+            portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
             WaitUtils.sleep(1000);
             makeClient();
         }
@@ -176,27 +166,15 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
 
     private void makeClient() {
         try {
-            LOG.debug("Creating new FTPClient instance");
-            client = new OpenShiftFtpClient();
-            client.connect(localClientHost(), port());
-            client.login(account().username(), account().password());
-            client.enterLocalPassiveMode();
-            client.setFileType(FTP.BINARY_FILE_TYPE);
-            client.setDataTimeout(1000);
-            client.setRemoteVerificationEnabled(false);
+            LOG.debug("Creating new SFTPClient instance");
+            SSHClient sshClient = new SSHClient();
+            sshClient.addHostKeyVerifier(new PromiscuousVerifier());
+            sshClient.connect("localhost", LOCAL_PORT);
+            sshClient.authPassword(account().username(), account().password());
+            client = sshClient.newSFTPClient();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-    }
-
-    @Override
-    public int port() {
-        return FTP_COMMAND_PORT;
-    }
-
-    @Override
-    protected String localClientHost() {
-        return "localhost";
     }
 
     @Override
@@ -214,33 +192,4 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
         deploy();
     }
 
-    private void setupPortForwards() {
-        Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
-            portForwards.add(OpenshiftClient.get().portForward(ftpPod, dataPort, dataPort));
-        }
-        PortForward commandPortForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
-        portForwards.add(commandPortForward);
-    }
-
-    /**
-     * Custom client to work around FTP issues in openshift
-     */
-    public class OpenShiftFtpClient extends FTPClient {
-
-        @Override
-        public boolean storeFile(String fileName, InputStream fileContent) throws IOException {
-            // transferring files over FTP using fabric8 port-forward is extremely unreliable, copy the file directly into the container instead
-            Path tempFile = Files.createTempFile(null, null);
-            try {
-                Files.copy(fileContent, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-                OpenshiftClient.get().pods().withName(ftpPod.getMetadata().getName())
-                    .file("/tmp/" + fileName).upload(tempFile);
-            } finally {
-                tempFile.toFile().delete();
-            }
-            return true;
-        }
-    }
 }

@@ -4,7 +4,10 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
@@ -13,6 +16,8 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 
 public final class IOUtils {
+    private static final Logger LOG = LoggerFactory.getLogger(IOUtils.class);
+
     private IOUtils() {
     }
 
@@ -78,5 +83,9 @@ public final class IOUtils {
             throw new RuntimeException("Unable to create tar file: ", e);
         }
         return output;
+    }
+
+    public static void closeQuietly(Closeable closeable) {
+        org.apache.commons.io.IOUtils.closeQuietly(closeable, e -> LOG.warn("Could not close resource", e));
     }
 }

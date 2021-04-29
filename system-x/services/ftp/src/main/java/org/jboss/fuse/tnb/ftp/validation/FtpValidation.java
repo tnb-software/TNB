@@ -2,11 +2,6 @@ package org.jboss.fuse.tnb.ftp.validation;
 
 import org.apache.commons.net.ftp.FTPClient;
 
-import org.jboss.fuse.tnb.ftp.account.FtpAccount;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;

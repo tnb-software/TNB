@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.ftp.resource.local;
 
+import net.schmizz.sshj.sftp.SFTPClient;
+
 import org.jboss.fuse.tnb.ftp.service.Ftp;
 import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.Deployable;

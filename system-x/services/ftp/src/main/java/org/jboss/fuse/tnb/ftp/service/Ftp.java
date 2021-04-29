@@ -1,14 +1,11 @@
 package org.jboss.fuse.tnb.ftp.service;
 
-import org.apache.commons.net.ftp.FTPClient;
-
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
-
 import org.jboss.fuse.tnb.ftp.account.FtpAccount;
-
 import org.jboss.fuse.tnb.ftp.validation.FtpValidation;
 
+import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -14,6 +14,7 @@
 
 	<properties>
 		<ftp.client.version>3.6</ftp.client.version>
+		<sftp.client.version>0.27.0</sftp.client.version>
 	</properties>
 
 	<dependencies>
@@ -27,6 +28,13 @@
 			<groupId>commons-net</groupId>
 			<artifactId>commons-net</artifactId>
 			<version>${ftp.client.version}</version>
+		</dependency>
+
+		<!-- SFTP client -->
+		<dependency>
+			<groupId>com.hierynomus</groupId>
+			<artifactId>sshj</artifactId>
+			<version>${sftp.client.version}</version>
 		</dependency>
 
 	</dependencies>
