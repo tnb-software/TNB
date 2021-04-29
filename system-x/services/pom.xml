@@ -27,6 +27,7 @@
         <module>dballocator</module>
         <module>sql</module>
         <module>elasticsearch</module>
+        <module>salesforce</module>
     </modules>
 
     <dependencies>
