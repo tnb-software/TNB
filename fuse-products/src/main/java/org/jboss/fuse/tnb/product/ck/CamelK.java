@@ -66,9 +66,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             );
         }
         OpenshiftClient
-            .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(), SUBSCRIPTION_NAME,
+            .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
+                SUBSCRIPTION_NAME,
                 config.subscriptionSourceNamespace());
-        OpenshiftClient.waitForCompletion(SUBSCRIPTION_NAME);
+        OpenshiftClient.waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
         // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
         // and then the desired one is returned
@@ -205,7 +206,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void removeIntegrations() {
-        integrations.values().forEach(app -> app.stop());//can't be reused removeIntegration - changing underlying map
+        integrations.values().forEach(CamelKApp::stop);//can't be reused removeIntegration - changing underlying map
         integrations.clear();
     }
 

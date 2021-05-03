@@ -22,6 +22,7 @@
 		<module>azure-storage-queue</module>
 		<module>kinesis</module>
 		<module>ftp</module>
+		<module>knative</module>
 	</modules>
 
 	<dependencies>

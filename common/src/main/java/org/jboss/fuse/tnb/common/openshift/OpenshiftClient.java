@@ -24,7 +24,6 @@ import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroup;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
@@ -63,23 +62,41 @@ public class OpenshiftClient extends OpenShift {
      * @param operatorName operator name
      * @param source operator catalog source
      * @param subscriptionName name of the subscription
+     * @param subscriptionNamespace namespace of the catalogsource
+     */
+    public static void createSubscription(String channel, String operatorName, String source, String subscriptionName, String subscriptionNamespace) {
+        createSubscription(channel, operatorName, source, subscriptionName, subscriptionNamespace, OpenshiftConfiguration.openshiftNamespace(),
+            false);
+    }
+
+    /**
+     * Creates the operatorgroup and subscription.
+     *
+     * @param channel operatorhub channel
+     * @param operatorName operator name
+     * @param source operator catalog source
+     * @param subscriptionName name of the subscription
+     * @param subscriptionSourceNamespace namespace of the catalogsource
+     * @param targetNamespace where the subscription should be created
+     * @param clusterWide if the installation is clusterwide or not
      */
     public static void createSubscription(String channel, String operatorName, String source, String subscriptionName,
-        String subscriptionSourceNamespace) {
+        String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide) {
         LOG.info("Creating subcription with name {}, for operator {}, channel {}, source {} in {}", subscriptionName, operatorName, channel, source,
             subscriptionSourceNamespace);
         LOG.debug("Creating operator group {}", subscriptionName);
-        if (get().operatorHub().operatorGroups().inNamespace(OpenshiftConfiguration.openshiftNamespace()).
-            list().getItems().size() == 0) {
-            OperatorGroup og = new OperatorGroupBuilder()
+        if (get().operatorHub().operatorGroups().inNamespace(targetNamespace).list().getItems().size() == 0) {
+            final OperatorGroupBuilder operatorGroupBuilder = new OperatorGroupBuilder()
                 .withNewMetadata()
                 .withName(subscriptionName)
-                .endMetadata()
-                .withNewSpec()
-                .withTargetNamespaces(OpenshiftConfiguration.openshiftNamespace())
-                .endSpec()
-                .build();
-            client.operatorHub().operatorGroups().createOrReplace(og);
+                .endMetadata();
+            if (!clusterWide) {
+                operatorGroupBuilder
+                    .withNewSpec()
+                    .withTargetNamespaces(targetNamespace)
+                    .endSpec();
+            }
+            client.operatorHub().operatorGroups().inNamespace(targetNamespace).createOrReplace(operatorGroupBuilder.build());
         }
 
         Subscription s = new SubscriptionBuilder()
@@ -93,43 +110,63 @@ public class OpenshiftClient extends OpenShift {
             .withSourceNamespace(subscriptionSourceNamespace)
             .endSpec()
             .build();
-        client.operatorHub().subscriptions().createOrReplace(s);
+        client.operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
     }
 
     /**
      * Waits until the install plan for a given subscription completes.
      *
-     * @param name subscription name
+     * @param subscriptionName subscription name
      */
-    public static void waitForCompletion(String name) {
+    public static void waitForInstallPlanToComplete(String subscriptionName) {
+        waitForInstallPlanToComplete(subscriptionName, OpenshiftConfiguration.openshiftNamespace());
+    }
+
+    /**
+     * Waits until the install plan for a given subscription completes.
+     *
+     * @param subscriptionName subscription name
+     * @param targetNamespace subscription namespace
+     */
+    public static void waitForInstallPlanToComplete(String subscriptionName, String targetNamespace) {
         WaitUtils.waitFor(() -> {
-            Subscription subscription = get().operatorHub().subscriptions().withName(name).get();
+            Subscription subscription = get().operatorHub().subscriptions().inNamespace(targetNamespace).withName(subscriptionName).get();
             if (subscription == null || subscription.getStatus() == null || subscription.getStatus().getInstallplan() == null) {
                 return false;
             }
             String ipName = subscription.getStatus().getInstallplan().getName();
-            InstallPlan installPlan = get().operatorHub().installPlans().withName(ipName).get();
+            InstallPlan installPlan = get().operatorHub().installPlans().inNamespace(targetNamespace).withName(ipName).get();
             if (installPlan == null || installPlan.getStatus() == null || installPlan.getStatus().getPhase() == null) {
                 return false;
             }
             return installPlan.getStatus().getPhase().equalsIgnoreCase("complete");
-        }, 60, 5000L, String.format("Waiting until the install plan from subscription %s is complete", name));
+        }, 50, 5000L, String.format("Waiting until the install plan from subscription %s is complete", subscriptionName));
     }
 
     /**
-     * Deletes the operatorgroup subscription.
+     * Deletes the operatorhub subscription.
      *
      * @param name subscription name
      */
     public static void deleteSubscription(String name) {
-        LOG.info("Deleting subscription {}", name);
-        Subscription subscription = get().operatorHub().subscriptions().withName(name).get();
+        deleteSubscription(name, OpenshiftConfiguration.openshiftNamespace());
+    }
+
+    /**
+     * Deletes the operatorhub subscription in given namespace.
+     *
+     * @param name subscription name
+     * @param namespace subscription namespace
+     */
+    public static void deleteSubscription(String name, String namespace) {
+        LOG.info("Deleting subscription {} in namespace {}", name, namespace);
+        Subscription subscription = get().operatorHub().subscriptions().inNamespace(namespace).withName(name).get();
         String csvName = subscription.getStatus().getCurrentCSV();
-        //CSV being null can happen if you delete the subscription without deleting the CSV, then your new subscription is CSV-less
+        // CSV being null can happen if you delete the subscription without deleting the CSV, then your new subscription is CSV-less
         if (csvName != null) {
-            get().operatorHub().clusterServiceVersions().withName(csvName).delete();
+            get().operatorHub().clusterServiceVersions().inNamespace(namespace).withName(csvName).delete();
         }
-        get().operatorHub().subscriptions().withName(name).delete();
+        get().operatorHub().subscriptions().inNamespace(namespace).withName(name).delete();
     }
 
     /**
