@@ -138,7 +138,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
     }
 
     @Override
-    public MongoClient client() {
+    protected MongoClient client() {
         if (client == null) {
             LOG.debug("Creating port-forward to {} for port {}", name(), port());
             portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());

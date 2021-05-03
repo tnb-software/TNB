@@ -48,7 +48,7 @@ public class GoogleSheets implements Service {
         return account;
     }
 
-    public Sheets client() {
+    protected Sheets client() {
         if (service == null) {
             LOG.debug("Creating new google-sheet client");
             Credential credential = authorize();
