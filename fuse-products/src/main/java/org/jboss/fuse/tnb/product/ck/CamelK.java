@@ -19,6 +19,8 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -26,7 +28,11 @@ import com.google.auto.service.AutoService;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
@@ -43,9 +49,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     private static final CustomResourceDefinitionContext KAMELET_BINDING_CONTEXT =
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
 
-    private App app;
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
     private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
+    private Map<String, CamelKApp> integrations = new HashMap<>();
+    private List<String> kamelets = new ArrayList<>();
 
     @Override
     public void setupProduct() {
@@ -78,16 +85,30 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public App createIntegration(IntegrationBuilder integrationBuilder) {
-        app = new CamelKApp(integrationBuilder);
+        CamelKApp app = new CamelKApp(integrationBuilder);
+        integrations.put(integrationBuilder.getIntegrationName(), app);
         app.start();
         app.waitUntilReady();
         return app;
     }
 
-    @Override
-    public void removeIntegration() {
-        if (app != null) {
-            app.stop();
+    public App createIntegration(KameletBinding kameletBinding) {
+        CamelKApp app = new CamelKApp(kameletBinding);
+        integrations.put(kameletBinding.getMetadata().getName(), app);
+        app.start();
+        app.waitUntilReady();
+        return app;
+    }
+
+    public App createIntegration(File kameletBindingFile) {
+        if (kameletBindingFile == null) {
+            LOG.error("File is null");
+            throw new RuntimeException("File is null");
+        }
+        try (FileInputStream is = new FileInputStream(kameletBindingFile)) {
+            return createIntegration(kameletBindingClient.load(is).get());
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load KameletBinding: ", e);
         }
     }
 
@@ -97,32 +118,15 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     @Override
-    public void loadKamelet(File file) {
+    public void createKamelet(File file) {
         if (file == null) {
             LOG.error("File is null");
             throw new RuntimeException("File is null");
         }
-        try {
-            Kamelet k = kameletClient.load(new FileInputStream(file)).get();
-            createKamelet(k);
-        } catch (Exception e) {
-            LOG.error("Failed to load Kamelet");
+        try (FileInputStream is = new FileInputStream(file)) {
+            createKamelet(kameletClient.load(file).get());
+        } catch (IOException e) {
             throw new RuntimeException("Failed to load Kamelet", e);
-        }
-    }
-
-    @Override
-    public void loadKameletBinding(File file) {
-        if (file == null) {
-            LOG.error("File is null");
-            throw new RuntimeException("File is null");
-        }
-        try {
-            KameletBinding kb = kameletBindingClient.load(new FileInputStream(file)).get();
-            createKameletBinding(kb);
-        } catch (Exception e) {
-            LOG.error("Failed to load KameletBinding");
-            throw new RuntimeException("Failed to load KameletBinding: ", e);
         }
     }
 
@@ -134,61 +138,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         }
         LOG.info("Create Kamelet " + kamelet.getMetadata().getName());
         kameletClient.createOrReplace(kamelet);
+        kamelets.add(kamelet.getMetadata().getName());
         WaitUtils.waitFor(() -> isKameletReady(kamelet), "Waiting for Kamelet to be ready");
     }
 
-    @Override
-    public void createKameletBinding(KameletBinding kameletBinding) {
-        if (kameletBinding == null) {
-            LOG.error("Null KameletBinding");
-            throw new RuntimeException("Null KameletBinding");
-        }
-        LOG.info("Create KameletBinding " + kameletBinding.getMetadata().getName());
-        kameletBindingClient.createOrReplace(kameletBinding);
-        WaitUtils.waitFor(() -> isKameletBindingReady(kameletBinding), 50, 5000L,
-            "Waiting for KameletBinding to be ready");//TODO maybe not needed here - could run in parallel with others
-    }
-
-    @Override
-    public void deleteKamelet(String name) {
-        LOG.info("Delete Kamelet " + name);
-        kameletClient.withName(name).delete();
-    }
-
-    @Override
-    public void deleteKamelet(Kamelet kamelet) {
-        if (kamelet != null) {
-            LOG.info("Delete Kamelet " + kamelet.getMetadata().getName());
-            kameletClient.delete(kamelet);
-        }
-    }
-
-    @Override
-    public void deleteKameletBinding(String kameletBinding) {
-        LOG.info("Delete KameletBinding " + kameletBinding);
-        kameletBindingClient.withName(kameletBinding).delete();
-    }
-
-    @Override
-    public void deleteKameletBinding(KameletBinding kameletBinding) {
-        if (kameletBinding != null) {
-            LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());
-            kameletBindingClient.delete(kameletBinding);
-        }
-    }
-
-    @Override
-    public boolean isKameletBindingReady(KameletBinding kameletBinding) {
-        String kameletBindingName = kameletBinding.getMetadata().getName();
-        if ((kameletBindingClient.withName(kameletBindingName).get() != null) &&
-            (kameletBindingClient.withName(kameletBindingName).get().getStatus() != null)) {
-            return "ready".equalsIgnoreCase(kameletBindingClient.withName(kameletBindingName).get().getStatus().getPhase());
-        } else {
-            return false;
-        }
-    }
-
-    @Override
     public boolean isKameletReady(Kamelet kamelet) {
         String kameletName = kamelet.getMetadata().getName();
         if ((getKameletByName(kameletName) != null) &&
@@ -209,25 +162,17 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
      * @param name of Kamelet
      * @return null if Kamelet wasn't found, otherwise Kamelet with given name
      */
-    @Override
     public Kamelet getKameletByName(String name) {
         return kameletClient.withName(name).get();
     }
 
     /**
-     * @param name of KameletBinding
-     * @return null if KameletBinding wasn't found, otherwise KameletBinding with given name
-     */
-    @Override
-    public KameletBinding getKameletBindingByName(String name) {
-        return kameletBindingClient.withName(name).get();
-    }
-
-    /**
      * Create and label secret from credentials to kamelet
+     *
      * @param kameletName name of kamelet
      * @param credentials credentials required by kamelet
      */
+    @Override
     public void createApplicationPropertiesSecretForKamelet(String kameletName, Properties credentials) {
         String prefix = "camel.kamelet." + kameletName + "." + kameletName + ".";
         Map<String, String> labels = new LinkedHashMap<>();
@@ -236,7 +181,37 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         OpenshiftClient.createApplicationPropertiesSecret(kameletName + "." + kameletName, credentials, labels, prefix);
     }
 
+    @Override
     public void deleteSecretForKamelet(String kameletName) {
         OpenshiftClient.deleteSecret(kameletName + "." + kameletName);
+    }
+
+    @Override
+    public void removeKamelet(String kameletName) {
+        LOG.info("Delete Kamelet " + kameletName);
+        kameletClient.withName(kameletName).delete();
+        kamelets.remove(kameletName);
+    }
+
+    public void removeKamelets() {
+        kamelets.forEach(kamelet -> kameletClient.withName(kamelet).delete());
+        kamelets.clear();
+    }
+
+    public void removeIntegration(String name) {
+        integrations.get(name).stop();
+        integrations.remove(name);
+    }
+
+    @Override
+    public void removeIntegrations() {
+        integrations.values().forEach(app -> app.stop());//can't be reused removeIntegration - changing underlying map
+        integrations.clear();
+    }
+
+    @Override
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
+        removeKamelets();
+        removeIntegrations();
     }
 }

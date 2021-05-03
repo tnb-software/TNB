@@ -1,35 +1,20 @@
 package org.jboss.fuse.tnb.product.interfaces;
 
 import org.jboss.fuse.tnb.product.ck.generated.Kamelet;
-import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
 
 import java.io.File;
+import java.util.Properties;
 
 public interface KameletOps {
+    void createKamelet(File file);
 
-    public abstract void loadKamelet(File file);
+    void createKamelet(Kamelet kamelet);
 
-    public abstract void loadKameletBinding(File file);
+    boolean isKameletReady(String name);
 
-    public abstract void deleteKamelet(String name);
+    void createApplicationPropertiesSecretForKamelet(String kameletName, Properties credentials);
 
-    public abstract void deleteKamelet(Kamelet kamelet);
+    void deleteSecretForKamelet(String kameletName);
 
-    public abstract void deleteKameletBinding(String kamelet);
-
-    public abstract void deleteKameletBinding(KameletBinding kameletBinding);
-
-    public abstract void createKamelet(Kamelet kamelet);
-
-    public abstract void createKameletBinding(KameletBinding kameletBinding);
-
-    public abstract boolean isKameletBindingReady(KameletBinding kameletBinding);
-
-    public abstract boolean isKameletReady(Kamelet kamelet);
-
-    public abstract boolean isKameletReady(String name);
-
-    public abstract Kamelet getKameletByName(String name);
-
-    public abstract KameletBinding getKameletBindingByName(String name);
+    void removeKamelet(String kameletName);
 }

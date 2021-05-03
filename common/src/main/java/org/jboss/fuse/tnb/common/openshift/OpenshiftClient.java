@@ -2,7 +2,6 @@ package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
-import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
 import org.slf4j.Logger;

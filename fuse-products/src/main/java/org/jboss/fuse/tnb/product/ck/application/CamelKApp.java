@@ -8,6 +8,8 @@ import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
+import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
+import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
@@ -32,10 +34,18 @@ public class CamelKApp extends App {
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT =
         CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT);
 
-    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> client =
+    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
         OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private final IntegrationData integrationData;
+
+    private static OpenshiftClient client = OpenshiftClient.get();
+    private static CustomResourceDefinitionContext kameletBindingCtx =
+        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
+    private static final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient =
+        client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
+
+    private KameletBinding kameletBinding = null;
 
     public CamelKApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
@@ -47,25 +57,30 @@ public class CamelKApp extends App {
         }
     }
 
-    /**
-     * Integration built from kameletbinding
-     *
-     * @param integrationName name of kameletbinding
-     */
-    public CamelKApp(String integrationName) {
-        super(integrationName);
+    public CamelKApp(KameletBinding kameletBinding) {
+        super(kameletBinding.getMetadata().getName());//name of created integration is same as name of kameletbinding
+        this.kameletBinding = kameletBinding;
         integrationData = null;
     }
 
     @Override
     public void start() {
-        client.create(createIntegrationResource(name, integrationData));
+        if (kameletBinding == null) {
+            integrationClient.create(createIntegrationResource(name, integrationData));
+        } else {
+            LOG.info("Create KameletBinding " + kameletBinding.getMetadata().getName());
+            kameletBindingClient.createOrReplace(kameletBinding);
+        }
     }
 
     @Override
     public void stop() {
         LOG.info("Removing integration {}", name);
-        client.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        if (kameletBinding != null) {
+            LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());
+            kameletBindingClient.delete(kameletBinding);
+        }
+        integrationClient.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
                 .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
             "Waiting until the integration " + name + " is undeployed");
@@ -74,7 +89,7 @@ public class CamelKApp extends App {
     @Override
     public boolean isReady() {
         try {
-            return "running".equalsIgnoreCase(client.withName(name).get().getStatus().getPhase())
+            return "running".equalsIgnoreCase(integrationClient.withName(name).get().getStatus().getPhase())
                 && ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name))
                 && isCamelStarted();
         } catch (Exception ignored) {
@@ -85,7 +100,7 @@ public class CamelKApp extends App {
     @Override
     public boolean isFailed() {
         try {
-            return "error".equalsIgnoreCase(client.withName(name).get().getStatus().getPhase());
+            return "error".equalsIgnoreCase(integrationClient.withName(name).get().getStatus().getPhase());
         } catch (Exception ignored) {
             return false;
         }

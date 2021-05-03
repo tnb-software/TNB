@@ -11,10 +11,10 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public abstract class Product implements BeforeAllCallback, AfterAllCallback, AfterEachCallback {
     public abstract App createIntegration(IntegrationBuilder integrationBuilder);
 
-    public abstract void removeIntegration();
+    public abstract void removeIntegrations();
 
     public void afterEach(ExtensionContext extensionContext) throws Exception {
-        removeIntegration();
+        removeIntegrations();
     }
 
     public abstract void setupProduct();
