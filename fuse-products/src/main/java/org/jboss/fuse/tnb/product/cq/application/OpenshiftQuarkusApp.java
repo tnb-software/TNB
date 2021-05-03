@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
+import org.apache.commons.io.input.ReaderInputStream;
+
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
@@ -13,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -51,6 +54,12 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void stop() {
+        LOG.info("Collecting logs of integration {}", name);
+        try {
+            Files.copy(new ReaderInputStream(getLogs(), StandardCharsets.UTF_8), TestConfiguration.appLocation().resolve(name + ".log"));
+        } catch (IOException e) {
+            LOG.warn("Could not collect integration logs", e);
+        }
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
