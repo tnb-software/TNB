@@ -14,6 +14,7 @@ import java.util.Map;
 
 public abstract class MongoDB implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
+    public static final String MONGODB_IMAGE = "mongodb.image";
 
     private MongoDBAccount account;
     private MongoDBValidation validation;
@@ -52,5 +53,9 @@ public abstract class MongoDB implements Service {
 
     public int port() {
         return 27017;
+    }
+
+    public static String mongoDbImage() {
+        return System.getProperty(MONGODB_IMAGE, "quay.io/bitnami/mongodb:4.4.5");
     }
 }

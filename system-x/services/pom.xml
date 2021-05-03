@@ -21,6 +21,7 @@
 		<module>sqs</module>
 		<module>azure-storage-queue</module>
 		<module>kinesis</module>
+		<module>ftp</module>
 	</modules>
 
 	<dependencies>
