@@ -20,6 +20,7 @@
 		<module>slack</module>
 		<module>sqs</module>
 		<module>azure-storage-queue</module>
+		<module>kinesis</module>
 	</modules>
 
 	<dependencies>
