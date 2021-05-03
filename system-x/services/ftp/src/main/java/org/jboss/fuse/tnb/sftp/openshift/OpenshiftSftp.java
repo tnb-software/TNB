@@ -1,9 +1,6 @@
 package org.jboss.fuse.tnb.sftp.openshift;
 
-import io.fabric8.kubernetes.api.model.EnvVarBuilder;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -27,7 +24,6 @@ import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
@@ -89,7 +85,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
                 .editOrNewSpec()
                 .withServiceAccount(sa)
                 .addNewContainer()
-                .withName(name()).withImage(SystemXConfiguration.sftpImage()).addAllToPorts(ports)
+                .withName(name()).withImage(sftpImage()).addAllToPorts(ports)
                 .withImagePullPolicy("IfNotPresent")
                 .withEnv(new EnvVar("SFTP_USERS", containerEnvironment().get("SFTP_USERS"), null))
                 .editOrNewSecurityContext()

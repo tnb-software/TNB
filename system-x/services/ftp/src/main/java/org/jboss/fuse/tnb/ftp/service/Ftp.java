@@ -11,13 +11,15 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
+
 public abstract class Ftp implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Ftp.class);
+    private static final String FTP_IMAGE_KEY = "ftp.image";
 
     private FtpAccount account;
     private FtpValidation validation;
 
-    public abstract FTPClient client();
+    protected abstract FTPClient client();
 
     public abstract int port();
 
@@ -47,5 +49,11 @@ public abstract class Ftp implements Service {
 
     protected String localClientHost() {
         return host();
+    }
+
+
+    public static String ftpImage() {
+        // TODO: move this to a team org
+        return System.getProperty(FTP_IMAGE_KEY, "quay.io/asmigala/ftpserver:latest");
     }
 }

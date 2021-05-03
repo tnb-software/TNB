@@ -5,10 +5,8 @@ import net.schmizz.sshj.sftp.SFTPClient;
 
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 
-import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.ftp.service.Ftp;
 
 import org.jboss.fuse.tnb.sftp.service.Sftp;
 
@@ -31,7 +29,7 @@ public class LocalSftp extends Sftp implements Deployable {
 
     public void deploy() {
         LOG.info("Starting sftp container");
-        container = new SftpContainer(SystemXConfiguration.sftpImage(), containerEnvironment());
+        container = new SftpContainer(sftpImage(), containerEnvironment());
         container.start();
     }
 

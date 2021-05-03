@@ -20,6 +20,7 @@ import java.util.Map;
 
 public abstract class Sftp implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Sftp.class);
+    private static final String SFTP_IMAGE_KEY = "sftp.image";
 
     private SftpAccount account;
     private SftpValidation validation;
@@ -52,4 +53,7 @@ public abstract class Sftp implements Service {
         );
     }
 
+    public static String sftpImage() {
+        return System.getProperty(SFTP_IMAGE_KEY, "atmoz/sftp:alpine");
+    }
 }

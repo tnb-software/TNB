@@ -1,9 +1,6 @@
 package org.jboss.fuse.tnb.ftp.resource.local;
 
-import net.schmizz.sshj.sftp.SFTPClient;
-
 import org.jboss.fuse.tnb.ftp.service.Ftp;
-import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 
 import org.apache.commons.net.ftp.FTPClient;
@@ -29,7 +26,7 @@ public class LocalFtp extends Ftp implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting Ftp container");
-        container = new FtpContainer(SystemXConfiguration.ftpImage(), port(), containerEnvironment());
+        container = new FtpContainer(ftpImage(), port(), containerEnvironment());
         container.start();
         LOG.info("Ftp container started");
     }
@@ -43,7 +40,7 @@ public class LocalFtp extends Ftp implements Deployable {
     }
 
     @Override
-    public FTPClient client() {
+    protected FTPClient client() {
         if (client == null) {
             try {
                 LOG.debug("Creating new FTPClient instance");

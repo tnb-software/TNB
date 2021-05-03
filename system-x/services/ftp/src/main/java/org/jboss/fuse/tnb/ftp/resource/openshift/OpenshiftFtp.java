@@ -7,12 +7,9 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
-import net.schmizz.sshj.sftp.SFTPClient;
-
 import org.apache.commons.net.ftp.FTP;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -92,7 +89,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
                 .endMetadata()
                 .editOrNewSpec()
                 .addNewContainer()
-                .withName(name()).withImage(SystemXConfiguration.ftpImage()).addAllToPorts(ports)
+                .withName(name()).withImage(ftpImage()).addAllToPorts(ports)
                 .withEnv(new EnvVar("FTP_USERNAME", account().username(), null), new EnvVar("FTP_PASSWORD", account().password(), null))
                 .endContainer()
                 .endSpec()
@@ -165,7 +162,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
     }
 
     @Override
-    public FTPClient client() {
+    protected FTPClient client() {
         if (client == null) {
             setupPortForwards();
             WaitUtils.sleep(1000);
