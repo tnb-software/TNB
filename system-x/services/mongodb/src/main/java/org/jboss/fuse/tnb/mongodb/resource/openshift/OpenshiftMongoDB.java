@@ -5,7 +5,6 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.SystemXConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
@@ -66,7 +65,7 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
                     .editOrNewSpec()
                         .addNewContainer()
                             .withName(name())
-                            .withImage(SystemXConfiguration.mongoDbImage())
+                            .withImage(mongoDbImage())
                             .addAllToPorts(ports)
                             .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null)).collect(Collectors.toList()))
                         .endContainer()
