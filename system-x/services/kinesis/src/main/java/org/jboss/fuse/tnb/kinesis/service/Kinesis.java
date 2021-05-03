@@ -33,7 +33,7 @@ public class Kinesis implements Service {
         return account;
     }
 
-    public KinesisClient client() {
+    protected KinesisClient client() {
         if (client == null) {
             LOG.debug("Creating new Kinesis client");
             client = KinesisClient.builder()

@@ -28,7 +28,7 @@ public class Slack implements Service {
         return account;
     }
 
-    public com.slack.api.Slack client() {
+    protected com.slack.api.Slack client() {
         if (client == null) {
             LOG.debug("Creating new Slack client");
             client = com.slack.api.Slack.getInstance();

@@ -27,7 +27,7 @@ public abstract class MongoDB implements Service {
         return account;
     }
 
-    public abstract MongoClient client();
+    protected abstract MongoClient client();
 
     public MongoDBValidation validation() {
         if (validation == null) {

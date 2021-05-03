@@ -34,7 +34,7 @@ public class LocalMongoDB extends MongoDB implements Deployable {
     }
 
     @Override
-    public MongoClient client() {
+    protected MongoClient client() {
         if (client == null) {
             LOG.debug("Creating new MongoClient instance");
             client = MongoClients.create(replicaSetUrl());

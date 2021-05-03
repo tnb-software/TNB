@@ -30,7 +30,7 @@ public class StorageQueue implements Service {
         return account;
     }
 
-    public QueueServiceClient client() {
+    protected QueueServiceClient client() {
         if (client == null) {
             client = new QueueServiceClientBuilder()
                 .endpoint(String.format("https://%s.queue.core.windows.net/%s", account().accountName(), account().accessKey()))

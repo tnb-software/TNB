@@ -35,7 +35,7 @@ public class SQS implements Service {
         return account;
     }
 
-    public SqsClient client() {
+    protected SqsClient client() {
         if (client == null) {
             LOG.debug("Creating new SQS client");
             client = SqsClient.builder()
