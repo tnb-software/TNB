@@ -56,7 +56,7 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct {
     }
 
     @Override
-    public void removeIntegration() {
+    public void removeIntegrations() {
         if (app != null) {
             app.stop();
         }

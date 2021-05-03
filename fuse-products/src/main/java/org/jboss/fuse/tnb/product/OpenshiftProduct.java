@@ -33,4 +33,6 @@ public abstract class OpenshiftProduct extends Product {
     }
 
     public abstract boolean isReady();
+
+    public abstract void removeIntegrations();
 }
