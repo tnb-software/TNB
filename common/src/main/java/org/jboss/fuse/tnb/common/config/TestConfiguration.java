@@ -24,6 +24,9 @@ public class TestConfiguration extends Configuration {
     public static final String QUARKUS_VERSION = "quarkus.version";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
 
+    public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
+    public static final String VARIABLE_PLACEHOLDER_END = "\\}";
+
     public static String camelVersion() {
         return getProperty(CAMEL_VERSION);
     }

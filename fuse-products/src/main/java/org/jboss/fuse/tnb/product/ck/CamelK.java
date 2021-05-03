@@ -82,6 +82,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void teardownProduct() {
         OpenshiftClient.deleteSubscription(SUBSCRIPTION_NAME);
+        removeKamelets();
     }
 
     @Override
@@ -190,12 +191,16 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void removeKamelet(String kameletName) {
         LOG.info("Delete Kamelet " + kameletName);
-        kameletClient.withName(kameletName).delete();
+        if (kameletClient != null) {
+            kameletClient.withName(kameletName).delete();
+        }
         kamelets.remove(kameletName);
     }
 
     public void removeKamelets() {
-        kamelets.forEach(kamelet -> kameletClient.withName(kamelet).delete());
+        if (kameletClient != null) {
+            kamelets.forEach(kamelet -> kameletClient.withName(kamelet).delete());
+        }
         kamelets.clear();
     }
 
@@ -212,7 +217,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
-        removeKamelets();
         removeIntegrations();
     }
 }

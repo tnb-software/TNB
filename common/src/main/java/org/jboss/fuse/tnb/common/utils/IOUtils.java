@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Properties;
 
 public final class IOUtils {
     private static final Logger LOG = LoggerFactory.getLogger(IOUtils.class);
@@ -111,5 +112,15 @@ public final class IOUtils {
         } catch (IOException e) {
             throw new RuntimeException("Unable to copy directories: ", e);
         }
+    }
+
+    public static void replaceVariables(Path input, Properties keysValues, Path output) {
+        String withVars = readFile(input);
+        //can't use lambda because withVars would have to be effectively final
+        for (Object key : keysValues.keySet()) {
+            withVars = withVars.replaceAll(TestConfiguration.VARIABLE_PLACEHOLDER_START + key + TestConfiguration.VARIABLE_PLACEHOLDER_END,
+                keysValues.getProperty(key.toString()));
+        }
+        writeFile(output, withVars);
     }
 }
