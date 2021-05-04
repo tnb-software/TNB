@@ -54,11 +54,6 @@
 			<version>${maven.model.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.squareup</groupId>
-			<artifactId>javapoet</artifactId>
-			<version>${javapoet.version}</version>
-		</dependency>
-		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-core-model</artifactId>
 			<version>${camel.version}</version>
@@ -87,6 +82,11 @@
 			<groupId>com.fasterxml.jackson.module</groupId>
 			<artifactId>jackson-module-jsonSchema</artifactId>
 			<version>${jackson.module.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.javaparser</groupId>
+			<artifactId>javaparser-symbol-solver-core</artifactId>
+			<version>${javaparser.version}</version>
 		</dependency>
 	</dependencies>
 	<build>

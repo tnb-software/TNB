@@ -10,7 +10,7 @@ For each product there are two main areas covered:
 The integration code is generated from a "meta"
 class [IntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/IntegrationBuilder.java)
 and 0..x [Customizer](../system-x/customizers/src/main/java/org/jboss/fuse/tnb/customizer/Customizer.java)s for given system-x services using
-the [javapoet](https://github.com/square/javapoet) framework.
+the [javaparser](https://javaparser.org/) framework. See [RouteBuilders guide](RouteBuilders.md) for more details.
 
 The integrations are created differently for each product:
 

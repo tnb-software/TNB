@@ -4,12 +4,10 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.customizer.Customizer;
 
-import com.squareup.javapoet.ClassName;
+import com.github.javaparser.StaticJavaParser;
 
-/**
- * Customizer for MongoDB that creates the bean with mongodb client.
- */
 public class MongoDBCustomizer extends Customizer {
+
     private final String name;
     private final String replicaSetUrl;
 
@@ -27,15 +25,16 @@ public class MongoDBCustomizer extends Customizer {
         }
     }
 
-    private void customizeQuarkus() {
-        getApplicationProperties().put("quarkus.mongodb.connection-string", replicaSetUrl);
-    }
-
     private void customizeStandalone() {
         /*
             bindToRegistry("<name>", MongoClients.create("<replicaSetUrl>");
          */
-        getConfigureMethodBuilder().addStatement("bindToRegistry($S, $T.create($S))",
-            name, ClassName.get("com.mongodb.client", "MongoClients"), replicaSetUrl);
+        final String statement = String.format("bindToRegistry(\"%s\", MongoClients.create(\"%s\"))", name, replicaSetUrl);
+        getConfigureMethod().getBody().get().addStatement(0, StaticJavaParser.parseExpression(statement));
+        getRouteBuilder().addImport("com.mongodb.client.MongoClients");
+    }
+
+    private void customizeQuarkus() {
+        getApplicationProperties().put("quarkus.mongodb.connection-string", replicaSetUrl);
     }
 }

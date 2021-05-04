@@ -14,8 +14,8 @@
 
 	<modules>
 		<module>common</module>
-		<module>customizers</module>
 		<module>services</module>
+		<module>customizers</module>
 	</modules>
 
 </project>
