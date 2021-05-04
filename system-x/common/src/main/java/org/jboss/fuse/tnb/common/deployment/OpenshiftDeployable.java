@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.common.deployment;
 
+import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
 public interface OpenshiftDeployable extends Deployable {
@@ -11,6 +12,7 @@ public interface OpenshiftDeployable extends Deployable {
 
     @Override
     default void deploy() {
+        OpenshiftClient.createNamespace(); // ensure namespace exists
         create();
         WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the resource is ready");
     }

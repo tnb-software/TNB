@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public abstract class OpenshiftProduct extends Product {
 
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        createTmpNamespace();//check if temporary namespace should be created
+        OpenshiftClient.createNamespace(); // ensure namespace exists
         setupProduct();
         WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the resource is ready");
     }
@@ -17,13 +17,6 @@ public abstract class OpenshiftProduct extends Product {
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         teardownProduct();
         deleteTmpNamespace();//if namespace was temporary, delete it (TODO: check if it wasn't deleted yet)
-    }
-
-    public void createTmpNamespace() {
-        //new temporary namespace name is generated when OpenshiftConfiguration is firstly loaded
-        if (OpenshiftConfiguration.isTemporaryNamespace()) {
-            OpenshiftClient.createNamespace();
-        }
     }
 
     public void deleteTmpNamespace() {
