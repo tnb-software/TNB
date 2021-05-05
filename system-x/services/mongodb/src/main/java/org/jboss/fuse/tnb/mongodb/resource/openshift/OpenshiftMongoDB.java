@@ -1,9 +1,5 @@
 package org.jboss.fuse.tnb.mongodb.resource.openshift;
 
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -29,9 +25,12 @@ import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(MongoDB.class)
 public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployable {
@@ -129,7 +128,8 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0
+            && isReady();
     }
 
     @Override
