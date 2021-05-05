@@ -1,9 +1,9 @@
 package org.jboss.fuse.tnb.ftp.resource.local;
 
 import org.jboss.fuse.tnb.common.deployment.Deployable;
+import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
 import org.jboss.fuse.tnb.ftp.service.Ftp;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.images.builder.Transferable;
@@ -12,12 +12,15 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 @AutoService(Ftp.class)
 public class LocalFtp extends Ftp implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFtp.class);
     private FtpContainer container;
-    private FTPClient client;
+    private final CustomFtpClient client = new TestContainerFtpOutOfBandClient();
 
     @Override
     public void deploy() {
@@ -37,32 +40,16 @@ public class LocalFtp extends Ftp implements Deployable {
 
     @Override
     public void openResources() {
-        try {
-            LOG.debug("Creating new FTPClient instance");
-            client = new TestContainerFtpOutOfBandClient();
-            client.connect(localClientHost(), port());
-            client.login(account().username(), account().password());
-            client.enterLocalPassiveMode();
-            client.setFileType(org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE);
-            client.setDataTimeout(500000);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // noop
     }
 
     @Override
     public void closeResources() {
-        try {
-            if (client != null) {
-                client.disconnect();
-            }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        // noop
     }
 
     @Override
-    protected FTPClient client() {
+    protected CustomFtpClient client() {
         return client;
     }
 
@@ -83,12 +70,32 @@ public class LocalFtp extends Ftp implements Deployable {
     /**
      * Custom client to make transfering files into the server faster and more stable
      */
-    public class TestContainerFtpOutOfBandClient extends FTPClient {
+    public class TestContainerFtpOutOfBandClient implements CustomFtpClient {
 
         @Override
-        public boolean storeFile(String fileName, InputStream fileContent) throws IOException {
-            container.copyFileToContainer(Transferable.of(fileContent.readAllBytes(), 040777), "/tmp/" + fileName);
-            return true;
+        public void storeFile(String fileName, InputStream fileContent) throws IOException {
+            container.copyFileToContainer(Transferable.of(fileContent.readAllBytes(), 040777),
+                basePath() + "/" + fileName);
+        }
+
+        @Override
+        public void retrieveFile(String fileName, OutputStream local) throws IOException {
+            Path tempFile = Files.createTempFile(null, null);
+            try {
+                container.copyFileFromContainer(basePath() + "/" + fileName, tempFile.toString());
+                org.apache.commons.io.IOUtils.copy(Files.newInputStream(tempFile), local);
+            } finally {
+                tempFile.toFile().delete();
+            }
+        }
+
+        @Override
+        public void makeDirectory(String dirName) throws IOException {
+            try {
+                container.execInContainer(String.format("mkdir -m a=rwx '%s/%s'", basePath(), dirName));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 }

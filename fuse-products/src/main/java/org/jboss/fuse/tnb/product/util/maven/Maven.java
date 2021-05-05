@@ -142,7 +142,8 @@ public final class Maven {
                 .setGoals(goals)
                 .setProfiles(buildRequest.getProfiles())
                 .setProperties(properties)
-                .setOutputHandler(buildRequest.getOutputHandler());
+                .setOutputHandler(buildRequest.getOutputHandler())
+                .setErrorHandler(buildRequest.getOutputHandler());
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);

@@ -1,26 +1,26 @@
 package org.jboss.fuse.tnb.ftp.resource.openshift;
 
+import io.fabric8.kubernetes.api.model.apps.Deployment;
+
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
 import org.jboss.fuse.tnb.ftp.service.Ftp;
 
-import org.apache.commons.net.ftp.FTP;
-import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -35,15 +35,14 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(Ftp.class)
 public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftFtp.class);
 
-    private FTPClient client;
+    private final CustomFtpClient client = new OpenShiftFtpClient();
 
-    private List<PortForward> portForwards = new ArrayList<>();
 
     public static final int FTP_COMMAND_PORT = 2121;
     public static final int FTP_DATA_PORT_START = 2122;
@@ -85,7 +84,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
                 .editOrNewSpec()
                 .addNewContainer()
                 .withName(name()).withImage(ftpImage()).addAllToPorts(ports)
-                .withEnv(new EnvVar("FTP_USERNAME", account().username(), null), new EnvVar("FTP_PASSWORD", account().password(), null))
+                .withEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
                 .endContainer()
                 .endSpec()
                 .endTemplate()
@@ -132,23 +131,12 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
 
     @Override
     public void openResources() {
-        setupPortForwards();
-        WaitUtils.sleep(1000);
-        makeClient();
+        // noop
     }
 
     @Override
     public void closeResources() {
-        try {
-            if (client != null) {
-                client.disconnect();
-            }
-        } catch (IOException ignored) {
-        }
-
-        for (PortForward portForward : portForwards) {
-            IOUtils.closeQuietly(portForward);
-        }
+        // noop
     }
 
     @Override
@@ -156,12 +144,16 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
         return ResourceFunctions.areExactlyNPodsReady(1)
             .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
             && OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            .contains("event=Starting");
+            .contains("FtpServer started");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
+        return
+            deployment != null
+            && !deployment.isMarkedForDeletion()
+            && isReady();
     }
 
     @Override
@@ -170,23 +162,8 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     }
 
     @Override
-    protected FTPClient client() {
+    protected CustomFtpClient client() {
         return client;
-    }
-
-    private void makeClient() {
-        try {
-            LOG.debug("Creating new FTPClient instance");
-            client = new OpenShiftFtpClient();
-            client.connect(localClientHost(), port());
-            client.login(account().username(), account().password());
-            client.enterLocalPassiveMode();
-            client.setFileType(FTP.BINARY_FILE_TYPE);
-            client.setDataTimeout(1000);
-            client.setRemoteVerificationEnabled(false);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
@@ -195,42 +172,43 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     }
 
     @Override
-    protected String localClientHost() {
-        return "localhost";
-    }
-
-    @Override
     public String host() {
         return name();
     }
 
-    private void setupPortForwards() {
-        Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
-            portForwards.add(OpenshiftClient.get().portForward(ftpPod, dataPort, dataPort));
-        }
-        PortForward commandPortForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
-        portForwards.add(commandPortForward);
-    }
-
-    /**
-     * Custom client to work around FTP issues in openshift
-     */
-    public class OpenShiftFtpClient extends FTPClient {
+    public class OpenShiftFtpClient implements CustomFtpClient {
 
         @Override
-        public boolean storeFile(String fileName, InputStream fileContent) throws IOException {
-            // transferring files over FTP using fabric8 port-forward is extremely unreliable, copy the file directly into the container instead
+        public void storeFile(String fileName, InputStream fileContent) throws IOException {
             Path tempFile = Files.createTempFile(null, null);
             try {
                 Files.copy(fileContent, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-                OpenshiftClient.get().pods().withName(ftpPod.getMetadata().getName())
-                    .file("/tmp/" + fileName).upload(tempFile);
+                getPodResource().file("/tmp/" + account().username() + "/" + fileName).upload(tempFile);
             } finally {
                 tempFile.toFile().delete();
             }
-            return true;
+        }
+
+        @Override
+        public void retrieveFile(String fileName, OutputStream local) throws IOException {
+            Path tempFile = Files.createTempFile(null, null);
+            try {
+                getPodResource().file("/tmp/" + account().username() + "/" + fileName).copy(tempFile);
+                org.apache.commons.io.IOUtils.copy(Files.newInputStream(tempFile), local);
+            } finally {
+                tempFile.toFile().delete();
+            }
+        }
+
+        @Override
+        public void makeDirectory(String dirName) {
+            getPodResource().writingOutput(new ByteArrayOutputStream())
+                .exec("mkdir", "-p", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
+        }
+
+        private PodResource<Pod> getPodResource() {
+            Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
+            return OpenshiftClient.get().pods().withName(ftpPod.getMetadata().getName());
         }
     }
 }
