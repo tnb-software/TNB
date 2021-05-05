@@ -2,13 +2,11 @@ package org.jboss.fuse.tnb.knative.service;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.knative.validation.KNativeValidation;
-
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import com.google.auto.service.AutoService;
 
@@ -23,7 +21,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(KNative.class)
-public class KNative implements Service, OpenshiftDeployable {
+public class KNative implements Service, ReusableOpenshiftDeployable {
     private static final String CHANNEL = "stable";
     private static final String OPERATOR_NAME = "serverless-operator";
     private static final String SOURCE = "redhat-operators";
@@ -123,16 +121,6 @@ public class KNative implements Service, OpenshiftDeployable {
             && !OpenshiftClient.get().customResource(SERVING_CTX).list(SERVING_NAMESPACE).isEmpty();
     }
 
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
-    }
-
     protected KnativeClient client() {
         if (OpenshiftClient.get().isAdaptable(KnativeClient.class)) {
             return OpenshiftClient.get().adapt(KnativeClient.class);
@@ -157,5 +145,17 @@ public class KNative implements Service, OpenshiftDeployable {
         metadata.put("namespace", namespace);
         cr.put("metadata", metadata);
         return cr;
+    }
+
+    @Override
+    public void cleanup() {
+        if (validation != null) {
+            validation.deleteCreatedResources();
+        }
+    }
+
+    @Override
+    public void close() {
+        // no need to close anything
     }
 }

@@ -1,11 +1,10 @@
 package org.jboss.fuse.tnb.mongodb.resource.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
+import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
-
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +12,7 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -33,7 +33,7 @@ import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(MongoDB.class)
-public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployable {
+public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeployable, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMongoDB.class);
 
     private PortForward portForward;
@@ -102,13 +102,6 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift MongoDB");
-        client().close();
-        try {
-            LOG.debug("Closing port-forward");
-            portForward.close();
-        } catch (IOException ignored) {
-        }
-
         LOG.debug("Deleting service {}", name());
         OpenshiftClient.get().services().withName(name()).delete();
         LOG.debug("Deleting deploymentconfig {}", name());
@@ -154,12 +147,27 @@ public class OpenshiftMongoDB extends MongoDB implements OpenshiftNamedDeployabl
     }
 
     @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
+    public void cleanup() {
+        LOG.info("Cleaning MongoDB database");
+        MongoDatabase db = client().getDatabase(account().database());
+        for (String collection : db.listCollectionNames()) {
+            LOG.debug("Dropping collection {}", collection);
+            db.getCollection(collection).drop();
+        }
     }
 
     @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
+    public void close() {
+        if (client != null) {
+            LOG.debug("Closing MongoDB client");
+            client.close();
+        }
+        if (portForward != null && portForward.isAlive()) {
+            try {
+                LOG.debug("Closing port-forward");
+                portForward.close();
+            } catch (IOException ignored) {
+            }
+        }
     }
 }

@@ -1,6 +1,9 @@
 package org.jboss.fuse.tnb.common.deployment;
 
-public interface Deployable {
+import org.junit.jupiter.api.extension.AfterAllCallback;
+import org.junit.jupiter.api.extension.BeforeAllCallback;
+
+public interface Deployable extends BeforeAllCallback, AfterAllCallback {
     void deploy();
 
     void undeploy();

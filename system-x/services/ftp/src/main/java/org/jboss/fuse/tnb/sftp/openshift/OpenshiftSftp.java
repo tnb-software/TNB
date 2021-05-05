@@ -1,7 +1,8 @@
 package org.jboss.fuse.tnb.sftp.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
+import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
@@ -36,7 +37,7 @@ import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 
 @AutoService(Sftp.class)
-public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
+public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSftp.class);
 
     public static final int LOCAL_PORT = 3322;
