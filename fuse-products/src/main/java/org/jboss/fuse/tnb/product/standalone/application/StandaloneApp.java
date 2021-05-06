@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.standalone.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -10,6 +11,7 @@ import org.jboss.fuse.tnb.product.util.maven.Maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,14 +26,26 @@ public class StandaloneApp extends App {
         super(integrationBuilder.getIntegrationName());
 
         LOG.info("Creating Camel Standalone application project for integration {}", name);
-        Maven.createFromArchetype(
-            "org.apache.camel.archetypes",
-            "camel-archetype-main",
-            TestConfiguration.camelVersion(),
-            TestConfiguration.appGroupId(),
-            name,
-            TestConfiguration.appLocation().toFile()
-        );
+        if (!TestConfiguration.appLocation().resolve(TestConfiguration.appTemplateName()).toFile().exists()) {
+            IOUtils.createDirectory(TestConfiguration.appLocation());
+
+            LOG.debug("Creating standalone app template in {}", TestConfiguration.appLocation().toAbsolutePath());
+            Maven.invoke(new BuildRequest.Builder()
+                .withBaseDirectory(TestConfiguration.appLocation())
+                .withGoals("archetype:generate")
+                .withProperties(Map.of(
+                    "archetypeGroupId", "org.apache.camel.archetypes",
+                    "archetypeArtifactId", "camel-archetype-main",
+                    "archetypeVersion", TestConfiguration.camelVersion(),
+                    "groupId", TestConfiguration.appGroupId(),
+                    "artifactId", TestConfiguration.appTemplateName()))
+                .build()
+            );
+        }
+
+        IOUtils.createDirectory(TestConfiguration.appLocation().resolve(name));
+        IOUtils.copyDirectory(TestConfiguration.appLocation().resolve(TestConfiguration.appTemplateName()),
+            TestConfiguration.appLocation().resolve(name));
 
         IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
