@@ -1,6 +1,8 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
+import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 
 import org.slf4j.Logger;
@@ -19,6 +21,7 @@ import java.util.List;
 public class LocalQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalQuarkusApp.class);
     private final Path logFile;
+    private Reader logFileReader;
     private Process appProcess;
 
     public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
@@ -35,6 +38,11 @@ public class LocalQuarkusApp extends QuarkusApp {
             appProcess = processBuilder.start();
         } catch (IOException e) {
             throw new RuntimeException("Unable to start integration process: ", e);
+        }
+        WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
+        try {
+            logFileReader = new FileReader(logFile.toFile());
+        } catch (FileNotFoundException ignored) {
         }
     }
 
@@ -60,12 +68,8 @@ public class LocalQuarkusApp extends QuarkusApp {
     }
 
     @Override
-    public Reader getLogs() {
-        try {
-            return new FileReader(logFile.toFile());
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException("Can't find the log file", e);
-        }
+    public String getLogs() {
+        return IOUtils.toString(logFileReader);
     }
 
     private List<String> getCommand() {

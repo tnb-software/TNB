@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.ck.application;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
@@ -17,14 +18,9 @@ import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 
-import org.apache.commons.io.input.ReaderInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.Reader;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Collections;
 import java.util.Map;
 
@@ -81,11 +77,7 @@ public class CamelKApp extends App {
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        try {
-            Files.copy(new ReaderInputStream(getLogs(), StandardCharsets.UTF_8), TestConfiguration.appLocation().resolve(name + ".log"));
-        } catch (IOException e) {
-            LOG.warn("Could not collect integration logs", e);
-        }
+        IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLogs());
         LOG.info("Removing integration {}", name);
         if (kameletBinding != null) {
             LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());
@@ -118,8 +110,8 @@ public class CamelKApp extends App {
     }
 
     @Override
-    public Reader getLogs() {
-        return OpenshiftClient.get().getPodLogReader(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name).get(0));
+    public String getLogs() {
+        return OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod("camel.apache.org/integration", name));
     }
 
     /**
