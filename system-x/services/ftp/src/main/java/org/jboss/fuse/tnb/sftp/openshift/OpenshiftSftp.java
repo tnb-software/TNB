@@ -1,13 +1,12 @@
 package org.jboss.fuse.tnb.sftp.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
+import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.sftp.service.Sftp;
-
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,7 +35,7 @@ import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 
 @AutoService(Sftp.class)
-public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
+public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSftp.class);
 
     public static final int LOCAL_PORT = 3322;
@@ -123,13 +122,23 @@ public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift ftp");
-        IOUtils.closeQuietly(client);
-        IOUtils.closeQuietly(portForward);
-
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
+    }
+
+    @Override
+    public void openResources() {
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
+        WaitUtils.sleep(1000);
+        makeClient();
+    }
+
+    @Override
+    public void closeResources() {
+        IOUtils.closeQuietly(client);
+        IOUtils.closeQuietly(portForward);
     }
 
     @Override
@@ -152,11 +161,6 @@ public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
 
     @Override
     public SFTPClient client() {
-        if (client == null) {
-            portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
-            WaitUtils.sleep(1000);
-            makeClient();
-        }
         return client;
     }
 
@@ -176,16 +180,6 @@ public class OpenshiftSftp extends Sftp implements OpenshiftNamedDeployable {
     @Override
     public String host() {
         return name();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
     }
 
 }

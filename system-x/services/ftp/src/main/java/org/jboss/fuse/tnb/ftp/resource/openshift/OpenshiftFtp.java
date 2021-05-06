@@ -1,23 +1,14 @@
 package org.jboss.fuse.tnb.ftp.resource.openshift;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
-
-import io.fabric8.kubernetes.api.model.Pod;
-
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
-
-import org.apache.commons.net.ftp.FTP;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.deployment.OpenshiftNamedDeployable;
+import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.ftp.service.Ftp;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
+import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,13 +28,17 @@ import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 
 @AutoService(Ftp.class)
-public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
+public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftFtp.class);
 
     private FTPClient client;
@@ -129,18 +124,31 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift ftp");
-        try {
-            client().disconnect();
-        } catch (IOException ignored) {
-        }
-        for (PortForward portForward : portForwards) {
-            IOUtils.closeQuietly(portForward);
-        }
-
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
+    }
+
+    @Override
+    public void openResources() {
+        setupPortForwards();
+        WaitUtils.sleep(1000);
+        makeClient();
+    }
+
+    @Override
+    public void closeResources() {
+        try {
+            if (client != null) {
+                client.disconnect();
+            }
+        } catch (IOException ignored) {
+        }
+
+        for (PortForward portForward : portForwards) {
+            IOUtils.closeQuietly(portForward);
+        }
     }
 
     @Override
@@ -163,11 +171,6 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
 
     @Override
     protected FTPClient client() {
-        if (client == null) {
-            setupPortForwards();
-            WaitUtils.sleep(1000);
-            makeClient();
-        }
         return client;
     }
 
@@ -199,16 +202,6 @@ public class OpenshiftFtp extends Ftp implements OpenshiftNamedDeployable {
     @Override
     public String host() {
         return name();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
     }
 
     private void setupPortForwards() {

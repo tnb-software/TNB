@@ -19,16 +19,20 @@ import cz.xtf.core.openshift.helpers.ResourceFunctions;
 @AutoService(Product.class)
 public class OpenshiftCamelQuarkus extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
+
+    private static boolean initialized;
+
     private App app;
 
     @Override
     public boolean isReady() {
-        return true;
+        return initialized;
     }
 
     @Override
     public void setupProduct() {
         Maven.setupMaven();
+        initialized = true;
     }
 
     @Override
