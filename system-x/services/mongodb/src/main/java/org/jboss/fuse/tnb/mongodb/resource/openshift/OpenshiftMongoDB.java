@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.mongodb.service.MongoDB;
 
 import org.slf4j.Logger;
@@ -14,7 +15,6 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -111,6 +111,14 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     }
 
     @Override
+    public void openResources() {
+        LOG.debug("Creating port-forward to {} for port {}", name(), port());
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
+        LOG.debug("Creating new MongoClient instance");
+        client = MongoClients.create(replicaSetUrl().replace("@" + name(), "@localhost"));
+    }
+
+    @Override
     public boolean isReady() {
         List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
         if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
@@ -132,12 +140,6 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     protected MongoClient client() {
-        if (client == null) {
-            LOG.debug("Creating port-forward to {} for port {}", name(), port());
-            portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
-            LOG.debug("Creating new MongoClient instance");
-            client = MongoClients.create(replicaSetUrl().replace("@" + name(), "@localhost"));
-        }
         return client;
     }
 
@@ -157,17 +159,14 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     }
 
     @Override
-    public void close() {
+    public void closeResources() {
         if (client != null) {
             LOG.debug("Closing MongoDB client");
             client.close();
         }
         if (portForward != null && portForward.isAlive()) {
-            try {
-                LOG.debug("Closing port-forward");
-                portForward.close();
-            } catch (IOException ignored) {
-            }
+            LOG.debug("Closing port-forward");
+            IOUtils.closeQuietly(portForward);
         }
     }
 }

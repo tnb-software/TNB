@@ -80,6 +80,16 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
     }
 
     @Override
+    public void openResources() {
+        // no-op
+    }
+
+    @Override
+    public void closeResources() {
+        // no-op
+    }
+
+    @Override
     public void create() {
         OpenshiftClient.createNamespace(TARGET_NAMESPACE);
         // Create subscription for serverless operator
@@ -152,10 +162,5 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
         if (validation != null) {
             validation.deleteCreatedResources();
         }
-    }
-
-    @Override
-    public void close() {
-        // no need to close anything
     }
 }

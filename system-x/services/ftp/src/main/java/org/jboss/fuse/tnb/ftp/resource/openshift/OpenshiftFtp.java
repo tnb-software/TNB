@@ -8,8 +8,6 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.ftp.service.Ftp;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.apache.commons.net.ftp.FTP;
 import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
@@ -126,18 +124,31 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift ftp");
-        try {
-            client().disconnect();
-        } catch (IOException ignored) {
-        }
-        for (PortForward portForward : portForwards) {
-            IOUtils.closeQuietly(portForward);
-        }
-
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
+    }
+
+    @Override
+    public void openResources() {
+        setupPortForwards();
+        WaitUtils.sleep(1000);
+        makeClient();
+    }
+
+    @Override
+    public void closeResources() {
+        try {
+            if (client != null) {
+                client.disconnect();
+            }
+        } catch (IOException ignored) {
+        }
+
+        for (PortForward portForward : portForwards) {
+            IOUtils.closeQuietly(portForward);
+        }
     }
 
     @Override
@@ -160,11 +171,6 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
 
     @Override
     protected FTPClient client() {
-        if (client == null) {
-            setupPortForwards();
-            WaitUtils.sleep(1000);
-            makeClient();
-        }
         return client;
     }
 
@@ -196,16 +202,6 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     @Override
     public String host() {
         return name();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
     }
 
     private void setupPortForwards() {

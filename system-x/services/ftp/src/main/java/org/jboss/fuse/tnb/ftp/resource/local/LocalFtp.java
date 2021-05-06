@@ -1,18 +1,14 @@
 package org.jboss.fuse.tnb.ftp.resource.local;
 
-import org.jboss.fuse.tnb.ftp.service.Ftp;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
+import org.jboss.fuse.tnb.ftp.service.Ftp;
 
 import org.apache.commons.net.ftp.FTPClient;
-
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.images.builder.Transferable;
 
 import com.google.auto.service.AutoService;
-
-import org.testcontainers.images.builder.Transferable;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,20 +36,33 @@ public class LocalFtp extends Ftp implements Deployable {
     }
 
     @Override
-    protected FTPClient client() {
-        if (client == null) {
-            try {
-                LOG.debug("Creating new FTPClient instance");
-                client = new TestContainerFtpOutOfBandClient();
-                client.connect(localClientHost(), port());
-                client.login(account().username(), account().password());
-                client.enterLocalPassiveMode();
-                client.setFileType(org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE);
-                client.setDataTimeout(500000);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+    public void openResources() {
+        try {
+            LOG.debug("Creating new FTPClient instance");
+            client = new TestContainerFtpOutOfBandClient();
+            client.connect(localClientHost(), port());
+            client.login(account().username(), account().password());
+            client.enterLocalPassiveMode();
+            client.setFileType(org.apache.commons.net.ftp.FTP.BINARY_FILE_TYPE);
+            client.setDataTimeout(500000);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public void closeResources() {
+        try {
+            if (client != null) {
+                client.disconnect();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    protected FTPClient client() {
         return client;
     }
 
@@ -69,16 +78,6 @@ public class LocalFtp extends Ftp implements Deployable {
         // Also tried exposing all the ports and using localhost, but then the integration would not work for some reason
         //      (probably because the ftp server is listening for passive connections on the ip, not on localhost)
         return container.getContainerInfo().getNetworkSettings().getNetworks().get("bridge").getIpAddress();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
     }
 
     /**

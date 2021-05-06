@@ -13,15 +13,11 @@ public interface ReusableOpenshiftDeployable extends OpenshiftDeployable {
      */
     void cleanup();
 
-    /**
-     * Close the resources used to communicate with services after the tests - clients, port-forwards, etc.
-     */
-    void close();
-
     default void beforeAll(ExtensionContext extensionContext) throws Exception {
         if (!isDeployed()) {
             deploy();
         }
+        openResources();
     }
 
     default void afterAll(ExtensionContext extensionContext) throws Exception {
@@ -30,6 +26,6 @@ public interface ReusableOpenshiftDeployable extends OpenshiftDeployable {
         } else {
             undeploy();
         }
-        close();
+        closeResources();
     }
 }

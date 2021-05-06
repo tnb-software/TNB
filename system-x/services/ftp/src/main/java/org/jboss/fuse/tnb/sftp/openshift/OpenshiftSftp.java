@@ -8,8 +8,6 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.sftp.service.Sftp;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -124,13 +122,23 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift ftp");
-        IOUtils.closeQuietly(client);
-        IOUtils.closeQuietly(portForward);
-
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
+    }
+
+    @Override
+    public void openResources() {
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
+        WaitUtils.sleep(1000);
+        makeClient();
+    }
+
+    @Override
+    public void closeResources() {
+        IOUtils.closeQuietly(client);
+        IOUtils.closeQuietly(portForward);
     }
 
     @Override
@@ -153,11 +161,6 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
 
     @Override
     public SFTPClient client() {
-        if (client == null) {
-            portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
-            WaitUtils.sleep(1000);
-            makeClient();
-        }
         return client;
     }
 
@@ -177,16 +180,6 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
     @Override
     public String host() {
         return name();
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        undeploy();
-    }
-
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        deploy();
     }
 
 }
