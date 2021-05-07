@@ -1,8 +1,9 @@
 package org.jboss.fuse.tnb.slack.account;
 
 import org.jboss.fuse.tnb.common.account.Account;
+import org.jboss.fuse.tnb.common.account.WithId;
 
-public class SlackAccount implements Account {
+public class SlackAccount implements Account, WithId {
     private String webhook_url;
     private String token;
     private String channel;
