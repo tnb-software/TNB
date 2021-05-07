@@ -23,6 +23,9 @@
 		<module>kinesis</module>
 		<module>ftp</module>
 		<module>knative</module>
+		<module>s3</module>
+		<module>kinesis-firehose</module>
+		<module>azure-storage-blob</module>
 	</modules>
 
 	<dependencies>
