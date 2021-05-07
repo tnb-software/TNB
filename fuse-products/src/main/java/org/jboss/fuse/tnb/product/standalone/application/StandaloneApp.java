@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product.standalone.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -75,6 +74,6 @@ public class StandaloneApp extends App {
 
     @Override
     public String getLogs() {
-        return IOUtils.toString(buildRequest.getOutputHandler().getOutput());
+        return buildRequest.getOutputHandler().getOutput();
     }
 }

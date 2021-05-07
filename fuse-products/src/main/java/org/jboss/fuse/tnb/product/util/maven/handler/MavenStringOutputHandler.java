@@ -1,8 +1,5 @@
 package org.jboss.fuse.tnb.product.util.maven.handler;
 
-import java.io.Reader;
-import java.io.StringReader;
-
 public class MavenStringOutputHandler implements MavenOutputHandler {
 
     private final StringBuilder stringBuilder = new StringBuilder();
@@ -12,7 +9,7 @@ public class MavenStringOutputHandler implements MavenOutputHandler {
         stringBuilder.append(s);
     }
 
-    public Reader getOutput() {
-        return new StringReader(stringBuilder.toString());
+    public String getOutput() {
+        return stringBuilder.toString();
     }
 }

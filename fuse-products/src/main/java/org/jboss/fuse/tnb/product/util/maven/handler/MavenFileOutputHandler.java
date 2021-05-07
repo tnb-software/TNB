@@ -1,17 +1,17 @@
 package org.jboss.fuse.tnb.product.util.maven.handler;
 
+import org.jboss.fuse.tnb.common.utils.IOUtils;
+
 import java.io.Closeable;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.Reader;
 import java.nio.file.Path;
 
 public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
 
-    private PrintWriter in;
-    private Path file;
+    private final PrintWriter in;
+    private final Path file;
 
     public MavenFileOutputHandler(Path outputFile) throws IOException {
         this.in = new PrintWriter(new FileWriter(outputFile.toFile()), true);
@@ -24,12 +24,8 @@ public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
     }
 
     @Override
-    public Reader getOutput() {
-        try {
-            return new FileReader(file.toFile());
-        } catch (IOException e) {
-            throw new RuntimeException("Can't find the log file", e);
-        }
+    public String getOutput() {
+        return IOUtils.readFile(file);
     }
 
     @Override
