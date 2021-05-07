@@ -11,27 +11,15 @@
 
 	<artifactId>system-x-google</artifactId>
 	<name>system-x-google</name>
+	<packaging>pom</packaging>
 
 	<properties>
 		<google-api.client.version>1.23.0</google-api.client.version>
 		<google-sheets.client.version>v4-rev493-1.23.0</google-sheets.client.version>
 	</properties>
 
-	<dependencies>
-		<dependency>
-			<groupId>com.google.api-client</groupId>
-			<artifactId>google-api-client</artifactId>
-			<version>${google-api.client.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.oauth-client</groupId>
-			<artifactId>google-oauth-client-jetty</artifactId>
-			<version>${google-api.client.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>com.google.apis</groupId>
-			<artifactId>google-api-services-sheets</artifactId>
-			<version>${google-sheets.client.version}</version>
-		</dependency>
-	</dependencies>
+	<modules>
+		<module>sheets</module>
+	</modules>
+
 </project>
