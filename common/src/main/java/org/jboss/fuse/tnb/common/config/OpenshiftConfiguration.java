@@ -3,6 +3,8 @@ package org.jboss.fuse.tnb.common.config;
 import java.util.UUID;
 
 public class OpenshiftConfiguration extends Configuration {
+    public static final String USE_OPENSHIFT = "test.use.openshift";
+
     private static final String OPENSHIFT_URL = "openshift.url";
     private static final String OPENSHIFT_USERNAME = "openshift.username";
     private static final String OPENSHIFT_PASSWORD = "openshift.password";
@@ -14,12 +16,16 @@ public class OpenshiftConfiguration extends Configuration {
     private static final String NAMESPACE_PREFIX = "tnb-test-";
 
     static {
-        if ((openshiftUrl() != null) && (openshiftNamespace() == null)) {
+        if (isOpenshift() && (openshiftNamespace() == null)) {
             OPENSHIFT_IS_TEMPORARY_NAMESPACE = true;
             //generate new name for temporary namespace
             String random = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
             setProperty(OPENSHIFT_NAMESPACE, NAMESPACE_PREFIX + random);
         }
+    }
+
+    public static boolean isOpenshift() {
+        return getBoolean(USE_OPENSHIFT, false);
     }
 
     public static String openshiftUrl() {
@@ -40,10 +46,6 @@ public class OpenshiftConfiguration extends Configuration {
 
     public static String openshiftDeploymentLabel() {
         return getProperty(OPENSHIFT_DEPLOYMENT_LABEL, "app");
-    }
-
-    public static boolean isOpenshift() {
-        return openshiftUrl() != null;
     }
 
     public static boolean isTemporaryNamespace() {
