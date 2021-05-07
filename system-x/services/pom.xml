@@ -23,6 +23,7 @@
 		<module>kinesis</module>
 		<module>ftp</module>
 		<module>knative</module>
+		<module>kinesis-firehose</module>
 	</modules>
 
 	<dependencies>
