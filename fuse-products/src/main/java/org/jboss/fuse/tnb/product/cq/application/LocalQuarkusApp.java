@@ -9,10 +9,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -21,7 +18,6 @@ import java.util.List;
 public class LocalQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalQuarkusApp.class);
     private final Path logFile;
-    private Reader logFileReader;
     private Process appProcess;
 
     public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
@@ -40,10 +36,6 @@ public class LocalQuarkusApp extends QuarkusApp {
             throw new RuntimeException("Unable to start integration process: ", e);
         }
         WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
-        try {
-            logFileReader = new FileReader(logFile.toFile());
-        } catch (FileNotFoundException ignored) {
-        }
     }
 
     @Override
@@ -69,7 +61,7 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     @Override
     public String getLogs() {
-        return IOUtils.toString(logFileReader);
+        return IOUtils.readFile(logFile);
     }
 
     private List<String> getCommand() {

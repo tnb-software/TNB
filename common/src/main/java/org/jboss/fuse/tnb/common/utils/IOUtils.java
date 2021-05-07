@@ -9,7 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.IOException;
-import java.io.Reader;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -88,13 +87,5 @@ public final class IOUtils {
 
     public static void closeQuietly(Closeable closeable) {
         org.apache.commons.io.IOUtils.closeQuietly(closeable, e -> LOG.warn("Could not close resource", e));
-    }
-
-    public static String toString(Reader r) {
-        try {
-            return org.apache.commons.io.IOUtils.toString(r);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read reader: ", e);
-        }
     }
 }
