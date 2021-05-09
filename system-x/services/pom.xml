@@ -21,6 +21,7 @@
 		<module>log</module>
 		<module>mongodb</module>
 		<module>slack</module>
+		<module>jira</module>
 	</modules>
 
 	<dependencies>
