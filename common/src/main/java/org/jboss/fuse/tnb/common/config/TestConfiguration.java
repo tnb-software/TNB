@@ -18,6 +18,7 @@ public class TestConfiguration extends Configuration {
     public static final String CREDENTIALS_FILE = "test.credentials.file";
     public static final String APP_GROUP_ID = "test.app.group.id";
     public static final String APP_LOCATION = "app.location";
+    public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
@@ -55,6 +56,10 @@ public class TestConfiguration extends Configuration {
 
     public static Path appLocation() {
         return Paths.get(getProperty(APP_LOCATION, "target"));
+    }
+
+    public static String appTemplateName() {
+        return getProperty(APP_TEMPLATE_NAME, "tnb-app");
     }
 
     public static Duration testWaitTime() {
