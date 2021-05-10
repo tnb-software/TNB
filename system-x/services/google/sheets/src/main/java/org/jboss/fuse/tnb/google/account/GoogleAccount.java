@@ -1,8 +1,9 @@
 package org.jboss.fuse.tnb.google.account;
 
 import org.jboss.fuse.tnb.common.account.Account;
+import org.jboss.fuse.tnb.common.account.WithId;
 
-public class GoogleAccount implements Account {
+public class GoogleAccount implements Account, WithId {
 
     private String api_client_id;
     private String api_client_secret;

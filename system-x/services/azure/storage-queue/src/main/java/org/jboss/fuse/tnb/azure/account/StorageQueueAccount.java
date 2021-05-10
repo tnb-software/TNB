@@ -1,11 +1,13 @@
 package org.jboss.fuse.tnb.azure.account;
 
 import org.jboss.fuse.tnb.common.account.Account;
+import org.jboss.fuse.tnb.common.account.WithId;
 
-public class StorageQueueAccount implements Account {
+public class StorageQueueAccount implements Account, WithId {
     private String access_key;
     private String account_name;
 
+    @Override
     public String credentialsId() {
         return "azure-tnb";
     }

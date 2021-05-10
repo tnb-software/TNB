@@ -1,13 +1,15 @@
 package org.jboss.fuse.tnb.aws.account;
 
 import org.jboss.fuse.tnb.common.account.Account;
+import org.jboss.fuse.tnb.common.account.WithId;
 
-public class AWSAccount implements Account {
+public class AWSAccount implements Account, WithId {
     private String access_key;
     private String secret_key;
     private String region;
     private String account_id;
 
+    @Override
     public String credentialsId() {
         return "aws";
     }
