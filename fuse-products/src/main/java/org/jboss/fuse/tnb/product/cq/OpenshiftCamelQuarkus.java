@@ -20,7 +20,7 @@ import cz.xtf.core.openshift.helpers.ResourceFunctions;
 public class OpenshiftCamelQuarkus extends OpenshiftProduct {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
 
-    private static boolean initialized;
+    private static boolean initialized = false;
 
     private App app;
 
@@ -31,8 +31,10 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct {
 
     @Override
     public void setupProduct() {
-        Maven.setupMaven();
-        initialized = true;
+        if (!initialized) {
+            Maven.setupMaven();
+            initialized = true;
+        }
     }
 
     @Override

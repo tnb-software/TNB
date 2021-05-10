@@ -56,20 +56,22 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void setupProduct() {
-        LOG.info("Deploying Camel-K");
-        CamelKConfiguration config = CamelKConfiguration.getConfiguration();
-        if (CamelKConfiguration.forceUpstream()) {
-            LOG.warn(
-                "You are going to deploy upstream version of Camel-K. " +
-                    "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can break the " +
-                    "cluster for other tests."
-            );
+        if (!isReady()) {
+            LOG.info("Deploying Camel-K");
+            CamelKConfiguration config = CamelKConfiguration.getConfiguration();
+            if (CamelKConfiguration.forceUpstream()) {
+                LOG.warn(
+                    "You are going to deploy upstream version of Camel-K. " +
+                        "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can break the " +
+                        "cluster for other tests."
+                );
+            }
+            OpenshiftClient
+                .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
+                    SUBSCRIPTION_NAME,
+                    config.subscriptionSourceNamespace());
+            OpenshiftClient.waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
         }
-        OpenshiftClient
-            .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
-                SUBSCRIPTION_NAME,
-                config.subscriptionSourceNamespace());
-        OpenshiftClient.waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
         // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
         // and then the desired one is returned

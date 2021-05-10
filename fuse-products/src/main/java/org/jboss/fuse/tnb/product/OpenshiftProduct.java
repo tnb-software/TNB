@@ -10,11 +10,9 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public abstract class OpenshiftProduct extends Product {
 
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        if (!isReady()) {
-            OpenshiftClient.createNamespace(); // ensure namespace exists
-            setupProduct();
-            WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the resource is ready");
-        }
+        OpenshiftClient.createNamespace(); // ensure namespace exists
+        setupProduct();
+        WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " is ready");
     }
 
     public void afterAll(ExtensionContext extensionContext) throws Exception {
