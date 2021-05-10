@@ -57,15 +57,15 @@ public class TestConfiguration extends Configuration {
         return Paths.get(getProperty(APP_LOCATION, "target"));
     }
 
+    public static Duration testWaitTime() {
+        return Duration.of(getInteger(TEST_WAIT_TIME, 60), ChronoUnit.SECONDS);
+    }
+
     public static String quarkusVersion() {
         return getProperty(QUARKUS_VERSION, "1.11.5.Final");
     }
 
     public static boolean isQuarkusNative() {
         return getBoolean(QUARKUS_NATIVE_BUILD);
-    }
-
-    public static Duration testWaitTime() {
-        return Duration.of(getInteger(TEST_WAIT_TIME, 60), ChronoUnit.SECONDS);
     }
 }
