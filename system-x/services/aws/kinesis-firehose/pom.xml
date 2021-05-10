@@ -3,17 +3,13 @@
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-		<artifactId>system-x-parent</artifactId>
+		<artifactId>system-x-aws</artifactId>
 		<groupId>org.jboss.fuse.tnb</groupId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
 	<modelVersion>4.0.0</modelVersion>
 
-	<artifactId>system-x-kinesis</artifactId>
-
-	<properties>
-		<kinesis.client.version>2.16.43</kinesis.client.version>
-	</properties>
+	<artifactId>system-x-aws-kinesis-firehose</artifactId>
 
 	<dependencies>
 		<dependency>
@@ -23,9 +19,8 @@
 		</dependency>
 		<dependency>
 			<groupId>software.amazon.awssdk</groupId>
-			<artifactId>kinesis</artifactId>
-			<version>${kinesis.client.version}</version>
+			<artifactId>firehose</artifactId>
+			<version>${aws.clients.version}</version>
 		</dependency>
 	</dependencies>
-
 </project>

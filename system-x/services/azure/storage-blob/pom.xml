@@ -3,7 +3,7 @@
 		xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 		xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<parent>
-		<artifactId>system-x-services</artifactId>
+		<artifactId>system-x-azure</artifactId>
 		<groupId>org.jboss.fuse.tnb</groupId>
 		<version>1.0-SNAPSHOT</version>
 	</parent>
@@ -11,15 +11,11 @@
 
 	<artifactId>system-x-azure-storage-blob</artifactId>
 
-	<properties>
-		<azure.storage.blob.client.version>12.8.0</azure.storage.blob.client.version>
-	</properties>
-
 	<dependencies>
 		<dependency>
 			<groupId>com.azure</groupId>
 			<artifactId>azure-storage-blob</artifactId>
-			<version>${azure.storage.blob.client.version}</version>
+			<version>${azure.clients.version}</version>
 		</dependency>
 	</dependencies>
 </project>

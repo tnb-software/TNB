@@ -13,19 +13,14 @@
 	<packaging>pom</packaging>
 
 	<modules>
-		<module>aws-common</module>
+		<module>aws</module>
+		<module>azure</module>
+		<module>ftp</module>
 		<module>google</module>
+		<module>knative</module>
 		<module>log</module>
 		<module>mongodb</module>
 		<module>slack</module>
-		<module>sqs</module>
-		<module>azure-storage-queue</module>
-		<module>kinesis</module>
-		<module>ftp</module>
-		<module>knative</module>
-		<module>s3</module>
-		<module>kinesis-firehose</module>
-		<module>azure-storage-blob</module>
 	</modules>
 
 	<dependencies>
