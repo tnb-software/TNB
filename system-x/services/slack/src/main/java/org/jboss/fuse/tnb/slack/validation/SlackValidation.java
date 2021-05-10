@@ -35,7 +35,7 @@ public class SlackValidation {
             LOG.info("Sending message {} to Slack", text);
             ConversationsListResponse conversationsList =
                 client.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build());
-            Conversation chann = conversationsList.getChannels().stream().filter(c -> c.getName().contains("tests")).findFirst().get();
+            Conversation chann = conversationsList.getChannels().stream().filter(c -> c.getName().contains(account.channel())).findFirst().get();
             final ChatPostMessageResponse chatPostMessageResponse = client.methods().chatPostMessage(ChatPostMessageRequest.builder()
                 .token(account.token())
                 .channel(chann.getId())
@@ -53,7 +53,7 @@ public class SlackValidation {
             ConversationsListResponse conversationsList =
                 client.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build());
             Conversation chann = conversationsList.getChannels().stream()
-                .filter(c -> c.getName().equals("tests")).findFirst().get();
+                .filter(c -> c.getName().equals(account.channel())).findFirst().get();
             return client.methods().conversationsHistory(ConversationsHistoryRequest.builder()
                 .token(account.token())
                 .channel(chann.getId())
