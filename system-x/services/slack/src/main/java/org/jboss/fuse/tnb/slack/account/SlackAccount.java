@@ -9,7 +9,7 @@ public class SlackAccount implements Account {
 
     @Override
     public String credentialsId() {
-        return "slack";
+        return "slack-tnb";
     }
 
     public String webhookUrl() {
