@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.ftp.validation;
 
-import org.apache.commons.net.ftp.FTPClient;
+import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -11,9 +11,9 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 public class FtpValidation {
 
-    private final FTPClient client;
+    private final CustomFtpClient client;
 
-    public FtpValidation(FTPClient client) {
+    public FtpValidation(CustomFtpClient client) {
         this.client = client;
     }
 
@@ -27,7 +27,6 @@ public class FtpValidation {
 
     public String downloadFile(String fileName) {
         try {
-            fileName = client.printWorkingDirectory() + "/" + fileName;
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
             client.retrieveFile(fileName, baos);
             return baos.toString();

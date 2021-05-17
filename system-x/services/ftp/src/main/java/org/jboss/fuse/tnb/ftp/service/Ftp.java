@@ -19,7 +19,7 @@ public abstract class Ftp implements Service {
     private FtpAccount account;
     private FtpValidation validation;
 
-    protected abstract FTPClient client();
+    protected abstract CustomFtpClient client();
 
     public abstract int port();
 
@@ -43,17 +43,18 @@ public abstract class Ftp implements Service {
     public Map<String, String> containerEnvironment() {
         return Map.of(
             "FTP_USERNAME", account().username(),
-            "FTP_PASSWORD", account().password()
+            "FTP_PASSWORD", account().password(),
+            "USERS", String.format("%s|%s", account.username(), account.password())
         );
     }
 
-    protected String localClientHost() {
-        return host();
+    protected String basePath() {
+        // base path in the container to put files on (because we use out of band transfer)
+        return "/tmp/" + account().username();
     }
-
 
     public static String ftpImage() {
         // TODO: move this to a team org
-        return System.getProperty(FTP_IMAGE_KEY, "quay.io/asmigala/ftpserver:latest");
+        return System.getProperty(FTP_IMAGE_KEY, "quay.io/asmigala/apache-ftp:latest");
     }
 }
