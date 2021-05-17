@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -42,6 +43,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
 
     private SFTPClient client;
     private PortForward portForward;
+    private String serviceAccountName;
 
     @Override
     public void create() {
@@ -52,17 +54,27 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
             .withContainerPort(port())
             .withProtocol("TCP").build());
 
-        String sa = name() + "-sa";
+        serviceAccountName = name() + "-sa";
+
         OpenshiftClient.get().serviceAccounts()
             .createOrReplace(new ServiceAccountBuilder()
                 .withNewMetadata()
-                .withName(sa)
+                .withName(serviceAccountName)
                 .endMetadata()
                 .build()
             );
 
         SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName("anyuid").edit();
-        scc.getUsers().add("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + sa);
+        final String user = "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
+        if (scc.getUsers().isEmpty() || !scc.getUsers().contains(user)) {
+            scc.getUsers().add(user);
+        }
+        if (scc.getDefaultAddCapabilities() == null) {
+            scc.setDefaultAddCapabilities(new ArrayList<>());
+        }
+        if (!scc.getDefaultAddCapabilities().contains("SYS_CHROOT")) {
+            scc.getDefaultAddCapabilities().add("SYS_CHROOT");
+        }
         OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
@@ -82,7 +94,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
                 .editOrNewSpec()
-                .withServiceAccount(sa)
+                .withServiceAccount(serviceAccountName)
                 .addNewContainer()
                 .withName(name()).withImage(sftpImage()).addAllToPorts(ports)
                 .withImagePullPolicy("IfNotPresent")
@@ -121,7 +133,10 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
 
     @Override
     public void undeploy() {
-        LOG.info("Undeploying OpenShift ftp");
+        LOG.info("Undeploying OpenShift sftp");
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName("anyuid").edit();
+        scc.getUsers().remove("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName);
+        OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
