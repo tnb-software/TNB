@@ -35,7 +35,8 @@ public final class MapUtils {
 
     public static Map<String, Object> propertiesToMap(Properties properties, String prefix) {
         Map<String, Object> map = new LinkedHashMap<>();
-        properties.entrySet().stream().forEach(entry -> map.put(prefix + entry.getKey(), entry.getValue()));
+        properties.entrySet().stream()
+            .forEach(entry -> map.put(prefix + StringUtils.replaceUnderscoreWithCamelCase(entry.getKey().toString()), entry.getValue()));
         return map;
     }
 }
