@@ -23,8 +23,10 @@ import com.github.javaparser.utils.SourceRoot;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 /**
  * Wrapper around creating integrations
@@ -33,6 +35,9 @@ public class IntegrationBuilder {
     private String integrationName;
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
+
+    private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit");
+
     private final List<String> camelDependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private CompilationUnit routeBuilder;
@@ -143,11 +148,6 @@ public class IntegrationBuilder {
             decl.setName("MyRouteBuilder");
             processImports(cu);
         });
-        for (Customizer customizer : customizers) {
-            customizer.setRouteBuilder(cu);
-            customizer.setApplicationProperties(appProperties);
-            customizer.customize();
-        }
     }
 
     /**
@@ -160,7 +160,7 @@ public class IntegrationBuilder {
                 super.visit(importDecl, arg);
                 final String importClass = importDecl.getName().asString();
                 //Remove internal classes
-                if (importClass.startsWith("org.jboss.fuse.tnb")) {
+                if (IGNORED_PACKAGES.stream().anyMatch(importClass::startsWith)) {
                     return null;
                 }
                 return importDecl;
@@ -197,5 +197,9 @@ public class IntegrationBuilder {
 
     public Properties getAppProperties() {
         return appProperties;
+    }
+
+    public List<Customizer> getCustomizers() {
+        return customizers;
     }
 }

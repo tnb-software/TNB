@@ -5,6 +5,8 @@ import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 
+import org.jboss.fuse.tnb.customizer.Customizer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,6 +85,12 @@ public final class IntegrationGenerator {
                     return n;
                 }
             }, null);
+        }
+
+        for (Customizer customizer : integrationBuilder.getCustomizers()) {
+            customizer.setRouteBuilder(integrationBuilder.getRouteBuilder());
+            customizer.setApplicationProperties(integrationBuilder.getAppProperties());
+            customizer.customize();
         }
 
         return new IntegrationData(integrationBuilder.getRouteBuilder().toString(), integrationBuilder.getAppProperties());
