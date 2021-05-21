@@ -5,12 +5,15 @@ import org.jboss.fuse.tnb.aws.account.AWSAccount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import software.amazon.awssdk.core.sync.RequestBody;
+import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import software.amazon.awssdk.services.s3.S3Client;
 
 public class S3Validation {
 
@@ -61,5 +64,14 @@ public class S3Validation {
             throw new RuntimeException("Unable to transfer object contents", e);
         }
         return outputStream.toString();
+    }
+
+    public void sendMessage(String bucketName, String key, String message) {
+        PutObjectRequest objectRequest = PutObjectRequest.builder()
+            .bucket(bucketName)
+            .key(key)
+            .build();
+
+        client.putObject(objectRequest, RequestBody.fromString(message));
     }
 }
