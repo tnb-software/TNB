@@ -94,6 +94,7 @@ public final class IntegrationGenerator {
 
         LOG.debug("Integration class:\n{}", integrationBuilder.getRouteBuilder().toString());
 
-        return new IntegrationData(integrationBuilder.getRouteBuilder().toString(), integrationBuilder.getAppProperties());
+        return new IntegrationData(integrationBuilder.getRouteBuilder().toString(), integrationBuilder.getAppProperties(),
+            integrationBuilder.getCamelDependencies());
     }
 }
