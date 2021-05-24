@@ -4,7 +4,6 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
-
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import org.slf4j.Logger;
@@ -92,6 +91,8 @@ public final class IntegrationGenerator {
             customizer.setApplicationProperties(integrationBuilder.getAppProperties());
             customizer.customize();
         }
+
+        LOG.debug("Integration class:\n{}", integrationBuilder.getRouteBuilder().toString());
 
         return new IntegrationData(integrationBuilder.getRouteBuilder().toString(), integrationBuilder.getAppProperties());
     }

@@ -10,7 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+/**
+ * @deprecated use App.getLog() for validation purposes.
+ */
 @AutoService(Log.class)
+@Deprecated
 public class Log implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Log.class);
 

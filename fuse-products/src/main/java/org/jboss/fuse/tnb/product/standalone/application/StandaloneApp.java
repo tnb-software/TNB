@@ -5,6 +5,7 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.log.MavenLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -60,6 +61,8 @@ public class StandaloneApp extends App {
             .withLogFile(TestConfiguration.appLocation().resolve(name + ".log"))
             .build();
 
+        log = new MavenLog(buildRequest.getOutputHandler());
+
         executorService.submit(() -> {
             try {
                 Maven.invoke(buildRequest);
@@ -84,10 +87,5 @@ public class StandaloneApp extends App {
     @Override
     public boolean isFailed() {
         return !isRunning;
-    }
-
-    @Override
-    public String getLogs() {
-        return buildRequest.getOutputHandler().getOutput();
     }
 }
