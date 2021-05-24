@@ -38,6 +38,10 @@ public class CamelKSupport {
         return camelkCRDContext("kamelets", version);
     }
 
+    public static CustomResourceDefinitionContext integrationPlatformCRDContext(String version) {
+        return camelkCRDContext("integrationplatforms", version);
+    }
+
     public static CustomResourceDefinitionContext kameletBindingCRDContext(String version) {
         return camelkCRDContext("kameletbindings", version);
     }

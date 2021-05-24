@@ -20,6 +20,9 @@ public class TestConfiguration extends Configuration {
     public static final String APP_LOCATION = "app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
+    public static final String MAVEN_REPOSITORY = "test.maven.repository";
+    public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
+    public static final String MAVEN_PROFILE_ID = "test.maven.profile.id";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
@@ -67,6 +70,18 @@ public class TestConfiguration extends Configuration {
 
     public static Duration testWaitTime() {
         return Duration.of(getInteger(TEST_WAIT_TIME, 60), ChronoUnit.SECONDS);
+    }
+
+    public static String mavenRepository() {
+        return getProperty(MAVEN_REPOSITORY);
+    }
+
+    public static String mavenSettingsFileName() {
+        return getProperty(MAVEN_SETTINGS_FILE_NAME, "tnb-maven-settings.xml");
+    }
+
+    public static String mavenProfileId() {
+        return getProperty(MAVEN_PROFILE_ID, "tnb-maven-repo");
     }
 
     public static String quarkusVersion() {

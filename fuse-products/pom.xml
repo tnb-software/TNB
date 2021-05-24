@@ -54,6 +54,11 @@
 			<version>${maven.model.version}</version>
 		</dependency>
 		<dependency>
+			<groupId>org.apache.maven</groupId>
+			<artifactId>maven-settings</artifactId>
+			<version>${maven.model.version}</version>
+		</dependency>
+		<dependency>
 			<groupId>org.apache.camel</groupId>
 			<artifactId>camel-core-model</artifactId>
 			<version>${camel.version}</version>
