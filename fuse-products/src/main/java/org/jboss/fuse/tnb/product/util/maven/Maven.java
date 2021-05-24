@@ -1,10 +1,15 @@
 package org.jboss.fuse.tnb.product.util.maven;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
+
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.settings.RepositoryPolicy;
+import org.apache.maven.settings.Settings;
+import org.apache.maven.settings.io.xpp3.SettingsXpp3Writer;
 import org.apache.maven.shared.invoker.DefaultInvocationRequest;
 import org.apache.maven.shared.invoker.DefaultInvoker;
 import org.apache.maven.shared.invoker.InvocationRequest;
@@ -23,7 +28,9 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -81,6 +88,8 @@ public final class Maven {
         if (mvnLocation == null) {
             throw new RuntimeException("No maven found in system/environment properties nor in PATH");
         }
+
+        createSettingsXmlFile();
     }
 
     /**
@@ -124,10 +133,19 @@ public final class Maven {
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
         List<String> goals = buildRequest.getGoals();
+        List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
+        File globalMavenSettings = null;
+
+        if (TestConfiguration.mavenRepository() != null) {
+            LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenProfileId());
+            profiles.add(TestConfiguration.mavenProfileId());
+            globalMavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
+        }
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n" +
             "  Base dir: " + dir.getAbsolutePath() + "\n" +
-            "  Goals: " + goals.toString() + "\n"
+            "  Goals: " + goals.toString() + "\n" +
+            "  Profiles: " + profiles + "\n"
         );
         if (properties != null && !properties.isEmpty()) {
             propertiesLog.append("  Properties").append("\n");
@@ -137,10 +155,11 @@ public final class Maven {
 
         try {
             InvocationRequest request = newRequest()
+                .setGlobalSettingsFile(globalMavenSettings)
                 .setBaseDirectory(dir)
                 .setBatchMode(true)
                 .setGoals(goals)
-                .setProfiles(buildRequest.getProfiles())
+                .setProfiles(profiles)
                 .setProperties(properties)
                 .setOutputHandler(buildRequest.getOutputHandler())
                 .setErrorHandler(buildRequest.getOutputHandler());
@@ -178,7 +197,7 @@ public final class Maven {
             return;
         }
         File pom = dir.resolve("pom.xml").toFile();
-        LOG.info("Adding {} as dependencies to {}", dependencies.toString(), pom);
+        LOG.info("Adding {} as dependencies to {}", dependencies, pom);
 
         Model model = loadPom(pom);
         for (String dependency : dependencies) {
@@ -219,6 +238,40 @@ public final class Maven {
             new MavenXpp3Writer().write(os, model);
         } catch (IOException e) {
             throw new RuntimeException("Unable to write POM " + pom.getAbsolutePath(), e);
+        }
+    }
+
+    /**
+     * Creates a settings xml file with 1 profile with specified maven repository. This file is later used as maven global settings and will be
+     * merged by user's settings by default by maven.
+     */
+    private static void createSettingsXmlFile() {
+        if (TestConfiguration.mavenRepository() == null) {
+            return;
+        }
+
+        // Create settings.xml file with the user defined repository
+        Settings settings = new Settings();
+
+        org.apache.maven.settings.Repository r = new org.apache.maven.settings.Repository();
+        r.setId(TestConfiguration.mavenProfileId());
+        r.setUrl(TestConfiguration.mavenRepository());
+        RepositoryPolicy enabled = new RepositoryPolicy();
+        enabled.setEnabled(true);
+        r.setReleases(enabled);
+        r.setSnapshots(enabled);
+
+        org.apache.maven.settings.Profile p = new org.apache.maven.settings.Profile();
+        p.setId("tnb-maven-repo");
+        p.setRepositories(Collections.singletonList(r));
+        p.setPluginRepositories(Collections.singletonList(r));
+
+        settings.setProfiles(Collections.singletonList(p));
+        File out = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
+        try (OutputStream os = new FileOutputStream(out)) {
+            new SettingsXpp3Writer().write(os, settings);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to write settings file ", e);
         }
     }
 }
