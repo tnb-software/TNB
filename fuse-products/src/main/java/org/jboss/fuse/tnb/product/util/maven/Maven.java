@@ -7,6 +7,7 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
+import org.apache.maven.settings.Mirror;
 import org.apache.maven.settings.RepositoryPolicy;
 import org.apache.maven.settings.Settings;
 import org.apache.maven.settings.io.xpp3.SettingsXpp3Writer;
@@ -137,9 +138,11 @@ public final class Maven {
         File globalMavenSettings = null;
 
         if (TestConfiguration.mavenRepository() != null) {
-            LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenProfileId());
-            profiles.add(TestConfiguration.mavenProfileId());
             globalMavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
+            if (!TestConfiguration.isMavenMirror()) {
+                LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenRepositoryId());
+                profiles.add(TestConfiguration.mavenRepositoryId());
+            }
         }
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n" +
@@ -253,20 +256,30 @@ public final class Maven {
         // Create settings.xml file with the user defined repository
         Settings settings = new Settings();
 
-        org.apache.maven.settings.Repository r = new org.apache.maven.settings.Repository();
-        r.setId(TestConfiguration.mavenProfileId());
-        r.setUrl(TestConfiguration.mavenRepository());
-        RepositoryPolicy enabled = new RepositoryPolicy();
-        enabled.setEnabled(true);
-        r.setReleases(enabled);
-        r.setSnapshots(enabled);
+        if (TestConfiguration.isMavenMirror()) {
+            // if the maven repository is a mirror of something, define it as a mirror
+            Mirror m = new Mirror();
+            m.setId(TestConfiguration.mavenRepositoryId());
+            m.setUrl(StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@"));
+            m.setMirrorOf(StringUtils.substringAfter(TestConfiguration.mavenRepository(), "mirrorOf="));
+            settings.addMirror(m);
+        } else {
+            // otherwise create a new profile with that repository
+            org.apache.maven.settings.Repository r = new org.apache.maven.settings.Repository();
+            r.setId(TestConfiguration.mavenRepositoryId());
+            r.setUrl(TestConfiguration.mavenRepository());
+            RepositoryPolicy enabled = new RepositoryPolicy();
+            enabled.setEnabled(true);
+            r.setReleases(enabled);
+            r.setSnapshots(enabled);
 
-        org.apache.maven.settings.Profile p = new org.apache.maven.settings.Profile();
-        p.setId("tnb-maven-repo");
-        p.setRepositories(Collections.singletonList(r));
-        p.setPluginRepositories(Collections.singletonList(r));
+            org.apache.maven.settings.Profile p = new org.apache.maven.settings.Profile();
+            p.setId("tnb-maven-repo");
+            p.setRepositories(Collections.singletonList(r));
+            p.setPluginRepositories(Collections.singletonList(r));
 
-        settings.setProfiles(Collections.singletonList(p));
+            settings.setProfiles(Collections.singletonList(p));
+        }
         File out = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
         try (OutputStream os = new FileOutputStream(out)) {
             new SettingsXpp3Writer().write(os, settings);
