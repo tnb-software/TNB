@@ -22,7 +22,7 @@ public class TestConfiguration extends Configuration {
     public static final String TEST_WAIT_TIME = "test.wait.time";
     public static final String MAVEN_REPOSITORY = "test.maven.repository";
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
-    public static final String MAVEN_PROFILE_ID = "test.maven.profile.id";
+    public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
@@ -80,8 +80,12 @@ public class TestConfiguration extends Configuration {
         return getProperty(MAVEN_SETTINGS_FILE_NAME, "tnb-maven-settings.xml");
     }
 
-    public static String mavenProfileId() {
-        return getProperty(MAVEN_PROFILE_ID, "tnb-maven-repo");
+    public static String mavenRepositoryId() {
+        return getProperty(MAVEN_REPOSITORY_ID, "tnb-maven-repo");
+    }
+
+    public static boolean isMavenMirror() {
+        return getProperty(MAVEN_REPOSITORY, "").contains("@mirrorOf=");
     }
 
     public static String quarkusVersion() {
