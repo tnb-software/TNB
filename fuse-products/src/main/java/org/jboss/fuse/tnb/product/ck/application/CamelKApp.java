@@ -17,12 +17,16 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
@@ -40,8 +44,8 @@ public class CamelKApp extends App {
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private final IntegrationData integrationData;
 
-    private static OpenshiftClient client = OpenshiftClient.get();
-    private static CustomResourceDefinitionContext kameletBindingCtx =
+    private static final OpenshiftClient client = OpenshiftClient.get();
+    private static final CustomResourceDefinitionContext kameletBindingCtx =
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
     private static final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient =
         client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
@@ -72,12 +76,14 @@ public class CamelKApp extends App {
             LOG.info("Create KameletBinding " + kameletBinding.getMetadata().getName());
             kameletBindingClient.createOrReplace(kameletBinding);
         }
+        log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
+            && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration")));
     }
 
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLogs());
+        IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
         LOG.info("Removing integration {}", name);
         if (kameletBinding != null) {
             LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());
@@ -109,11 +115,6 @@ public class CamelKApp extends App {
         }
     }
 
-    @Override
-    public String getLogs() {
-        return OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod("camel.apache.org/integration", name));
-    }
-
     /**
      * Creates an Integration object in OpenShift.
      *
@@ -128,6 +129,11 @@ public class CamelKApp extends App {
 
         IntegrationSpec is = new IntegrationSpec();
         is.setSources(Collections.singletonList(issrc));
+        List<String> dependencies = new ArrayList<>();
+        dependencies.add("mvn:org.apache.camel.k:camel-k-runtime");
+        dependencies.add("mvn:org.apache.camel.quarkus:camel-quarkus-java-joor-dsl");
+        dependencies.addAll(integrationData.getDependencies().stream().map(c -> "camel:" + c).collect(Collectors.toList()));
+        is.setDependencies(dependencies);
 
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationData.getProperties().isEmpty()) {
@@ -135,10 +141,8 @@ public class CamelKApp extends App {
             is.setConfiguration(Collections.singletonList(isc));
         }
 
-        Integration integration = new Integration.Builder()
+        return new Integration.Builder()
             .name(name)
             .build(is);
-
-        return integration;
     }
 }

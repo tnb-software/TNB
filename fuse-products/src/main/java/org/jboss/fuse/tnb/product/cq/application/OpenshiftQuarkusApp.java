@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
@@ -46,12 +47,14 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         // Path filePath = createTar(integrationTarget.resolve("quarkus-app"));
         Path filePath = org.jboss.fuse.tnb.common.utils.IOUtils.createTar(prepareS2iBuildDirectory(name));
         OpenshiftClient.doS2iBuild(name, filePath);
+        log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
+            && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")));
     }
 
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLogs());
+        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
@@ -77,11 +80,6 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         } catch (Exception ignored) {
             return false;
         }
-    }
-
-    @Override
-    public String getLogs() {
-        return OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod(name));
     }
 
     /**
