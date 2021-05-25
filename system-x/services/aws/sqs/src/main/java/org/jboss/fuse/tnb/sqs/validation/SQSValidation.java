@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import software.amazon.awssdk.services.sqs.SqsClient;
+import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 
 public class SQSValidation {
@@ -25,7 +26,8 @@ public class SQSValidation {
 
     public void createQueue(String name) {
         LOG.debug("Creating SQS queue {}", name);
-        client.createQueue(b -> b.queueName(name));
+        final CreateQueueResponse queue = client.createQueue(b -> b.queueName(name));
+        WaitUtils.waitFor(() -> queueExists(queue.queueUrl()), "Waiting until the queue " + name + " is created");
     }
 
     public void deleteQueue(String name) {
@@ -45,5 +47,9 @@ public class SQSValidation {
             }
             return messages;
         });
+    }
+
+    public boolean queueExists(String queueUrl) {
+        return client.listQueues().queueUrls().stream().anyMatch(queueUrl::equals);
     }
 }
