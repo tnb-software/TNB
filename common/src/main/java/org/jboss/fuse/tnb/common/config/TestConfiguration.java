@@ -35,7 +35,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION, "1.6.0");
+        return getProperty(CAMEL_QUARKUS_VERSION, "1.8.1");
     }
 
     public static String quarkusProductBomVersion() {
@@ -89,7 +89,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "1.11.5.Final");
+        return getProperty(QUARKUS_VERSION, "1.13.0.Final");
     }
 
     public static boolean isQuarkusNative() {

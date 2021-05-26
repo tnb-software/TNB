@@ -43,49 +43,56 @@ public final class IOUtils {
     /**
      * Creates a new tar file from given directory.
      *
-     * @param dir path to the directory
+     * @param f path to the directory or file
      * @return path to the tar file
      */
-    public static Path createTar(Path dir) {
+    public static Path createTar(Path f) {
         Path output;
         try {
-            output = Files.createTempFile(TestConfiguration.appLocation(), "tar", "");
+            output = Files.createTempFile(TestConfiguration.appLocation(), "tar", ".tar");
         } catch (IOException e) {
             throw new RuntimeException("Unable to create temp file: ", e);
         }
         try (TarArchiveOutputStream archive = new TarArchiveOutputStream(Files.newOutputStream(output))) {
             archive.setLongFileMode(TarArchiveOutputStream.LONGFILE_POSIX);
+            if (!f.toFile().isDirectory()) {
+                addTarEntry(archive, f, f.getFileName().toString());
+            } else {
+                Files.walkFileTree(f, new SimpleFileVisitor<>() {
+                    @Override
+                    public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
+                        if (attributes.isSymbolicLink()) {
+                            return FileVisitResult.CONTINUE;
+                        }
+                        Path targetFile = f.relativize(file);
+                        addTarEntry(archive, f, targetFile.toString());
 
-            Files.walkFileTree(dir, new SimpleFileVisitor<>() {
-                @Override
-                public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
-                    if (attributes.isSymbolicLink()) {
                         return FileVisitResult.CONTINUE;
                     }
-                    Path targetFile = dir.relativize(file);
-                    try {
-                        TarArchiveEntry tarEntry = new TarArchiveEntry(file.toFile(), targetFile.toString());
-                        archive.putArchiveEntry(tarEntry);
-                        Files.copy(file, archive);
-                        archive.closeArchiveEntry();
-                    } catch (IOException e) {
-                        throw new RuntimeException(e);
+
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                        return FileVisitResult.CONTINUE;
                     }
-
-                    return FileVisitResult.CONTINUE;
-                }
-
-                @Override
-                public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                    return FileVisitResult.CONTINUE;
-                }
-            });
+                });
+            }
 
             archive.finish();
         } catch (IOException e) {
             throw new RuntimeException("Unable to create tar file: ", e);
         }
         return output;
+    }
+
+    private static void addTarEntry(TarArchiveOutputStream taos, Path file, String fileName) {
+        try {
+            TarArchiveEntry tarEntry = new TarArchiveEntry(file.toFile(), fileName);
+            taos.putArchiveEntry(tarEntry);
+            Files.copy(file, taos);
+            taos.closeArchiveEntry();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create tar entry: ", e);
+        }
     }
 
     public static void closeQuietly(Closeable closeable) {
