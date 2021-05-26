@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.kinesis.validation;
 
+import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.kinesis.account.KinesisFirehoseAccount;
 
 import org.slf4j.Logger;
@@ -9,6 +10,7 @@ import java.util.List;
 
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.firehose.FirehoseClient;
+import software.amazon.awssdk.services.firehose.model.DeliveryStreamStatus;
 
 public class KinesisFirehoseValidation {
 
@@ -38,6 +40,9 @@ public class KinesisFirehoseValidation {
                         .bufferingHints(builder1 -> builder1.intervalInSeconds(60).sizeInMBs(1)))
                 .deliveryStreamType("DirectPut")
         );
+        WaitUtils.waitFor(
+            () -> client.describeDeliveryStream(b -> b.deliveryStreamName(streamName).build()).deliveryStreamDescription().deliveryStreamStatus()
+                == DeliveryStreamStatus.ACTIVE, "Waiting until the Firehose stream is active");
     }
 
     public void sendMessage(String stream, String message) {
