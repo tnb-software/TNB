@@ -129,7 +129,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         return app;
     }
 
-    public App createIntegration(KameletBinding kameletBinding) {
+    public App createKameletBinding(KameletBinding kameletBinding) {
         CamelKApp app = new CamelKApp(kameletBinding);
         integrations.put(kameletBinding.getMetadata().getName(), app);
         app.start();
@@ -137,13 +137,13 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         return app;
     }
 
-    public App createIntegration(File kameletBindingFile) {
+    public App createKameletBinding(File kameletBindingFile) {
         if (kameletBindingFile == null) {
             LOG.error("File is null");
             throw new RuntimeException("File is null");
         }
         try (FileInputStream is = new FileInputStream(kameletBindingFile)) {
-            return createIntegration(kameletBindingClient.load(is).get());
+            return createKameletBinding(kameletBindingClient.load(is).get());
         } catch (IOException e) {
             throw new RuntimeException("Failed to load KameletBinding: ", e);
         }
