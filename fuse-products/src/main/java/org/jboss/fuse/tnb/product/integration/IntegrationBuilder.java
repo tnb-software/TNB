@@ -19,11 +19,11 @@ import com.github.javaparser.utils.CodeGenerationUtils;
 import com.github.javaparser.utils.ParserCollectionStrategy;
 import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
+import com.github.javaparser.utils.StringEscapeUtils;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
 import java.util.Set;
@@ -132,7 +132,13 @@ public class IntegrationBuilder {
                         final Field field = routeBuilder.getClass().getDeclaredField(fieldName);
                         field.setAccessible(true);
                         final Object value = field.get(routeBuilder);
-                        String expression = value instanceof String ? "\"" + value + "\"" : value.toString();
+                        String expression;
+                        if (value instanceof String) {
+                            //Escape escaped characters so javaparser can compile and unescape them 
+                            expression = "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
+                        } else {
+                            expression = value.toString();
+                        }
                         decl.addFieldWithInitializer(fieldDecl.getElementType(), fieldName, StaticJavaParser.parseExpression(expression),
                             Modifier.Keyword.FINAL);
                     } catch (Exception e) {
