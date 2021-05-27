@@ -65,7 +65,7 @@ public final class IOUtils {
                             return FileVisitResult.CONTINUE;
                         }
                         Path targetFile = f.relativize(file);
-                        addTarEntry(archive, f, targetFile.toString());
+                        addTarEntry(archive, file, targetFile.toString());
 
                         return FileVisitResult.CONTINUE;
                     }
