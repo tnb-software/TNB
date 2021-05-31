@@ -14,6 +14,7 @@ import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
 import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
+import org.jboss.fuse.tnb.product.ck.utils.InlineCustomizer;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -83,7 +84,9 @@ public class CamelKApp extends App {
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
+        if (getLog() != null) {
+            IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
+        }
         LOG.info("Removing integration {}", name);
         if (kameletBinding != null) {
             LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());

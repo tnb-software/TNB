@@ -5,6 +5,9 @@ import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import org.apache.camel.builder.RouteBuilder;
+
+import org.jboss.fuse.tnb.product.ck.utils.InlineCustomizer;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,7 +17,12 @@ import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.expr.MethodCallExpr;
+import com.github.javaparser.ast.expr.NameExpr;
+import com.github.javaparser.ast.expr.NullLiteralExpr;
+import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
+import com.github.javaparser.ast.visitor.Visitable;
 import com.github.javaparser.utils.CodeGenerationUtils;
 import com.github.javaparser.utils.ParserCollectionStrategy;
 import com.github.javaparser.utils.ProjectRoot;
@@ -45,8 +53,11 @@ public class IntegrationBuilder {
 
     final String basePackage = TestConfiguration.appGroupId();
 
+    private int FIELD_ID = 0;
+
     public IntegrationBuilder(String name) {
         this.integrationName = name;
+        addCustomizer(new InlineCustomizer());
     }
 
     public IntegrationBuilder fromRouteBuilder(RouteBuilder routeBuilder) {
