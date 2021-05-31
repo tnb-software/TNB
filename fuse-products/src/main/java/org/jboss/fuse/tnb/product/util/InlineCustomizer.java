@@ -1,16 +1,14 @@
-package org.jboss.fuse.tnb.product.ck.utils;
+package org.jboss.fuse.tnb.product.util;
 
 import org.jboss.fuse.tnb.customizer.Customizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.body.FieldDeclaration;
 import com.github.javaparser.ast.body.VariableDeclarator;
 import com.github.javaparser.ast.expr.Expression;
 import com.github.javaparser.ast.expr.MethodCallExpr;
-import com.github.javaparser.ast.expr.NameExpr;
 import com.github.javaparser.ast.expr.NullLiteralExpr;
 import com.github.javaparser.ast.expr.StringLiteralExpr;
 import com.github.javaparser.ast.visitor.GenericVisitorAdapter;
@@ -18,13 +16,15 @@ import com.github.javaparser.utils.StringEscapeUtils;
 
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
+/**
+ * Inlines values from final fields to specified methods
+ * Mainly serves as a workaround for ENTESB-16531.
+ */
 public class InlineCustomizer extends Customizer {
 
     private static final Set<String> INLINE_METHODS = Set.of("from", "to");
     private static final Logger LOG = LoggerFactory.getLogger(InlineCustomizer.class);
-    private static int FIELD_ID = 0;
 
     @Override
     public void customize() {
@@ -32,22 +32,28 @@ public class InlineCustomizer extends Customizer {
     }
 
     private void inlineVars() {
-        getRouteBuilderClass().getMethodsByName("configure").forEach(method -> {
-            method.getBody().ifPresent(body -> {
-                body.accept(new GenericVisitorAdapter<>() {
-                    @Override
-                    public Object visit(MethodCallExpr n, Object arg) {
-                        Object defaultVal = super.visit(n, arg);
-                        if (INLINE_METHODS.contains(n.getNameAsString())) {
-                            inlineVar(n);
-                        }
-                        return defaultVal;
+        getConfigureMethod().getBody().ifPresent(body -> {
+            //Visit all method calls & inline values if necessary
+            body.accept(new GenericVisitorAdapter<>() {
+                @Override
+                public Object visit(MethodCallExpr n, Object arg) {
+                    Object defaultVal = super.visit(n, arg);
+                    if (INLINE_METHODS.contains(n.getNameAsString())) {
+                        inlineVar(n);
                     }
-                }, null);
-            });
+                    return defaultVal;
+                }
+            }, null);
         });
     }
 
+    /**
+     * Tries to find the value of field name and return that value as expression
+     *
+     * @param name referenced field name
+     * @param defaultValue current expression that is to be replaced
+     * @return replaced expression with the value or the default value
+     */
     private Expression replaceExpr(String name, Expression defaultValue) {
         final Optional<FieldDeclaration> field = getRouteBuilderClass().getFieldByName(name);
         final FieldDeclaration fieldDeclaration = field.orElseThrow(() -> new UnsupportedOperationException(String
@@ -66,8 +72,10 @@ public class InlineCustomizer extends Customizer {
 
     private void inlineVar(MethodCallExpr n) {
         n.getArguments().replaceAll(argExpr -> {
+            //matches this.a or File.pathSeparator
             if (argExpr.isFieldAccessExpr()) {
                 return argExpr.toFieldAccessExpr().map(fieldAccessExpr -> {
+                    //is true if File.pathSeparator, is false for pathSeparator
                     if (fieldAccessExpr.hasScope()) {
                         //don't change access to other class' fields
                         if (!fieldAccessExpr.getScope().isThisExpr()) {
@@ -77,11 +85,13 @@ public class InlineCustomizer extends Customizer {
                     return replaceExpr(fieldAccessExpr.getNameAsString(), argExpr);
                 }).orElse(argExpr);
             }
+            //matches normal field access, fromEndpoint for example
             if (argExpr.isNameExpr()) {
                 return argExpr.toNameExpr().map(nameExpr -> {
                     return replaceExpr(nameExpr.getNameAsString(), argExpr);
                 }).orElse(argExpr);
             }
+            //Matches any method call, is used to warn and transform basic format
             if (argExpr.isMethodCallExpr()) {
                 final MethodCallExpr methodCallExpr = argExpr.asMethodCallExpr();
                 if (methodCallExpr.getNameAsString().equals("format")) {
@@ -119,11 +129,14 @@ public class InlineCustomizer extends Customizer {
                                 args[i] = argument.toString();
                             }
                         }
+                        //Perform the formatting before buildtime so camel-k can discover the component
                         return new StringLiteralExpr(StringEscapeUtils.escapeJava(String.format(template.asString(), args)));
                     } catch (Exception e) {
                         LOG.error("Failed to process String.format in route definition, please move the format call to a field");
                         throw e;
                     }
+                } else {
+                    LOG.warn("Calling methods in from/to methods can break Camel K component discovery, be careful");
                 }
             }
 

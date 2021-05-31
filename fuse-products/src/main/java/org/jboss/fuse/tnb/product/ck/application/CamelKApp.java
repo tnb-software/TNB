@@ -14,7 +14,6 @@ import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
 import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
-import org.jboss.fuse.tnb.product.ck.utils.InlineCustomizer;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -23,11 +22,8 @@ import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
@@ -132,11 +128,6 @@ public class CamelKApp extends App {
 
         IntegrationSpec is = new IntegrationSpec();
         is.setSources(Collections.singletonList(issrc));
-        List<String> dependencies = new ArrayList<>();
-        dependencies.add("mvn:org.apache.camel.k:camel-k-runtime");
-        dependencies.add("mvn:org.apache.camel.quarkus:camel-quarkus-java-joor-dsl");
-        dependencies.addAll(integrationData.getDependencies().stream().map(c -> "camel:" + c).collect(Collectors.toList()));
-        is.setDependencies(dependencies);
 
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationData.getProperties().isEmpty()) {
