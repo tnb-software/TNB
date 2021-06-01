@@ -5,10 +5,10 @@ import org.jboss.fuse.tnb.common.config.Configuration;
 public abstract class CamelKConfiguration extends Configuration {
     private static final String FORCE_UPSTREAM = "force.upstream";
 
-    protected static final String SUBSCRIPTION_CHANNEL = "subscription.channel";
-    protected static final String SUBSCRIPTION_OPERATOR_NAME = "subscription.operatorName";
-    protected static final String SUBSCRIPTION_SOURCE = "subscription.source";
-    protected static final String SUBSCRIPTION_SOURCE_NAMESPACE = "subscription.sourceNamespace";
+    protected static final String SUBSCRIPTION_CHANNEL = "camelk.subscription.channel";
+    protected static final String SUBSCRIPTION_OPERATOR_NAME = "camelk.subscription.operatorName";
+    protected static final String SUBSCRIPTION_SOURCE = "camelk.subscription.source";
+    protected static final String SUBSCRIPTION_SOURCE_NAMESPACE = "camelk.subscription.sourceNamespace";
 
     public static final String SUBSCRIPTION_NAME = "tnb-camel-k";
 
