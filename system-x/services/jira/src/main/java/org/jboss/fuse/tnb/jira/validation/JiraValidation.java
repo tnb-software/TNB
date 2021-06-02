@@ -59,8 +59,18 @@ public class JiraValidation {
                 .post(body)
                 .build();
 
-            Call call = new OkHttpClient().newCall(request);
-            String issueJson = call.execute().body().string();
+            //added multiple attempts due to FUSEQE-12463
+            String issueJson = null;
+            boolean unsuccessful = true;
+            for (int i = 0; i < 2 && unsuccessful; i++) {
+                try {
+                    issueJson = new OkHttpClient().newCall(request).execute().body().string();
+                    unsuccessful = false;
+                } catch (IOException e) {
+                    LOG.debug(i + ". attempt to create issue failed");
+                }
+            }
+
             LOG.debug("Created issue: " + issueJson);
 
             Map<String, String> issueMap
