@@ -1,7 +1,7 @@
-package org.jboss.fuse.tnb.kinesis.validation;
+package org.jboss.fuse.tnb.firehose.validation;
 
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-import org.jboss.fuse.tnb.kinesis.account.KinesisFirehoseAccount;
+import org.jboss.fuse.tnb.firehose.account.KinesisFirehoseAccount;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

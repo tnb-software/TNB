@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.aws.validation;
+package org.jboss.fuse.tnb.s3.validation;
 
 import org.jboss.fuse.tnb.aws.account.AWSAccount;
 
@@ -10,7 +10,6 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 import java.io.ByteArrayOutputStream;
-import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.stream.Collectors;

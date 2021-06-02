@@ -1,9 +1,9 @@
-package org.jboss.fuse.tnb.kinesis.service;
+package org.jboss.fuse.tnb.s3.service;
 
+import org.jboss.fuse.tnb.aws.account.AWSAccount;
+import org.jboss.fuse.tnb.s3.validation.S3Validation;
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
-import org.jboss.fuse.tnb.kinesis.account.KinesisFirehoseAccount;
-import org.jboss.fuse.tnb.kinesis.validation.KinesisFirehoseValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -14,29 +14,28 @@ import com.google.auto.service.AutoService;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.regions.Region;
-import software.amazon.awssdk.services.firehose.FirehoseClient;
+import software.amazon.awssdk.services.s3.S3Client;
 
-@AutoService(KinesisFirehose.class)
-public class KinesisFirehose implements Service {
+@AutoService(S3.class)
+public class S3 implements Service {
 
-    private static final Logger LOG = LoggerFactory.getLogger(KinesisFirehose.class);
+    private static final Logger LOG = LoggerFactory.getLogger(S3.class);
 
-    private KinesisFirehoseAccount account;
-    private FirehoseClient client;
-    private KinesisFirehoseValidation validation;
+    private AWSAccount account;
+    private S3Client client;
+    private S3Validation validation;
 
-    public KinesisFirehoseAccount account() {
+    public AWSAccount account() {
         if (account == null) {
-            LOG.debug("Creating new Kinesis account");
-            account = Accounts.get(KinesisFirehoseAccount.class);
+            account = Accounts.get(AWSAccount.class);
         }
         return account;
     }
 
-    protected FirehoseClient client() {
+    protected S3Client client() {
         if (client == null) {
-            LOG.debug("Creating new Kinesis client");
-            client = FirehoseClient.builder()
+            LOG.debug("Creating new S3 client");
+            client = S3Client.builder()
                 .region(Region.of(account().region()))
                 .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
                 .build();
@@ -44,10 +43,10 @@ public class KinesisFirehose implements Service {
         return client;
     }
 
-    public KinesisFirehoseValidation validation() {
+    public S3Validation validation() {
         if (validation == null) {
-            LOG.debug("Creating new Kinesis validation");
-            validation = new KinesisFirehoseValidation(client(), account());
+            LOG.debug("Creating new S3 validation");
+            validation = new S3Validation(client(), account());
         }
         return validation;
     }
