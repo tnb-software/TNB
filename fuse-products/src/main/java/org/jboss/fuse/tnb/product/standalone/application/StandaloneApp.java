@@ -76,7 +76,7 @@ public class StandaloneApp extends App {
 
     @Override
     public void stop() {
-        executorService.shutdown();
+        executorService.shutdownNow();
     }
 
     @Override
