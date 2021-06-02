@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.kinesis.account;
+package org.jboss.fuse.tnb.firehose.account;
 
 import org.jboss.fuse.tnb.aws.account.AWSAccount;
 
