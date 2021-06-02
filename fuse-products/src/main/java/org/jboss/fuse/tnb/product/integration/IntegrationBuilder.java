@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.integration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.customizer.Customizer;
+import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.slf4j.Logger;
@@ -47,6 +48,9 @@ public class IntegrationBuilder {
 
     public IntegrationBuilder(String name) {
         this.integrationName = name;
+        //replicate user behavior by specifying route endpoints as hardcoded strings
+        //camel-k needs this to register components automagically
+        addCustomizer(new InlineCustomizer());
     }
 
     public IntegrationBuilder fromRouteBuilder(RouteBuilder routeBuilder) {
