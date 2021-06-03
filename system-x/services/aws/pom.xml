@@ -22,5 +22,6 @@
 		<module>kinesis-firehose</module>
 		<module>s3</module>
 		<module>sqs</module>
+		<module>sns</module>
 	</modules>
 </project>
