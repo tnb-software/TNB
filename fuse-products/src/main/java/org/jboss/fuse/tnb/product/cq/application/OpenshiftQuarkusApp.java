@@ -8,6 +8,7 @@ import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -48,7 +49,11 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         if (TestConfiguration.isQuarkusNative()) {
             filePath = createTar(integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner"));
         } else {
-            filePath = createTar(integrationTarget.resolve("quarkus-app"));
+            if (TestConfiguration.quarkusMajorMinorVersion() < 1.12) {
+                filePath = createTar(prepareS2iBuildDirectory(name));
+            } else {
+                filePath = createTar(integrationTarget.resolve("quarkus-app"));
+            }
         }
         OpenshiftClient.doS2iBuild(name, filePath);
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
@@ -95,5 +100,36 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
             .getSourceStrategy().getFrom().getName().split(":");
         OpenshiftClient.waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
+    }
+
+    /**
+     * Copies necessary files into a new temporary directory and returns its path.
+     *
+     * @param name integration name
+     * @return path to a new directory
+     */
+    private Path prepareS2iBuildDirectory(String name) {
+        LOG.debug("Preparing s2i directory");
+        final Path directory;
+        try {
+            directory = Files.createTempDirectory(TestConfiguration.appLocation(), "app");
+            LOG.debug("s2i directory: {}", directory.toAbsolutePath());
+            if (TestConfiguration.isQuarkusNative()) {
+                FileUtils.copyFile(
+                    TestConfiguration.appLocation().resolve(name).resolve("target").resolve(name + "-1.0.0-SNAPSHOT-runner").toFile(),
+                    directory.resolve(name + "-1.0.0-SNAPSHOT-runner").toFile()
+                );
+            } else {
+                FileUtils
+                    .copyDirectory(TestConfiguration.appLocation().resolve(name).resolve("target/lib").toFile(), directory.resolve("lib").toFile());
+                FileUtils.copyFile(
+                    TestConfiguration.appLocation().resolve(name).resolve("target").resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toFile(),
+                    directory.resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toFile()
+                );
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to prepare s2i build directory: ", e);
+        }
+        return directory;
     }
 }

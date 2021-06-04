@@ -69,7 +69,11 @@ public class LocalQuarkusApp extends QuarkusApp {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
         } else {
             cmd.addAll(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
-            fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
+            if (TestConfiguration.quarkusMajorMinorVersion() < 1.12) {
+                fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toAbsolutePath().toString();
+            } else {
+                fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
+            }
         }
         cmd.add(fileName);
 

@@ -95,4 +95,15 @@ public class TestConfiguration extends Configuration {
     public static boolean isQuarkusNative() {
         return getBoolean(QUARKUS_NATIVE_BUILD);
     }
+
+    public static double quarkusMajorMinorVersion() {
+        double version;
+        try {
+            version = Double.parseDouble(quarkusVersion().substring(0, 4));
+        } catch (NumberFormatException e) {
+            // Just in case if in the future the version will be something like 2.0.Final
+            version = Double.parseDouble(quarkusVersion().substring(0, 3));
+        }
+        return version;
+    }
 }
