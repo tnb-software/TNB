@@ -83,7 +83,7 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
                 "Waiting until all serving pods are terminated");
 
             // Remove serverless operator subscription
-            OpenshiftClient.deleteSubscription(SUBSCRIPTION_NAME, TARGET_NAMESPACE);
+            OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME, TARGET_NAMESPACE);
             WaitUtils.waitFor(() -> OpenshiftClient.get().pods().inNamespace(TARGET_NAMESPACE).list().getItems().size() == 0,
                 "Waiting until all serverless operator pods are terminated");
         } else {
@@ -108,9 +108,9 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
             LOG.debug("Serverless operator already installed");
         } else {
             LOG.debug("Creating serverless operator");
-            OpenshiftClient.createNamespace(TARGET_NAMESPACE);
+            OpenshiftClient.get().createNamespace(TARGET_NAMESPACE);
             // Create subscription for serverless operator
-            OpenshiftClient.createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE, TARGET_NAMESPACE,
+            OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE, TARGET_NAMESPACE,
                 true);
 
             // The serverless operator also creates eventing and serving namespaces if they are not present

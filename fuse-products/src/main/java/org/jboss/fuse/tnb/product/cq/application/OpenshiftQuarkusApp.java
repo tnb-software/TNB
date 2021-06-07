@@ -55,7 +55,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
                 filePath = createTar(integrationTarget.resolve("quarkus-app"));
             }
         }
-        OpenshiftClient.doS2iBuild(name, filePath);
+        OpenshiftClient.get().doS2iBuild(name, filePath);
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")));
     }
@@ -99,7 +99,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     private void waitForImageStream(String bcName) {
         final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
             .getSourceStrategy().getFrom().getName().split(":");
-        OpenshiftClient.waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
+        OpenshiftClient.get().waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
     }
 
     /**

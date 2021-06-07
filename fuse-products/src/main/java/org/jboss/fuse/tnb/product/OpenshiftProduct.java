@@ -10,7 +10,7 @@ import org.junit.jupiter.api.extension.ExtensionContext;
 public abstract class OpenshiftProduct extends Product {
 
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        OpenshiftClient.createNamespace(); // ensure namespace exists
+        OpenshiftClient.get().createNamespace(); // ensure namespace exists
         setupProduct();
         WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " is ready");
     }
@@ -24,7 +24,7 @@ public abstract class OpenshiftProduct extends Product {
 
     public void deleteTmpNamespace() {
         if (OpenshiftConfiguration.isTemporaryNamespace()) {
-            OpenshiftClient.deleteNamespace();
+            OpenshiftClient.get().deleteNamespace();
         }
     }
 

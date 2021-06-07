@@ -122,7 +122,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     public boolean isReady() {
         List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
         if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
-            return OpenshiftClient.getLogs(pods.get(0)).contains("Transition to primary complete; database writes are now permitted");
+            return OpenshiftClient.get().getLogs(pods.get(0)).contains("Transition to primary complete; database writes are now permitted");
         }
         return false;
     }

@@ -1,12 +1,14 @@
 package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Map;
@@ -22,6 +24,7 @@ import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
@@ -35,23 +38,39 @@ public class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
     private static OpenshiftClient client;
 
-    static {
-        LOG.info("Creating new OpenShift client");
-        OpenShiftConfig openShiftConfig = new OpenShiftConfigBuilder()
-            .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
-            .withTrustCerts(true)
-            .withNamespace(OpenshiftConfiguration.openshiftNamespace())
-            .withUsername(OpenshiftConfiguration.openshiftUsername())
-            .withPassword(OpenshiftConfiguration.openshiftPassword())
-            .build();
-        client = new OpenshiftClient(openShiftConfig);
-    }
-
     private OpenshiftClient(OpenShiftConfig openShiftConfig) {
         super(openShiftConfig);
     }
 
+    private static OpenshiftClient createClient() {
+        if (OpenshiftConfiguration.openshiftUrl() == null) {
+            try {
+                OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
+                config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
+                config.setBuildTimeout(10 * 60 * 1000);
+                config.setRequestTimeout(120_000);
+                config.setConnectionTimeout(120_000);
+                config.setTrustCerts(true);
+                return new OpenshiftClient(config);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to create openshift config: ", e);
+            }
+        } else {
+            return new OpenshiftClient(
+                new OpenShiftConfigBuilder()
+                    .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
+                    .withTrustCerts(true)
+                    .withNamespace(OpenshiftConfiguration.openshiftNamespace())
+                    .withUsername(OpenshiftConfiguration.openshiftUsername())
+                    .withPassword(OpenshiftConfiguration.openshiftPassword())
+                    .build());
+        }
+    }
+
     public static OpenshiftClient get() {
+        if (client == null) {
+            client = createClient();
+        }
         return client;
     }
 
@@ -64,7 +83,7 @@ public class OpenshiftClient extends OpenShift {
      * @param subscriptionName name of the subscription
      * @param subscriptionNamespace namespace of the catalogsource
      */
-    public static void createSubscription(String channel, String operatorName, String source, String subscriptionName, String subscriptionNamespace) {
+    public void createSubscription(String channel, String operatorName, String source, String subscriptionName, String subscriptionNamespace) {
         createSubscription(channel, operatorName, source, subscriptionName, subscriptionNamespace, OpenshiftConfiguration.openshiftNamespace(),
             false);
     }
@@ -80,7 +99,7 @@ public class OpenshiftClient extends OpenShift {
      * @param targetNamespace where the subscription should be created
      * @param clusterWide if the installation is clusterwide or not
      */
-    public static void createSubscription(String channel, String operatorName, String source, String subscriptionName,
+    public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
         String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide) {
         LOG.info("Creating subcription with name {}, for operator {}, channel {}, source {} in {}", subscriptionName, operatorName, channel, source,
             subscriptionSourceNamespace);
@@ -118,7 +137,7 @@ public class OpenshiftClient extends OpenShift {
      *
      * @param subscriptionName subscription name
      */
-    public static void waitForInstallPlanToComplete(String subscriptionName) {
+    public void waitForInstallPlanToComplete(String subscriptionName) {
         waitForInstallPlanToComplete(subscriptionName, OpenshiftConfiguration.openshiftNamespace());
     }
 
@@ -128,7 +147,7 @@ public class OpenshiftClient extends OpenShift {
      * @param subscriptionName subscription name
      * @param targetNamespace subscription namespace
      */
-    public static void waitForInstallPlanToComplete(String subscriptionName, String targetNamespace) {
+    public void waitForInstallPlanToComplete(String subscriptionName, String targetNamespace) {
         WaitUtils.waitFor(() -> {
             Subscription subscription = get().operatorHub().subscriptions().inNamespace(targetNamespace).withName(subscriptionName).get();
             if (subscription == null || subscription.getStatus() == null || subscription.getStatus().getInstallplan() == null) {
@@ -148,7 +167,7 @@ public class OpenshiftClient extends OpenShift {
      *
      * @param name subscription name
      */
-    public static void deleteSubscription(String name) {
+    public void deleteSubscription(String name) {
         deleteSubscription(name, OpenshiftConfiguration.openshiftNamespace());
     }
 
@@ -158,7 +177,7 @@ public class OpenshiftClient extends OpenShift {
      * @param name subscription name
      * @param namespace subscription namespace
      */
-    public static void deleteSubscription(String name, String namespace) {
+    public void deleteSubscription(String name, String namespace) {
         LOG.info("Deleting subscription {} in namespace {}", name, namespace);
         Subscription subscription = get().operatorHub().subscriptions().inNamespace(namespace).withName(name).get();
         String csvName = subscription.getStatus().getCurrentCSV();
@@ -175,7 +194,7 @@ public class OpenshiftClient extends OpenShift {
      * @param name imagestream name
      * @param tag imagestream tag
      */
-    public static void waitForImageStream(String name, String tag) {
+    public void waitForImageStream(String name, String tag) {
         WaitUtils.waitFor(() -> OpenshiftClient.get().imageStreams().withName(name).get().getSpec().getTags().stream()
             .anyMatch(t -> tag.equals(t.getName())), 24, 5000L, String.format("Waiting until the imagestream %s contains %s tag", name, tag));
     }
@@ -186,7 +205,7 @@ public class OpenshiftClient extends OpenShift {
      * @param name buildconfig name
      * @param filePath path to the file
      */
-    public static void doS2iBuild(String name, Path filePath) {
+    public void doS2iBuild(String name, Path filePath) {
         LOG.info("Instantiating a new build for buildconfig {} from file {}", name, filePath.toAbsolutePath());
         OpenshiftClient.get().buildConfigs().withName(name).instantiateBinary().fromFile(filePath.toFile());
 
@@ -201,7 +220,7 @@ public class OpenshiftClient extends OpenShift {
     /**
      * Create namespace (name obtained from system property openshift.namespace)
      */
-    public static void createNamespace() {
+    public void createNamespace() {
         createNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
@@ -210,7 +229,7 @@ public class OpenshiftClient extends OpenShift {
      *
      * @param name of namespace to be created
      */
-    public static void createNamespace(String name) {
+    public void createNamespace(String name) {
         if ((name == null) || (name.isEmpty())) {
             LOG.info("Skipped creating namespace, name null or empty");
             return;
@@ -227,7 +246,7 @@ public class OpenshiftClient extends OpenShift {
     /**
      * Delete namespace (name obtained from system property openshift.namespace)
      */
-    public static void deleteNamespace() {
+    public void deleteNamespace() {
         deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
@@ -236,7 +255,7 @@ public class OpenshiftClient extends OpenShift {
      *
      * @param name of namespace to be deleted
      */
-    public static void deleteNamespace(String name) {
+    public void deleteNamespace(String name) {
         if ((name == null) || (name.isEmpty())) {
             LOG.info("Skipped deleting namespace, name null or empty");
             return;
@@ -255,7 +274,7 @@ public class OpenshiftClient extends OpenShift {
      * @param name configmap name
      * @param data map with data
      */
-    public static void createConfigMap(String name, Map<String, String> data) {
+    public void createConfigMap(String name, Map<String, String> data) {
         client.configMaps().withName(name).createOrReplace(
             new ConfigMapBuilder()
                 .withNewMetadata()
@@ -272,7 +291,7 @@ public class OpenshiftClient extends OpenShift {
      * @param p the pod
      * @return log of the pod
      */
-    public static String getLogs(Pod p) {
+    public String getLogs(Pod p) {
         PodResource<Pod> pr = OpenshiftClient.get().pods().withName(p.getMetadata().getName());
         Container c = OpenshiftClient.get().getAnyContainer(p);
         ContainerResource cr = pr.inContainer(c.getName());
@@ -286,7 +305,7 @@ public class OpenshiftClient extends OpenShift {
      * @param prefix default null, prefix which should be prepended to keys in credentials (<prefix>key=value)
      * @return created secret
      */
-    public static Secret createApplicationPropertiesSecret(String name, Properties credentials, Map<String, String> labels, String prefix) {
+    public Secret createApplicationPropertiesSecret(String name, Properties credentials, Map<String, String> labels, String prefix) {
         String credentialsString = MapUtils.propertiesToString(credentials, Optional.ofNullable(prefix).orElse(""));
         String dataFileName = (name.indexOf(".") != -1) ? name.substring(0, name.indexOf(".")) : name;
         Secret secret = new SecretBuilder()
@@ -297,7 +316,7 @@ public class OpenshiftClient extends OpenShift {
         return client.secrets().createOrReplace(secret);
     }
 
-    public static void deleteSecret(String name) {
+    public void deleteSecret(String name) {
         client.secrets().withName(name).delete();
     }
 }

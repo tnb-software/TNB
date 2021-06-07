@@ -71,11 +71,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                         "cluster for other tests."
                 );
             }
-            OpenshiftClient
-                .createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
-                    SUBSCRIPTION_NAME,
-                    config.subscriptionSourceNamespace());
-            OpenshiftClient.waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+            OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
+                SUBSCRIPTION_NAME,
+                config.subscriptionSourceNamespace());
+            OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
         }
 
         // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
@@ -117,7 +116,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void teardownProduct() {
-        OpenshiftClient.deleteSubscription(SUBSCRIPTION_NAME);
+        OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
         removeKamelets();
     }
 
@@ -162,7 +161,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             throw new RuntimeException("File is null");
         }
         try (FileInputStream is = new FileInputStream(file)) {
-            createKamelet(kameletClient.load(file).get());
+            createKamelet(kameletClient.load(is).get());
         } catch (IOException e) {
             throw new RuntimeException("Failed to load Kamelet", e);
         }
@@ -217,12 +216,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet", kameletName);
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet.configuration", kameletName);
         Properties camelCaseCredentials = PropertiesUtils.toCamelCaseProperties(credentials);
-        OpenshiftClient.createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
+        OpenshiftClient.get().createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
     }
 
     @Override
     public void deleteSecretForKamelet(String kameletName) {
-        OpenshiftClient.deleteSecret(kameletName + "." + kameletName);
+        OpenshiftClient.get().deleteSecret(kameletName + "." + kameletName);
     }
 
     @Override

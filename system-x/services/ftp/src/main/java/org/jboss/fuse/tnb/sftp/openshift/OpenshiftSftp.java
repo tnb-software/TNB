@@ -160,7 +160,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
     public boolean isReady() {
         return ResourceFunctions.areExactlyNPodsReady(1)
             .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
+            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
             .contains("Server listening on");
     }
 
