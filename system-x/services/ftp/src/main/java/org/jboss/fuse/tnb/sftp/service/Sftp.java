@@ -1,22 +1,16 @@
 package org.jboss.fuse.tnb.sftp.service;
 
-import net.schmizz.sshj.sftp.SFTPClient;
-
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
-import org.jboss.fuse.tnb.ftp.account.FtpAccount;
-import org.jboss.fuse.tnb.ftp.validation.FtpValidation;
-
-import org.apache.commons.net.ftp.FTPClient;
-
 import org.jboss.fuse.tnb.sftp.account.SftpAccount;
-
 import org.jboss.fuse.tnb.sftp.validation.SftpValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+
+import net.schmizz.sshj.sftp.SFTPClient;
 
 public abstract class Sftp implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Sftp.class);
@@ -54,6 +48,6 @@ public abstract class Sftp implements Service {
     }
 
     public static String sftpImage() {
-        return System.getProperty(SFTP_IMAGE_KEY, "atmoz/sftp:alpine");
+        return System.getProperty(SFTP_IMAGE_KEY, "quay.io/syndesis_qe/sftp:alpine");
     }
 }
