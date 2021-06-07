@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.common.utils;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -33,10 +34,15 @@ public final class MapUtils {
             .collect(Collectors.joining(System.lineSeparator()));
     }
 
+    /**
+     * @param properties of service, obtained from credentials.yaml
+     * @param prefix e.g. "camel.kamelet.aws-s3-source."
+     * @return map with keys in camelCase
+     */
     public static Map<String, Object> propertiesToMap(Properties properties, String prefix) {
         Map<String, Object> map = new LinkedHashMap<>();
         properties.entrySet().stream()
-            .forEach(entry -> map.put(prefix + StringUtils.replaceUnderscoreWithCamelCase(entry.getKey().toString()), entry.getValue()));
+            .forEach(entry -> map.put(Optional.ofNullable(prefix).orElse("") + StringUtils.replaceUnderscoreWithCamelCase(entry.getKey().toString()), entry.getValue()));
         return map;
     }
 }
