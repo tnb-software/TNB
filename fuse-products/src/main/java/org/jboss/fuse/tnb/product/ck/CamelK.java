@@ -5,6 +5,7 @@ import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SU
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
@@ -207,7 +208,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
      * Create and label secret from credentials to kamelet
      *
      * @param kameletName name of kamelet
-     * @param credentials credentials required by kamelet
+     * @param credentials credentials required by kamelet (keys may contain underscore)
      */
     @Override
     public void createApplicationPropertiesSecretForKamelet(String kameletName, Properties credentials) {
@@ -215,7 +216,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         Map<String, String> labels = new LinkedHashMap<>();
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet", kameletName);
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet.configuration", kameletName);
-        OpenshiftClient.createApplicationPropertiesSecret(kameletName + "." + kameletName, credentials, labels, prefix);
+        Properties camelCaseCredentials = PropertiesUtils.toCamelCaseProperties(credentials);
+        OpenshiftClient.createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
     }
 
     @Override
