@@ -13,7 +13,7 @@ public interface OpenshiftDeployable extends Deployable {
     @Override
     default void deploy() {
         if (!isDeployed()) {
-            OpenshiftClient.createNamespace(); // ensure namespace exists
+            OpenshiftClient.get().createNamespace(); // ensure namespace exists
             create();
             WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
         }

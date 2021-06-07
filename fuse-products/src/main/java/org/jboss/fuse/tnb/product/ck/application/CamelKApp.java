@@ -55,7 +55,8 @@ public class CamelKApp extends App {
 
         // If there are any properties set, create a config map with the same map as the integration
         if (!integrationData.getProperties().isEmpty()) {
-            OpenshiftClient.createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(integrationData.getProperties())));
+            OpenshiftClient.get()
+                .createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(integrationData.getProperties())));
         }
     }
 

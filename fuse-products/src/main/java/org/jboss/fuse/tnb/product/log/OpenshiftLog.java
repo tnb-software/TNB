@@ -25,7 +25,7 @@ public class OpenshiftLog extends Log {
             LOG.trace("Specified pod doesn't exist (yet), returning empty string as logs");
             return "";
         } else {
-            return OpenshiftClient.getLogs(podOptional.get());
+            return OpenshiftClient.get().getLogs(podOptional.get());
         }
     }
 }

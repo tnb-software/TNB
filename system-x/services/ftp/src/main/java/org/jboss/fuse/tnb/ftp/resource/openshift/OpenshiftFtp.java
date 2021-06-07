@@ -1,7 +1,5 @@
 package org.jboss.fuse.tnb.ftp.resource.openshift;
 
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
@@ -34,6 +32,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 
@@ -143,7 +142,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
     public boolean isReady() {
         return ResourceFunctions.areExactlyNPodsReady(1)
             .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
+            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
             .contains("FtpServer started");
     }
 

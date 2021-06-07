@@ -1,28 +1,26 @@
 package org.jboss.fuse.tnb.common.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 public class OpenshiftConfiguration extends Configuration {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftConfiguration.class);
     public static final String USE_OPENSHIFT = "test.use.openshift";
 
     private static final String OPENSHIFT_URL = "openshift.url";
     private static final String OPENSHIFT_USERNAME = "openshift.username";
     private static final String OPENSHIFT_PASSWORD = "openshift.password";
     private static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
+    private static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
 
     private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
     private static boolean OPENSHIFT_IS_TEMPORARY_NAMESPACE = false;
     private static final String NAMESPACE_PREFIX = "tnb-test-";
-
-    static {
-        if (isOpenshift() && (openshiftNamespace() == null)) {
-            OPENSHIFT_IS_TEMPORARY_NAMESPACE = true;
-            //generate new name for temporary namespace
-            String random = UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
-            setProperty(OPENSHIFT_NAMESPACE, NAMESPACE_PREFIX + random);
-        }
-    }
 
     public static boolean isOpenshift() {
         return getBoolean(USE_OPENSHIFT, false);
@@ -41,7 +39,18 @@ public class OpenshiftConfiguration extends Configuration {
     }
 
     public static String openshiftNamespace() {
-        return getProperty(OPENSHIFT_NAMESPACE);
+        String namespace = getProperty(OPENSHIFT_NAMESPACE);
+        if (namespace == null) {
+            namespace = NAMESPACE_PREFIX + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
+            OPENSHIFT_IS_TEMPORARY_NAMESPACE = true;
+            LOG.info("Using namespace {}", namespace);
+            setProperty(OPENSHIFT_NAMESPACE, namespace);
+        }
+        return namespace;
+    }
+
+    public static Path openshiftKubeconfig() {
+        return Paths.get(getProperty(OPENSHIFT_KUBECONFIG, System.getProperty("user.home") + "/.kube/config"));
     }
 
     public static String openshiftDeploymentLabel() {
