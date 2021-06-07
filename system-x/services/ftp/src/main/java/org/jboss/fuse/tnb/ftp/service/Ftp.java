@@ -5,7 +5,6 @@ import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.ftp.account.FtpAccount;
 import org.jboss.fuse.tnb.ftp.validation.FtpValidation;
 
-import org.apache.commons.net.ftp.FTPClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +53,6 @@ public abstract class Ftp implements Service {
     }
 
     public static String ftpImage() {
-        // TODO: move this to a team org
-        return System.getProperty(FTP_IMAGE_KEY, "quay.io/asmigala/apache-ftp:latest");
+        return System.getProperty(FTP_IMAGE_KEY, "quay.io/syndesis_qe/apache-ftp:latest");
     }
 }
