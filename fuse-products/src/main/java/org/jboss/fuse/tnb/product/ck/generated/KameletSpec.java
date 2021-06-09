@@ -177,6 +177,7 @@ public class KameletSpec implements KubernetesResource {
         }
     }
 
+    @JsonIgnoreProperties(ignoreUnknown = true)//unclear type - discussion of cibsen, lburgazz and oscerd, CamelK channel, 4.6.2021
     @JsonInclude(JsonInclude.Include.NON_NULL)
     @JsonPropertyOrder({"title", "description", "required", "properties"})
     public static class Definition {
