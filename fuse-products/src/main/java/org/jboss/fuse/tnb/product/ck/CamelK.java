@@ -180,6 +180,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     public boolean isKameletReady(Kamelet kamelet) {
+        if (kamelet == null) {
+            return false;
+        }
         String kameletName = kamelet.getMetadata().getName();
         if ((getKameletByName(kameletName) != null) &&
             (getKameletByName(kameletName).getStatus() != null)
