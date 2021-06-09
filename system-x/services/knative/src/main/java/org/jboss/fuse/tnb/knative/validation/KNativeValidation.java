@@ -28,7 +28,7 @@ public class KNativeValidation {
         this.createdItems = new ArrayList<>();
     }
 
-    public void createInMemoryChannel(String name) {
+    public InMemoryChannel createInMemoryChannel(String name) {
         LOG.debug("Creating In-Memory Channel {}", name);
         final InMemoryChannel channel = new InMemoryChannelBuilder()
             .withNewMetadata()
@@ -37,9 +37,10 @@ public class KNativeValidation {
             .build();
         client.inMemoryChannels().create(channel);
         createdItems.add(channel);
+        return channel;
     }
 
-    public void createBroker(String name) {
+    public Broker createBroker(String name) {
         LOG.debug("Creating Broker {}", name);
         final Broker broker = new BrokerBuilder()
             .withNewMetadata()
@@ -48,6 +49,7 @@ public class KNativeValidation {
             .build();
         client.brokers().create(broker);
         createdItems.add(broker);
+        return broker;
     }
 
     public void deleteCreatedResources() {
