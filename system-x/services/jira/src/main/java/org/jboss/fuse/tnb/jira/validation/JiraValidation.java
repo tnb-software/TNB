@@ -18,7 +18,6 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-import okhttp3.Call;
 import okhttp3.Credentials;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -37,7 +36,7 @@ public class JiraValidation {
     }
 
     /**
-     * Create issue in given project
+     * Create issue in given project.
      *
      * @param projectKey key of project where issue will be created
      * @param issueSummary name of issue to be created

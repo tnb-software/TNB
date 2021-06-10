@@ -77,9 +77,10 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
             // Wait until the pods are terminated
             WaitUtils.waitFor(() -> OpenshiftClient.get().pods().inNamespace(EVENTING_NAMESPACE).list().getItems().size() == 0,
                 "Waiting until all eventing pods are terminated");
-            WaitUtils.waitFor(() -> OpenshiftClient.get().pods().inNamespace(SERVING_NAMESPACE).list().getItems().size() == 0 ||
-                    OpenshiftClient.get().pods().inNamespace(SERVING_NAMESPACE).list().getItems().stream()
-                        .allMatch(p -> "succeeded".equalsIgnoreCase(p.getStatus().getPhase())),
+            WaitUtils.waitFor(
+                () -> OpenshiftClient.get().pods().inNamespace(SERVING_NAMESPACE).list().getItems().size() == 0 || OpenshiftClient.get().pods()
+                    .inNamespace(SERVING_NAMESPACE).list().getItems().stream()
+                    .allMatch(p -> "succeeded".equalsIgnoreCase(p.getStatus().getPhase())),
                 "Waiting until all serving pods are terminated");
 
             // Remove serverless operator subscription
@@ -138,8 +139,8 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
         final List<Pod> servingPods = OpenshiftClient.get().pods().inNamespace(EVENTING_NAMESPACE).list().getItems();
         return pods.size() > 0 && pods.stream().allMatch(ResourceParsers::isPodReady)
             && eventingPods.size() > 0 && eventingPods.stream().allMatch(ResourceParsers::isPodReady)
-            && servingPods.size() > 0 &&
-            servingPods.stream().allMatch(p -> ResourceParsers.isPodReady(p) || "succeeded".equalsIgnoreCase(p.getStatus().getPhase()));
+            && servingPods.size() > 0
+            && servingPods.stream().allMatch(p -> ResourceParsers.isPodReady(p) || "succeeded".equalsIgnoreCase(p.getStatus().getPhase()));
     }
 
     @Override

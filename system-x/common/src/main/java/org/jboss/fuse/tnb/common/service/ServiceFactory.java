@@ -10,8 +10,11 @@ import java.util.Optional;
 import java.util.ServiceLoader;
 import java.util.stream.StreamSupport;
 
-public class ServiceFactory {
+public final class ServiceFactory {
     private static final Logger LOG = LoggerFactory.getLogger(ServiceFactory.class);
+
+    private ServiceFactory() {
+    }
 
     /**
      * Returns an instance of subclass of given type. If there is just one implementation, it returns that one, otherwise it will return

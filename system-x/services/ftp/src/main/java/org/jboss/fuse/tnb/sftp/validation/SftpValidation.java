@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.sftp.validation;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.sftp.account.SftpAccount;
 
@@ -8,8 +10,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 
 import net.schmizz.sshj.sftp.SFTPClient;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class SftpValidation {
 

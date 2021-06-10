@@ -1,13 +1,13 @@
 package org.jboss.fuse.tnb.google.validation;
 
-import com.google.api.services.sheets.v4.Sheets;
-import com.google.api.services.sheets.v4.model.Spreadsheet;
-import com.google.api.services.sheets.v4.model.SpreadsheetProperties;
-
 import org.jboss.fuse.tnb.google.account.GoogleAccount;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.api.services.sheets.v4.Sheets;
+import com.google.api.services.sheets.v4.model.Spreadsheet;
+import com.google.api.services.sheets.v4.model.SpreadsheetProperties;
 
 import java.io.IOException;
 

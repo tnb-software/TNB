@@ -10,7 +10,6 @@ public abstract class Log {
     }
 
     public boolean containsRegex(String regex) {
-        Pattern p = Pattern.compile(regex);
         return containsRegex(Pattern.compile(regex));
     }
 

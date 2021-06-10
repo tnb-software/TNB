@@ -7,7 +7,7 @@ import com.github.javaparser.ast.body.MethodDeclaration;
 import java.util.Properties;
 
 /**
- * Abstract class for customizations for routebuilder / application properties
+ * Abstract class for customizations for routebuilder / application properties.
  */
 public abstract class Customizer {
 

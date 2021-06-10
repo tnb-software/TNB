@@ -10,12 +10,12 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
     void undeploy();
 
     /**
-     * Open all resources needed after the service is deployed - initialize clients and stuff
+     * Open all resources needed after the service is deployed - initialize clients and stuff.
      */
     void openResources();
 
     /**
-     * Close all resources used after before the service is undeployed
+     * Close all resources used after before the service is undeployed.
      */
     void closeResources();
 

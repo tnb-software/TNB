@@ -61,7 +61,8 @@ public class CamelKApp extends App {
     }
 
     public CamelKApp(KameletBinding kameletBinding) {
-        super(kameletBinding.getMetadata().getName());//name of created integration is same as name of kameletbinding
+        //name of created integration is same as name of kameletbinding
+        super(kameletBinding.getMetadata().getName());
         this.kameletBinding = kameletBinding;
         integrationData = null;
     }

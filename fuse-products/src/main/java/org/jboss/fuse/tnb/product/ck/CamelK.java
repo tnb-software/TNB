@@ -66,9 +66,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             CamelKConfiguration config = CamelKConfiguration.getConfiguration();
             if (CamelKConfiguration.forceUpstream()) {
                 LOG.warn(
-                    "You are going to deploy upstream version of Camel-K. " +
-                        "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can break the " +
-                        "cluster for other tests."
+                    "You are going to deploy upstream version of Camel-K. "
+                        + "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can break the "
+                        + "cluster for other tests."
                 );
             }
             OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
@@ -184,9 +184,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             return false;
         }
         String kameletName = kamelet.getMetadata().getName();
-        if ((getKameletByName(kameletName) != null) &&
-            (getKameletByName(kameletName).getStatus() != null)
-        ) {
+        if (getKameletByName(kameletName) != null && getKameletByName(kameletName).getStatus() != null) {
             return "ready".equalsIgnoreCase(getKameletByName(kameletName).getStatus().getPhase());
         } else {
             return false;
@@ -199,6 +197,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     /**
+     * Gets kamelet by its name.
+     *
      * @param name of Kamelet
      * @return null if Kamelet wasn't found, otherwise Kamelet with given name
      */
@@ -207,7 +207,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     /**
-     * Create and label secret from credentials to kamelet
+     * Create and label secret from credentials to kamelet.
      *
      * @param kameletName name of kamelet
      * @param credentials credentials required by kamelet (keys may contain underscore)
@@ -250,7 +250,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void removeIntegrations() {
-        integrations.values().forEach(CamelKApp::stop);//can't be reused removeIntegration - changing underlying map
+        //can't be reused removeIntegration - changing underlying map
+        integrations.values().forEach(CamelKApp::stop);
         integrations.clear();
     }
 

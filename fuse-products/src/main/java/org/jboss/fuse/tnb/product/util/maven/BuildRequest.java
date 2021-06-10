@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-public class BuildRequest {
+public final class BuildRequest {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss-SSS").withZone(ZoneId.systemDefault());
 
     private File baseDirectory;

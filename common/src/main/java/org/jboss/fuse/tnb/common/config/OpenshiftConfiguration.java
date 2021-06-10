@@ -19,8 +19,9 @@ public class OpenshiftConfiguration extends Configuration {
 
     private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
-    private static boolean OPENSHIFT_IS_TEMPORARY_NAMESPACE = false;
     private static final String NAMESPACE_PREFIX = "tnb-test-";
+
+    private static boolean isTemporaryNamespace = false;
 
     public static boolean isOpenshift() {
         return getBoolean(USE_OPENSHIFT, false);
@@ -42,7 +43,7 @@ public class OpenshiftConfiguration extends Configuration {
         String namespace = getProperty(OPENSHIFT_NAMESPACE);
         if (namespace == null) {
             namespace = NAMESPACE_PREFIX + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
-            OPENSHIFT_IS_TEMPORARY_NAMESPACE = true;
+            isTemporaryNamespace = true;
             LOG.info("Using namespace {}", namespace);
             setProperty(OPENSHIFT_NAMESPACE, namespace);
         }
@@ -58,6 +59,6 @@ public class OpenshiftConfiguration extends Configuration {
     }
 
     public static boolean isTemporaryNamespace() {
-        return OPENSHIFT_IS_TEMPORARY_NAMESPACE;
+        return isTemporaryNamespace;
     }
 }

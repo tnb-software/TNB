@@ -1,22 +1,14 @@
 package org.jboss.fuse.tnb.sns.validation;
 
-import org.jboss.fuse.tnb.common.service.ServiceFactory;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-
 import org.jboss.fuse.tnb.sns.account.SNSAccount;
-
 import org.jboss.fuse.tnb.sqs.service.SQS;
-
-import org.jboss.fuse.tnb.sqs.validation.SQSValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
-
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateTopicResponse;
-import software.amazon.awssdk.services.sqs.model.Message;
 
 public class SNSValidation {
     private static final Logger LOG = LoggerFactory.getLogger(SNSValidation.class);

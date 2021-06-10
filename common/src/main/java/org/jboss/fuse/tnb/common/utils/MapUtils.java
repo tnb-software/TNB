@@ -7,6 +7,9 @@ import java.util.Properties;
 import java.util.stream.Collectors;
 
 public final class MapUtils {
+    private MapUtils() {
+    }
+
     /**
      * Creates a Properties file from a given map.
      *
@@ -35,6 +38,8 @@ public final class MapUtils {
     }
 
     /**
+     * Converts properties object into a map.
+     *
      * @param properties of service, obtained from credentials.yaml
      * @param prefix e.g. "camel.kamelet.aws-s3-source."
      * @return map with keys in camelCase

@@ -1,18 +1,14 @@
 package org.jboss.fuse.tnb.sns.service;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
-
 import org.jboss.fuse.tnb.common.service.ServiceFactory;
 import org.jboss.fuse.tnb.sns.account.SNSAccount;
-
 import org.jboss.fuse.tnb.sns.validation.SNSValidation;
-
 import org.jboss.fuse.tnb.sqs.service.SQS;
-
 import org.jboss.fuse.tnb.sqs.validation.SQSValidation;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

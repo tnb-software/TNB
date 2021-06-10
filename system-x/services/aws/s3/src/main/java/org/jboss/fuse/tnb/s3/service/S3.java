@@ -1,9 +1,9 @@
 package org.jboss.fuse.tnb.s3.service;
 
 import org.jboss.fuse.tnb.aws.account.AWSAccount;
-import org.jboss.fuse.tnb.s3.validation.S3Validation;
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.service.Service;
+import org.jboss.fuse.tnb.s3.validation.S3Validation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 

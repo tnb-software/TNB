@@ -18,7 +18,8 @@
 package org.jboss.fuse.tnb.product.ck.utils;
 
 /**
- * 
+ * Common Camel-K settings class.
+ *
  */
 public final class CamelKSettings {
 

@@ -44,6 +44,9 @@ public final class Maven {
     private static final Logger LOG = LoggerFactory.getLogger(Maven.class);
     private static Invoker invoker;
 
+    private Maven() {
+    }
+
     private static InvocationRequest newRequest() {
         if (invoker == null) {
             invoker = new DefaultInvoker();
@@ -145,10 +148,10 @@ public final class Maven {
             }
         }
 
-        StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n" +
-            "  Base dir: " + dir.getAbsolutePath() + "\n" +
-            "  Goals: " + goals.toString() + "\n" +
-            "  Profiles: " + profiles + "\n"
+        StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
+            + "  Base dir: " + dir.getAbsolutePath() + "\n"
+            + "  Goals: " + goals.toString() + "\n"
+            + "  Profiles: " + profiles + "\n"
         );
         if (properties != null && !properties.isEmpty()) {
             propertiesLog.append("  Properties").append("\n");
