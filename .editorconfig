@@ -2,7 +2,7 @@
 charset = utf-8
 end_of_line = lf
 indent_size = 4
-indent_style = tab
+indent_style = space
 insert_final_newline = true
 max_line_length = 150
 tab_width = 4
@@ -50,7 +50,7 @@ ij_java_array_initializer_wrap = normal
 ij_java_assert_statement_colon_on_next_line = false
 ij_java_assert_statement_wrap = normal
 ij_java_assignment_wrap = normal
-ij_java_binary_operation_sign_on_next_line = false
+ij_java_binary_operation_sign_on_next_line = true
 ij_java_binary_operation_wrap = normal
 ij_java_blank_lines_after_anonymous_class_header = 0
 ij_java_blank_lines_after_class_header = 0
