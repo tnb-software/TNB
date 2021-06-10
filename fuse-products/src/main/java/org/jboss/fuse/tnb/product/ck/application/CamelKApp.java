@@ -22,7 +22,9 @@ import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -126,10 +128,27 @@ public class CamelKApp extends App {
     private Integration createIntegrationResource(String name, IntegrationData integrationData) {
         IntegrationSpec.Source issrc = new IntegrationSpec.Source();
         issrc.setName("MyRouteBuilder.java");
-        issrc.setContent("// camel-k: language=java\n" + integrationData.getIntegration());
+        issrc.setContent(integrationData.getIntegration());
 
         IntegrationSpec is = new IntegrationSpec();
         is.setSources(Collections.singletonList(issrc));
+
+        // TODO(anyone): remove if clause when 1.4 camel-k is officially released
+        if (OpenshiftClient.get().operatorHub().clusterServiceVersions().inNamespace(OpenshiftConfiguration.openshiftNamespace())
+            .list().getItems().stream().filter(csv -> csv.getMetadata().getName().contains("camel-k")).findFirst().get()
+            .getSpec().getVersion().startsWith("1.3")) {
+            LOG.warn("Camel-K 1.3 detected, not setting dependencies into Integration object due to changes between 1.3 and 1.4");
+        } else {
+            List<String> dependencies = new ArrayList<>();
+
+            String modeline = integrationData.getIntegration().split("\n")[0];
+            for (String s : modeline.split(" ")) {
+                if (s.contains("dependency=")) {
+                    dependencies.add(s.split("=")[1]);
+                }
+            }
+            is.setDependencies(dependencies);
+        }
 
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationData.getProperties().isEmpty()) {

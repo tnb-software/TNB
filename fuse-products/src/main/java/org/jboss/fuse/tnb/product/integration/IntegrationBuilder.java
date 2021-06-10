@@ -38,7 +38,7 @@ public class IntegrationBuilder {
 
     private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit");
 
-    private final List<String> camelDependencies = new ArrayList<>();
+    private final List<String> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private CompilationUnit routeBuilder;
     private Properties appProperties = new Properties();
@@ -182,8 +182,15 @@ public class IntegrationBuilder {
         }, null);
     }
 
-    public IntegrationBuilder camelDependencies(String... dependencies) {
-        camelDependencies.addAll(Arrays.asList(dependencies));
+    /**
+     * Adds dependencies to resulting projects / classes. If a dependency contains a colon, it's assumed that it is a form of GA[V] and it is used
+     * as is, otherwise it is assumed that it is a camel dependency and it is prepended with "camel-" or "camel-quarkus-"
+     *
+     * @param dependencies dependencies to add
+     * @return this
+     */
+    public IntegrationBuilder dependencies(String... dependencies) {
+        this.dependencies.addAll(Arrays.asList(dependencies));
         return this;
     }
 
@@ -201,8 +208,8 @@ public class IntegrationBuilder {
         return integrationName;
     }
 
-    public List<String> getCamelDependencies() {
-        return camelDependencies;
+    public List<String> getDependencies() {
+        return dependencies;
     }
 
     public CompilationUnit getRouteBuilder() {

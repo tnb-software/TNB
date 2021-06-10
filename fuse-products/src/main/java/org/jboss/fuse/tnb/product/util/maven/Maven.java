@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.util.maven;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.product.ProductType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
@@ -28,7 +29,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -194,31 +194,6 @@ public final class Maven {
     }
 
     /**
-     * Adds camel component dependencies to pom.xml file in a given dir.
-     *
-     * @param dir base directory
-     * @param dependencies array of camel dependencies, e.g. "slack"
-     */
-    public static void addCamelComponentDependencies(Path dir, List<String> dependencies) {
-        if (dependencies == null || dependencies.isEmpty()) {
-            return;
-        }
-        File pom = dir.resolve("pom.xml").toFile();
-        LOG.info("Adding {} as dependencies to {}", dependencies, pom);
-
-        Model model = loadPom(pom);
-        for (String dependency : dependencies) {
-            Dependency dep = new Dependency();
-            dep.setGroupId("org.apache.camel");
-            dep.setArtifactId("camel-" + dependency);
-            LOG.debug("Adding dependency {}:{}", dep.getGroupId(), dep.getArtifactId());
-            model.getDependencies().add(dep);
-        }
-
-        writePom(pom, model);
-    }
-
-    /**
      * Loads the given pom file.
      *
      * @param pom pom file
@@ -290,5 +265,37 @@ public final class Maven {
         } catch (IOException e) {
             throw new RuntimeException("Unable to write settings file ", e);
         }
+    }
+
+    /**
+     * Returns the dependency object from given string. If the string contains ":" it is assumed that it is a GA[V] string.
+     *
+     * @param s dependency string
+     * @return dependency object
+     */
+    public static Dependency toDependency(String s) {
+        Dependency dependency = new Dependency();
+        if (s.contains(":")) {
+            String[] parts = s.split(":");
+            dependency.setGroupId(parts[0]);
+            dependency.setArtifactId(parts[1]);
+            if (parts.length > 2) {
+                dependency.setVersion(parts[2]);
+            }
+        } else {
+            if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
+                dependency.setGroupId("org.apache.camel");
+                dependency.setArtifactId("camel-" + s);
+            } else {
+                dependency.setGroupId("org.apache.camel.quarkus");
+                dependency.setArtifactId("camel-quarkus-" + s);
+            }
+        }
+        String log = "Created dependency: " + dependency.getGroupId() + ":" + dependency.getArtifactId();
+        if (dependency.getVersion() != null) {
+            log += ":" + dependency.getVersion();
+        }
+        LOG.info(log);
+        return dependency;
     }
 }

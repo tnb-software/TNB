@@ -5,7 +5,9 @@ import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.customizer.Customizer;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,6 +89,19 @@ public final class IntegrationGenerator {
                     return n;
                 }
             }, null);
+        }
+
+        if (TestConfiguration.product() == ProductType.CAMEL_K) {
+            // Add the dependencies to the modeline of the integration class
+            StringBuilder modeline = new StringBuilder("camel-k: language=java");
+            for (String dependency : integrationBuilder.getDependencies()) {
+                final Dependency dep = Maven.toDependency(dependency);
+                modeline.append(" dependency=mvn:").append(dep.getGroupId()).append(":").append(dep.getArtifactId());
+                if (dep.getVersion() != null) {
+                    modeline.append(":").append(dep.getVersion());
+                }
+            }
+            integrationBuilder.getRouteBuilder().setLineComment(modeline.append("\n").toString());
         }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
