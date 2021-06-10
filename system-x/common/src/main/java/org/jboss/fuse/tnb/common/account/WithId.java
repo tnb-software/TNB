@@ -5,7 +5,7 @@ package org.jboss.fuse.tnb.common.account;
  */
 public interface WithId {
     /**
-     * Get the id from system property if set, the system property is for example "awsaccount.id"
+     * Get the id from system property if set, the system property is for example "awsaccount.id".
      *
      * @return value of system property or default id
      */

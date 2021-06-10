@@ -18,11 +18,14 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.function.Function;
 
-public class Accounts {
+public final class Accounts {
     private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
 
     private static Map<String, Map<String, Object>> credentials;
     private static ObjectMapper mapper;
+
+    private Accounts() {
+    }
 
     /**
      * Loads the credentials file into a map.

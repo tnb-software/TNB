@@ -34,7 +34,7 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
-public class OpenshiftClient extends OpenShift {
+public final class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
     private static OpenshiftClient client;
 
@@ -218,14 +218,14 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
-     * Create namespace (name obtained from system property openshift.namespace)
+     * Create namespace (name obtained from system property openshift.namespace).
      */
     public void createNamespace() {
         createNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     /**
-     * Create namespace with given name
+     * Create namespace with given name.
      *
      * @param name of namespace to be created
      */
@@ -244,14 +244,14 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
-     * Delete namespace (name obtained from system property openshift.namespace)
+     * Delete namespace (name obtained from system property openshift.namespace).
      */
     public void deleteNamespace() {
         deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     /**
-     * Delete namespace of given name
+     * Delete namespace of given name.
      *
      * @param name of namespace to be deleted
      */
@@ -286,7 +286,7 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
-     * Get log of pod (alternative to OpenShift instance method getPodLog())
+     * Get log of pod (alternative to OpenShift instance method getPodLog()).
      *
      * @param p the pod
      * @return log of the pod
@@ -299,15 +299,17 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
+     * Creates a secret from given properties, wrappen into a application.properties key.
+     *
      * @param name of secret to be created
      * @param credentials of service from credentials.yaml
      * @param labels default null
-     * @param prefix default null, prefix which should be prepended to keys in credentials (<prefix>key=value)
+     * @param prefix default null, prefix which should be prepended to keys in credentials ([prefix]key=value)
      * @return created secret
      */
     public Secret createApplicationPropertiesSecret(String name, Properties credentials, Map<String, String> labels, String prefix) {
         String credentialsString = MapUtils.propertiesToString(credentials, Optional.ofNullable(prefix).orElse(""));
-        String dataFileName = (name.indexOf(".") != -1) ? name.substring(0, name.indexOf(".")) : name;
+        String dataFileName = (name.contains(".")) ? name.substring(0, name.indexOf(".")) : name;
         Secret secret = new SecretBuilder()
             .withStringData(Collections.singletonMap(dataFileName + ".properties", credentialsString)).withNewMetadata()
             .withName(name)

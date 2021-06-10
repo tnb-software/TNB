@@ -68,7 +68,7 @@ public class LocalFtp extends Ftp implements Deployable {
     }
 
     /**
-     * Custom client to make transfering files into the server faster and more stable
+     * Custom client to make transfering files into the server faster and more stable.
      */
     public class TestContainerFtpOutOfBandClient implements CustomFtpClient {
 

@@ -37,6 +37,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     public void start() {
         Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
         Path openshiftResources = integrationTarget.resolve("kubernetes/openshift.yml");
+
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
             LOG.info("Creating openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
             createdResources = OpenshiftClient.get().load(is).createOrReplace();

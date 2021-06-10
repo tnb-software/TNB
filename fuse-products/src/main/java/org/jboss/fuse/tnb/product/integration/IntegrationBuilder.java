@@ -30,7 +30,7 @@ import java.util.Properties;
 import java.util.Set;
 
 /**
- * Wrapper around creating integrations
+ * Wrapper around creating integrations.
  */
 public class IntegrationBuilder {
     private String integrationName;
@@ -161,7 +161,7 @@ public class IntegrationBuilder {
     }
 
     /**
-     * Processes imports - right now any tnb related import has to be removed as the classes are not present in the generated application
+     * Processes imports - right now any tnb related import has to be removed as the classes are not present in the generated application.
      */
     private static void processImports(CompilationUnit cu) {
         cu.accept(new ModifierVisitor<>() {

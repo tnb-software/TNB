@@ -48,7 +48,7 @@ public class InlineCustomizer extends Customizer {
     }
 
     /**
-     * Tries to find the value of field name and return that value as expression
+     * Tries to find the value of field name and return that value as expression.
      *
      * @param name referenced field name
      * @param defaultValue current expression that is to be replaced
@@ -97,8 +97,8 @@ public class InlineCustomizer extends Customizer {
                 if (methodCallExpr.getNameAsString().equals("format")) {
                     try {
                         LOG.warn(
-                            "Trying to inline result of String.format in from/to... if you get an error you can move the format call the to field " +
-                                "initializer/constructor");
+                            "Trying to inline result of String.format in from/to... if you get an error you can move the format call the to field "
+                                + "initializer/constructor");
                         StringLiteralExpr template = methodCallExpr.getArguments().get(0).asStringLiteralExpr();
                         //One argument is the formatting string
                         Object[] args = new Object[methodCallExpr.getArguments().size() - 1];

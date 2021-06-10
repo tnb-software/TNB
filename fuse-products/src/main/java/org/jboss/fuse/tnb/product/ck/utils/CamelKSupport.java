@@ -20,9 +20,10 @@ package org.jboss.fuse.tnb.product.ck.utils;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 /**
- * 
+ * Utility class for Camel-K CRDs.
+ *
  */
-public class CamelKSupport {
+public final class CamelKSupport {
 
     public static final String CAMELK_CRD_GROUP = "camel.apache.org";
 

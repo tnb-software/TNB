@@ -1,13 +1,13 @@
 package org.jboss.fuse.tnb.ftp.validation;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-
-import static org.junit.jupiter.api.Assertions.fail;
 
 public class FtpValidation {
 

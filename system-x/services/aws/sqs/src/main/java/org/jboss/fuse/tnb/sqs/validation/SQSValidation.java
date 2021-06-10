@@ -42,21 +42,21 @@ public class SQSValidation {
     public void setPermissiveAccessPolicy(String queue) {
         Map<QueueAttributeName, String> attributes = new HashMap<>();
         attributes.put(QueueAttributeName.POLICY,
-            "{\n" +
-                "\"Version\": \"2008-10-17\",\n" +
-                "\"Id\": \"__default_policy_ID\",\n" +
-                "\"Statement\": [\n" +
-                "  {\n" +
-                "    \"Sid\": \"__owner_statement\",\n" +
-                "    \"Effect\": \"Allow\",\n" +
-                "    \"Principal\": {\n" +
-                "      \"AWS\": \"*\"\n" +
-                "    },\n" +
-                "    \"Action\": \"SQS:*\",\n" +
-                "    \"Resource\": \"" + account.queueArnPrefix() + queue + "\"\n" +
-                "  }\n" +
-                "]\n" +
-                "}");
+            "{\n"
+                + "\"Version\": \"2008-10-17\",\n"
+                + "\"Id\": \"__default_policy_ID\",\n"
+                + "\"Statement\": [\n"
+                + "  {\n"
+                + "    \"Sid\": \"__owner_statement\",\n"
+                + "    \"Effect\": \"Allow\",\n"
+                + "    \"Principal\": {\n"
+                + "      \"AWS\": \"*\"\n"
+                + "    },\n"
+                + "    \"Action\": \"SQS:*\",\n"
+                + "    \"Resource\": \"" + account.queueArnPrefix() + queue + "\"\n"
+                + "  }\n"
+                + "]\n"
+                + "}");
         client.setQueueAttributes(builder -> builder.queueUrl(account.queueUrlPrefix() + queue).attributes(attributes
         ));
     }

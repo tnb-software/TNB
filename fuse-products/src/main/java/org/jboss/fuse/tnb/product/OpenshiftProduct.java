@@ -18,7 +18,7 @@ public abstract class OpenshiftProduct extends Product {
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
             teardownProduct();
-            deleteTmpNamespace();//if namespace was temporary, delete it (TODO: check if it wasn't deleted yet)
+            deleteTmpNamespace();
         }
     }
 

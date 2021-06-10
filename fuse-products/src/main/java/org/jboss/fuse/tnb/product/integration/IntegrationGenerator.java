@@ -27,6 +27,9 @@ import java.nio.file.StandardOpenOption;
 public final class IntegrationGenerator {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationGenerator.class);
 
+    private IntegrationGenerator() {
+    }
+
     /**
      * Dumps the codeblock into a integration data object.
      *
