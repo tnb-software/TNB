@@ -37,3 +37,9 @@ The code style is in the [EditorConfig](https://editorconfig.org/) [file](.edito
     - Use a local checkstyle file from the `checkstyle` directory  and set some description (for example `TNB configuration`)
     - Mark the newly added configuration as `active`
 
+
+### General tips
+
+#### Generating CRD classes
+
+See [here](docs/generating-crd-classes.md)
