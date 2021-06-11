@@ -12,7 +12,6 @@ import org.slf4j.LoggerFactory;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
-import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.Node;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
@@ -130,23 +129,28 @@ public class IntegrationBuilder {
             //Preprocess all final fields
             decl.getFields().forEach(fieldDecl -> {
                 if (fieldDecl.isFinal()) {
-                    try {
-                        decl.remove(fieldDecl);
-                        String fieldName = fieldDecl.getVariable(0).getNameAsString();
-                        final Field field = routeBuilder.getClass().getDeclaredField(fieldName);
-                        field.setAccessible(true);
-                        final Object value = field.get(routeBuilder);
-                        String expression;
-                        if (value instanceof String) {
-                            //Escape escaped characters so javaparser can compile and unescape them 
-                            expression = "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
-                        } else {
-                            expression = value.toString();
-                        }
-                        decl.addFieldWithInitializer(fieldDecl.getElementType(), fieldName, StaticJavaParser.parseExpression(expression),
-                            Modifier.Keyword.FINAL);
-                    } catch (Exception e) {
-                        throw new RuntimeException("Failed to find/process route builder class: " + e.getMessage());
+                    if (fieldDecl.getCommonType().isPrimitiveType() || fieldDecl.getCommonType().asString().equals("String")) {
+                        fieldDecl.getVariables().forEach(varDecl -> {
+                            try {
+                                String fieldName = fieldDecl.getVariable(0).getNameAsString();
+                                final Field field = routeBuilder.getClass().getDeclaredField(fieldName);
+                                field.setAccessible(true);
+                                final Object value = field.get(routeBuilder);
+                                String expression;
+                                if (value instanceof String) {
+                                    //Escape escaped characters so javaparser can compile and unescape them
+                                    expression = "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
+                                } else {
+                                    expression = value.toString();
+                                }
+                                varDecl.setInitializer(expression);
+                            } catch (Exception e) {
+                                throw new RuntimeException("Failed to find/process route builder class: " + e.getMessage());
+                            }
+                        });
+                    } else {
+                        LOG.debug("Field {} was marked as final but type {} is not primitive, skipping", fieldDecl.getVariables().toString(),
+                            fieldDecl.getElementType());
                     }
                 }
             });
