@@ -31,7 +31,7 @@ public class StorageBlobValidation {
         client.deleteBlobContainer(name);
     }
 
-    public void creteBlockBlob(String blobContainer, String blob, String message) {
+    public void createBlockBlob(String blobContainer, String blob, String message) {
         LOG.debug("Creating block blob with name {} and content {}", blob, message);
         ByteArrayInputStream dataStream = new ByteArrayInputStream(message.getBytes());
         client.getBlobContainerClient(blobContainer).getBlobClient(blob).upload(dataStream, message.length());
