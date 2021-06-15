@@ -22,7 +22,7 @@ class ExampleTest {
     public void testConsumer() {
         IntegrationBuilder integrationBase = new IntegrationBuilder("slack-to-log")
                 .fromRouteBuilder(new ConsumerRouteBuilder(slack))
-                .camelDependencies("slack", "bean");
+                .dependencies("slack", "bean");
     }
 
     class ConsumerRouteBuilder extends RouteBuilder {
