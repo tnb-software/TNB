@@ -47,6 +47,7 @@ public final class OpenshiftClient extends OpenShift {
             try {
                 OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
                 config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
+                config.setHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy());
                 config.setBuildTimeout(10 * 60 * 1000);
                 config.setRequestTimeout(120_000);
                 config.setConnectionTimeout(120_000);
@@ -63,6 +64,7 @@ public final class OpenshiftClient extends OpenShift {
                     .withNamespace(OpenshiftConfiguration.openshiftNamespace())
                     .withUsername(OpenshiftConfiguration.openshiftUsername())
                     .withPassword(OpenshiftConfiguration.openshiftPassword())
+                    .withHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy())
                     .build());
         }
     }
