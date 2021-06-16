@@ -16,6 +16,7 @@ public class OpenshiftConfiguration extends Configuration {
     private static final String OPENSHIFT_PASSWORD = "openshift.password";
     private static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
     private static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
+    private static final String OPENSHIFT_HTTPS_PROXY = "openshift.https.proxy";
 
     private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
@@ -37,6 +38,10 @@ public class OpenshiftConfiguration extends Configuration {
 
     public static String openshiftPassword() {
         return getProperty(OPENSHIFT_PASSWORD, "admin");
+    }
+
+    public static String openshiftHttpsProxy() {
+        return getProperty(OPENSHIFT_HTTPS_PROXY, null);
     }
 
     public static String openshiftNamespace() {
