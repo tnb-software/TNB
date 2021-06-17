@@ -18,8 +18,10 @@
 
     <modules>
         <module>aws-common</module>
+        <module>iam</module>
         <module>kinesis</module>
         <module>kinesis-firehose</module>
+        <module>lambda</module>
         <module>s3</module>
         <module>sqs</module>
         <module>sns</module>

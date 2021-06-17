@@ -10,13 +10,19 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Arrays;
 import java.util.Properties;
+import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public final class IOUtils {
     private static final Logger LOG = LoggerFactory.getLogger(IOUtils.class);
@@ -129,5 +135,27 @@ public final class IOUtils {
                 keysValues.getProperty(key.toString()));
         }
         writeFile(output, withVars);
+    }
+
+    public static Path zipFiles(String zipFileName, Path... files) {
+        LOG.info("Creating zip file {}.zip from files: {}", zipFileName, Arrays.stream(files).map(f -> f.getFileName().toString())
+            .collect(Collectors.toList()));
+        final Path zipFile;
+        try {
+            zipFile = Files.createFile(Paths.get("/tmp", zipFileName + ".zip"));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create temp zip file: ", e);
+        }
+        try (ZipOutputStream zos = new ZipOutputStream(new FileOutputStream(zipFile.toFile()))) {
+            for (Path file : files) {
+                ZipEntry e = new ZipEntry(file.getFileName().toString());
+                zos.putNextEntry(e);
+                zos.write(readFile(file).getBytes());
+                zos.closeEntry();
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to add file to zip file: ", e);
+        }
+        return zipFile;
     }
 }
