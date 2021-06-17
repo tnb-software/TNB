@@ -6,6 +6,7 @@ import org.jboss.fuse.tnb.customizer.Customizer;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,6 +22,7 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
+import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -129,29 +131,18 @@ public class IntegrationBuilder {
             //Preprocess all final fields
             decl.getFields().forEach(fieldDecl -> {
                 if (fieldDecl.isFinal()) {
-                    if (fieldDecl.getCommonType().isPrimitiveType() || fieldDecl.getCommonType().asString().equals("String")) {
-                        fieldDecl.getVariables().forEach(varDecl -> {
-                            try {
-                                String fieldName = fieldDecl.getVariable(0).getNameAsString();
-                                final Field field = routeBuilder.getClass().getDeclaredField(fieldName);
-                                field.setAccessible(true);
-                                final Object value = field.get(routeBuilder);
-                                String expression;
-                                if (value instanceof String) {
-                                    //Escape escaped characters so javaparser can compile and unescape them
-                                    expression = "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
-                                } else {
-                                    expression = value.toString();
-                                }
-                                varDecl.setInitializer(expression);
-                            } catch (Exception e) {
-                                throw new RuntimeException("Failed to find/process route builder class: " + e.getMessage());
-                            }
-                        });
-                    } else {
-                        LOG.debug("Field {} was marked as final but type {} is not primitive, skipping", fieldDecl.getVariables().toString(),
-                            fieldDecl.getElementType());
-                    }
+                    fieldDecl.getVariables().forEach(varDecl -> {
+                        try {
+                            String fieldName = fieldDecl.getVariable(0).getNameAsString();
+                            final Field field = routeBuilder.getClass().getDeclaredField(fieldName);
+                            field.setAccessible(true);
+                            final Object value = field.get(routeBuilder);
+                            String expression = getExpressionCode(value);
+                            varDecl.setInitializer(expression);
+                        } catch (Exception e) {
+                            throw new RuntimeException("Failed to find/process route builder class: " + e.getMessage());
+                        }
+                    });
                 }
             });
             if (!decl.isPublic()) {
@@ -162,6 +153,34 @@ public class IntegrationBuilder {
             decl.setName("MyRouteBuilder");
             processImports(cu);
         });
+    }
+
+    /**
+     * Returns code that should replicate the expression.
+     *
+     * @param value the runtime value from the routebuilder
+     * @return code that will create the same values in the app code
+     */
+    private String getExpressionCode(Object value) {
+        if (value instanceof String) {
+            //Escape escaped characters so javaparser can compile and unescape them 
+            return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
+        } else if (value.getClass().isArray()) {
+            StringBuilder expressionBuilder = new StringBuilder();
+            expressionBuilder.append("new ").append(value.getClass().getTypeName()).append("{");
+            for (int i = 0; i < Array.getLength(value); i++) {
+                //get string representation for each value
+                expressionBuilder.append(getExpressionCode(Array.get(value, i))).append(",");
+            }
+            expressionBuilder.append("}");
+            return expressionBuilder.toString();
+        } else if (ClassUtils.isPrimitiveOrWrapper(value.getClass())) {
+            //is primitive, or boxed Primitive
+            return value.toString();
+        } else {
+            throw new RuntimeException("Can't process final field with type " + value.getClass().getName()
+                + " please consider not making this field final if you don't want it processed");
+        }
     }
 
     /**
