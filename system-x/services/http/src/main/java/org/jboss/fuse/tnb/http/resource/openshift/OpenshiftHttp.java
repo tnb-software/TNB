@@ -140,7 +140,7 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
 
     @Override
     public String httpUrl() {
-        return "http://" + HTTP_SVC + " /";
+        return "http://" + HTTP_SVC + "/";
     }
 
     @Override
