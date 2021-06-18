@@ -7,7 +7,7 @@ public abstract class CamelKConfiguration extends Configuration {
 
     protected static final String SUBSCRIPTION_CHANNEL = "camelk.subscription.channel";
     protected static final String SUBSCRIPTION_OPERATOR_NAME = "camelk.subscription.operatorName";
-    protected static final String SUBSCRIPTION_SOURCE = "camelk.subscription.source";
+    public static final String SUBSCRIPTION_SOURCE = "camelk.subscription.source";
     protected static final String SUBSCRIPTION_SOURCE_NAMESPACE = "camelk.subscription.sourceNamespace";
 
     public static final String SUBSCRIPTION_NAME = "tnb-camel-k";

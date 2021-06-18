@@ -71,6 +71,14 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                         + "cluster for other tests."
                 );
             }
+            if (OpenshiftClient.get().operatorHub().catalogSources().inNamespace(config.subscriptionSourceNamespace())
+                .withName(config.subscriptionSource()).get() == null) {
+                LOG.error("Operator Hub catalog source {} not found! Set {} property to an existing catalog source or create a new catalog source"
+                        + " with {} name in {} namespace. Be careful, as if someone else uses the same cluster with a different version,"
+                        + " the deployments may fail due changes in CRDs between versions", config.subscriptionSource(),
+                    CamelKConfiguration.SUBSCRIPTION_SOURCE, config.subscriptionSource(), config.subscriptionSourceNamespace());
+                throw new RuntimeException("Operator Hub catalog source " + config.subscriptionSource() + " not found!");
+            }
             OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
                 SUBSCRIPTION_NAME,
                 config.subscriptionSourceNamespace());
