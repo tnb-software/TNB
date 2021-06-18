@@ -11,8 +11,11 @@ import org.apache.maven.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.javaparser.ast.ImportDeclaration;
+import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
+import com.github.javaparser.ast.body.TypeDeclaration;
 import com.github.javaparser.ast.visitor.ModifierVisitor;
 import com.github.javaparser.ast.visitor.Visitable;
 
@@ -39,6 +42,25 @@ public final class IntegrationGenerator {
      * @return integration data instance
      */
     public static IntegrationData toIntegrationData(IntegrationBuilder integrationBuilder) {
+        //Inline classes to the routebuilder
+        integrationBuilder.getAdditionalClasses().forEach(cu -> {
+            //newClass is an empty class added to the route builder
+            final TypeDeclaration<?> routeBuilder = integrationBuilder.getRouteBuilder().getClassByName(IntegrationBuilder.ROUTE_BUILDER_NAME).get();
+            //sourceClass is modified to be inlinable
+            final TypeDeclaration<?> sourceClass = cu.getPrimaryType().get();
+            sourceClass.setPublic(true);
+            sourceClass.addModifier(Modifier.Keyword.STATIC);
+
+            routeBuilder.addMember(sourceClass);
+            //merge imports from the source class
+            for (ImportDeclaration imp : cu.getImports()) {
+                integrationBuilder.getRouteBuilder().addImport(imp.getNameAsString());
+            }
+            //Remove the import to the class itself (won't be present in the generated app)
+            integrationBuilder.getRouteBuilder().getImports().removeIf(
+                imp -> imp.getNameAsString().equals(cu.getPackageDeclaration().get().getNameAsString() + "." + sourceClass.getNameAsString()));
+        });
+
         return create(integrationBuilder);
     }
 
@@ -49,6 +71,30 @@ public final class IntegrationGenerator {
      * @param location location of the root of the app
      */
     public static void toFile(IntegrationBuilder integrationBuilder, Path location) {
+        final Path sources = location.resolve("src/main/java");
+
+        //Add additional classes to the application
+        integrationBuilder.getAdditionalClasses().forEach(cu -> {
+            final String originalPackageName = cu.getPackageDeclaration().get().getNameAsString();
+            cu.setPackageDeclaration(TestConfiguration.appGroupId());
+            final String packageName = cu.getPackageDeclaration().get().getNameAsString();
+            final String typeName = cu.getPrimaryTypeName().get();
+
+            final Path packageFolder = sources.resolve(packageName.replace(".", "/"));
+            packageFolder.toFile().mkdirs();
+            final Path fileName = packageFolder.resolve(typeName + ".java");
+            //fully qualified class name
+            final String fqn = packageName + "." + typeName;
+            LOG.info("Adding class '{}' to application as class '{}'", originalPackageName + "." + typeName, fqn);
+            IOUtils.writeFile(fileName, cu.toString());
+            //If the class is in the same package, it needs to be imported explicitly
+            final ImportDeclaration importDeclaration =
+                new ImportDeclaration(fqn, false, false);
+            if (!integrationBuilder.getRouteBuilder().getImports().contains(importDeclaration)) {
+                integrationBuilder.getRouteBuilder().addImport(importDeclaration);
+            }
+        });
+
         final IntegrationData integrationData = create(integrationBuilder);
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
@@ -57,12 +103,10 @@ public final class IntegrationGenerator {
         try {
             // Properties#store() escapes stuff by default, so construct the property file manually
             Files.write(applicationPropertiesPath, applicationPropertiesContent.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-
         } catch (IOException e) {
             throw new RuntimeException("Unable to write application.properties: ", e);
         }
 
-        final Path sources = location.resolve("src/main/java");
         final PackageDeclaration packageDeclaration = integrationBuilder.getRouteBuilder().getPackageDeclaration().get();
         final Path destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
         destination.toFile().mkdirs();
