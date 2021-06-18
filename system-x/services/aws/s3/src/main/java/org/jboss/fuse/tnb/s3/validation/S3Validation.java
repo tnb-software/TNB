@@ -7,12 +7,14 @@ import org.slf4j.LoggerFactory;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Object;
 
 public class S3Validation {
 
@@ -48,10 +50,7 @@ public class S3Validation {
     }
 
     public List<String> listKeysInBucket(String bucketName) {
-
-        List<String> filesInBucket = client.listObjects(b -> b.bucket(bucketName)).contents().stream().map(c -> c.key())
-            .collect(Collectors.toList());
-        return filesInBucket;
+        return client.listObjects(b -> b.bucket(bucketName)).contents().stream().map(S3Object::key).collect(Collectors.toList());
     }
 
     public String readFileFromBucket(String bucketName, String key) {
@@ -65,12 +64,24 @@ public class S3Validation {
         return outputStream.toString();
     }
 
-    public void sendMessage(String bucketName, String key, String message) {
+    public void createFile(String bucketName, String key, String content) {
+        createFromBody(bucketName, key, RequestBody.fromString(content));
+    }
+
+    public void createFile(String bucketName, Path file) {
+        createFile(bucketName, file.getFileName().toString(), file);
+    }
+
+    public void createFile(String bucketName, String key, Path file) {
+        createFromBody(bucketName, key, RequestBody.fromFile(file));
+    }
+
+    private void createFromBody(String bucketName, String key, RequestBody body) {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(key)
             .build();
 
-        client.putObject(objectRequest, RequestBody.fromString(message));
+        client.putObject(objectRequest, body);
     }
 }
