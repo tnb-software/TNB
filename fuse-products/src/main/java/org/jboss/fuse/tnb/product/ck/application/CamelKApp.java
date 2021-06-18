@@ -134,9 +134,8 @@ public class CamelKApp extends App {
         is.setSources(Collections.singletonList(issrc));
 
         // TODO(anyone): remove if clause when 1.4 camel-k is officially released
-        if (OpenshiftClient.get().operatorHub().clusterServiceVersions().inNamespace(OpenshiftConfiguration.openshiftNamespace())
-            .list().getItems().stream().filter(csv -> csv.getMetadata().getName().contains("camel-k")).findFirst().get()
-            .getSpec().getVersion().startsWith("1.3")) {
+        if (OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("name", "camel-k-operator")).executeWithBash("kamel version")
+            .getOutput().contains("1.3")) {
             LOG.warn("Camel-K 1.3 detected, not setting dependencies into Integration object due to changes between 1.3 and 1.4");
         } else {
             List<String> dependencies = new ArrayList<>();
