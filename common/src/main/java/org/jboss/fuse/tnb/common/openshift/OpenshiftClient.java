@@ -182,6 +182,11 @@ public final class OpenshiftClient extends OpenShift {
     public void deleteSubscription(String name, String namespace) {
         LOG.info("Deleting subscription {} in namespace {}", name, namespace);
         Subscription subscription = get().operatorHub().subscriptions().inNamespace(namespace).withName(name).get();
+        if (subscription == null) {
+            // Avoid NPE when you have the operator installed manually through UI
+            LOG.warn("Unable to find subscription {} in {} namespace, skipping delete", name, namespace);
+            return;
+        }
         String csvName = subscription.getStatus().getCurrentCSV();
         // CSV being null can happen if you delete the subscription without deleting the CSV, then your new subscription is CSV-less
         if (csvName != null) {
