@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.sqs.validation;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.sqs.account.SQSAccount;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 
 import software.amazon.awssdk.services.sqs.SqsClient;
-import software.amazon.awssdk.services.sqs.model.CreateQueueResponse;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
@@ -29,14 +29,14 @@ public class SQSValidation {
 
     public void createQueue(String name) {
         LOG.debug("Creating SQS queue {}", name);
-        final CreateQueueResponse queue = client.createQueue(b -> b.queueName(name));
-        WaitUtils.waitFor(() -> queueExists(queue.queueUrl()), "Waiting until the queue " + name + " is created");
+        client.createQueue(b -> b.queueName(name));
+        WaitUtils.waitFor(() -> queueExists(name), "Waiting until the queue " + name + " is created");
     }
 
     /**
      * Add this access policy to allow AWS users to use SQS queue as SNS topic subscriber.
      *
-     * @param queue
+     * @param queue queue name
      * @see <a href="https://camel.apache.org/components/3.10.x/aws2-sns-component.html#_sns_fifo">Camel SNS documentation</a>
      */
     public void setPermissiveAccessPolicy(String queue) {
@@ -80,7 +80,10 @@ public class SQSValidation {
         });
     }
 
-    public boolean queueExists(String queueUrl) {
-        return client.listQueues().queueUrls().stream().anyMatch(queueUrl::equals);
+    public boolean queueExists(String queue) {
+        // request builder contains only prefix method, so check if any of the "prefixed" queues matches the name exactly
+        // queue url is in form https://sqs.<region>.amazonaws.com/<accound-id>/<queue-name>
+        return client.listQueues(b -> b.queueNamePrefix(queue)).queueUrls().stream()
+            .anyMatch(url -> queue.equals(StringUtils.substringAfterLast(url, "/")));
     }
 }
