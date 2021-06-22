@@ -34,6 +34,7 @@ import java.util.Set;
  * Wrapper around creating integrations.
  */
 public class IntegrationBuilder {
+    public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
     private String integrationName;
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
@@ -42,6 +43,7 @@ public class IntegrationBuilder {
 
     private final List<String> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
+    private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private CompilationUnit routeBuilder;
     private Properties appProperties = new Properties();
 
@@ -70,6 +72,10 @@ public class IntegrationBuilder {
                 cu.getLocalDeclarationFromClassname(getClassName(routeBuilder.getClass()));
             if (!classList.isEmpty()) {
                 final ClassOrInterfaceDeclaration decl = classList.get(0);
+                if (decl.isStatic()) {
+                    decl.setStatic(false);
+                }
+
                 String code = decl.toString();
 
                 final CompilationUnit nestedCu = StaticJavaParser.parse(decl.toString());
@@ -150,7 +156,7 @@ public class IntegrationBuilder {
                 decl.setPublic(true);
             }
             //Rewrite the original MyRouteBuilder class from the archetypes
-            decl.setName("MyRouteBuilder");
+            decl.setName(ROUTE_BUILDER_NAME);
             processImports(cu);
         });
     }
@@ -221,6 +227,31 @@ public class IntegrationBuilder {
     public IntegrationBuilder addCustomizer(Customizer c) {
         customizers.add(c);
         return this;
+    }
+
+    /**
+     * Adds class source to the application code. The sources must be available, so this will work only for classes inside tnb-tests.
+     *
+     * @param clazz class to be added to the application
+     * @return this
+     */
+    public IntegrationBuilder addClass(Class<?> clazz) {
+        return addClass(getSourceRoot(clazz).parse(clazz.getPackageName(), clazz.getSimpleName() + ".java"));
+    }
+
+    /**
+     * Adds class source to the application code. This can be used for classes outside of the maven project.
+     *
+     * @param cu compilation unit that represents the class to be added
+     * @return this
+     */
+    public IntegrationBuilder addClass(CompilationUnit cu) {
+        classesToAdd.add(cu);
+        return this;
+    }
+
+    public List<CompilationUnit> getAdditionalClasses() {
+        return this.classesToAdd;
     }
 
     public String getIntegrationName() {
