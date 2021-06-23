@@ -29,18 +29,12 @@ public class Slack implements Service {
     }
 
     protected com.slack.api.Slack client() {
-        if (client == null) {
-            LOG.debug("Creating new Slack client");
-            client = com.slack.api.Slack.getInstance();
-        }
+        LOG.debug("Creating new Slack client");
+        client = com.slack.api.Slack.getInstance();
         return client;
     }
 
     public SlackValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Slack validation");
-            validation = new SlackValidation(client(), account());
-        }
         return validation;
     }
 
@@ -54,5 +48,7 @@ public class Slack implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        LOG.debug("Creating new Slack validation");
+        validation = new SlackValidation(client(), account());
     }
 }

@@ -32,21 +32,15 @@ public class IAM implements Service {
     }
 
     protected IamClient client() {
-        if (client == null) {
-            LOG.debug("Creating new IAM client");
-            client = IamClient.builder()
-                .region(Region.AWS_GLOBAL)
-                .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new IAM client");
+        client = IamClient.builder()
+            .region(Region.AWS_GLOBAL)
+            .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public IAMValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new IAM validation");
-            validation = new IAMValidation(client());
-        }
         return validation;
     }
 
@@ -59,6 +53,7 @@ public class IAM implements Service {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        // no-op
+        LOG.debug("Creating new IAM validation");
+        validation = new IAMValidation(client());
     }
 }

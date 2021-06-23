@@ -33,20 +33,14 @@ public class Jira implements Service {
     }
 
     protected JiraRestClient client() {
-        if (client == null) {
-            LOG.debug("Creating new JiraRest client");
+        LOG.debug("Creating new JiraRest client");
 
-            client = new AsynchronousJiraRestClientFactory()
-                .createWithBasicHttpAuthentication(URI.create(account().getJiraUrl()), account().getUsername(), account().getPassword());
-        }
+        client = new AsynchronousJiraRestClientFactory()
+            .createWithBasicHttpAuthentication(URI.create(account().getJiraUrl()), account().getUsername(), account().getPassword());
         return client;
     }
 
     public JiraValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Jira validation");
-            validation = new JiraValidation(client(), account());
-        }
         return validation;
     }
 
@@ -59,6 +53,7 @@ public class Jira implements Service {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-
+        LOG.debug("Creating new Jira validation");
+        validation = new JiraValidation(client(), account());
     }
 }

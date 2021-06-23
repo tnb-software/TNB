@@ -27,10 +27,9 @@ public class GoogleSheets implements Service {
     private static final String APPLICATION_NAME = "TNB test app";
     private static final JacksonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
 
-    private NetHttpTransport httpTransport;
+    private final NetHttpTransport httpTransport;
 
     private GoogleAccount account;
-    private Sheets service;
     private SheetsValidation validation;
 
     public GoogleSheets() {
@@ -49,13 +48,8 @@ public class GoogleSheets implements Service {
     }
 
     protected Sheets client() {
-        if (service == null) {
-            LOG.debug("Creating new google-sheet client");
-            Credential credential = authorize();
-            return new Sheets.Builder(httpTransport, JSON_FACTORY, credential).setApplicationName(APPLICATION_NAME)
-                .build();
-        }
-        return service;
+        LOG.debug("Creating new Google Sheet client");
+        return new Sheets.Builder(httpTransport, JSON_FACTORY, authorize()).setApplicationName(APPLICATION_NAME).build();
     }
 
     private Credential authorize() {
@@ -72,19 +66,16 @@ public class GoogleSheets implements Service {
     }
 
     public SheetsValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new google-sheet validation");
-            validation = new SheetsValidation(client(), account());
-        }
         return validation;
     }
 
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
-
     }
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        LOG.debug("Creating new Google Sheet validation");
+        validation = new SheetsValidation(client(), account());
     }
 }

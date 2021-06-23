@@ -21,7 +21,6 @@ public class StorageBlob implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlob.class);
 
     private StorageBlobAccount account;
-    private BlobServiceClient client;
     private StorageBlobValidation validation;
 
     public StorageBlobAccount account() {
@@ -32,21 +31,14 @@ public class StorageBlob implements Service {
     }
 
     protected BlobServiceClient client() {
-        if (client == null) {
-            LOG.debug("Creating new Azure Storage Blob client");
-            client = new BlobServiceClientBuilder()
-                .endpoint(String.format("https://%s.blob.core.windows.net/%s", account().accountName(), account().accessKey()))
-                .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
-                .buildClient();
-        }
-        return client;
+        LOG.debug("Creating new Azure Storage Blob client");
+        return new BlobServiceClientBuilder()
+            .endpoint(String.format("https://%s.blob.core.windows.net/%s", account().accountName(), account().accessKey()))
+            .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
+            .buildClient();
     }
 
     public StorageBlobValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Azure Storage Blob validation");
-            validation = new StorageBlobValidation(client());
-        }
         return validation;
     }
 
@@ -57,6 +49,7 @@ public class StorageBlob implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new Azure Storage Blob validation");
+        validation = new StorageBlobValidation(client());
     }
 }

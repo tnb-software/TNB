@@ -35,21 +35,15 @@ public class Lambda implements Service {
     }
 
     protected LambdaClient client() {
-        if (client == null) {
-            LOG.debug("Creating new Lambda client");
-            client = LambdaClient.builder()
-                .region(Region.of(account().region()))
-                .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new Lambda client");
+        client = LambdaClient.builder()
+            .region(Region.of(account().region()))
+            .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public LambdaValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Lambda validation");
-            validation = new LambdaValidation(client(), iam);
-        }
         return validation;
     }
 
@@ -63,6 +57,7 @@ public class Lambda implements Service {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        // no-op
+        LOG.debug("Creating new Lambda validation");
+        validation = new LambdaValidation(client(), iam);
     }
 }
