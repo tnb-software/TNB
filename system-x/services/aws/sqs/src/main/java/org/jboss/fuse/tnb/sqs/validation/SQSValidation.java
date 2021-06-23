@@ -28,8 +28,19 @@ public class SQSValidation {
     }
 
     public void createQueue(String name) {
+        createQueueWithAttributes(name, null);
+    }
+
+    public void createContentBasedDeduplicationFifoQueue(String name) {
+        if (!name.endsWith(".fifo")) {
+            throw new IllegalArgumentException("Fifo queue name must end with .fifo");
+        }
+        createQueueWithAttributes(name, Map.of(QueueAttributeName.FIFO_QUEUE, "true", QueueAttributeName.CONTENT_BASED_DEDUPLICATION, "true"));
+    }
+
+    private void createQueueWithAttributes(String name, Map<QueueAttributeName, String> attributes) {
         LOG.debug("Creating SQS queue {}", name);
-        client.createQueue(b -> b.queueName(name));
+        client.createQueue(b -> b.queueName(name).attributes(attributes));
         WaitUtils.waitFor(() -> queueExists(name), "Waiting until the queue " + name + " is created");
     }
 
@@ -85,5 +96,11 @@ public class SQSValidation {
         // queue url is in form https://sqs.<region>.amazonaws.com/<accound-id>/<queue-name>
         return client.listQueues(b -> b.queueNamePrefix(queue)).queueUrls().stream()
             .anyMatch(url -> queue.equals(StringUtils.substringAfterLast(url, "/")));
+    }
+
+    public int getQueueSize(String queue) {
+        return Integer.parseInt(client.getQueueAttributes(qab -> qab.queueUrl(client.getQueueUrl(qub -> qub.queueName(queue)).queueUrl())
+            .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES))
+            .attributes().get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES));
     }
 }
