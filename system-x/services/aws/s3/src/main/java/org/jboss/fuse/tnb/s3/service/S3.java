@@ -33,21 +33,15 @@ public class S3 implements Service {
     }
 
     protected S3Client client() {
-        if (client == null) {
-            LOG.debug("Creating new S3 client");
-            client = S3Client.builder()
-                .region(Region.of(account().region()))
-                .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new S3 client");
+        client = S3Client.builder()
+            .region(Region.of(account().region()))
+            .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public S3Validation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new S3 validation");
-            validation = new S3Validation(client(), account());
-        }
         return validation;
     }
 
@@ -60,6 +54,7 @@ public class S3 implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new S3 validation");
+        validation = new S3Validation(client(), account());
     }
 }

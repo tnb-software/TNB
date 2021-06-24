@@ -36,21 +36,15 @@ public class SQS implements Service {
     }
 
     protected SqsClient client() {
-        if (client == null) {
-            LOG.debug("Creating new SQS client");
-            client = SqsClient.builder()
-                .region(Region.of(account().region()))
-                .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new SQS client");
+        client = SqsClient.builder()
+            .region(Region.of(account().region()))
+            .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public SQSValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new SQS validation");
-            validation = new SQSValidation(client(), account());
-        }
         return validation;
     }
 
@@ -63,6 +57,7 @@ public class SQS implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new SQS validation");
+        validation = new SQSValidation(client(), account());
     }
 }

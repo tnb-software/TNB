@@ -41,21 +41,15 @@ public class SNS implements Service {
     }
 
     protected SnsClient client() {
-        if (client == null) {
-            LOG.debug("Creating new SNS client");
-            client = SnsClient.builder()
-                .region(Region.of(account().region()))
-                .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new SNS client");
+        client = SnsClient.builder()
+            .region(Region.of(account().region()))
+            .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public SNSValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new SNS validation");
-            validation = new SNSValidation(client(), account(), sqs);
-        }
         return validation;
     }
 
@@ -73,6 +67,8 @@ public class SNS implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        sqs.beforeAll(extensionContext);
+        LOG.debug("Creating new SNS validation");
+        validation = new SNSValidation(client(), account(), sqs);
     }
 }

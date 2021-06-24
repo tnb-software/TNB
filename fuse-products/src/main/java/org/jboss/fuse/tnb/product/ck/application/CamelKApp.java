@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -96,6 +97,11 @@ public class CamelKApp extends App {
         WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
                 .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
             "Waiting until the integration " + name + " is undeployed");
+        final ConfigMap configMap = OpenshiftClient.get().getConfigMap(name);
+        if (configMap != null) {
+            LOG.debug("Removing config map {}", configMap.getMetadata().getName());
+            OpenshiftClient.get().configMaps().withName(name).delete();
+        }
     }
 
     @Override

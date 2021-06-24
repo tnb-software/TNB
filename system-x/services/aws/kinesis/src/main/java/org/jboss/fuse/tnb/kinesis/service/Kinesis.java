@@ -34,21 +34,15 @@ public class Kinesis implements Service {
     }
 
     protected KinesisClient client() {
-        if (client == null) {
             LOG.debug("Creating new Kinesis client");
             client = KinesisClient.builder()
                 .region(Region.of(account().region()))
                 .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
                 .build();
-        }
         return client;
     }
 
     public KinesisValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Kinesis validation");
-            validation = new KinesisValidation(client(), account());
-        }
         return validation;
     }
 
@@ -61,6 +55,7 @@ public class Kinesis implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new Kinesis validation");
+        validation = new KinesisValidation(client(), account());
     }
 }

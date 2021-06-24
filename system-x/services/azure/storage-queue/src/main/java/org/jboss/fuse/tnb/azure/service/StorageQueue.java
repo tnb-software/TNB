@@ -20,7 +20,6 @@ public class StorageQueue implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(StorageQueue.class);
 
     private StorageQueueAccount account;
-    private QueueServiceClient client;
     private StorageQueueValidation validation;
 
     public StorageQueueAccount account() {
@@ -31,19 +30,14 @@ public class StorageQueue implements Service {
     }
 
     protected QueueServiceClient client() {
-        if (client == null) {
-            client = new QueueServiceClientBuilder()
-                .endpoint(String.format("https://%s.queue.core.windows.net/%s", account().accountName(), account().accessKey()))
-                .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
-                .buildClient();
-        }
-        return client;
+        LOG.debug("Creating new Storage Queue client");
+        return new QueueServiceClientBuilder()
+            .endpoint(String.format("https://%s.queue.core.windows.net/%s", account().accountName(), account().accessKey()))
+            .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
+            .buildClient();
     }
 
     public StorageQueueValidation validation() {
-        if (validation == null) {
-            validation = new StorageQueueValidation(client());
-        }
         return validation;
     }
 
@@ -54,6 +48,7 @@ public class StorageQueue implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new Storage Queue validation");
+        validation = new StorageQueueValidation(client());
     }
 }

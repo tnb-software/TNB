@@ -34,21 +34,15 @@ public class KinesisFirehose implements Service {
     }
 
     protected FirehoseClient client() {
-        if (client == null) {
-            LOG.debug("Creating new Kinesis client");
-            client = FirehoseClient.builder()
-                .region(Region.of(account().region()))
-                .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
-                .build();
-        }
+        LOG.debug("Creating new Kinesis client");
+        client = FirehoseClient.builder()
+            .region(Region.of(account().region()))
+            .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
+            .build();
         return client;
     }
 
     public KinesisFirehoseValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new Kinesis validation");
-            validation = new KinesisFirehoseValidation(client(), account());
-        }
         return validation;
     }
 
@@ -61,6 +55,7 @@ public class KinesisFirehose implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        // no-op
+        LOG.debug("Creating new Kinesis validation");
+        validation = new KinesisFirehoseValidation(client(), account());
     }
 }
