@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.customizer;
+package org.jboss.fuse.tnb.product.integration;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -11,17 +11,20 @@ import java.util.Properties;
  */
 public abstract class Customizer {
 
-    private CompilationUnit routeBuilder;
-    private Properties applicationProperties;
+    private IntegrationBuilder integrationBuilder;
 
     public abstract void customize();
 
     public Properties getApplicationProperties() {
-        return applicationProperties;
+        return getIntegrationBuilder().getAppProperties();
     }
 
     public CompilationUnit getRouteBuilder() {
-        return routeBuilder;
+        return getIntegrationBuilder().getRouteBuilder();
+    }
+
+    public IntegrationBuilder getIntegrationBuilder() {
+        return integrationBuilder;
     }
 
     public ClassOrInterfaceDeclaration getRouteBuilderClass() {
@@ -32,11 +35,7 @@ public abstract class Customizer {
         return getRouteBuilderClass().getMethodsBySignature("configure").get(0);
     }
 
-    public void setRouteBuilder(CompilationUnit compilationUnit) {
-        this.routeBuilder = compilationUnit;
-    }
-
-    public void setApplicationProperties(Properties applicationProperties) {
-        this.applicationProperties = applicationProperties;
+    public void setIntegrationBuilder(IntegrationBuilder integrationBuilder) {
+        this.integrationBuilder = integrationBuilder;
     }
 }
