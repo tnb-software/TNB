@@ -57,6 +57,7 @@ public class Lambda implements Service {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        iam.beforeAll(context);
         LOG.debug("Creating new Lambda validation");
         validation = new LambdaValidation(client(), iam);
     }
