@@ -46,8 +46,12 @@ public final class MapUtils {
      */
     public static Map<String, Object> propertiesToMap(Properties properties, String prefix) {
         Map<String, Object> map = new LinkedHashMap<>();
-        properties.entrySet().stream()
-            .forEach(entry -> map.put(Optional.ofNullable(prefix).orElse("") + StringUtils.replaceUnderscoreWithCamelCase(entry.getKey().toString()), entry.getValue()));
+        if (properties != null) {
+            properties.entrySet().stream()
+                .forEach(entry -> map
+                    .put(Optional.ofNullable(prefix).orElse("") + StringUtils.replaceUnderscoreWithCamelCase(entry.getKey().toString()),
+                        entry.getValue()));
+        }
         return map;
     }
 }
