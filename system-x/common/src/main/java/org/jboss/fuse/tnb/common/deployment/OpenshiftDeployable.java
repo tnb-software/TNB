@@ -15,7 +15,7 @@ public interface OpenshiftDeployable extends Deployable {
         if (!isDeployed()) {
             OpenshiftClient.get().createNamespace(); // ensure namespace exists
             create();
-            WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
         }
+        WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
     }
 }
