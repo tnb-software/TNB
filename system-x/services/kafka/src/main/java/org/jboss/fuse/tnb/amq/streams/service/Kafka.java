@@ -11,4 +11,9 @@ public abstract class Kafka implements Service {
     public static String kafkaLocalImage() {
         return "quay.io/strimzi/kafka:latest-kafka-2.7.0";
     }
+
+    public static String zookeeperLocalImage() {
+        // actually the same image
+        return kafkaLocalImage();
+    }
 }
