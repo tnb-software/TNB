@@ -54,11 +54,8 @@ public abstract class Configuration {
                 throw new RuntimeException(e);
             }
             props.forEach((key, value) -> {
-                // Do not override properties set on command line
-                if (System.getProperty(key.toString()) == null) {
-                    LOG.debug("Setting system property {} to {}", key, value.toString());
-                    System.setProperty(key.toString(), value.toString());
-                }
+                LOG.debug("Setting system property {} to {}", key.toString(), value.toString());
+                System.setProperty(key.toString(), value.toString());
             });
         } else {
             LOG.debug("Test.properties file not found");
