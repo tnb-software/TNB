@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.product.util;
 
-import org.jboss.fuse.tnb.customizer.Customizer;
+import org.jboss.fuse.tnb.product.integration.Customizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

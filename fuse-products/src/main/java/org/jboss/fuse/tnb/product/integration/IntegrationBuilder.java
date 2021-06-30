@@ -2,7 +2,6 @@ package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.customizer.Customizer;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 
 import org.apache.camel.builder.RouteBuilder;

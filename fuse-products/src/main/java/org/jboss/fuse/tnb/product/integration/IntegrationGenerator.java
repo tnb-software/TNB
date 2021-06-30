@@ -4,22 +4,16 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
-import org.jboss.fuse.tnb.customizer.Customizer;
-import org.jboss.fuse.tnb.product.util.maven.Maven;
+import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
+import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 
-import org.apache.maven.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.PackageDeclaration;
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
-import com.github.javaparser.ast.visitor.ModifierVisitor;
-import com.github.javaparser.ast.visitor.Visitable;
-
-import javax.enterprise.context.ApplicationScoped;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -120,37 +114,16 @@ public final class IntegrationGenerator {
      * @param integrationBuilder integration builder instance
      */
     private static IntegrationData create(IntegrationBuilder integrationBuilder) {
-        // For camel quarkus we add @ApplicationScoped to RouteBuilder class
-        // And dump properties into application.properties
         if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
-            integrationBuilder.getRouteBuilder().accept(new ModifierVisitor<>() {
-                @Override
-                public Visitable visit(ClassOrInterfaceDeclaration n, Object arg) {
-                    super.visit(n, arg);
-                    if (n.getExtendedTypes().stream().anyMatch(x -> x.getNameAsString().equals("RouteBuilder"))) {
-                        n.addAnnotation(ApplicationScoped.class);
-                    }
-                    return n;
-                }
-            }, null);
+            integrationBuilder.addCustomizer(new ApplicationScopeCustomizer());
         }
 
         if (TestConfiguration.product() == ProductType.CAMEL_K) {
-            // Add the dependencies to the modeline of the integration class
-            StringBuilder modeline = new StringBuilder("camel-k: language=java");
-            for (String dependency : integrationBuilder.getDependencies()) {
-                final Dependency dep = Maven.toDependency(dependency);
-                modeline.append(" dependency=mvn:").append(dep.getGroupId()).append(":").append(dep.getArtifactId());
-                if (dep.getVersion() != null) {
-                    modeline.append(":").append(dep.getVersion());
-                }
-            }
-            integrationBuilder.getRouteBuilder().setLineComment(modeline.append("\n").toString());
+            integrationBuilder.addCustomizer(new ModelineCustomizer());
         }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
-            customizer.setRouteBuilder(integrationBuilder.getRouteBuilder());
-            customizer.setApplicationProperties(integrationBuilder.getAppProperties());
+            customizer.setIntegrationBuilder(integrationBuilder);
             customizer.customize();
         }
 

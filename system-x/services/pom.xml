@@ -23,6 +23,7 @@
         <module>jira</module>
         <module>http</module>
         <module>kafka</module>
+        <module>dballocator</module>
     </modules>
 
     <dependencies>

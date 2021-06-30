@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.customizer.mongodb;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.customizer.Customizer;
+import org.jboss.fuse.tnb.product.integration.Customizer;
 
 import com.github.javaparser.StaticJavaParser;
 

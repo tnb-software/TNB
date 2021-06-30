@@ -17,15 +17,17 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -51,9 +53,11 @@ public class CamelKApp extends App {
         client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
 
     private KameletBinding kameletBinding = null;
+    private IntegrationBuilder integrationBuilder = null;
 
     public CamelKApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
+        this.integrationBuilder = integrationBuilder;
         integrationData = IntegrationGenerator.toIntegrationData(integrationBuilder);
 
         // If there are any properties set, create a config map with the same map as the integration
@@ -144,14 +148,14 @@ public class CamelKApp extends App {
             .getOutput().contains("1.3")) {
             LOG.warn("Camel-K 1.3 detected, not setting dependencies into Integration object due to changes between 1.3 and 1.4");
         } else {
-            List<String> dependencies = new ArrayList<>();
-
-            String modeline = integrationData.getIntegration().split("\n")[0];
-            for (String s : modeline.split(" ")) {
-                if (s.contains("dependency=")) {
-                    dependencies.add(s.split("=")[1]);
-                }
-            }
+            final List<String> dependencies = integrationBuilder.getDependencies().stream()
+                .map(Maven::toDependency)
+                .map(dep -> {
+                    if (dep.getVersion() == null) {
+                        return String.format("mvn:%s:%s", dep.getGroupId(), dep.getArtifactId());
+                    }
+                    return String.format("mvn:%s:%s:%s", dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
+                }).collect(Collectors.toList());
             is.setDependencies(dependencies);
         }
 
@@ -160,6 +164,11 @@ public class CamelKApp extends App {
             IntegrationSpec.Configuration isc = new IntegrationSpec.Configuration("configmap", name);
             is.setConfiguration(Collections.singletonList(isc));
         }
+
+        integrationBuilder.getCustomizers().stream()
+            .filter(IntegrationSpecCustomizer.class::isInstance)
+            .map(IntegrationSpecCustomizer.class::cast)
+            .forEach(i -> i.customizeIntegration(is));
 
         return new Integration.Builder()
             .name(name)
