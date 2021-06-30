@@ -20,6 +20,7 @@ public class TestConfiguration extends Configuration {
     public static final String APP_LOCATION = "app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
+    public static final String TEST_SKIP_TEARDOWN = "test.skip.teardown";
     public static final String MAVEN_REPOSITORY = "test.maven.repository";
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
@@ -94,6 +95,10 @@ public class TestConfiguration extends Configuration {
 
     public static boolean isQuarkusNative() {
         return getBoolean(QUARKUS_NATIVE_BUILD);
+    }
+
+    public static boolean skipTearDown() {
+        return getBoolean(TEST_SKIP_TEARDOWN, false);
     }
 
     public static double quarkusMajorMinorVersion() {
