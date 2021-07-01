@@ -1,10 +1,13 @@
 package org.jboss.fuse.tnb.common.utils;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
+
+import io.fabric8.kubernetes.api.model.EnvVar;
 
 public final class MapUtils {
     private MapUtils() {
@@ -53,5 +56,9 @@ public final class MapUtils {
                         entry.getValue()));
         }
         return map;
+    }
+
+    public static List<EnvVar> mapToEnvVars(Map<String, String> map) {
+        return map.entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null)).collect(Collectors.toList());
     }
 }

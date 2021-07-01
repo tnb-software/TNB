@@ -24,6 +24,7 @@
         <module>http</module>
         <module>kafka</module>
         <module>dballocator</module>
+        <module>sql</module>
     </modules>
 
     <dependencies>
