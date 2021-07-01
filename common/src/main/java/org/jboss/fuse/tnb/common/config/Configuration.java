@@ -1,25 +1,21 @@
 package org.jboss.fuse.tnb.common.config;
 
+import org.eclipse.microprofile.config.Config;
+import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Properties;
-
 public abstract class Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
-    private static final String TEST_PROPERTIES = "test.properties";
+
+    private static Config config;
 
     protected static String getProperty(String name) {
-        return System.getProperty(name);
+        return getProperty(name, null);
     }
 
     protected static String getProperty(String name, String defaultValue) {
-        return System.getProperty(name, defaultValue);
+        return config.getOptionalValue(name, String.class).orElse(defaultValue);
     }
 
     protected static void setProperty(String name, String value) {
@@ -27,38 +23,32 @@ public abstract class Configuration {
     }
 
     protected static boolean getBoolean(String name) {
-        return Boolean.parseBoolean(getProperty(name));
+        return getBoolean(name, false);
     }
 
     protected static boolean getBoolean(String name, boolean defaultValue) {
-        return Boolean.parseBoolean(getProperty(name, String.valueOf(defaultValue)));
+        return config.getOptionalValue(name, Boolean.class).orElse(defaultValue);
     }
 
     protected static int getInteger(String name) {
-        return Integer.parseInt(getProperty(name));
+        return getInteger(name, 0);
     }
 
     protected static int getInteger(String name, int defaultValue) {
-        return Integer.parseInt(getProperty(name, String.valueOf(defaultValue)));
+        return config.getOptionalValue(name, Integer.class).orElse(defaultValue);
+    }
+
+    protected static String[] getArray(String name) {
+        return getArray(name, new String[0]);
+    }
+
+    protected static String[] getArray(String name, String[] defaultValue) {
+        return config.getOptionalValue(name, String[].class).orElse(defaultValue);
     }
 
     static {
-        Path testProperties = Paths.get(System.getProperty(TEST_PROPERTIES, "test.properties"));
-        if (testProperties.toFile().exists()) {
-            LOG.info("Loading properties from {}", testProperties.toAbsolutePath());
-            Properties props = new Properties();
-            try (InputStream is = Files.newInputStream(testProperties)) {
-                props.load(is);
-            } catch (IOException e) {
-                LOG.error("Unable to load properties from " + testProperties.toAbsolutePath(), e);
-                throw new RuntimeException(e);
-            }
-            props.forEach((key, value) -> {
-                LOG.debug("Setting system property {} to {}", key.toString(), value.toString());
-                System.setProperty(key.toString(), value.toString());
-            });
-        } else {
-            LOG.debug("Test.properties file not found");
-        }
+        LOG.info("Loading properties");
+        System.setProperty("org.apache.geronimo.config.configsource.SystemPropertyConfigSource.copy", "false");
+        config = ConfigProvider.getConfig();
     }
 }
