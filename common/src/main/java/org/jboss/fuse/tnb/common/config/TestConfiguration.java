@@ -53,7 +53,7 @@ public class TestConfiguration extends Configuration {
         if (credentials == null) {
             throw new IllegalArgumentException("No credentials file specified!");
         }
-        return getProperty(CREDENTIALS_FILE);
+        return credentials;
     }
 
     public static String appGroupId() {
