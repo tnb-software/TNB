@@ -124,8 +124,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void teardownProduct() {
-        OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
-        removeKamelets();
+        if (!TestConfiguration.skipTearDown()) {
+            OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+            removeKamelets();
+        }
     }
 
     @Override

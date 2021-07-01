@@ -1,0 +1,1 @@
+internal maven repo does not have valid cert which makes mvn >= 3.8 freak out
