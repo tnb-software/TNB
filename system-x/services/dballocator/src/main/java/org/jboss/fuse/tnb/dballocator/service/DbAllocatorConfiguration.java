@@ -2,7 +2,6 @@ package org.jboss.fuse.tnb.dballocator.service;
 
 import org.jboss.fuse.tnb.common.config.Configuration;
 
-import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -20,7 +19,7 @@ public class DbAllocatorConfiguration extends Configuration {
     }
 
     public static String[] getDependencies() {
-        return Optional.ofNullable(getProperty(DEPENDENCIES)).map(s -> s.split(",")).orElse(new String[0]);
+        return getArray(DEPENDENCIES);
     }
 
     public static String getRequestee() {
