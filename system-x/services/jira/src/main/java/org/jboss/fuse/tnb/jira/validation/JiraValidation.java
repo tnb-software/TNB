@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.jira.validation;
 
+import org.jboss.fuse.tnb.common.utils.HTTPUtils;
 import org.jboss.fuse.tnb.jira.account.JiraAccount;
 
 import org.slf4j.Logger;
@@ -20,8 +21,6 @@ import java.util.stream.StreamSupport;
 
 import okhttp3.Credentials;
 import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public class JiraValidation {
@@ -52,29 +51,21 @@ public class JiraValidation {
             String input = new ObjectMapper().writeValueAsString(inputMap);
             RequestBody body = RequestBody.create(MediaType.parse("application/json"), input);
 
-            Request request = new Request.Builder()
-                .url(account.getJiraUrl() + "/rest/api/2/issue")
-                .addHeader("Authorization", Credentials.basic(account.getUsername(), account.getPassword()))
-                .post(body)
-                .build();
-
             //added multiple attempts due to FUSEQE-12463
             String issueJson = null;
             boolean unsuccessful = true;
             for (int i = 0; i < 2 && unsuccessful; i++) {
                 try {
-                    issueJson = new OkHttpClient().newCall(request).execute().body().string();
+                    issueJson = HTTPUtils.post(account.getJiraUrl() + "/rest/api/2/issue", body,
+                        Map.of("Authorization", Credentials.basic(account.getUsername(), account.getPassword()))).getBody();
                     unsuccessful = false;
-                } catch (IOException e) {
+                } catch (Exception e) {
                     LOG.debug(i + ". attempt to create issue failed");
                 }
             }
 
             LOG.debug("Created issue: " + issueJson);
-
-            Map<String, String> issueMap
-                = new ObjectMapper().readValue(issueJson, Map.class);
-            return issueMap.get("key");
+            return new ObjectMapper().readValue(issueJson, Map.class).get("key").toString();
         } catch (IOException e) {
             throw new RuntimeException("Failed to create issue", e);
         }
