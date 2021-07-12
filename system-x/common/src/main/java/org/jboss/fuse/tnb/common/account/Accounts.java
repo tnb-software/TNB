@@ -72,6 +72,14 @@ public final class Accounts {
         return null;
     }
 
+    /**
+     * Gets the credentials of a service as Properties instance.
+     *
+     * @param credentialsId credentials id
+     * @return properties instance
+     * @deprecated use account.toProperties() method
+     */
+    @Deprecated
     public static Properties getCredentialsOfService(String credentialsId) {
         if (credentials == null) {
             load();
