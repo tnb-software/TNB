@@ -14,6 +14,7 @@ import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
 import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
+import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -27,6 +28,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -40,6 +43,7 @@ public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT =
         CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
 
     private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
         OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
@@ -61,9 +65,11 @@ public class CamelKApp extends App {
         integrationData = IntegrationGenerator.toIntegrationData(integrationBuilder);
 
         // If there are any properties set, create a config map with the same map as the integration
+        // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
         if (!integrationData.getProperties().isEmpty()) {
-            OpenshiftClient.get()
+            ConfigMap integrationProperties = OpenshiftClient.get()
                 .createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(integrationData.getProperties())));
+            EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationProperties, name));
         }
     }
 
@@ -101,11 +107,6 @@ public class CamelKApp extends App {
         WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
                 .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
             "Waiting until the integration " + name + " is undeployed");
-        final ConfigMap configMap = OpenshiftClient.get().getConfigMap(name);
-        if (configMap != null) {
-            LOG.debug("Removing config map {}", configMap.getMetadata().getName());
-            OpenshiftClient.get().configMaps().withName(name).delete();
-        }
     }
 
     @Override
