@@ -18,6 +18,7 @@ import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.generated.KameletList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
+import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
@@ -38,8 +39,11 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -53,6 +57,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
     private static final CustomResourceDefinitionContext INTEGRATIONPLATFORM_CONTEXT =
         CamelKSupport.integrationPlatformCRDContext(CamelKSettings.API_VERSION_DEFAULT);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
 
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
     private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
@@ -92,33 +97,31 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         kameletBindingClient = OpenshiftClient.get().customResources(KAMELET_BINDING_CONTEXT, KameletBinding.class, KameletBindingList.class)
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
 
-        if (TestConfiguration.mavenRepository() != null) {
-            // One-off use of IntegrationPlatform, so not creating classes for this small stuff
-            // Create an IntegrationPlatform object with given maven repository
-            // this object is created by "kamel install" or when installed through operatorhub, it's created with 1st integration
-            Map<String, Object> metadata = Map.of(
-                "labels", Map.of("app", "camel-k"),
-                "name", "camel-k"
-            );
-            Map<String, Object> spec = Map.of(
-                "configuration", Collections.singletonList(Map.of(
-                    "type", "repository",
-                    "value", TestConfiguration.mavenRepository()
-                ))
-            );
-            Map<String, Object> integrationPlatform = Map.of(
-                "apiVersion", "camel.apache.org/v1",
-                "kind", "IntegrationPlatform",
-                "metadata", metadata,
-                "spec", spec
-            );
-            try {
-                OpenshiftClient.get().customResource(INTEGRATIONPLATFORM_CONTEXT).delete(OpenshiftConfiguration.openshiftNamespace());
-                OpenshiftClient.get().customResource(INTEGRATIONPLATFORM_CONTEXT)
-                    .create(OpenshiftConfiguration.openshiftNamespace(), integrationPlatform);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to create integration platform: ", e);
-            }
+        // One-off use of IntegrationPlatform, so not creating classes for this small stuff
+        // Create an IntegrationPlatform object with given maven repository
+        // this object is created by "kamel install" or when installed through operatorhub, it's created with 1st integration
+        Map<String, Object> metadata = Map.of(
+            "labels", Map.of("app", "camel-k"),
+            "name", "camel-k"
+        );
+        Map<String, Object> spec = Map.of(
+            "configuration", Collections.singletonList(Map.of(
+                "type", "repository",
+                "value", TestConfiguration.mavenRepository()
+            ))
+        );
+        Map<String, Object> integrationPlatform = Map.of(
+            "apiVersion", "camel.apache.org/v1",
+            "kind", "IntegrationPlatform",
+            "metadata", metadata,
+            "spec", spec
+        );
+        try {
+            OpenshiftClient.get().customResource(INTEGRATIONPLATFORM_CONTEXT).delete(OpenshiftConfiguration.openshiftNamespace());
+            OpenshiftClient.get().customResource(INTEGRATIONPLATFORM_CONTEXT)
+                .create(OpenshiftConfiguration.openshiftNamespace(), integrationPlatform);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create integration platform: ", e);
         }
     }
 
@@ -229,7 +232,11 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet", kameletName);
         labels.put(CamelKSupport.CAMELK_CRD_GROUP + "/kamelet.configuration", kameletName);
         Properties camelCaseCredentials = PropertiesUtils.toCamelCaseProperties(credentials);
-        OpenshiftClient.get().createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
+
+        // Set the later created integration object as the owner of the secret, so that the secret is deleted together with the integration
+        Secret integrationSecret =
+            OpenshiftClient.get().createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
+        EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationSecret, kameletName));
     }
 
     @Override

@@ -17,6 +17,7 @@ import java.util.Properties;
 import java.util.function.BooleanSupplier;
 
 import cz.xtf.core.openshift.OpenShift;
+import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Namespace;
@@ -280,9 +281,10 @@ public final class OpenshiftClient extends OpenShift {
      *
      * @param name configmap name
      * @param data map with data
+     * @return created configmap instance
      */
-    public void createConfigMap(String name, Map<String, String> data) {
-        client.configMaps().withName(name).createOrReplace(
+    public ConfigMap createConfigMap(String name, Map<String, String> data) {
+        return client.configMaps().withName(name).createOrReplace(
             new ConfigMapBuilder()
                 .withNewMetadata()
                 .withName(name)
