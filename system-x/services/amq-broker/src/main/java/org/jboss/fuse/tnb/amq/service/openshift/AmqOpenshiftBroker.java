@@ -81,7 +81,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
                 LOG.debug("Amq broker operator pod is already present");
             }
             // Create amq-broker custom resource
-            amqbrokerCli.create(createBrokerCR(BROKER_NAME));
+            amqbrokerCli.createOrReplace(createBrokerCR(BROKER_NAME));
         }
     }
 
@@ -103,6 +103,8 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
             .timeout(120_000).waitFor();
         OpenshiftClient.get().deleteSecret(SSL_SECRET_NAME);
         OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "name", "amq-broker-operator")
+            .timeout(120_000).waitFor();
     }
 
     @Override

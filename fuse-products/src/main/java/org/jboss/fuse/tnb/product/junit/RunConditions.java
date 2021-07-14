@@ -78,26 +78,41 @@ public class RunConditions implements ExecutionCondition {
      */
     private ConditionEvaluationResult evaluateJiraAnnotations(ExtensionContext context) {
         Optional<Jiras> annotation = getCurrentElementAnnotation(context, Jiras.class);
-        if (annotation.isPresent()) {
+        // If there is no "Jiras" annotation (with > 1 Jira), there still can be a single Jira annotation
+        if (annotation.isEmpty()) {
+            Optional<Jira> optionalJira = getCurrentElementAnnotation(context, Jira.class);
+            if (optionalJira.isPresent()) {
+                return evaluateJiraAnnotation(context, optionalJira.get());
+            }
+        } else {
             Jira[] jiras = annotation.get().value();
             for (Jira jira : jiras) {
-                // If the jira isn't reported against the current environment, do nothing
-                if (!jira.configuration().isCurrentEnv()) {
-                    continue;
+                ConditionEvaluationResult result = evaluateJiraAnnotation(context, jira);
+                if (result.isDisabled()) {
+                    return result;
                 }
-                for (String jiraKey : jira.keys()) {
-                    final HTTPUtils.Response response = HTTPUtils.get(JIRA_URL_PREFIX + jiraKey);
-                    if (response.getResponseCode() == 200) {
-                        final String status = new JSONObject(response.getBody()).getJSONObject("fields").getJSONObject("status").get("name")
-                            .toString();
-                        if (!RUN_RESOLUTIONS.contains(status)) {
-                            LOG.debug("Skipping {}, JIRA {} is in {} state", context.getDisplayName(), jiraKey, status);
-                            return ConditionEvaluationResult.disabled(String.format("JIRA %s is in %s state", jiraKey, status));
-                        }
-                    } else {
-                        LOG.warn("Jira response code was {}, not evaluating jira state", response.getResponseCode());
-                    }
+            }
+        }
+        return ConditionEvaluationResult.enabled("Running");
+    }
+
+    private ConditionEvaluationResult evaluateJiraAnnotation(ExtensionContext context, Jira jira) {
+        // If the jira isn't reported against the current environment, run the test
+        if (!jira.configuration().isCurrentEnv()) {
+            return ConditionEvaluationResult.enabled("Running");
+        }
+        for (String jiraKey : jira.keys()) {
+            LOG.trace("Checking JIRA {}", jiraKey);
+            final HTTPUtils.Response response = HTTPUtils.get(JIRA_URL_PREFIX + jiraKey);
+            if (response.getResponseCode() == 200) {
+                final String status = new JSONObject(response.getBody()).getJSONObject("fields").getJSONObject("status").get("name")
+                    .toString();
+                if (!RUN_RESOLUTIONS.contains(status)) {
+                    LOG.debug("Skipping {}, JIRA {} is in {} state", context.getDisplayName(), jiraKey, status);
+                    return ConditionEvaluationResult.disabled(String.format("JIRA %s is in %s state", jiraKey, status));
                 }
+            } else {
+                LOG.warn("Jira response code was {}, not evaluating jira state", response.getResponseCode());
             }
         }
         return ConditionEvaluationResult.enabled("Running");

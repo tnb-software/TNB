@@ -1,5 +1,8 @@
 package org.jboss.fuse.tnb.amq.validation;
 
+import org.apache.activemq.artemis.jms.client.ActiveMQBytesMessage;
+
+import javax.jms.BytesMessage;
 import javax.jms.Connection;
 import javax.jms.Destination;
 import javax.jms.JMSException;
@@ -69,6 +72,17 @@ public class AMQValidation {
         if (message instanceof TextMessage) {
             try {
                 return ((TextMessage) message).getText();
+            } catch (JMSException e) {
+                throw new RuntimeException(e);
+            }
+        } else if (message instanceof ActiveMQBytesMessage) {
+            try {
+                BytesMessage byteMessage = (BytesMessage) message;
+                byte[] byteArr;
+                byteArr = new byte[(int) byteMessage.getBodyLength()];
+                byteMessage.readBytes(byteArr);
+                byteMessage.reset();
+                return new String(byteArr);
             } catch (JMSException e) {
                 throw new RuntimeException(e);
             }
