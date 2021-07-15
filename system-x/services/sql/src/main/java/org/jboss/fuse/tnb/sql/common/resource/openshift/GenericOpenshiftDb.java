@@ -52,7 +52,7 @@ public class GenericOpenshiftDb implements OpenshiftDeployable, WithName {
                                     .withName(name())
                                 .endPort()
                                 .withImagePullPolicy("IfNotPresent")
-                                .withEnv(MapUtils.mapToEnvVars(sqlService.containerEnvironment()))
+                                .withEnv(MapUtils.toEnvVars(sqlService.containerEnvironment()))
                                 .withNewReadinessProbe()
                                     .withNewTcpSocket()
                                         .withNewPort(name())

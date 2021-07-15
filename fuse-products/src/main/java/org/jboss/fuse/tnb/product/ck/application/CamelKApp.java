@@ -4,7 +4,7 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.generated.Integration;
@@ -68,7 +68,7 @@ public class CamelKApp extends App {
         // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
         if (!integrationData.getProperties().isEmpty()) {
             ConfigMap integrationProperties = OpenshiftClient.get()
-                .createConfigMap(name, Map.of("application.properties", MapUtils.propertiesToString(integrationData.getProperties())));
+                .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationData.getProperties())));
             EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationProperties, name));
         }
     }

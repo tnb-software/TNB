@@ -26,6 +26,10 @@ public final class HTTPUtils {
         return execute(new Request.Builder().post(body).url(url).headers(Headers.of(headers)).build());
     }
 
+    public static void delete(String url) {
+        execute(new Request.Builder().url(url).delete().build());
+    }
+
     private static Response execute(Request request) {
         try {
             okhttp3.Response response = CLIENT.newCall(request).execute();

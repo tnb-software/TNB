@@ -3,7 +3,7 @@ package org.jboss.fuse.tnb.product.integration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 
@@ -92,7 +92,7 @@ public final class IntegrationGenerator {
         final IntegrationData integrationData = create(integrationBuilder);
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
-        String applicationPropertiesContent = MapUtils.propertiesToString(integrationBuilder.getAppProperties());
+        String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getAppProperties());
         LOG.debug("Application properties:\n{}", applicationPropertiesContent);
         try {
             // Properties#store() escapes stuff by default, so construct the property file manually
