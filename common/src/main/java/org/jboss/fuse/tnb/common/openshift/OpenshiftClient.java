@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
 import org.slf4j.Logger;
@@ -317,7 +317,7 @@ public final class OpenshiftClient extends OpenShift {
      * @return created secret
      */
     public Secret createApplicationPropertiesSecret(String name, Properties credentials, Map<String, String> labels, String prefix) {
-        String credentialsString = MapUtils.propertiesToString(credentials, Optional.ofNullable(prefix).orElse(""));
+        String credentialsString = PropertiesUtils.toString(credentials, Optional.ofNullable(prefix).orElse(""));
         String dataFileName = (name.contains(".")) ? name.substring(0, name.indexOf(".")) : name;
         Secret secret = new SecretBuilder()
             .withStringData(Collections.singletonMap(dataFileName + ".properties", credentialsString)).withNewMetadata()
