@@ -20,6 +20,7 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -137,6 +138,14 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     public App createIntegration(IntegrationBuilder integrationBuilder) {
         CamelKApp app = new CamelKApp(integrationBuilder);
         integrations.put(integrationBuilder.getIntegrationName(), app);
+        app.start();
+        app.waitUntilReady();
+        return app;
+    }
+
+    public App createIntegration(String name, IntegrationData integrationData) {
+        CamelKApp app = new CamelKApp(name, integrationData);
+        integrations.put(name, app);
         app.start();
         app.waitUntilReady();
         return app;

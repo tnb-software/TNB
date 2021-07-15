@@ -20,10 +20,13 @@ import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
-import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.util.Collections;
 import java.util.List;
@@ -31,6 +34,7 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -60,9 +64,13 @@ public class CamelKApp extends App {
     private IntegrationBuilder integrationBuilder = null;
 
     public CamelKApp(IntegrationBuilder integrationBuilder) {
-        super(integrationBuilder.getIntegrationName());
+        this(integrationBuilder.getIntegrationName(), IntegrationGenerator.toIntegrationData(integrationBuilder));
         this.integrationBuilder = integrationBuilder;
-        integrationData = IntegrationGenerator.toIntegrationData(integrationBuilder);
+    }
+
+    public CamelKApp(String name, IntegrationData data) {
+        super(name);
+        integrationData = data;
 
         // If there are any properties set, create a config map with the same map as the integration
         // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
@@ -137,27 +145,41 @@ public class CamelKApp extends App {
      * @return integration instance
      */
     private Integration createIntegrationResource(String name, IntegrationData integrationData) {
-        IntegrationSpec.Source issrc = new IntegrationSpec.Source();
-        issrc.setName("MyRouteBuilder.java");
-        issrc.setContent(integrationData.getIntegration());
 
         IntegrationSpec is = new IntegrationSpec();
-        is.setSources(Collections.singletonList(issrc));
+        if (integrationData.getSourceName().endsWith(".yaml")) {
+            ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
+            try {
+                is.setFlows(mapper.readValue(integrationData.getIntegration(), List.class));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException("Can't parse yaml flow from source file.");
+            }
+        } else {
+            IntegrationSpec.Source issrc = new IntegrationSpec.Source();
+            issrc.setName(integrationData.getSourceName());
+            issrc.setContent(integrationData.getIntegration());
+
+            is.setSources(Collections.singletonList(issrc));
+        }
 
         // TODO(anyone): remove if clause when 1.4 camel-k is officially released
         if (OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("name", "camel-k-operator")).executeWithBash("kamel version")
             .getOutput().contains("1.3")) {
             LOG.warn("Camel-K 1.3 detected, not setting dependencies into Integration object due to changes between 1.3 and 1.4");
         } else {
-            final List<String> dependencies = integrationBuilder.getDependencies().stream()
-                .map(Maven::toDependency)
-                .map(dep -> {
-                    if (dep.getVersion() == null) {
-                        return String.format("mvn:%s:%s", dep.getGroupId(), dep.getArtifactId());
-                    }
-                    return String.format("mvn:%s:%s:%s", dep.getGroupId(), dep.getArtifactId(), dep.getVersion());
-                }).collect(Collectors.toList());
-            is.setDependencies(dependencies);
+            String modelinePreffix = integrationData.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
+            List<String> modelines = integrationData.getIntegration().lines()
+                .filter(l -> l.trim().startsWith(modelinePreffix))
+                .map(l -> l.replaceAll(modelinePreffix, ""))
+                .flatMap(l -> Stream.of(l.split("\\s")))
+                .collect(Collectors.toList());
+
+            is.setDependencies(modelines.stream()
+                .filter(modeline -> modeline.contains("dependency"))
+                .map(modeline -> modeline.split("=")[1])
+                // unify dependency format
+                .map(dependency -> dependency.replaceAll("^camel-", "camel:")).collect(
+                    Collectors.toList()));
         }
 
         // if there are any properties set, use the configmap in the integration's configuration
@@ -166,10 +188,12 @@ public class CamelKApp extends App {
             is.setConfiguration(Collections.singletonList(isc));
         }
 
-        integrationBuilder.getCustomizers().stream()
-            .filter(IntegrationSpecCustomizer.class::isInstance)
-            .map(IntegrationSpecCustomizer.class::cast)
-            .forEach(i -> i.customizeIntegration(is));
+        if (integrationBuilder != null) {
+            integrationBuilder.getCustomizers().stream()
+                .filter(IntegrationSpecCustomizer.class::isInstance)
+                .map(IntegrationSpecCustomizer.class::cast)
+                .forEach(i -> i.customizeIntegration(is));
+        }
 
         return new Integration.Builder()
             .name(name)
