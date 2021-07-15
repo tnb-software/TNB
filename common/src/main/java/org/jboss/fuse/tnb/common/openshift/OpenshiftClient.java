@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -26,7 +27,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.dsl.ContainerResource;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
@@ -302,9 +302,15 @@ public final class OpenshiftClient extends OpenShift {
      */
     public String getLogs(Pod p) {
         PodResource<Pod> pr = OpenshiftClient.get().pods().withName(p.getMetadata().getName());
-        Container c = OpenshiftClient.get().getAnyContainer(p);
-        ContainerResource cr = pr.inContainer(c.getName());
-        return cr.getLog();
+        final List<Container> allContainers = OpenshiftClient.get().getAllContainers(p);
+        Container c;
+        if (allContainers.size() == 1) {
+            c = allContainers.get(0);
+        } else {
+            // this throws exception if there is no "integration" container, we can solve that later once it starts failing
+            c = OpenshiftClient.get().getContainer(p, "integration");
+        }
+        return pr.inContainer(c.getName()).getLog();
     }
 
     /**
