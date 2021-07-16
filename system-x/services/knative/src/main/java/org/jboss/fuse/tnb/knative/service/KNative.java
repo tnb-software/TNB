@@ -132,11 +132,11 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
     @Override
     public boolean isReady() {
         return OpenshiftClient.get().apps().deployments().inNamespace(TARGET_NAMESPACE).list().getItems().stream()
-            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
+            .allMatch(d -> d.getSpec().getReplicas() == 0 || d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
             && OpenshiftClient.get().apps().deployments().inNamespace(EVENTING_NAMESPACE).list().getItems().stream()
-            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
+            .allMatch(d -> d.getSpec().getReplicas() == 0 || d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
             && OpenshiftClient.get().apps().deployments().inNamespace(SERVING_NAMESPACE).list().getItems().stream()
-            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()));
+            .allMatch(d -> d.getSpec().getReplicas() == 0 || d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()));
     }
 
     @Override
