@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.lambda.validation;
 
+import static org.junit.jupiter.api.Assertions.fail;
+
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.iam.service.IAM;
 
@@ -10,6 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import software.amazon.awssdk.core.SdkBytes;
@@ -32,6 +36,14 @@ public class LambdaValidation {
     public LambdaValidation(LambdaClient client, IAM iam) {
         this.client = client;
         this.iam = iam;
+    }
+
+    public void createFunction(String name, Runtime runtime, String handler, Path zipFile) {
+        try (InputStream is = Files.newInputStream(zipFile)) {
+            createFunction(name, runtime, handler, SdkBytes.fromInputStream(is));
+        } catch (IOException e) {
+            fail("Unable to load function from zip file: ", e);
+        }
     }
 
     public void createFunction(String name, Runtime runtime, String handler, SdkBytes zipFile) {
