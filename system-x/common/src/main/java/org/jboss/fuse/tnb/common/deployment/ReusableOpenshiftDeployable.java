@@ -14,9 +14,8 @@ public interface ReusableOpenshiftDeployable extends OpenshiftDeployable {
     void cleanup();
 
     default void beforeAll(ExtensionContext extensionContext) throws Exception {
-        if (!isDeployed()) {
-            deploy();
-        }
+        // Deploy does "deploy" (if it is not already deployed) + wait until it's ready
+        deploy();
         openResources();
     }
 

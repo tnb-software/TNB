@@ -43,7 +43,7 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
 
     private KNativeValidation validation;
 
-    private boolean installedByDefault = false; //serverless operator installed by default shouldn't be removed
+    private boolean installedByDefault = true; //serverless operator installed by default shouldn't be removed
 
     private static final Logger LOG = LoggerFactory.getLogger(KNative.class);
 
@@ -104,50 +104,47 @@ public class KNative implements Service, ReusableOpenshiftDeployable {
 
     @Override
     public void create() {
-        if (isReady()) {
-            installedByDefault = true;
-            LOG.debug("Serverless operator already installed");
-        } else {
-            LOG.debug("Creating serverless operator");
-            OpenshiftClient.get().createNamespace(TARGET_NAMESPACE);
-            // Create subscription for serverless operator
-            OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE, TARGET_NAMESPACE,
-                true);
+        LOG.debug("Creating serverless operator");
+        installedByDefault = false;
 
-            // The serverless operator also creates eventing and serving namespaces if they are not present
-            WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(EVENTING_NAMESPACE).get() != null,
-                "Waiting until the eventing namespace is created");
-            WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(SERVING_NAMESPACE).get() != null,
-                "Waiting until the serving namespace is created");
+        OpenshiftClient.get().createNamespace(TARGET_NAMESPACE);
+        // Create subscription for serverless operator
+        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE, TARGET_NAMESPACE,
+            true);
 
-            // Create eventing and serving custom resource
-            try {
-                OpenshiftClient.get().customResource(EVENTING_CTX)
-                    .createOrReplace(EVENTING_NAMESPACE, createCr("KnativeEventing", EVENTING_CR_NAME, EVENTING_NAMESPACE));
-                OpenshiftClient.get().customResource(SERVING_CTX)
-                    .createOrReplace(SERVING_NAMESPACE, createCr("KnativeServing", SERVING_CR_NAME, SERVING_NAMESPACE));
-            } catch (IOException e) {
-                fail("Unable to create custom resources: ", e);
-            }
+        // The serverless operator also creates eventing and serving namespaces if they are not present
+        WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(EVENTING_NAMESPACE).get() != null,
+            "Waiting until the eventing namespace is created");
+        WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(SERVING_NAMESPACE).get() != null,
+            "Waiting until the serving namespace is created");
+
+        // Create eventing and serving custom resource
+        try {
+            OpenshiftClient.get().customResource(EVENTING_CTX)
+                .createOrReplace(EVENTING_NAMESPACE, createCr("KnativeEventing", EVENTING_CR_NAME, EVENTING_NAMESPACE));
+            OpenshiftClient.get().customResource(SERVING_CTX)
+                .createOrReplace(SERVING_NAMESPACE, createCr("KnativeServing", SERVING_CR_NAME, SERVING_NAMESPACE));
+        } catch (IOException e) {
+            fail("Unable to create custom resources: ", e);
         }
     }
 
     @Override
     public boolean isReady() {
-        final List<Pod> pods = OpenshiftClient.get().pods().inNamespace(TARGET_NAMESPACE).list().getItems();
-        final List<Pod> eventingPods = OpenshiftClient.get().pods().inNamespace(EVENTING_NAMESPACE).list().getItems();
-        final List<Pod> servingPods = OpenshiftClient.get().pods().inNamespace(EVENTING_NAMESPACE).list().getItems();
-        return pods.size() > 0 && pods.stream().allMatch(ResourceParsers::isPodReady)
-            && eventingPods.size() > 0 && eventingPods.stream().allMatch(ResourceParsers::isPodReady)
-            && servingPods.size() > 0
-            && servingPods.stream().allMatch(p -> ResourceParsers.isPodReady(p) || "succeeded".equalsIgnoreCase(p.getStatus().getPhase()));
+        return OpenshiftClient.get().apps().deployments().inNamespace(TARGET_NAMESPACE).list().getItems().stream()
+            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
+            && OpenshiftClient.get().apps().deployments().inNamespace(EVENTING_NAMESPACE).list().getItems().stream()
+            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()))
+            && OpenshiftClient.get().apps().deployments().inNamespace(SERVING_NAMESPACE).list().getItems().stream()
+            .allMatch(d -> d.getSpec().getReplicas().equals(d.getStatus().getAvailableReplicas()));
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().operatorHub().subscriptions().inNamespace(TARGET_NAMESPACE).withName(SUBSCRIPTION_NAME).get() != null
-            && !OpenshiftClient.get().customResource(EVENTING_CTX).list(EVENTING_NAMESPACE).isEmpty()
-            && !OpenshiftClient.get().customResource(SERVING_CTX).list(SERVING_NAMESPACE).isEmpty();
+        List<Pod> pods = OpenshiftClient.get().pods().inNamespace(TARGET_NAMESPACE).withLabel("name", "knative-operator").list().getItems();
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
+            && ((List) OpenshiftClient.get().customResource(EVENTING_CTX).list(EVENTING_NAMESPACE).get("items")).size() == 1
+            && ((List) OpenshiftClient.get().customResource(SERVING_CTX).list(SERVING_NAMESPACE).get("items")).size() == 1;
     }
 
     protected KnativeClient client() {
