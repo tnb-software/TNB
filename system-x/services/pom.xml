@@ -26,6 +26,7 @@
         <module>kafka</module>
         <module>dballocator</module>
         <module>sql</module>
+        <module>elasticsearch</module>
     </modules>
 
     <dependencies>
