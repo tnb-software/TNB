@@ -97,8 +97,7 @@ public class OpenshiftAmqStreams extends Kafka implements OpenshiftDeployable, W
     }
 
     private void deployOperator() {
-        OpenshiftClient.get().createSubscription("stable", "amq-streams", "redhat-operators",
-            "amq-streams", "openshift-marketplace");
+        OpenshiftClient.get().createSubscription("stable", "amq-streams", "redhat-operators", "amq-streams");
         OpenshiftClient.get().waitForInstallPlanToComplete("amq-streams");
     }
 

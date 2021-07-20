@@ -84,6 +84,19 @@ public final class OpenshiftClient extends OpenShift {
      * @param operatorName operator name
      * @param source operator catalog source
      * @param subscriptionName name of the subscription
+     */
+    public void createSubscription(String channel, String operatorName, String source, String subscriptionName) {
+        createSubscription(channel, operatorName, source, subscriptionName, "openshift-marketplace", OpenshiftConfiguration.openshiftNamespace(),
+            false);
+    }
+
+    /**
+     * Creates the operatorgroup and subscription.
+     *
+     * @param channel operatorhub channel
+     * @param operatorName operator name
+     * @param source operator catalog source
+     * @param subscriptionName name of the subscription
      * @param subscriptionNamespace namespace of the catalogsource
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName, String subscriptionNamespace) {
@@ -104,8 +117,8 @@ public final class OpenshiftClient extends OpenShift {
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
         String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide) {
-        LOG.info("Creating subcription with name {}, for operator {}, channel {}, source {} in {}", subscriptionName, operatorName, channel, source,
-            subscriptionSourceNamespace);
+        LOG.info("Creating subcription with name \"{}\", for operator \"{}\", channel \"{}\", catalog source \"{}\" from \"{}\" namespace",
+            subscriptionName, operatorName, channel, source, subscriptionSourceNamespace);
         LOG.debug("Creating operator group {}", subscriptionName);
         if (get().operatorHub().operatorGroups().inNamespace(targetNamespace).list().getItems().size() == 0) {
             final OperatorGroupBuilder operatorGroupBuilder = new OperatorGroupBuilder()
