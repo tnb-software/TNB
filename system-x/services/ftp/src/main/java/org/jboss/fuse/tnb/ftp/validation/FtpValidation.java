@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.ftp.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.jboss.fuse.tnb.common.FileTransferValidation;
 import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
 
 import java.io.ByteArrayInputStream;
@@ -9,7 +10,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
-public class FtpValidation {
+public class FtpValidation implements FileTransferValidation {
 
     private final CustomFtpClient client;
 
@@ -17,6 +18,7 @@ public class FtpValidation {
         this.client = client;
     }
 
+    @Override
     public void createFile(String fileName, String fileContent) {
         try {
             client.storeFile(fileName, new ByteArrayInputStream(fileContent.getBytes(StandardCharsets.UTF_8)));
@@ -25,6 +27,7 @@ public class FtpValidation {
         }
     }
 
+    @Override
     public String downloadFile(String fileName) {
         try {
             ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -35,6 +38,7 @@ public class FtpValidation {
         }
     }
 
+    @Override
     public void createDirectory(String dirName) {
         try {
             client.makeDirectory(dirName);

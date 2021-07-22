@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.ftp.service;
 
+import org.jboss.fuse.tnb.common.FileTransferService;
 import org.jboss.fuse.tnb.common.account.Accounts;
-import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.ftp.account.FtpAccount;
 import org.jboss.fuse.tnb.ftp.validation.FtpValidation;
 
@@ -10,8 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-
-public abstract class Ftp implements Service {
+public abstract class Ftp implements FileTransferService {
     private static final Logger LOG = LoggerFactory.getLogger(Ftp.class);
     private static final String FTP_IMAGE_KEY = "ftp.image";
 
@@ -20,10 +19,7 @@ public abstract class Ftp implements Service {
 
     protected abstract CustomFtpClient client();
 
-    public abstract int port();
-
-    public abstract String host();
-
+    @Override
     public FtpAccount account() {
         if (account == null) {
             account = Accounts.get(FtpAccount.class);
@@ -31,6 +27,7 @@ public abstract class Ftp implements Service {
         return account;
     }
 
+    @Override
     public FtpValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new Ftp validation");

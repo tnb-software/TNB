@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.sftp.service;
 
+import org.jboss.fuse.tnb.common.FileTransferService;
 import org.jboss.fuse.tnb.common.account.Accounts;
-import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.sftp.account.SftpAccount;
 import org.jboss.fuse.tnb.sftp.validation.SftpValidation;
 
@@ -12,7 +12,7 @@ import java.util.Map;
 
 import net.schmizz.sshj.sftp.SFTPClient;
 
-public abstract class Sftp implements Service {
+public abstract class Sftp implements FileTransferService {
     private static final Logger LOG = LoggerFactory.getLogger(Sftp.class);
     private static final String SFTP_IMAGE_KEY = "sftp.image";
 
@@ -20,12 +20,13 @@ public abstract class Sftp implements Service {
     private SftpValidation validation;
 
     public abstract SFTPClient client();
-    public abstract String host();
 
+    @Override
     public int port() {
         return 22;
     }
 
+    @Override
     public SftpAccount account() {
         if (account == null) {
             account = Accounts.get(SftpAccount.class);
@@ -33,6 +34,7 @@ public abstract class Sftp implements Service {
         return account;
     }
 
+    @Override
     public SftpValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new Ftp validation");

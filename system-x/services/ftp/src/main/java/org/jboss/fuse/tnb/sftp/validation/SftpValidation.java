@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.sftp.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.jboss.fuse.tnb.common.FileTransferValidation;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.sftp.account.SftpAccount;
 
@@ -11,7 +12,7 @@ import java.nio.file.Path;
 
 import net.schmizz.sshj.sftp.SFTPClient;
 
-public class SftpValidation {
+public class SftpValidation implements FileTransferValidation {
 
     private final SFTPClient client;
     private final SftpAccount account;
@@ -21,6 +22,7 @@ public class SftpValidation {
         this.account = account;
     }
 
+    @Override
     public void createFile(String fileName, String fileContent) {
         Path tempFile = createTempFile();
         try {
@@ -33,6 +35,7 @@ public class SftpValidation {
         }
     }
 
+    @Override
     public String downloadFile(String fileName) {
         Path tempFile = createTempFile();
         try {
@@ -45,6 +48,7 @@ public class SftpValidation {
         }
     }
 
+    @Override
     public void createDirectory(String dirName) {
         try {
             client.mkdir(account.baseDir() + "/" + dirName);

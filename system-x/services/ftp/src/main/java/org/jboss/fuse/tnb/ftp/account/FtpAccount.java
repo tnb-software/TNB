@@ -1,8 +1,8 @@
 package org.jboss.fuse.tnb.ftp.account;
 
-import org.jboss.fuse.tnb.common.account.Account;
+import org.jboss.fuse.tnb.common.FileTransferAccount;
 
-public class FtpAccount implements Account {
+public class FtpAccount implements FileTransferAccount {
 
     private String username = "test";
     private String password = "test";
