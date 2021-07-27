@@ -167,7 +167,9 @@ public class IntegrationBuilder {
      * @return code that will create the same values in the app code
      */
     private String getExpressionCode(Object value) {
-        if (value instanceof String) {
+        if (value == null) {
+            return "null";
+        } else if (value instanceof String) {
             //Escape escaped characters so javaparser can compile and unescape them 
             return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
         } else if (value.getClass().isArray()) {
