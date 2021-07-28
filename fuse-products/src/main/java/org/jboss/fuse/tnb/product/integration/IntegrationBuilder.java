@@ -9,6 +9,7 @@ import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
@@ -26,8 +27,11 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Wrapper around creating integrations.
@@ -61,9 +65,8 @@ public class IntegrationBuilder {
         while (clazz.getEnclosingClass() != null) {
             clazz = clazz.getEnclosingClass();
         }
-        SourceRoot sourceRoot = getSourceRoot(clazz);
+        CompilationUnit cu = getCompilationUnit(clazz);
         String className = getClassName(clazz);
-        CompilationUnit cu = sourceRoot.parse(clazz.getPackageName(), className + ".java");
 
         if (routeBuilder.getClass().getEnclosingClass() != null) {
             //Find the nested class, should really be only one class since they all should have unique names
@@ -106,9 +109,23 @@ public class IntegrationBuilder {
         return this;
     }
 
-    private SourceRoot getSourceRoot(Class<?> clazz) {
+    private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
         ProjectRoot projectRoot = new ParserCollectionStrategy().collect(CodeGenerationUtils.mavenModuleRoot(clazz));
-        return projectRoot.getSourceRoots().stream().filter(sr -> !sr.getRoot().toString().contains("target")).findFirst().get();
+        return projectRoot.getSourceRoots().stream().filter(sr -> !sr.getRoot().toString().contains("target"));
+    }
+
+    private CompilationUnit getCompilationUnit(Class<?> clazz) {
+        return getSourceRoots(clazz).map(sr -> {
+            try {
+                return sr.parse(clazz.getPackageName(), getClassName(clazz) + ".java");
+            } catch (ParseProblemException ex) {
+                return null;
+            }
+        }).filter(Objects::nonNull).findFirst()
+            .orElseThrow(() -> new RuntimeException(String
+                .format("Couldn't parse class %s in source roots [%s]. Make sure the sources are available.", clazz.getName(),
+                    getSourceRoots(clazz).collect(
+                        Collectors.toList()))));
     }
 
     ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
@@ -237,7 +254,7 @@ public class IntegrationBuilder {
      * @return this
      */
     public IntegrationBuilder addClass(Class<?> clazz) {
-        return addClass(getSourceRoot(clazz).parse(clazz.getPackageName(), clazz.getSimpleName() + ".java"));
+        return addClass(getCompilationUnit(clazz));
     }
 
     /**
