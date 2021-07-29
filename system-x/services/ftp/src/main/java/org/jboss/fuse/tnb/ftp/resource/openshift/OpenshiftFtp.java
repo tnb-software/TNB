@@ -42,7 +42,6 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
 
     private final CustomFtpClient client = new OpenShiftFtpClient();
 
-
     public static final int FTP_COMMAND_PORT = 2121;
     public static final int FTP_DATA_PORT_START = 2122;
     public static final int FTP_DATA_PORT_END = 2130;
@@ -124,7 +123,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
         LOG.info("Undeploying OpenShift ftp");
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
     }
 

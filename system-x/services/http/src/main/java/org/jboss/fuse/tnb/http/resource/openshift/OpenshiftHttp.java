@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.http.resource.openshift;
 
+import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -10,6 +11,7 @@ import com.google.auto.service.AutoService;
 import java.util.LinkedList;
 import java.util.List;
 
+import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -30,7 +32,9 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
     @Override
     public void undeploy() {
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenshiftClient.get().services().withLabel("app", name()).delete();
+        OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
+            .areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
     }
 
     @Override
@@ -68,14 +72,14 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
         OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
             .withNewMetadata()
                 .withName(name())
-                .addToLabels("app", name())
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector("app", name())
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
-                            .addToLabels("app", name())
+                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                         .endMetadata()
                         .editOrNewSpec()
                             .addNewContainer()
@@ -96,10 +100,10 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
         OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(HTTP_SVC)
-                .addToLabels("app", name())
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
-                .addToSelector("app", name())
+                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .addNewPort()
                     .withName("http")
                     .withProtocol("TCP")
@@ -112,10 +116,10 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
         OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(HTTPS_SVC)
-                .addToLabels("app", name())
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
-                .addToSelector("app", name())
+                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .addNewPort()
                     .withName("https")
                     .withProtocol("TCP")
@@ -129,13 +133,13 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
 
     @Override
     public boolean isReady() {
-        List<Pod> list = OpenshiftClient.get().getLabeledPods("app", name());
+        List<Pod> list = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
         return ResourceFunctions.areExactlyNPodsReady(1).apply(list);
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods("app", name()).size() > 0 && isReady();
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() > 0 && isReady();
     }
 
     @Override

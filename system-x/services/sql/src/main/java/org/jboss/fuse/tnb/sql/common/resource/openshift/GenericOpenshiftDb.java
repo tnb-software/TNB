@@ -95,7 +95,7 @@ public class GenericOpenshiftDb implements OpenshiftDeployable, WithName {
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
-            .areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
+            .areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
     }
 
     @Override
