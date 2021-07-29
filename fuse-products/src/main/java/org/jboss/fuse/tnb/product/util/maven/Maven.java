@@ -59,6 +59,8 @@ public final class Maven {
      */
     public static void setupMaven() {
         LOG.info("Setting up maven");
+        createSettingsXmlFile();
+
         if (System.getProperty("maven.home") != null) {
             // Do nothing as the maven.home is what we need
             return;
@@ -93,7 +95,6 @@ public final class Maven {
             throw new RuntimeException("No maven found in system/environment properties nor in PATH");
         }
 
-        createSettingsXmlFile();
     }
 
     /**
