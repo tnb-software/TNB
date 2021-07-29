@@ -107,7 +107,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         OpenshiftClient.get().services().withName(name()).delete();
         LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
     }
 

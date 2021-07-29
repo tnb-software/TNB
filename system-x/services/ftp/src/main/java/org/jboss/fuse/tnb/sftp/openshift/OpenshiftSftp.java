@@ -139,7 +139,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
         OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(0, OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
     }
 
