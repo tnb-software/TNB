@@ -7,6 +7,12 @@ import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 
 import com.google.auto.service.AutoService;
 
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -169,4 +175,26 @@ public class OpenshiftAmqStreams extends Kafka implements OpenshiftDeployable, W
         KAFKA_TOPIC_CRD_CLIENT.createOrReplace(kafkaTopic);
     }
 
+    public void createSASLBasedPlainAuth() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
+        // .q2/html-single/using_amq_streams_on_openshift/index#type-KafkaClientAuthenticationPlain-reference
+        String password = Base64.getEncoder().encodeToString(getSASLBasedPlainAuthPwd().getBytes());
+        Map<String, String> labels = new HashMap<>();
+        labels.put("strimzi.io/kind", "KafkaUser");
+        labels.put("strimzi.io/cluster", name());
+
+        SecretBuilder sb = new SecretBuilder()
+            .withApiVersion("v1")
+            .editOrNewMetadata().withName(getSASLBasedPlainAuthUser()).withLabels(labels).endMetadata()
+            .withType("Opaque")
+            .withData(Collections.singletonMap("password", password));
+        OpenshiftClient.get().secrets().createOrReplace(sb.build());
+    }
+
+    public String getSASLBasedPlainAuthUser() {
+        return "testuser";
+    }
+
+    public String getSASLBasedPlainAuthPwd() {
+        return "testpassword";
+    }
 }
