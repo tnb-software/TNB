@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -186,10 +187,17 @@ public class CamelKApp extends App {
                     Collectors.toList()));
         }
 
+        is.setConfiguration(new ArrayList<>());
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationData.getProperties().isEmpty()) {
             IntegrationSpec.Configuration isc = new IntegrationSpec.Configuration("configmap", name);
-            is.setConfiguration(Collections.singletonList(isc));
+            is.getConfiguration().add(isc);
+        }
+
+        // add the named secret to configuration
+        if (integrationData.getSecretName() != null) {
+            IntegrationSpec.Configuration iss = new IntegrationSpec.Configuration("secret", integrationData.getSecretName());
+            is.getConfiguration().add(iss);
         }
 
         if (integrationBuilder != null) {
