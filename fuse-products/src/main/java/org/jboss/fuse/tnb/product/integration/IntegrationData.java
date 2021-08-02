@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.integration;
 
+import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -7,6 +8,7 @@ import java.util.Properties;
  */
 public class IntegrationData {
     private final String sourceName;
+    private final Map<String, String> resources;
     private final String integration;
     private final Properties properties;
     private final String secretName;
@@ -16,14 +18,19 @@ public class IntegrationData {
     }
 
     public IntegrationData(String sourceName, String integration, Properties properties) {
-        this(sourceName, integration, properties, null);
+        this(sourceName, integration, properties, null, null);
     }
 
     public IntegrationData(String sourceName, String integration, Properties properties, String secretName) {
+        this(sourceName, integration, properties, secretName, null);
+    }
+
+    public IntegrationData(String sourceName, String integration, Properties properties, String secretName, Map<String, String> resources) {
         this.integration = integration;
         this.properties = properties;
         this.sourceName = sourceName;
         this.secretName = secretName;
+        this.resources = resources;
     }
 
     public String getSourceName() {
@@ -40,5 +47,9 @@ public class IntegrationData {
 
     public String getSecretName() {
         return secretName;
+    }
+
+    public Map<String, String> getResources() {
+        return resources;
     }
 }

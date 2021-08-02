@@ -28,6 +28,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -192,6 +193,16 @@ public class CamelKApp extends App {
         if (integrationData.getSecretName() != null) {
             IntegrationSpec.Configuration iss = new IntegrationSpec.Configuration("secret", integrationData.getSecretName());
             is.getConfiguration().add(iss);
+        }
+
+        // add resources
+        if (integrationData.getResources() != null && !integrationData.getResources().isEmpty()) {
+            is.setResources(new ArrayList<>());
+            integrationData.getResources().forEach((resourceName, resourceContent) -> {
+                IntegrationSpec.Resource res =
+                    new IntegrationSpec.Resource("data", "/etc/camel/resources/" + resourceName, new File(resourceName).getName(), resourceContent);
+                is.getResources().add(res);
+            });
         }
 
         if (integrationBuilder != null) {

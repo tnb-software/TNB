@@ -7,6 +7,7 @@ import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,9 +17,14 @@ import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Dumps the IntegrationBuilder class into a given object.
@@ -54,7 +60,6 @@ public final class IntegrationGenerator {
             integrationBuilder.getRouteBuilder().getImports().removeIf(
                 imp -> imp.getNameAsString().equals(cu.getPackageDeclaration().get().getNameAsString() + "." + sourceClass.getNameAsString()));
         });
-
         return create(integrationBuilder);
     }
 
@@ -86,6 +91,19 @@ public final class IntegrationGenerator {
                 new ImportDeclaration(fqn, false, false);
             if (!integrationBuilder.getRouteBuilder().getImports().contains(importDeclaration)) {
                 integrationBuilder.getRouteBuilder().addImport(importDeclaration);
+            }
+        });
+
+        // Add additional resources to the application
+        final Path resourcesPath = location.resolve("src/main/resources");
+        integrationBuilder.getResources().forEach(resource -> {
+            final Path destination = resourcesPath.resolve(resource);
+            final URL resourceUrl = IntegrationGenerator.class.getClassLoader().getResource(resource);
+            LOG.info("Adding resource '{}' to application under '{}'", resource, destination);
+            try {
+                FileUtils.copyURLToFile(resourceUrl, destination.toFile());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to copy resource: ", e);
             }
         });
 
@@ -129,6 +147,15 @@ public final class IntegrationGenerator {
 
         LOG.debug("Integration class:\n{}", integrationBuilder.getRouteBuilder().toString());
 
-        return new IntegrationData(integrationBuilder.getRouteBuilder().toString(), integrationBuilder.getAppProperties());
+        final Map<String, String> resources = integrationBuilder.getResources().stream().collect(Collectors.toMap(s -> s, s -> {
+            try (InputStream is = IntegrationGenerator.class.getClassLoader().getResourceAsStream(s)) {
+                return org.apache.commons.io.IOUtils.toString(is, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to read resource: ", e);
+            }
+        }));
+
+        return new IntegrationData("MyRouteBuilder.java", integrationBuilder.getRouteBuilder().toString(),
+            integrationBuilder.getAppProperties(), null, resources);
     }
 }
