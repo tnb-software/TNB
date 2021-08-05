@@ -3,8 +3,8 @@ package org.jboss.fuse.tnb.dballocator.validation;
 import org.jboss.qa.dballoc.api.allocator.entity.JaxbAllocation;
 import org.jboss.qa.dballoc.api.executor.SqlExecutor;
 import org.jboss.qa.dballoc.api.executor.SqlRequest;
-
-import javax.ws.rs.core.Response;
+import org.jboss.qa.dballoc.api.executor.SqlResponse;
+import org.jboss.resteasy.client.ClientResponse;
 
 import java.util.Arrays;
 import java.util.List;
@@ -19,9 +19,9 @@ public class SqlValidation {
         this.executor = executor;
     }
 
-    public Response executeSQL(boolean autocommit, List<String> sqlCommands) {
+    public SqlResponse executeSQL(boolean autocommit, List<String> sqlCommands) {
 
-        SqlRequest request = new SqlRequest(
+        final SqlRequest request = new SqlRequest(
             allocation.getAllocationProperties().getProperties().get("db.jdbc_url"),
             allocation.getAccount().getUsername(),
             allocation.getAccount().getPassword(),
@@ -29,18 +29,32 @@ public class SqlValidation {
             sqlCommands
         );
 
-        return executor.execute(request, true, 60);
+        ClientResponse<SqlResponse> r = null;
+
+        try {
+            r = (ClientResponse) this.executor.execute(request, true, 60);
+
+            if (r.getStatus() >= 400) {
+                throw new AssertionError("Sql execution operation failed. Status code " + r.getStatus()
+                    + ", reason: " + r.getEntity(SqlResponse.class).getError());
+            }
+            return r.getEntity(SqlResponse.class);
+        } finally {
+            if (r != null) {
+                r.releaseConnection();
+            }
+        }
     }
 
-    public Response executeSQL(boolean autocommit, String... sqlCommands) {
+    public SqlResponse executeSQL(boolean autocommit, String... sqlCommands) {
         return executeSQL(autocommit, Arrays.asList(sqlCommands));
     }
 
-    public Response executeSQL(List<String> sqlCommands) {
+    public SqlResponse executeSQL(List<String> sqlCommands) {
         return executeSQL(true, sqlCommands);
     }
 
-    public Response executeSQL(String... sqlCommands) {
+    public SqlResponse executeSQL(String... sqlCommands) {
         return executeSQL(true, Arrays.asList(sqlCommands));
     }
 }
