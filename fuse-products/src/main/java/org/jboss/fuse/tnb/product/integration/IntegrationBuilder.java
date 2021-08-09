@@ -201,6 +201,8 @@ public class IntegrationBuilder {
         } else if (ClassUtils.isPrimitiveOrWrapper(value.getClass())) {
             //is primitive, or boxed Primitive
             return value.toString();
+        } else if (value instanceof Class) {
+            return ((Class<?>) value).getName() + ".class";
         } else {
             throw new RuntimeException("Can't process final field with type " + value.getClass().getName()
                 + " please consider not making this field final if you don't want it processed");
