@@ -117,6 +117,23 @@ public final class OpenshiftClient extends OpenShift {
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
         String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide) {
+        createSubscription(channel, operatorName, source, subscriptionName, subscriptionSourceNamespace, targetNamespace, clusterWide, null);
+    }
+
+    /**
+     * Creates the operatorgroup and subscription.
+     *
+     * @param channel operatorhub channel
+     * @param operatorName operator name
+     * @param source operator catalog source
+     * @param subscriptionName name of the subscription
+     * @param subscriptionSourceNamespace namespace of the catalogsource
+     * @param targetNamespace where the subscription should be created
+     * @param clusterWide if the installation is clusterwide or not
+     * @param startingWithCSV the starting CSV version
+     */
+    public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
+        String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide, String startingWithCSV) {
         LOG.info("Creating subcription with name \"{}\", for operator \"{}\", channel \"{}\", catalog source \"{}\" from \"{}\" namespace",
             subscriptionName, operatorName, channel, source, subscriptionSourceNamespace);
         LOG.debug("Creating operator group {}", subscriptionName);
@@ -134,17 +151,33 @@ public final class OpenshiftClient extends OpenShift {
             client.operatorHub().operatorGroups().inNamespace(targetNamespace).createOrReplace(operatorGroupBuilder.build());
         }
 
-        Subscription s = new SubscriptionBuilder()
-            .editOrNewMetadata()
-            .withName(subscriptionName)
-            .endMetadata()
-            .withNewSpec()
-            .withName(operatorName)
-            .withChannel(channel)
-            .withSource(source)
-            .withSourceNamespace(subscriptionSourceNamespace)
-            .endSpec()
-            .build();
+        Subscription s;
+        if (startingWithCSV != null) {
+            s = new SubscriptionBuilder()
+                .editOrNewMetadata()
+                .withName(subscriptionName)
+                .endMetadata()
+                .withNewSpec()
+                .withName(operatorName)
+                .withChannel(channel)
+                .withSource(source)
+                .withSourceNamespace(subscriptionSourceNamespace)
+                .withStartingCSV(startingWithCSV)
+                .endSpec()
+                .build();
+        } else {
+            s = new SubscriptionBuilder()
+                .editOrNewMetadata()
+                .withName(subscriptionName)
+                .endMetadata()
+                .withNewSpec()
+                .withName(operatorName)
+                .withChannel(channel)
+                .withSource(source)
+                .withSourceNamespace(subscriptionSourceNamespace)
+                .endSpec()
+                .build();
+        }
         client.operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
     }
 
