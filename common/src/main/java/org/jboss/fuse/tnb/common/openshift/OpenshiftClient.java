@@ -151,33 +151,18 @@ public final class OpenshiftClient extends OpenShift {
             client.operatorHub().operatorGroups().inNamespace(targetNamespace).createOrReplace(operatorGroupBuilder.build());
         }
 
-        Subscription s;
-        if (startingWithCSV != null) {
-            s = new SubscriptionBuilder()
-                .editOrNewMetadata()
-                .withName(subscriptionName)
-                .endMetadata()
-                .withNewSpec()
-                .withName(operatorName)
-                .withChannel(channel)
-                .withSource(source)
-                .withSourceNamespace(subscriptionSourceNamespace)
-                .withStartingCSV(startingWithCSV)
-                .endSpec()
-                .build();
-        } else {
-            s = new SubscriptionBuilder()
-                .editOrNewMetadata()
-                .withName(subscriptionName)
-                .endMetadata()
-                .withNewSpec()
-                .withName(operatorName)
-                .withChannel(channel)
-                .withSource(source)
-                .withSourceNamespace(subscriptionSourceNamespace)
-                .endSpec()
-                .build();
-        }
+        Subscription s = new SubscriptionBuilder()
+            .editOrNewMetadata()
+            .withName(subscriptionName)
+            .endMetadata()
+            .withNewSpec()
+            .withName(operatorName)
+            .withChannel(channel)
+            .withSource(source)
+            .withSourceNamespace(subscriptionSourceNamespace)
+            .withStartingCSV(startingWithCSV)
+            .endSpec()
+            .build();
         client.operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
     }
 
