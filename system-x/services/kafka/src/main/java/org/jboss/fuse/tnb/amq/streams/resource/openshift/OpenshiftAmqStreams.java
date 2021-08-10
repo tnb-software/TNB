@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.amq.streams.resource.openshift;
 
 import org.jboss.fuse.tnb.amq.streams.service.Kafka;
+import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -103,7 +104,9 @@ public class OpenshiftAmqStreams extends Kafka implements OpenshiftDeployable, W
     }
 
     private void deployOperator() {
-        OpenshiftClient.get().createSubscription("stable", "amq-streams", "redhat-operators", "amq-streams");
+        OpenshiftClient.get().createSubscription("stable", "amq-streams", "redhat-operators", "amq-streams", "openshift-marketplace",
+            OpenshiftConfiguration.openshiftNamespace(),
+            false, "amqstreams.v1.7.3");
         OpenshiftClient.get().waitForInstallPlanToComplete("amq-streams");
     }
 
