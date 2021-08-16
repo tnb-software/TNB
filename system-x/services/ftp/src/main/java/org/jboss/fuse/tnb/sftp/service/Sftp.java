@@ -50,6 +50,6 @@ public abstract class Sftp implements FileTransferService {
     }
 
     public static String sftpImage() {
-        return System.getProperty(SFTP_IMAGE_KEY, "quay.io/syndesis_qe/sftp:alpine");
+        return System.getProperty(SFTP_IMAGE_KEY, "quay.io/fuse_qe/sftp:alpine");
     }
 }
