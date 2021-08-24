@@ -59,7 +59,9 @@ public final class Maven {
      */
     public static void setupMaven() {
         LOG.info("Setting up maven");
-        createSettingsXmlFile();
+        if (TestConfiguration.mavenSettings() == null) {
+            createSettingsXmlFile();
+        }
 
         if (System.getProperty("maven.home") != null) {
             // Do nothing as the maven.home is what we need
@@ -94,7 +96,6 @@ public final class Maven {
         if (mvnLocation == null) {
             throw new RuntimeException("No maven found in system/environment properties nor in PATH");
         }
-
     }
 
     /**
@@ -139,37 +140,46 @@ public final class Maven {
         Properties properties = buildRequest.getProperties();
         List<String> goals = buildRequest.getGoals();
         List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
-        File globalMavenSettings = null;
+        File mavenSettings;
 
-        if (TestConfiguration.mavenRepository() != null) {
-            globalMavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
+        InvocationRequest request = newRequest()
+            .setBaseDirectory(dir)
+            .setBatchMode(true)
+            .setGoals(goals)
+            .setProperties(properties)
+            .setOutputHandler(buildRequest.getOutputHandler())
+            .setErrorHandler(buildRequest.getOutputHandler());
+
+        // If you didn't specify custom maven settings, use settings.xml file created in createSettingsXmlFile method as the global settings
+        if (TestConfiguration.mavenSettings() == null) {
+            mavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
             if (!TestConfiguration.isMavenMirror()) {
                 LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenRepositoryId());
                 profiles.add(TestConfiguration.mavenRepositoryId());
+                request.setProfiles(profiles);
             }
+        } else {
+            // For custom settings, we want to override also the user settings, so that it is the only file used
+            LOG.debug("Using maven settings file {}", TestConfiguration.mavenSettings());
+            mavenSettings = new File(TestConfiguration.mavenSettings());
+            request.setUserSettingsFile(mavenSettings);
         }
+        request.setGlobalSettingsFile(mavenSettings);
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
             + "  Base dir: " + dir.getAbsolutePath() + "\n"
             + "  Goals: " + goals.toString() + "\n"
             + "  Profiles: " + profiles + "\n"
+            + (request.getUserSettingsFile() == null ? "" : "  User settings: " + request.getUserSettingsFile().getAbsolutePath() + "\n")
+            + "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n"
         );
-        if (properties != null && !properties.isEmpty()) {
-            propertiesLog.append("  Properties").append("\n");
+        if (!properties.isEmpty()) {
+            propertiesLog.append("  Properties:").append("\n");
             properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
         }
         LOG.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
 
         try {
-            InvocationRequest request = newRequest()
-                .setGlobalSettingsFile(globalMavenSettings)
-                .setBaseDirectory(dir)
-                .setBatchMode(true)
-                .setGoals(goals)
-                .setProfiles(profiles)
-                .setProperties(properties)
-                .setOutputHandler(buildRequest.getOutputHandler())
-                .setErrorHandler(buildRequest.getOutputHandler());
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);
@@ -229,10 +239,6 @@ public final class Maven {
      * merged by user's settings by default by maven.
      */
     private static void createSettingsXmlFile() {
-        if (TestConfiguration.mavenRepository() == null) {
-            return;
-        }
-
         // Create settings.xml file with the user defined repository
         Settings settings = new Settings();
 

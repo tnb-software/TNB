@@ -5,6 +5,7 @@ import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SU
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.OpenshiftProduct;
@@ -33,6 +34,7 @@ import com.google.auto.service.AutoService;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -99,18 +101,38 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
 
         // One-off use of IntegrationPlatform, so not creating classes for this small stuff
-        // Create an IntegrationPlatform object with given maven repository
+        // Create an IntegrationPlatform object with given maven repository or create maven settings configmap + reference it in the
+        // integrationplatform
         // this object is created by "kamel install" or when installed through operatorhub, it's created with 1st integration
         Map<String, Object> metadata = Map.of(
             "labels", Map.of("app", "camel-k"),
             "name", "camel-k"
         );
-        Map<String, Object> spec = Map.of(
-            "configuration", Collections.singletonList(Map.of(
-                "type", "repository",
-                "value", TestConfiguration.mavenRepository()
-            ))
-        );
+
+        Map<String, Object> spec;
+        if (TestConfiguration.mavenSettings() != null) {
+            OpenshiftClient.get()
+                .createConfigMap("tnb-maven-settings", Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
+            spec = Map.of(
+                "build", Map.of(
+                    "maven", Map.of(
+                        "settings", Map.of(
+                            "configMapKeyRef", Map.of(
+                                "key", "settings.xml",
+                                "name", "tnb-maven-settings"
+                            )
+                        )
+                    )
+                )
+            );
+        } else {
+            spec = Map.of(
+                "configuration", Collections.singletonList(Map.of(
+                    "type", "repository",
+                    "value", TestConfiguration.mavenRepository()
+                ))
+            );
+        }
         Map<String, Object> integrationPlatform = Map.of(
             "apiVersion", "camel.apache.org/v1",
             "kind", "IntegrationPlatform",
