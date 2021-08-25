@@ -47,6 +47,7 @@ public final class OpenshiftClient extends OpenShift {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
             try {
                 OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
+                LOG.info("Using cluster {}", config.getMasterUrl());
                 config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
                 config.setHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy());
                 config.setBuildTimeout(10 * 60 * 1000);
