@@ -167,25 +167,19 @@ public class CamelKApp extends App {
             is.setSources(Collections.singletonList(issrc));
         }
 
-        // TODO(anyone): remove if clause when 1.4 camel-k is officially released
-        if (OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("name", "camel-k-operator")).executeWithBash("kamel version")
-            .getOutput().contains("1.3")) {
-            LOG.warn("Camel-K 1.3 detected, not setting dependencies into Integration object due to changes between 1.3 and 1.4");
-        } else {
-            String modelinePreffix = integrationData.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
-            List<String> modelines = integrationData.getIntegration().lines()
-                .filter(l -> l.trim().startsWith(modelinePreffix))
-                .map(l -> l.replaceAll(modelinePreffix, ""))
-                .flatMap(l -> Stream.of(l.split("\\s")))
-                .collect(Collectors.toList());
+        String modelinePrefix = integrationData.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
+        List<String> modelines = integrationData.getIntegration().lines()
+            .filter(l -> l.trim().startsWith(modelinePrefix))
+            .map(l -> l.replaceAll(modelinePrefix, ""))
+            .flatMap(l -> Stream.of(l.split("\\s")))
+            .collect(Collectors.toList());
 
-            is.setDependencies(modelines.stream()
-                .filter(modeline -> modeline.contains("dependency"))
-                .map(modeline -> modeline.split("=")[1])
-                // unify dependency format
-                .map(dependency -> dependency.replaceAll("^camel-", "camel:")).collect(
-                    Collectors.toList()));
-        }
+        is.setDependencies(modelines.stream()
+            .filter(modeline -> modeline.contains("dependency"))
+            .map(modeline -> modeline.split("=")[1])
+            // unify dependency format
+            .map(dependency -> dependency.replaceAll("^camel-", "camel:")).collect(
+                Collectors.toList()));
 
         is.setConfiguration(new ArrayList<>());
         // if there are any properties set, use the configmap in the integration's configuration
