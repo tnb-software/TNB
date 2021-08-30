@@ -178,7 +178,7 @@ public class CamelKApp extends App {
             .filter(modeline -> modeline.contains("dependency"))
             .map(modeline -> modeline.split("=")[1])
             // unify dependency format
-            .map(dependency -> dependency.replaceAll("^camel-", "camel:")).collect(
+            .map(dependency -> dependency.replaceAll("^camel-quarkus-|^camel-", "camel:")).collect(
                 Collectors.toList()));
 
         is.setConfiguration(new ArrayList<>());
