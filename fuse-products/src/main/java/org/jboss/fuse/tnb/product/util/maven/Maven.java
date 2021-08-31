@@ -156,7 +156,6 @@ public final class Maven {
             if (!TestConfiguration.isMavenMirror()) {
                 LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenRepositoryId());
                 profiles.add(TestConfiguration.mavenRepositoryId());
-                request.setProfiles(profiles);
             }
         } else {
             // For custom settings, we want to override also the user settings, so that it is the only file used
@@ -164,6 +163,7 @@ public final class Maven {
             mavenSettings = new File(TestConfiguration.mavenSettings());
             request.setUserSettingsFile(mavenSettings);
         }
+        request.setProfiles(profiles);
         request.setGlobalSettingsFile(mavenSettings);
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
