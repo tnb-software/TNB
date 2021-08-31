@@ -50,6 +50,6 @@ public abstract class Ftp implements FileTransferService {
     }
 
     public static String ftpImage() {
-        return System.getProperty(FTP_IMAGE_KEY, "quay.io/syndesis_qe/apache-ftp:latest");
+        return System.getProperty(FTP_IMAGE_KEY, "quay.io/fuse_qe/apache-ftp:latest");
     }
 }

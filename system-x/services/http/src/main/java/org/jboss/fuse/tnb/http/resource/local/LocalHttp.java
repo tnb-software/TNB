@@ -40,6 +40,11 @@ public class LocalHttp extends HttpService implements Deployable {
     }
 
     @Override
+    public String getLog() {
+        return container.getLogs();
+    }
+
+    @Override
     public String httpUrl() {
         return "http://localhost:" + container.getHttpPort() + "/";
     }

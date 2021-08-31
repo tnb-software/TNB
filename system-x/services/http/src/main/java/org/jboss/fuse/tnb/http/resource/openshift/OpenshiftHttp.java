@@ -15,6 +15,7 @@ import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -26,8 +27,8 @@ import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 @AutoService(HttpService.class)
 public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeployable, WithName {
 
-    private static final String HTTP_SVC = "httpbin";
-    private static final String HTTPS_SVC = "httpsbin";
+    private static final String HTTP_SVC = "http-echo";
+    private static final String HTTPS_SVC = "https-echo";
 
     @Override
     public void undeploy() {
@@ -53,19 +54,19 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
         ports.add(new ContainerPortBuilder()
             .withName("http")
             .withProtocol("TCP")
-            .withContainerPort(8000)
+            .withContainerPort(HTTP_PORT)
             .build());
         ports.add(new ContainerPortBuilder()
             .withName("https")
             .withProtocol("TCP")
-            .withContainerPort(8443)
+            .withContainerPort(HTTPS_PORT)
             .build());
         //@formatter:off
 
         final Probe probe = new ProbeBuilder()
             .withHttpGet(new HTTPGetActionBuilder()
-                .withPort(new IntOrString(8000))
-                .withNewPath("/get")
+                .withPort(new IntOrString(HTTP_PORT))
+                .withNewPath("/live")
                 .build()
             ).build();
 
@@ -88,6 +89,7 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
                                 .addAllToPorts(ports)
                                 .withLivenessProbe(probe)
                                 .withReadinessProbe(probe)
+                                .addToEnv(new EnvVar("LOG_IGNORE_PATH", "/live", null))
                             .endContainer()
                         .endSpec()
                     .endTemplate()
@@ -108,7 +110,7 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
                     .withName("http")
                     .withProtocol("TCP")
                     .withPort(80)
-                    .withTargetPort(new IntOrString(8000))
+                    .withTargetPort(new IntOrString(HTTP_PORT))
                 .endPort()
             .endSpec()
         .build());
@@ -124,7 +126,7 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
                     .withName("https")
                     .withProtocol("TCP")
                     .withPort(443)
-                    .withTargetPort(new IntOrString(8443))
+                    .withTargetPort(new IntOrString(HTTPS_PORT))
                 .endPort()
             .endSpec()
             .build());
@@ -140,6 +142,11 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
     @Override
     public boolean isDeployed() {
         return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() > 0 && isReady();
+    }
+
+    @Override
+    public String getLog() {
+        return OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName()).getLog();
     }
 
     @Override
@@ -159,6 +166,6 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
 
     @Override
     public String name() {
-        return "httpbin";
+        return "http-echo";
     }
 }

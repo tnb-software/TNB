@@ -1,12 +1,12 @@
 package org.jboss.fuse.tnb.http.resource.local;
 
+import static org.jboss.fuse.tnb.http.service.HttpService.HTTPS_PORT;
+import static org.jboss.fuse.tnb.http.service.HttpService.HTTP_PORT;
+
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 public class HttpContainer extends GenericContainer<HttpContainer> {
-
-    private static final int HTTP_PORT = 8000;
-    private static final int HTTPS_PORT = 8443;
 
     public HttpContainer(String image) {
         super(image);

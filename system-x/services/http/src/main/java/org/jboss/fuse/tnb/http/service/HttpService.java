@@ -8,15 +8,19 @@ import java.security.cert.X509Certificate;
 
 public abstract class HttpService implements Service {
 
+    public static final int HTTP_PORT = 8080;
+    public static final int HTTPS_PORT = 8443;
     private static final String HTTP_IMAGE_NAME_PROPERTY = "http.image";
 
     public abstract String httpUrl();
 
     public abstract String httpsUrl();
 
+    public abstract String getLog();
+
     public byte[] getSignature() {
         byte[] signature;
-        try (InputStream is = HttpService.class.getResource("/httpbin/server.cert").openStream()) {
+        try (InputStream is = HttpService.class.getResource("/http-echo/fullchain.pem").openStream()) {
             CertificateFactory fact = CertificateFactory.getInstance("X.509");
             X509Certificate cer = (X509Certificate) fact.generateCertificate(is);
             signature = cer.getSignature();
@@ -27,6 +31,6 @@ public abstract class HttpService implements Service {
     }
 
     protected String httpImage() {
-        return System.getProperty(HTTP_IMAGE_NAME_PROPERTY, "quay.io/syndesis_qe/httpbin:latest");
+        return System.getProperty(HTTP_IMAGE_NAME_PROPERTY, "quay.io/fuse_qe/http-https-echo:latest");
     }
 }
