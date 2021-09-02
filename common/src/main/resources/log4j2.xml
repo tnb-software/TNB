@@ -1,27 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
-	<Properties>
-		<Property name="log_level">${sys:log4j.level:-INFO}</Property>
-	</Properties>
-	<Appenders>
-		<Console name="Console" target="SYSTEM_OUT">
-			<PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} %logger{1}:%L - %msg%n"/>
-			<ThresholdFilter level="${log_level}"/>
-		</Console>
-		<File name="Logfile" fileName="target/tests.log">
-			<PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} %logger{1}:%L - %msg%n"/>
-		</File>
-	</Appenders>
-	<Loggers>
-		<Root level="INFO">
-			<AppenderRef ref="Logfile"/>
-		</Root>
-		<Logger name="org.jboss.fuse.tnb" level="TRACE" additivity="false">
-			<AppenderRef ref="Logfile"/>
-			<AppenderRef ref="Console"/>
-		</Logger>
-		<Logger name="cz.xtf">
-			<AppenderRef ref="Console" level="INFO"/>
-		</Logger>
-	</Loggers>
+    <Properties>
+        <Property name="log_level">${sys:log4j.level:-INFO}</Property>
+    </Properties>
+    <Appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} [%t] %logger{1}:%L - %msg%n"/>
+            <ThresholdFilter level="${log_level}"/>
+        </Console>
+        <File name="Logfile" fileName="target/tests.log">
+            <PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} [%t] %logger{1}:%L - %msg%n"/>
+        </File>
+    </Appenders>
+    <Loggers>
+        <Root level="INFO">
+            <AppenderRef ref="Logfile"/>
+        </Root>
+        <Logger name="org.jboss.fuse.tnb" level="TRACE" additivity="false">
+            <AppenderRef ref="Logfile"/>
+            <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="cz.xtf">
+            <AppenderRef ref="Console" level="INFO"/>
+        </Logger>
+    </Loggers>
 </Configuration>

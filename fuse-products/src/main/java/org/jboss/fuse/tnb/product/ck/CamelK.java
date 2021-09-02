@@ -42,6 +42,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -60,7 +61,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
     private static final CustomResourceDefinitionContext INTEGRATIONPLATFORM_CONTEXT =
         CamelKSupport.integrationPlatformCRDContext(CamelKSettings.API_VERSION_DEFAULT);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
     private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
@@ -298,8 +299,21 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void removeIntegrations() {
+        CountDownLatch latch = new CountDownLatch(integrations.size());
         //can't be reused removeIntegration - changing underlying map
-        integrations.values().forEach(CamelKApp::stop);
+        integrations.values().forEach(app -> EXECUTOR_SERVICE.submit(() -> {
+            try {
+                app.stop();
+            } finally {
+                latch.countDown();
+            }
+        }));
+
+        try {
+            latch.await();
+        } catch (InterruptedException e) {
+            LOG.warn("Latch await thread interrupted");
+        }
         integrations.clear();
     }
 
