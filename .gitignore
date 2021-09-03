@@ -1,3 +1,7 @@
 .idea
 *.iml
+.classpath
+.settings/
+.project
+.sdkmanrc
 target/
