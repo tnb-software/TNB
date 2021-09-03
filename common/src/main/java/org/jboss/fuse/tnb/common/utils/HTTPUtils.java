@@ -26,6 +26,14 @@ public final class HTTPUtils {
         return execute(new Request.Builder().post(body).url(url).headers(Headers.of(headers)).build());
     }
 
+    public static Response put(String url, RequestBody body, Map<String, String> headers) {
+        return execute(new Request.Builder().put(body).url(url).headers(Headers.of(headers)).build());
+    }
+
+    public static Response put(String url, RequestBody body) {
+        return execute(new Request.Builder().put(body).url(url).build());
+    }
+
     public static void delete(String url) {
         execute(new Request.Builder().url(url).delete().build());
     }
