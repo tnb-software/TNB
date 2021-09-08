@@ -14,6 +14,7 @@
 
     <properties>
         <strimzi.api.version>0.23.0</strimzi.api.version>
+        <kafka.client.version>2.8.0</kafka.client.version>
     </properties>
 
     <dependencies>
@@ -27,9 +28,9 @@
             <version>${strimzi.api.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>kubernetes-model-common</artifactId>
-            <version>${kubernetes.client.version}</version>
+            <groupId>org.apache.kafka</groupId>
+            <artifactId>kafka-clients</artifactId>
+            <version>${kafka.client.version}</version>
         </dependency>
     </dependencies>
 

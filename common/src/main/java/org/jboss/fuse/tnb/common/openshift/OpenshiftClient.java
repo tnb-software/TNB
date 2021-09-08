@@ -137,8 +137,10 @@ public final class OpenshiftClient extends OpenShift {
         String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide, String startingWithCSV) {
         LOG.info("Creating subcription with name \"{}\", for operator \"{}\", channel \"{}\", catalog source \"{}\" from \"{}\" namespace",
             subscriptionName, operatorName, channel, source, subscriptionSourceNamespace);
-        LOG.debug("Creating operator group {}", subscriptionName);
+        // There can be only one operatorgroup in the namespace, otherwise the new operatorhub deployments complain about multiple operatorgroups
+        // in the namespace
         if (get().operatorHub().operatorGroups().inNamespace(targetNamespace).list().getItems().size() == 0) {
+            LOG.debug("Creating operator group {}", subscriptionName);
             final OperatorGroupBuilder operatorGroupBuilder = new OperatorGroupBuilder()
                 .withNewMetadata()
                 .withName(subscriptionName)

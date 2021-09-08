@@ -1,18 +1,33 @@
 package org.jboss.fuse.tnb.amq.streams.resource.openshift;
 
 import org.jboss.fuse.tnb.amq.streams.service.Kafka;
+import org.jboss.fuse.tnb.amq.streams.validation.KafkaValidation;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 
+import org.apache.kafka.clients.admin.AdminClient;
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.auto.service.AutoService;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.security.KeyStore;
+import java.security.cert.CertificateFactory;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
+import cz.xtf.core.openshift.OpenShiftWaiters;
+import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -26,7 +41,8 @@ import io.strimzi.api.kafka.model.listener.arraylistener.KafkaListenerType;
 import io.strimzi.api.kafka.model.status.Condition;
 
 @AutoService(Kafka.class)
-public class OpenshiftAmqStreams extends Kafka implements ReusableOpenshiftDeployable, WithName {
+public class OpenshiftAMQStreams extends Kafka implements ReusableOpenshiftDeployable, WithName {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQStreams.class);
 
     private static final String CRD_GROUP = "kafka.strimzi.io";
     private static final String CRD_VERSION = "v1beta2";
@@ -54,19 +70,36 @@ public class OpenshiftAmqStreams extends Kafka implements ReusableOpenshiftDeplo
         OpenshiftClient.get().customResources(KAFKA_TOPIC_CONTEXT, KafkaTopic.class, KafkaTopicList.class);
 
     @Override
+    public long waitTime() {
+        return 600_000;
+    }
+
+    @Override
     public void undeploy() {
-        KAFKA_CRD_CLIENT.withName(name()).delete();
-        // FIXME: (asmigala) this is just temporary, need to make sure pods are deleted and then undeploy operator
+        // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
+        KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
+            .timeout(120_000).waitFor();
+        OpenshiftClient.get().deleteSubscription("amq-streams");
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/kind", "cluster-operator")
+            .timeout(120_000).waitFor();
     }
 
     @Override
     public void openResources() {
-        // no-op for now
+        createBasicUser();
+        extractCertificate();
+
+        producer = new KafkaProducer<>(connectionProperties());
+        consumer = new KafkaConsumer<>(connectionProperties());
+        validation = new KafkaValidation(producer, consumer);
     }
 
     @Override
     public void closeResources() {
-        // no-op for now
+        producer.close();
+        consumer.close();
+        validation = null;
     }
 
     @Override
@@ -127,10 +160,10 @@ public class OpenshiftAmqStreams extends Kafka implements ReusableOpenshiftDeplo
                             .withType(KafkaListenerType.INTERNAL)
                         .endGenericKafkaListener()
                         .addNewGenericKafkaListener()
-                            .withName("tls")
+                            .withName("route")
                             .withPort(9093)
                             .withTls(true)
-                            .withType(KafkaListenerType.INTERNAL)
+                            .withType(KafkaListenerType.ROUTE)
                         .endGenericKafkaListener()
                     .endListeners()
                 .withNewEphemeralStorage().endEphemeralStorage()
@@ -154,10 +187,10 @@ public class OpenshiftAmqStreams extends Kafka implements ReusableOpenshiftDeplo
     }
 
     @Override
-    public String bootstrapServers(boolean tls) {
+    public String bootstrapServers() {
         return KAFKA_CRD_CLIENT.withName(name()).get().getStatus().getListeners()
             .stream()
-            .filter(l -> l.getType().equals(tls ? "tls" : "plain"))
+            .filter(l -> "plain".equals(l.getType()))
             .findFirst().get().getBootstrapServers();
     }
 
@@ -178,31 +211,69 @@ public class OpenshiftAmqStreams extends Kafka implements ReusableOpenshiftDeplo
         KAFKA_TOPIC_CRD_CLIENT.createOrReplace(kafkaTopic);
     }
 
-    public void createSASLBasedPlainAuth() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
+    @Override
+    public KafkaValidation validation() {
+        return validation;
+    }
+
+    private void createBasicUser() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
         // .q2/html-single/using_amq_streams_on_openshift/index#type-KafkaClientAuthenticationPlain-reference
-        String password = Base64.getEncoder().encodeToString(getSASLBasedPlainAuthPwd().getBytes());
+        String password = Base64.getEncoder().encodeToString(account().basicPassword().getBytes());
         Map<String, String> labels = new HashMap<>();
         labels.put("strimzi.io/kind", "KafkaUser");
         labels.put("strimzi.io/cluster", name());
 
         SecretBuilder sb = new SecretBuilder()
             .withApiVersion("v1")
-            .editOrNewMetadata().withName(getSASLBasedPlainAuthUser()).withLabels(labels).endMetadata()
+            .editOrNewMetadata().withName(account().basicUser()).withLabels(labels).endMetadata()
             .withType("Opaque")
             .withData(Collections.singletonMap("password", password));
         OpenshiftClient.get().secrets().createOrReplace(sb.build());
     }
 
-    public String getSASLBasedPlainAuthUser() {
-        return "testuser";
-    }
-
-    public String getSASLBasedPlainAuthPwd() {
-        return "testpassword";
-    }
-
     @Override
     public void cleanup() {
-        //TODO(lfabriko): investigate if anything is needed for cleanup
+        LOG.debug("Cleaning kafka instance");
+        AdminClient adminClient = AdminClient.create(connectionProperties());
+        try {
+            adminClient.deleteTopics(adminClient.listTopics().names().get());
+            adminClient.close();
+        } catch (Exception e) {
+            LOG.warn("Unable to clean kafka instance", e);
+        }
+    }
+
+    public void extractCertificate() {
+        LOG.debug("Extracting kafka certificate");
+        String cert = new String(Base64.getDecoder()
+            .decode(OpenshiftClient.get().secrets().withName(name() + "-cluster-ca-cert").get().getData().get("ca.crt")));
+        String password = new String(Base64.getDecoder()
+            .decode(OpenshiftClient.get().secrets().withName(name() + "-cluster-ca-cert").get().getData().get("ca.password")));
+        account().setTrustStorePassword(password);
+        try {
+            KeyStore ks = KeyStore.getInstance("PKCS12");
+            ks.load(null, password.toCharArray());
+            final CertificateFactory cf = CertificateFactory.getInstance("X.509");
+            try (ByteArrayInputStream is = new ByteArrayInputStream(cert.getBytes())) {
+                ks.setCertificateEntry("ca.crt", cf.generateCertificate(is));
+            }
+
+            FileOutputStream fos = new FileOutputStream(account().trustStore());
+            ks.store(fos, password.toCharArray());
+            fos.close();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to extract kafka certificate", e);
+        }
+    }
+
+    private Properties connectionProperties() {
+        Properties props = defaultClientProperties();
+        props.setProperty("bootstrap.servers", OpenshiftClient.get().routes().withName(name() + "-kafka-route-bootstrap").get()
+            .getSpec().getHost() + ":443");
+        props.setProperty("security.protocol", "SSL");
+        props.setProperty("ssl.truststore.password", account().trustStorePassword());
+        props.setProperty("ssl.truststore.location", new File(account().trustStore()).getAbsolutePath());
+        props.setProperty("ssl.truststore.type", "PKCS12");
+        return props;
     }
 }

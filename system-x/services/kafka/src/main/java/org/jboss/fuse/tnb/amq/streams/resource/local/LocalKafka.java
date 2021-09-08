@@ -1,13 +1,18 @@
 package org.jboss.fuse.tnb.amq.streams.resource.local;
 
 import org.jboss.fuse.tnb.amq.streams.service.Kafka;
+import org.jboss.fuse.tnb.amq.streams.validation.KafkaValidation;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 
+import org.apache.kafka.clients.consumer.KafkaConsumer;
+import org.apache.kafka.clients.producer.KafkaProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 
 import com.google.auto.service.AutoService;
+
+import java.util.Properties;
 
 @AutoService(Kafka.class)
 public class LocalKafka extends Kafka implements Deployable {
@@ -17,16 +22,21 @@ public class LocalKafka extends Kafka implements Deployable {
     private ZookeeperContainer zookeeperContainer;
 
     @Override
-    public String bootstrapServers(boolean tls) {
-        if (tls) {
-            throw new UnsupportedOperationException("TLS not implemented for local kafka");
-        }
+    public String bootstrapServers() {
         return strimziContainer.getContainerIpAddress() + ":" + strimziContainer.getKafkaPort();
     }
 
     @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op
+    }
+
+    @Override
+    public KafkaValidation validation() {
+        if (validation == null) {
+            validation = new KafkaValidation(producer, consumer);
+        }
+        return validation;
     }
 
     @Override
@@ -59,11 +69,16 @@ public class LocalKafka extends Kafka implements Deployable {
 
     @Override
     public void openResources() {
-        // no client needed for now
+        Properties props = defaultClientProperties();
+        props.setProperty("bootstrap.servers", bootstrapServers());
+
+        producer = new KafkaProducer<>(props);
+        consumer = new KafkaConsumer<>(props);
     }
 
     @Override
     public void closeResources() {
-        // no-op
+        producer.close();
+        consumer.close();
     }
 }

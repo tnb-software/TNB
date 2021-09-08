@@ -10,12 +10,18 @@ public interface OpenshiftDeployable extends Deployable {
 
     boolean isDeployed();
 
+    default long waitTime() {
+        return 300_000;
+    }
+
     @Override
     default void deploy() {
+        final int retries = 60;
         if (!isDeployed()) {
             OpenshiftClient.get().createNamespace(); // ensure namespace exists
             create();
         }
-        WaitUtils.waitFor(this::isReady, 60, 5000L, "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
+        WaitUtils.waitFor(this::isReady, retries, waitTime() / retries,
+            "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
     }
 }
