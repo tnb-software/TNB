@@ -89,6 +89,9 @@ public class CamelKApp extends App {
     public CamelKApp(KameletBinding kameletBinding) {
         //name of created integration is same as name of kameletbinding
         super(kameletBinding.getMetadata().getName());
+        if (name.length() > 63) {
+            throw new RuntimeException("Camel-K KameletBinding name " + name + " must be shorter than 63 characters");
+        }
         this.kameletBinding = kameletBinding;
         integrationData = null;
     }
