@@ -72,6 +72,9 @@ public class CamelKApp extends App {
 
     public CamelKApp(String name, IntegrationData data) {
         super(name);
+        if (name.length() > 63) {
+            throw new RuntimeException("Camel-K integration name " + name + " must be shorter than 63 characters");
+        }
         integrationData = data;
 
         // If there are any properties set, create a config map with the same map as the integration
