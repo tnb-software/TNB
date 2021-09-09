@@ -47,6 +47,7 @@ public class IntegrationBuilder {
     private final List<String> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
+    private final List<String> resources = new ArrayList<>();
     private CompilationUnit routeBuilder;
     private Properties appProperties = new Properties();
 
@@ -94,6 +95,16 @@ public class IntegrationBuilder {
         cu.setPackageDeclaration(basePackage);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
         this.routeBuilder = cu;
+        return this;
+    }
+
+    /**
+     * Add classpath resource (represented by string path) into integration.
+     * @param resource
+     * @return
+     */
+    public IntegrationBuilder addResource(final String resource) {
+        resources.add(resource);
         return this;
     }
 
@@ -288,6 +299,10 @@ public class IntegrationBuilder {
 
     public Properties getAppProperties() {
         return appProperties;
+    }
+
+    public List<String> getResources() {
+        return resources;
     }
 
     public List<Customizer> getCustomizers() {
