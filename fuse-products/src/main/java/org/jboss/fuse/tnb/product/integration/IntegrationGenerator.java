@@ -107,6 +107,11 @@ public final class IntegrationGenerator {
             }
         });
 
+        if (!integrationBuilder.getResources().isEmpty()) {
+            final String nativeResourcesIncludes = String.join(",", integrationBuilder.getResources());
+            integrationBuilder.addToApplicationProperties(ProductType.CAMEL_QUARKUS, "quarkus.native.resources.includes", nativeResourcesIncludes);
+        }
+
         final IntegrationData integrationData = create(integrationBuilder);
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
