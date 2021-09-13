@@ -28,6 +28,7 @@
         <module>sql</module>
         <module>elasticsearch</module>
         <module>salesforce</module>
+        <module>telegram</module>
     </modules>
 
     <dependencies>
