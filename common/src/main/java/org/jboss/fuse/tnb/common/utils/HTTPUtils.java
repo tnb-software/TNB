@@ -18,6 +18,10 @@ public final class HTTPUtils {
         return execute(new Request.Builder().get().url(url).build());
     }
 
+    public static Response get(String url, Map<String, String> headers) {
+        return execute(new Request.Builder().get().url(url).headers(Headers.of(headers)).build());
+    }
+
     public static Response post(String url, RequestBody body) {
         return execute(new Request.Builder().post(body).url(url).build());
     }
@@ -36,6 +40,10 @@ public final class HTTPUtils {
 
     public static void delete(String url) {
         execute(new Request.Builder().url(url).delete().build());
+    }
+
+    public static void delete(String url, Map<String, String> headers) {
+        execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build());
     }
 
     private static Response execute(Request request) {
