@@ -23,19 +23,14 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
-
 import io.fabric8.kubernetes.api.model.KubernetesResource;
-
-/**
- * 
- */
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({"definition", "dependencies", "types", "sources", "authorization", "flow"})
@@ -246,6 +241,12 @@ public class KameletSpec implements KubernetesResource {
                 this.type = type;
                 this.defaultValue = defaultValue;
                 this.example = example;
+            }
+
+            public PropertyConfig(String title, String type, Object defaultValue) {
+                this.title = title;
+                this.type = type;
+                this.defaultValue = defaultValue;
             }
 
             public String getTitle() {
