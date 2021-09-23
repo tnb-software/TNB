@@ -31,6 +31,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -187,6 +188,16 @@ public class CamelKApp extends App {
             // unify dependency format
             .map(dependency -> dependency.replaceAll("^camel-quarkus-|^camel-", "camel:")).collect(
                 Collectors.toList()));
+
+        List<String> buildProperties = modelines.stream()
+            .filter(modeline -> modeline.contains("build-property"))
+            .map(modeline -> modeline.split("=", 2)[1])
+            .collect(Collectors.toList());
+
+        Map<String, IntegrationSpec.TraitConfig> buildTraits = new HashMap<>();
+
+        buildTraits.put("builder", new IntegrationSpec.TraitConfig("properties", buildProperties));
+        is.setTraits(buildTraits);
 
         is.setConfiguration(new ArrayList<>());
         // if there are any properties set, use the configmap in the integration's configuration
