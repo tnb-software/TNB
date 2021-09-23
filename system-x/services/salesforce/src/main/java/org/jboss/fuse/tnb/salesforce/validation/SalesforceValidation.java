@@ -1,6 +1,8 @@
 package org.jboss.fuse.tnb.salesforce.validation;
 
 import org.jboss.fuse.tnb.salesforce.account.SalesforceAccount;
+import org.jboss.fuse.tnb.salesforce.dto.Account;
+import org.jboss.fuse.tnb.salesforce.dto.Case;
 import org.jboss.fuse.tnb.salesforce.dto.Lead;
 
 import org.junit.jupiter.api.Assertions;
@@ -44,6 +46,30 @@ public class SalesforceValidation {
             client.deleteSObject("lead", leadId);
             LOG.debug("Deleting salesforce lead: {}", lead.get());
         }
+    }
+
+    public String createCase(String accountId, String status, String origin, String subject) {
+        final Case newCase = new Case(accountId, status, origin, subject);
+        String caseId = client.createSObject("Case", newCase);
+        LOG.debug("Created case with id " + caseId);
+        return caseId;
+    }
+
+    public void deleteCase(String id) {
+        client.deleteSObject("case", id);
+        LOG.debug("Deleting salesforce case with id : {}", id);
+    }
+
+    public String createAccount(String name, String phone) {
+        final Account sfAccount = new Account(name, phone);
+        String accountId = client.createSObject("Account", sfAccount);
+        LOG.debug("Created account with id " + accountId);
+        return accountId;
+    }
+
+    public void deleteAccount(String id) {
+        client.deleteSObject("account", id);
+        LOG.debug("Deleting salesforce account with id : {}", id);
     }
 
     public Optional<Lead> getLeadByEmail(String emailAddress) {
