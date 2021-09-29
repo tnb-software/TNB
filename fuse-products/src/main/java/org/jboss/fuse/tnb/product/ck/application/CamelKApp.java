@@ -42,6 +42,7 @@ import java.util.stream.Stream;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -109,7 +110,8 @@ public class CamelKApp extends App {
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"))
             // find such pod where all containers are ready - sometimes in case of knative integrations it's possible that it gets the pod
             // that is in terminating state
-            && "True".equals(p.getStatus().getConditions().stream().filter(c -> "ContainersReady".equals(c.getType())).findFirst().get().getStatus())
+            && "True".equals(p.getStatus().getConditions().stream().filter(c -> "ContainersReady".equals(c.getType())).findFirst()
+            .orElse(new PodConditionBuilder().withStatus("False").build()).getStatus())
         );
     }
 
