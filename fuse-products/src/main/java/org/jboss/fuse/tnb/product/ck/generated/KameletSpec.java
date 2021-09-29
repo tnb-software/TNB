@@ -17,23 +17,23 @@
 
 package org.jboss.fuse.tnb.product.ck.generated;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"definition", "dependencies", "types", "sources", "authorization", "flow"})
+@JsonPropertyOrder({"definition", "dependencies", "types", "sources", "authorization", "flow", "template"})
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
@@ -51,6 +51,8 @@ public class KameletSpec implements KubernetesResource {
     private AuthorizationSpec authorization;
     @JsonProperty("flow")
     private Map<String, Object> flow;
+    @JsonProperty("template")
+    private Map<String, Object> template;
 
     public Definition getDefinition() {
         return definition;
@@ -98,6 +100,14 @@ public class KameletSpec implements KubernetesResource {
 
     public void setFlow(Map<String, Object> flow) {
         this.flow = flow;
+    }
+
+    public Map<String, Object> getTemplate() {
+        return template;
+    }
+
+    public void setTemplate(Map<String, Object> template) {
+        this.template = template;
     }
 
     @JsonInclude(JsonInclude.Include.NON_NULL)
@@ -163,7 +173,7 @@ public class KameletSpec implements KubernetesResource {
             this.mediaType = mediaType;
         }
 
-        public ObjectSchema getSchema() {
+        public JsonSchema getSchema() {
             return schema;
         }
 
@@ -172,14 +182,16 @@ public class KameletSpec implements KubernetesResource {
         }
     }
 
-    @JsonIgnoreProperties(ignoreUnknown = true)//unclear type - discussion of cibsen, lburgazz and oscerd, CamelK channel, 4.6.2021
     @JsonInclude(JsonInclude.Include.NON_NULL)
-    @JsonPropertyOrder({"title", "description", "required", "properties"})
+    @JsonPropertyOrder({"title", "description", "required", "properties", "type"})
+    @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Definition {
         @JsonProperty("title")
         private String title;
         @JsonProperty("description")
         private String description;
+        @JsonProperty("type")
+        private String type;
         @JsonProperty("required")
         private List<String> required = new ArrayList<>();
         @JsonProperty("properties")
@@ -199,6 +211,14 @@ public class KameletSpec implements KubernetesResource {
 
         public String getDescription() {
             return description;
+        }
+
+        public String getType() {
+            return type;
+        }
+
+        public void setType(String type) {
+            this.type = type;
         }
 
         public List<String> getRequired() {
@@ -241,12 +261,6 @@ public class KameletSpec implements KubernetesResource {
                 this.type = type;
                 this.defaultValue = defaultValue;
                 this.example = example;
-            }
-
-            public PropertyConfig(String title, String type, Object defaultValue) {
-                this.title = title;
-                this.type = type;
-                this.defaultValue = defaultValue;
             }
 
             public String getTitle() {
@@ -295,4 +309,3 @@ public class KameletSpec implements KubernetesResource {
     public static class AuthorizationSpec {
     }
 }
-
