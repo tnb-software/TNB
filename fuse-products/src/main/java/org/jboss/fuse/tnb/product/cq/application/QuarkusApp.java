@@ -76,8 +76,8 @@ public abstract class QuarkusApp extends App {
         // For productized build, we need to also add redhat quarkus bom
         if (TestConfiguration.camelQuarkusVersion().contains("redhat")) {
             Dependency redhatQuarkusBom = new Dependency();
-            redhatQuarkusBom.setGroupId("com.redhat.quarkus");
-            redhatQuarkusBom.setArtifactId("quarkus-product-bom");
+            redhatQuarkusBom.setGroupId("io.quarkus");
+            redhatQuarkusBom.setArtifactId("quarkus-bom");
             redhatQuarkusBom.setVersion(TestConfiguration.quarkusProductBomVersion());
             redhatQuarkusBom.setType("pom");
             redhatQuarkusBom.setScope("import");
