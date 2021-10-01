@@ -43,6 +43,7 @@ public class StandaloneApp extends App {
                     "archetypeVersion", TestConfiguration.camelVersion(),
                     "groupId", TestConfiguration.appGroupId(),
                     "artifactId", TestConfiguration.appTemplateName()))
+                .withLogFile(TestConfiguration.appLocation().resolve("app-template-generate.log"))
                 .build()
             );
         }

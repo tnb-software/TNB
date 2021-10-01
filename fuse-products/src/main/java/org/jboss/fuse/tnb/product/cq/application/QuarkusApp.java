@@ -34,6 +34,7 @@ public abstract class QuarkusApp extends App {
                 "projectArtifactId", name,
                 "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
             ))
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
             .build()
         );
 
@@ -47,7 +48,8 @@ public abstract class QuarkusApp extends App {
             .withProperties(Map.of(
                 "skipTests", "true",
                 "quarkus.native.container-build", "true"
-            ));
+            ))
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
         if (TestConfiguration.isQuarkusNative()) {
             requestBuilder.withProfiles("native");
         }
