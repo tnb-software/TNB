@@ -48,7 +48,7 @@ public class KameletBinding extends CustomResource<KameletBindingSpec, KameletBi
      */
     public static class Builder {
         private String name;
-        private IntegrationSpec integrationSpec;
+        private IntegrationSpec integration;
         private KameletBindingSpec.Endpoint source;
         private KameletBindingSpec.Endpoint sink;
 
@@ -57,8 +57,8 @@ public class KameletBinding extends CustomResource<KameletBindingSpec, KameletBi
             return this;
         }
 
-        public Builder integration(IntegrationSpec integrationSpec) {
-            this.integrationSpec = integrationSpec;
+        public Builder integration(IntegrationSpec integration) {
+            this.integration = integration;
             return this;
         }
 
@@ -102,8 +102,8 @@ public class KameletBinding extends CustomResource<KameletBindingSpec, KameletBi
             KameletBinding binding = new KameletBinding();
             binding.getMetadata().setName(name);
 
-            if (integrationSpec != null) {
-                binding.getSpec().setIntegration(integrationSpec);
+            if (integration != null) {
+                binding.getSpec().setIntegration(integration);
             }
 
             if (source != null) {
