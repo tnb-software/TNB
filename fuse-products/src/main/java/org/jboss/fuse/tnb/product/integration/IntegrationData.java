@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.product.integration;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Properties;
 
 /**
@@ -8,7 +8,7 @@ import java.util.Properties;
  */
 public class IntegrationData {
     private final String sourceName;
-    private final Map<String, String> resources;
+    private final List<Resource> resources;
     private final String integration;
     private final Properties properties;
     private final String secretName;
@@ -25,7 +25,7 @@ public class IntegrationData {
         this(sourceName, integration, properties, secretName, null);
     }
 
-    public IntegrationData(String sourceName, String integration, Properties properties, String secretName, Map<String, String> resources) {
+    public IntegrationData(String sourceName, String integration, Properties properties, String secretName, List<Resource> resources) {
         this.integration = integration;
         this.properties = properties;
         this.sourceName = sourceName;
@@ -49,7 +49,59 @@ public class IntegrationData {
         return secretName;
     }
 
-    public Map<String, String> getResources() {
+    public List<Resource> getResources() {
         return resources;
+    }
+
+    public static class Resource {
+        private ResourceType type;
+        private String name;
+        private String content;
+
+        public Resource(ResourceType type, String name, String content) {
+            this.name = name;
+            this.type = type;
+            this.content = content;
+        }
+
+        public ResourceType getType() {
+            return type;
+        }
+
+        public void setType(ResourceType type) {
+            this.type = type;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String getContent() {
+            return content;
+        }
+
+        public void setContent(String content) {
+            this.content = content;
+        }
+    }
+
+    public enum ResourceType {
+        DATA("data"),
+        CONFIG("config"),
+        OPENAPI("openapi");
+
+        private final String value;
+
+        ResourceType(String value) {
+            this.value = value;
+        }
+
+        public String getValue() {
+            return value;
+        }
     }
 }

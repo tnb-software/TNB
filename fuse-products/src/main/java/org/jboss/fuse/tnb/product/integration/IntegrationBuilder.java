@@ -26,7 +26,9 @@ import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -47,7 +49,7 @@ public class IntegrationBuilder {
     private final List<String> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
-    private final List<String> resources = new ArrayList<>();
+    private final Map<String, IntegrationData.ResourceType> resources = new HashMap<>();
     private CompilationUnit routeBuilder;
     private Properties appProperties = new Properties();
 
@@ -99,12 +101,13 @@ public class IntegrationBuilder {
     }
 
     /**
-     * Add classpath resource (represented by string path) into integration.
+     * Add classpath resource (represented by string path) into integration and the resource type
+     *
      * @param resource
      * @return
      */
-    public IntegrationBuilder addResource(final String resource) {
-        resources.add(resource);
+    public IntegrationBuilder addResource(final String resource, IntegrationData.ResourceType type) {
+        resources.put(resource, type);
         return this;
     }
 
@@ -301,7 +304,7 @@ public class IntegrationBuilder {
         return appProperties;
     }
 
-    public List<String> getResources() {
+    public Map<String, IntegrationData.ResourceType> getResources() {
         return resources;
     }
 
