@@ -30,7 +30,7 @@ import io.fabric8.kubernetes.model.annotation.Group;
 import io.fabric8.kubernetes.model.annotation.Version;
 
 /**
- * 
+ * Manually created k8s resource class KameletBinding
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Group(CamelKSupport.CAMELK_CRD_GROUP)
@@ -48,7 +48,7 @@ public class KameletBinding extends CustomResource<KameletBindingSpec, KameletBi
      */
     public static class Builder {
         private String name;
-        private Integration integration;
+        private IntegrationSpec integration;
         private KameletBindingSpec.Endpoint source;
         private KameletBindingSpec.Endpoint sink;
 
@@ -57,7 +57,7 @@ public class KameletBinding extends CustomResource<KameletBindingSpec, KameletBi
             return this;
         }
 
-        public Builder integration(Integration integration) {
+        public Builder integration(IntegrationSpec integration) {
             this.integration = integration;
             return this;
         }

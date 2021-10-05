@@ -38,7 +38,7 @@ import io.fabric8.kubernetes.api.model.KubernetesResource;
 public class KameletBindingSpec implements KubernetesResource {
 
     @JsonProperty("integration")
-    private Integration integration;
+    private IntegrationSpec integration;
 
     @JsonProperty("source")
     private Endpoint source;
@@ -65,11 +65,11 @@ public class KameletBindingSpec implements KubernetesResource {
         return sink;
     }
 
-    public void setIntegration(Integration integration) {
+    public void setIntegration(IntegrationSpec integration) {
         this.integration = integration;
     }
 
-    public Integration getIntegration() {
+    public IntegrationSpec getIntegration() {
         return integration;
     }
 
