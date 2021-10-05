@@ -60,4 +60,8 @@ public class KNativeValidation {
         }
         createdItems.clear();
     }
+
+    public String getRouteUrl(String serviceName) {
+        return client.routes().withName(serviceName).get().getStatus().getUrl();
+    }
 }
