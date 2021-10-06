@@ -23,8 +23,8 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Dumps the IntegrationBuilder class into a given object.
@@ -96,7 +96,7 @@ public final class IntegrationGenerator {
 
         // Add additional resources to the application
         final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach(resource -> {
+        integrationBuilder.getResources().forEach((resource, type) -> {
             final Path destination = resourcesPath.resolve(resource);
             final URL resourceUrl = IntegrationGenerator.class.getClassLoader().getResource(resource);
             LOG.info("Adding resource '{}' to application under '{}'", resource, destination);
@@ -108,7 +108,7 @@ public final class IntegrationGenerator {
         });
 
         if (!integrationBuilder.getResources().isEmpty()) {
-            final String nativeResourcesIncludes = String.join(",", integrationBuilder.getResources());
+            final String nativeResourcesIncludes = String.join(",", integrationBuilder.getResources().keySet());
             integrationBuilder.addToApplicationProperties(ProductType.CAMEL_QUARKUS, "quarkus.native.resources.includes", nativeResourcesIncludes);
         }
 
@@ -152,13 +152,19 @@ public final class IntegrationGenerator {
 
         LOG.debug("Integration class:\n{}", integrationBuilder.getRouteBuilder().toString());
 
-        final Map<String, String> resources = integrationBuilder.getResources().stream().collect(Collectors.toMap(s -> s, s -> {
-            try (InputStream is = IntegrationGenerator.class.getClassLoader().getResourceAsStream(s)) {
-                return org.apache.commons.io.IOUtils.toString(is, StandardCharsets.UTF_8);
+        final List<IntegrationData.Resource> resources = new ArrayList<>();
+        for (String resourceName : integrationBuilder.getResources().keySet()) {
+            String resourceData;
+            try (InputStream is = IntegrationGenerator.class.getClassLoader().getResourceAsStream(resourceName)) {
+                resourceData = org.apache.commons.io.IOUtils.toString(is, StandardCharsets.UTF_8);
             } catch (IOException e) {
                 throw new RuntimeException("Unable to read resource: ", e);
             }
-        }));
+
+            resources.add(
+                new IntegrationData.Resource((integrationBuilder.getResources().get(resourceName)), resourceName,
+                    resourceData));
+        }
 
         return new IntegrationData("MyRouteBuilder.java", integrationBuilder.getRouteBuilder().toString(),
             integrationBuilder.getAppProperties(), null, resources);
