@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.log;
 
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.StringUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +26,7 @@ public class OpenshiftLog extends Log {
             LOG.trace("Specified pod doesn't exist (yet), returning empty string as logs");
             return "";
         } else {
-            return OpenshiftClient.get().getLogs(podOptional.get());
+            return StringUtils.removeColorCodes(OpenshiftClient.get().getLogs(podOptional.get()));
         }
     }
 }
