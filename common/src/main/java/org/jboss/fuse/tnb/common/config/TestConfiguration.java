@@ -37,11 +37,11 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION, "1.8.1");
+        return getProperty(CAMEL_QUARKUS_VERSION, "2.2.0");
     }
 
     public static String quarkusProductBomVersion() {
-        return getProperty(QUARKUS_PRODUCT_BOM_VERSION, "1.11.6.Final-redhat-00001");
+        return getProperty(QUARKUS_PRODUCT_BOM_VERSION, "2.2.3.Final");
     }
 
     public static ProductType product() {
@@ -95,7 +95,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "1.13.0.Final");
+        return getProperty(QUARKUS_VERSION, "2.2.3");
     }
 
     public static boolean isQuarkusNative() {
