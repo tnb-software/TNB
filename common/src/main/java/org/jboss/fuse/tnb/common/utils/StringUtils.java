@@ -18,4 +18,8 @@ public final class StringUtils {
         }
         return s;
     }
+
+    public static String removeColorCodes(String s) {
+        return s.replaceAll("\u001B\\[[;\\d]*m", "");
+    }
 }

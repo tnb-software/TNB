@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.log;
 
+import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenOutputHandler;
 
 public class MavenLog extends Log {
@@ -11,6 +12,6 @@ public class MavenLog extends Log {
 
     @Override
     public String toString() {
-        return handler.getOutput();
+        return StringUtils.removeColorCodes(handler.getOutput());
     }
 }

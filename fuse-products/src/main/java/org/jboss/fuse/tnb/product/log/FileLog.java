@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.log;
 
 import org.jboss.fuse.tnb.common.utils.IOUtils;
+import org.jboss.fuse.tnb.common.utils.StringUtils;
 
 import java.nio.file.Path;
 
@@ -13,6 +14,6 @@ public class FileLog extends Log {
 
     @Override
     public String toString() {
-        return IOUtils.readFile(logFile);
+        return StringUtils.removeColorCodes(IOUtils.readFile(logFile));
     }
 }
