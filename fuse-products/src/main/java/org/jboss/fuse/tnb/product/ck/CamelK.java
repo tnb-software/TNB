@@ -4,6 +4,7 @@ import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SU
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.exception.TimeoutException;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
@@ -248,6 +249,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
      * @return null if Kamelet wasn't found, otherwise Kamelet with given name
      */
     public Kamelet getKameletByName(String name) {
+        try {
+            WaitUtils.waitFor(() -> kameletClient.withName(name).get() != null, 60, 5000L, "Waiting until the Kamelet " + name + " is installed");
+        } catch (TimeoutException e) {
+            LOG.warn("Kamelet {} is not present", name);
+            return null;
+        }
         return kameletClient.withName(name).get();
     }
 
