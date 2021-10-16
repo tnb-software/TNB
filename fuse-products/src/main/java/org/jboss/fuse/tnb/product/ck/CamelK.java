@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.ck;
 
+import static org.jboss.fuse.tnb.common.utils.IOUtils.writeFile;
 import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SUBSCRIPTION_NAME;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
@@ -133,6 +134,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             );
         } else {
             spec = Map.of(
+                "build", Map.of("timeout", "30m"),
                 "configuration", Collections.singletonList(Map.of(
                     "type", "repository",
                     "value", TestConfiguration.mavenRepository()
@@ -186,6 +188,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void teardownProduct() {
         if (!TestConfiguration.skipTearDown()) {
+            saveOperatorLog();
             OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
             removeKamelets();
         }
@@ -355,5 +358,11 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void afterEach(ExtensionContext extensionContext) throws Exception {
         removeIntegrations();
+    }
+
+    private void saveOperatorLog() {
+        LOG.info("Collecting logs of camel-k-operator");
+        writeFile(TestConfiguration.appLocation().resolve("camel-k-operator.log"),
+            OpenshiftClient.get().getLogs(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0)));
     }
 }
