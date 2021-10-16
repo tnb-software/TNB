@@ -38,11 +38,12 @@ import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -66,7 +67,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
     private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
-    private final Map<String, CamelKApp> integrations = new HashMap<>();
+    private final ConcurrentMap<String, CamelKApp> integrations = new ConcurrentHashMap<>();
     private final List<String> kamelets = new ArrayList<>();
 
     @Override
