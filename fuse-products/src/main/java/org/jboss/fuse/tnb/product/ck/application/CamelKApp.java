@@ -40,6 +40,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import io.fabric8.knative.client.KnativeClient;
+import io.fabric8.knative.serving.v1.Service;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
@@ -149,6 +151,26 @@ public class CamelKApp extends App {
             return "error".equalsIgnoreCase(integrationClient.withName(name).get().getStatus().getPhase());
         } catch (Exception ignored) {
             return false;
+        }
+    }
+
+    @Override
+    public void waitUntilReady() {
+        super.waitUntilReady();
+        KnativeClient knClient = OpenshiftClient.get().adapt(KnativeClient.class);
+        if (knClient.services().withName(name).get() != null) {
+            WaitUtils.waitFor(() -> {
+                final Service service = knClient.services().withName(name).get();
+                if (service.getStatus() == null) {
+                    return false;
+                }
+                if (service.getStatus().getConditions() == null || service.getStatus().getConditions().size() == 0) {
+                    return false;
+                }
+                LOG.debug("Knative service {}: {}", name,
+                    service.getStatus().getConditions().stream().map(c -> c.getType() + ": " + c.getStatus()).collect(Collectors.joining(", ")));
+                return service.getStatus().getConditions().stream().allMatch(c -> "True".equals(c.getStatus()));
+            }, 12, 5000L, "Waiting for the Knative service " + name + " to be ready");
         }
     }
 
