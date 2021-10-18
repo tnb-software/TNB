@@ -32,6 +32,8 @@ public class TestConfiguration extends Configuration {
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
 
+    public static final String USER = "tnb.user";
+
     public static String camelVersion() {
         return getProperty(CAMEL_VERSION);
     }
@@ -115,5 +117,12 @@ public class TestConfiguration extends Configuration {
             version = Double.parseDouble(quarkusVersion().substring(0, 3));
         }
         return version;
+    }
+
+    public static String user() {
+        if (!"hudson".equals(System.getProperty("user.name"))) {
+            return System.getProperty("user.name");
+        }
+        return System.getProperty(USER);
     }
 }
