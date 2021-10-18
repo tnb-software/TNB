@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.common.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
@@ -276,7 +277,15 @@ public final class OpenshiftClient extends OpenShift {
             LOG.info("Skipped creating namespace, name null or empty");
             return;
         }
-        Namespace ns = new NamespaceBuilder().withNewMetadata().withName(name).endMetadata().build();
+
+        // @formatter:off
+        Map<String, String> labels = TestConfiguration.user() == null ? Map.of() : Map.of("tnb/createdBy", TestConfiguration.user());
+        Namespace ns = new NamespaceBuilder()
+            .withNewMetadata()
+                .withName(name)
+                .withLabels(labels)
+            .endMetadata().build();
+        // @formatter:on
         if (client.namespaces().withName(name).get() == null) {
             client.namespaces().create(ns);
             LOG.info("Created namespace " + name);
