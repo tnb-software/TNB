@@ -4,7 +4,6 @@ import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SU
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.exception.TimeoutException;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
@@ -48,6 +47,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
@@ -69,6 +69,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
     private final ConcurrentMap<String, CamelKApp> integrations = new ConcurrentHashMap<>();
     private final List<String> kamelets = new ArrayList<>();
+
+    // Count of all kamelets from camel-k operator
+    private int operatorKameletCount = -1;
 
     @Override
     public void setupProduct() {
@@ -151,6 +154,34 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         }
     }
 
+    private boolean kameletsDeployed() {
+        if (operatorKameletCount == -1) {
+            final PodShellOutput shellOutput = OpenshiftClient.get().podShell(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0))
+                .executeWithBash("ls /kamelets/* | wc -l");
+            if (!shellOutput.getError().isEmpty()) {
+                LOG.error("Unable to list all kamelets: {}", shellOutput.getError());
+                return false;
+            }
+            if (shellOutput.getOutput().isEmpty()) {
+                LOG.error("Unable to list all kamelets: empty response");
+                return false;
+            }
+
+            operatorKameletCount = Integer.parseInt(shellOutput.getOutput().trim());
+        }
+
+        return kameletClient.list().getItems().size() >= operatorKameletCount;
+    }
+
+    private boolean kameletsReady() {
+        return kameletClient.list().getItems().stream().allMatch(k -> {
+            if (k.getStatus() == null) {
+                return false;
+            }
+            return "Ready".equals(k.getStatus().getPhase());
+        });
+    }
+
     @Override
     public void teardownProduct() {
         if (!TestConfiguration.skipTearDown()) {
@@ -198,7 +229,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"));
+        return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"))
+            && kameletsDeployed() && kameletsReady();
     }
 
     @Override
@@ -250,12 +282,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
      * @return null if Kamelet wasn't found, otherwise Kamelet with given name
      */
     public Kamelet getKameletByName(String name) {
-        try {
-            WaitUtils.waitFor(() -> kameletClient.withName(name).get() != null, 60, 5000L, "Waiting until the Kamelet " + name + " is installed");
-        } catch (TimeoutException e) {
-            LOG.warn("Kamelet {} is not present", name);
-            return null;
-        }
         return kameletClient.withName(name).get();
     }
 
