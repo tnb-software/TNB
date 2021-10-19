@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.common.product;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 
 public enum ProductConfiguration {
@@ -11,20 +12,20 @@ public enum ProductConfiguration {
             case STANDALONE:
                 return TestConfiguration.product() == ProductType.CAMEL_STANDALONE;
             case QUARKUS_JVM:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !TestConfiguration.isQuarkusNative();
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !QuarkusConfiguration.isQuarkusNative();
             case QUARKUS_JVM_LOCAL:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !TestConfiguration.isQuarkusNative() && !OpenshiftConfiguration
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration
                     .isOpenshift();
             case QUARKUS_JVM_OPENSHIFT:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !TestConfiguration.isQuarkusNative() && OpenshiftConfiguration
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !QuarkusConfiguration.isQuarkusNative() && OpenshiftConfiguration
                     .isOpenshift();
             case QUARKUS_NATIVE:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && TestConfiguration.isQuarkusNative();
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && QuarkusConfiguration.isQuarkusNative();
             case QUARKUS_NATIVE_LOCAL:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && TestConfiguration.isQuarkusNative() && !OpenshiftConfiguration
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration
                     .isOpenshift();
             case QUARKUS_NATIVE_OPENSHIFT:
-                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && TestConfiguration.isQuarkusNative() && OpenshiftConfiguration
+                return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && QuarkusConfiguration.isQuarkusNative() && OpenshiftConfiguration
                     .isOpenshift();
             case CAMEL_K:
                 return TestConfiguration.product() == ProductType.CAMEL_K;

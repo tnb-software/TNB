@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
@@ -21,14 +22,18 @@ import java.util.stream.Collectors;
 
 public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
+    private final boolean isProd = QuarkusConfiguration.camelQuarkusVersion().contains("redhat");
 
     public QuarkusApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
         LOG.info("Creating Camel Quarkus application project for integration {}", name);
 
+        String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
+            QuarkusConfiguration.mavenPluginGroupId(), QuarkusConfiguration.mavenPluginArtifactId(), QuarkusConfiguration.mavenPluginVersion());
+
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
-            .withGoals("io.quarkus:quarkus-maven-plugin:" + TestConfiguration.quarkusVersion() + ":create")
+            .withGoals(quarkusMavenPluginCreate)
             .withProperties(Map.of(
                 "projectGroupId", TestConfiguration.appGroupId(),
                 "projectArtifactId", name,
@@ -50,11 +55,11 @@ public abstract class QuarkusApp extends App {
                 "quarkus.native.container-build", "true"
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
-        if (TestConfiguration.isQuarkusNative()) {
+        if (QuarkusConfiguration.isQuarkusNative()) {
             requestBuilder.withProfiles("native");
         }
 
-        LOG.info("Building {} application project ({})", name, TestConfiguration.isQuarkusNative() ? "native" : "JVM");
+        LOG.info("Building {} application project ({})", name, QuarkusConfiguration.isQuarkusNative() ? "native" : "JVM");
         Maven.invoke(requestBuilder.build());
     }
 
@@ -75,20 +80,19 @@ public abstract class QuarkusApp extends App {
 
         // Switch to camel-quarkus-bom
         List<Dependency> boms = new ArrayList<>();
-        // For productized build, we need to also add redhat quarkus bom
-        if (TestConfiguration.camelQuarkusVersion().contains("redhat")) {
+        if (isProd) {
             Dependency redhatQuarkusBom = new Dependency();
-            redhatQuarkusBom.setGroupId("io.quarkus");
-            redhatQuarkusBom.setArtifactId("quarkus-bom");
-            redhatQuarkusBom.setVersion(TestConfiguration.quarkusProductBomVersion());
+            redhatQuarkusBom.setGroupId(QuarkusConfiguration.quarkusPlatformGroupId());
+            redhatQuarkusBom.setArtifactId(QuarkusConfiguration.quarkusPlatformArtifactId());
+            redhatQuarkusBom.setVersion(QuarkusConfiguration.quarkusVersion());
             redhatQuarkusBom.setType("pom");
             redhatQuarkusBom.setScope("import");
             boms.add(redhatQuarkusBom);
         }
         Dependency camelQuarkusBom = new Dependency();
-        camelQuarkusBom.setGroupId("org.apache.camel.quarkus");
-        camelQuarkusBom.setArtifactId("camel-quarkus-bom");
-        camelQuarkusBom.setVersion(TestConfiguration.camelQuarkusVersion());
+        camelQuarkusBom.setGroupId(QuarkusConfiguration.camelPlatformGroupId());
+        camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelPlatformArtifactId());
+        camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusVersion());
         camelQuarkusBom.setType("pom");
         camelQuarkusBom.setScope("import");
         boms.add(camelQuarkusBom);
