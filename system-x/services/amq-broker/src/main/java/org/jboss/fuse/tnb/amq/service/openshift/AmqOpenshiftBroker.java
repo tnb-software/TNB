@@ -46,8 +46,8 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     public static final String BROKER_NAME = "tnb-amq-broker";
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
 
-    private static final String CHANNEL = "current";
-    private static final String OPERATOR_NAME = "amq-broker";
+    private static final String CHANNEL = "7.x";
+    private static final String OPERATOR_NAME = "amq-broker-rhel8";
     private static final String SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-amq-broker";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
@@ -55,7 +55,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     private CustomResourceDefinitionContext artemisContext = new CustomResourceDefinitionContext.Builder()
         .withName("ActiveMQArtemis")
         .withGroup("broker.amq.io")
-        .withVersion("v2alpha4")
+        .withVersion("v2alpha5")
         .withPlural("activemqartemises")
         .withScope("Namespaced")
         .build();
