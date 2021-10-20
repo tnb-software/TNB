@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.junit;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.HTTPUtils;
 import org.jboss.fuse.tnb.product.junit.jira.Jira;
@@ -170,7 +171,7 @@ public class RunConditions implements ExecutionCondition {
             return true;
         }
 
-        if (TestConfiguration.isQuarkusNative() && !runOn.quarkusNative()) {
+        if (QuarkusConfiguration.isQuarkusNative() && !runOn.quarkusNative()) {
             LOG.debug("Skipping {}, should not run in native", name);
             return true;
         }

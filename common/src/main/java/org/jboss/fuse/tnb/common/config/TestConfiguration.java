@@ -10,9 +10,6 @@ import java.util.Arrays;
 
 public class TestConfiguration extends Configuration {
     public static final String CAMEL_VERSION = "camel.version";
-    public static final String CAMEL_QUARKUS_VERSION = "camel.quarkus.version";
-    // Version for com.redhat.quarkus:quarkus-product-bom needed for running productized camel-quarkus
-    public static final String QUARKUS_PRODUCT_BOM_VERSION = "redhat.quarkus.version";
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
@@ -26,9 +23,6 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
 
-    public static final String QUARKUS_VERSION = "quarkus.version";
-    public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
-
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
 
@@ -36,14 +30,6 @@ public class TestConfiguration extends Configuration {
 
     public static String camelVersion() {
         return getProperty(CAMEL_VERSION);
-    }
-
-    public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION, "2.2.0");
-    }
-
-    public static String quarkusProductBomVersion() {
-        return getProperty(QUARKUS_PRODUCT_BOM_VERSION, "2.2.3.Final");
     }
 
     public static ProductType product() {
@@ -96,27 +82,8 @@ public class TestConfiguration extends Configuration {
         return getProperty(MAVEN_REPOSITORY, "").contains("@mirrorOf=");
     }
 
-    public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "2.2.3");
-    }
-
-    public static boolean isQuarkusNative() {
-        return getBoolean(QUARKUS_NATIVE_BUILD);
-    }
-
     public static boolean skipTearDown() {
         return getBoolean(TEST_SKIP_TEARDOWN, false);
-    }
-
-    public static double quarkusMajorMinorVersion() {
-        double version;
-        try {
-            version = Double.parseDouble(quarkusVersion().substring(0, 4));
-        } catch (NumberFormatException e) {
-            // Just in case if in the future the version will be something like 2.0.Final
-            version = Double.parseDouble(quarkusVersion().substring(0, 3));
-        }
-        return version;
     }
 
     public static String user() {

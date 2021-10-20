@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
+import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
@@ -65,15 +66,11 @@ public class LocalQuarkusApp extends QuarkusApp {
         String fileName;
         Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
 
-        if (TestConfiguration.isQuarkusNative()) {
+        if (QuarkusConfiguration.isQuarkusNative()) {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
         } else {
             cmd.addAll(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
-            if (TestConfiguration.quarkusMajorMinorVersion() < 1.12) {
-                fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner.jar").toAbsolutePath().toString();
-            } else {
-                fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
-            }
+            fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
         }
         cmd.add(fileName);
 
