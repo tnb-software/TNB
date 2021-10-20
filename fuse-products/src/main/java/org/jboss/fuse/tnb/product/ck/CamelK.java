@@ -75,6 +75,13 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void setupProduct() {
+        // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
+        // and then the desired one is returned
+        kameletClient = OpenshiftClient.get().customResources(KAMELET_CONTEXT, Kamelet.class, KameletList.class)
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
+        kameletBindingClient = OpenshiftClient.get().customResources(KAMELET_BINDING_CONTEXT, KameletBinding.class, KameletBindingList.class)
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
+
         if (!isReady()) {
             LOG.info("Deploying Camel-K");
             CamelKConfiguration config = CamelKConfiguration.getConfiguration();
@@ -98,13 +105,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                 config.subscriptionSourceNamespace());
             OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
         }
-
-        // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
-        // and then the desired one is returned
-        kameletClient = OpenshiftClient.get().customResources(KAMELET_CONTEXT, Kamelet.class, KameletList.class)
-            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
-        kameletBindingClient = OpenshiftClient.get().customResources(KAMELET_BINDING_CONTEXT, KameletBinding.class, KameletBindingList.class)
-            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
 
         // One-off use of IntegrationPlatform, so not creating classes for this small stuff
         // Create an IntegrationPlatform object with given maven repository or create maven settings configmap + reference it in the
@@ -156,8 +156,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     private boolean kameletsDeployed() {
         if (operatorKameletCount == -1) {
-            final PodShellOutput shellOutput = OpenshiftClient.get().podShell(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0))
-                .executeWithBash("ls /kamelets/* | wc -l");
+            final PodShellOutput shellOutput =
+                OpenshiftClient.get().podShell(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0))
+                    .executeWithBash("ls /kamelets/* | wc -l");
             if (!shellOutput.getError().isEmpty()) {
                 LOG.error("Unable to list all kamelets: {}", shellOutput.getError());
                 return false;
