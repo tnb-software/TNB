@@ -13,7 +13,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <azure.clients.version>12.8.0</azure.clients.version>
+        <azure.clients.version>12.11.1</azure.clients.version>
     </properties>
 
     <modules>
