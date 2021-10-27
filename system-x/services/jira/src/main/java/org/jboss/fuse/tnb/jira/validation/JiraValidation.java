@@ -56,7 +56,7 @@ public class JiraValidation {
             boolean unsuccessful = true;
             for (int i = 0; i < 2 && unsuccessful; i++) {
                 try {
-                    issueJson = HTTPUtils.post(account.getJiraUrl() + "/rest/api/2/issue", body,
+                    issueJson = HTTPUtils.get().post(account.getJiraUrl() + "/rest/api/2/issue", body,
                         Map.of("Authorization", Credentials.basic(account.getUsername(), account.getPassword()))).getBody();
                     unsuccessful = false;
                 } catch (Exception e) {
