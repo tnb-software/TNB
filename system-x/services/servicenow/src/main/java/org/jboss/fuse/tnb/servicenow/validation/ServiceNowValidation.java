@@ -48,12 +48,13 @@ public class ServiceNowValidation {
                 throw new RuntimeException(e);
             }
         }
-        HTTPUtils.Response r = HTTPUtils.get(getUrl, Map.of("Authorization", Credentials.basic(account.userName(), account.password())));
+        HTTPUtils.Response r =
+            HTTPUtils.getInstance().get(getUrl, Map.of("Authorization", Credentials.basic(account.userName(), account.password())));
         return parseResponse(r.getBody());
     }
 
     public void deleteIncident(String incidentId) {
-        HTTPUtils.delete(
+        HTTPUtils.getInstance().delete(
             String.format("%s/%s", account.url(), incidentId),
             Map.of("Authorization", Credentials.basic(account.userName(), account.password()))
         );
