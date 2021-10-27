@@ -64,14 +64,14 @@ public final class HTTPUtils {
         }
     }
 
-    public static HTTPUtils get() {
+    public static HTTPUtils getInstance() {
         if (instance == null) {
             instance = new HTTPUtils(new OkHttpClient());
         }
         return instance;
     }
 
-    public static HTTPUtils get(OkHttpClient client) {
+    public static HTTPUtils getInstance(OkHttpClient client) {
         return new HTTPUtils(client);
     }
 

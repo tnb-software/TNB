@@ -104,7 +104,7 @@ public class RunConditions implements ExecutionCondition {
         }
         for (String jiraKey : jira.keys()) {
             LOG.trace("Checking JIRA {}", jiraKey);
-            final HTTPUtils.Response response = HTTPUtils.get(JIRA_URL_PREFIX + jiraKey);
+            final HTTPUtils.Response response = HTTPUtils.getInstance().get(JIRA_URL_PREFIX + jiraKey);
             if (response.getResponseCode() == 200) {
                 final String status = new JSONObject(response.getBody()).getJSONObject("fields").getJSONObject("status").get("name")
                     .toString();
