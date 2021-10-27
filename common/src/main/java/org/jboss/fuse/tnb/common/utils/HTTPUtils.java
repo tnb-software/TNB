@@ -9,46 +9,49 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public final class HTTPUtils {
-    private static final OkHttpClient CLIENT = new OkHttpClient();
+    private static HTTPUtils instance;
 
-    private HTTPUtils() {
+    private final OkHttpClient client;
+
+    private HTTPUtils(OkHttpClient client) {
+        this.client = client;
     }
 
-    public static Response get(String url) {
+    public Response get(String url) {
         return execute(new Request.Builder().get().url(url).build());
     }
 
-    public static Response get(String url, Map<String, String> headers) {
+    public Response get(String url, Map<String, String> headers) {
         return execute(new Request.Builder().get().url(url).headers(Headers.of(headers)).build());
     }
 
-    public static Response post(String url, RequestBody body) {
+    public Response post(String url, RequestBody body) {
         return execute(new Request.Builder().post(body).url(url).build());
     }
 
-    public static Response post(String url, RequestBody body, Map<String, String> headers) {
+    public Response post(String url, RequestBody body, Map<String, String> headers) {
         return execute(new Request.Builder().post(body).url(url).headers(Headers.of(headers)).build());
     }
 
-    public static Response put(String url, RequestBody body, Map<String, String> headers) {
+    public Response put(String url, RequestBody body, Map<String, String> headers) {
         return execute(new Request.Builder().put(body).url(url).headers(Headers.of(headers)).build());
     }
 
-    public static Response put(String url, RequestBody body) {
+    public Response put(String url, RequestBody body) {
         return execute(new Request.Builder().put(body).url(url).build());
     }
 
-    public static void delete(String url) {
+    public void delete(String url) {
         execute(new Request.Builder().url(url).delete().build());
     }
 
-    public static void delete(String url, Map<String, String> headers) {
+    public void delete(String url, Map<String, String> headers) {
         execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build());
     }
 
-    private static Response execute(Request request) {
+    private Response execute(Request request) {
         try {
-            okhttp3.Response response = CLIENT.newCall(request).execute();
+            okhttp3.Response response = client.newCall(request).execute();
             int responseCode = response.code();
             String responseBody = null;
             if (response.body() != null) {
@@ -59,6 +62,17 @@ public final class HTTPUtils {
         } catch (IOException e) {
             throw new RuntimeException("Unable to execute request: ", e);
         }
+    }
+
+    public static HTTPUtils get() {
+        if (instance == null) {
+            instance = new HTTPUtils(new OkHttpClient());
+        }
+        return instance;
+    }
+
+    public static HTTPUtils get(OkHttpClient client) {
+        return new HTTPUtils(client);
     }
 
     public static class Response {
