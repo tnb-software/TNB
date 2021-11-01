@@ -30,10 +30,13 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
@@ -218,10 +221,20 @@ public class CamelKApp extends App {
             .map(modeline -> modeline.split("=", 2)[1])
             .collect(Collectors.toList());
 
-        Map<String, IntegrationSpec.TraitConfig> buildTraits = new HashMap<>();
+        Map<String, IntegrationSpec.TraitConfig> traits = new HashMap<>();
+        traits.put("builder", new IntegrationSpec.TraitConfig("properties", buildProperties));
 
-        buildTraits.put("builder", new IntegrationSpec.TraitConfig("properties", buildProperties));
-        is.setTraits(buildTraits);
+        Set<String> traitDefinitions = modelines.stream()
+            .filter(modeline -> modeline.contains("trait"))
+            .map(modeline -> modeline.split("=", 2)[1])
+            .collect(Collectors.toSet());
+
+        Map<String, Map<String, Object>> td = processTraits(traitDefinitions);
+        for (String t : td.keySet()) {
+            traits.put(t, new IntegrationSpec.TraitConfig(td.get(t)));
+        }
+
+        is.setTraits(traits);
 
         is.setConfiguration(new ArrayList<>());
         // if there are any properties set, use the configmap in the integration's configuration
@@ -258,5 +271,29 @@ public class CamelKApp extends App {
         return new Integration.Builder()
             .name(name)
             .build(is);
+    }
+
+    private Map<String, Map<String, Object>> processTraits(Collection<String> traitDeffinitions) {
+        Map<String, Map<String, Object>> out = new HashMap();
+        for (String t : traitDeffinitions) {
+            String[] kv = t.split("\\.", 2);
+            String[] config = kv[1].split("=");
+            Map<String, Object> cfg = Optional.ofNullable(out.get(kv[0])).orElse(new HashMap<>());
+
+            cfg.put(config[0], deriveType(config[1]));
+            out.put(kv[0], cfg);
+        }
+        return out;
+    }
+
+    private Object deriveType(String value) {
+        try {
+            int i = Integer.parseInt(value);
+            return i;
+        } catch (NumberFormatException e) {
+            // no-op
+        }
+        return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value) ? Boolean.parseBoolean(value)
+            : value;
     }
 }
