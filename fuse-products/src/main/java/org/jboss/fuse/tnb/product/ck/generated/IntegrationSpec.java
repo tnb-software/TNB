@@ -181,6 +181,10 @@ public class IntegrationSpec implements KubernetesResource {
             add(key, value);
         }
 
+        public TraitConfig(Map<String, Object> config) {
+            this.configuration = config;
+        }
+
         public Map<String, Object> getConfiguration() {
             return configuration;
         }
