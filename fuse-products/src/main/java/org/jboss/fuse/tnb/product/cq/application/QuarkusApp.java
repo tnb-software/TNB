@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,6 +36,9 @@ public abstract class QuarkusApp extends App {
             .withProperties(Map.of(
                 "projectGroupId", TestConfiguration.appGroupId(),
                 "projectArtifactId", name,
+                "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
+                "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
+                "platformVersion", QuarkusConfiguration.quarkusVersion(),
                 "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
@@ -78,25 +80,18 @@ public abstract class QuarkusApp extends App {
         File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
-        // Switch to camel-quarkus-bom
-        List<Dependency> boms = new ArrayList<>();
-        if (isProd) {
-            Dependency redhatQuarkusBom = new Dependency();
-            redhatQuarkusBom.setGroupId(QuarkusConfiguration.quarkusPlatformGroupId());
-            redhatQuarkusBom.setArtifactId(QuarkusConfiguration.quarkusPlatformArtifactId());
-            redhatQuarkusBom.setVersion(QuarkusConfiguration.quarkusVersion());
-            redhatQuarkusBom.setType("pom");
-            redhatQuarkusBom.setScope("import");
-            boms.add(redhatQuarkusBom);
-        }
+        // For community versions use camel platform bom only, for productized append the camel platform bom (quarkus bom already present)
         Dependency camelQuarkusBom = new Dependency();
         camelQuarkusBom.setGroupId(QuarkusConfiguration.camelPlatformGroupId());
         camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelPlatformArtifactId());
         camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusVersion());
         camelQuarkusBom.setType("pom");
         camelQuarkusBom.setScope("import");
-        boms.add(camelQuarkusBom);
-        model.getDependencyManagement().setDependencies(boms);
+        if (isProd) {
+            model.getDependencyManagement().getDependencies().add(camelQuarkusBom);
+        } else {
+            model.getDependencyManagement().setDependencies(List.of(camelQuarkusBom));
+        }
 
         if (!OpenshiftConfiguration.isOpenshift()) {
             // quarkus-resteasy is needed for the openshift.yml to be generated, but the resteasy itself is not used anywhere
