@@ -35,7 +35,7 @@ public class KNativeValidation {
             .withName(name)
             .endMetadata()
             .build();
-        client.inMemoryChannels().create(channel);
+        client.inMemoryChannels().createOrReplace(channel);
         createdItems.add(channel);
         return channel;
     }
@@ -47,7 +47,7 @@ public class KNativeValidation {
             .withName(name)
             .endMetadata()
             .build();
-        client.brokers().create(broker);
+        client.brokers().createOrReplace(broker);
         createdItems.add(broker);
         return broker;
     }
