@@ -21,6 +21,9 @@ import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,18 +42,24 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import java.util.stream.StreamSupport;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.knative.client.KnativeClient;
+import io.fabric8.knative.eventing.v1.Trigger;
 import io.fabric8.knative.serving.v1.Service;
+import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
+import io.fabric8.kubernetes.client.utils.Serialization;
 
 public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
@@ -161,19 +170,16 @@ public class CamelKApp extends App {
     public void waitUntilReady() {
         super.waitUntilReady();
         KnativeClient knClient = OpenshiftClient.get().adapt(KnativeClient.class);
-        if (knClient.services().withName(name).get() != null) {
-            WaitUtils.waitFor(() -> {
-                final Service service = knClient.services().withName(name).get();
-                if (service.getStatus() == null) {
-                    return false;
-                }
-                if (service.getStatus().getConditions() == null || service.getStatus().getConditions().size() == 0) {
-                    return false;
-                }
-                LOG.debug("Knative service {}: {}", name,
-                    service.getStatus().getConditions().stream().map(c -> c.getType() + ": " + c.getStatus()).collect(Collectors.joining(", ")));
-                return service.getStatus().getConditions().stream().allMatch(c -> "True".equals(c.getStatus()));
-            }, 12, 5000L, "Waiting for the Knative service " + name + " to be ready");
+        Service svc = knClient.services().withName(name).get();
+        if (svc != null) {
+            waitForKnativeResource(() -> knClient.services().withName(name).get());
+        }
+        final List<Trigger> triggers = knClient.triggers().withLabel("camel.apache.org/integration", name).list().getItems();
+        if (triggers.size() > 0) {
+            Trigger trigger = knClient.triggers().withName(triggers.get(0).getMetadata().getName()).get();
+            waitForKnativeResource(() -> knClient.triggers().withName(trigger.getMetadata().getName()).get());
+            waitForKnativeResource(() -> knClient.subscriptions().withLabel("eventing.knative.dev/trigger", trigger.getMetadata().getName())
+                .list().getItems().get(0));
         }
     }
 
@@ -185,7 +191,6 @@ public class CamelKApp extends App {
      * @return integration instance
      */
     private Integration createIntegrationResource(String name, IntegrationData integrationData) {
-
         IntegrationSpec is = new IntegrationSpec();
         if (integrationData.getSourceName().endsWith(".yaml")) {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
@@ -273,9 +278,9 @@ public class CamelKApp extends App {
             .build(is);
     }
 
-    private Map<String, Map<String, Object>> processTraits(Collection<String> traitDeffinitions) {
-        Map<String, Map<String, Object>> out = new HashMap();
-        for (String t : traitDeffinitions) {
+    private Map<String, Map<String, Object>> processTraits(Collection<String> traitDefinitions) {
+        Map<String, Map<String, Object>> out = new HashMap<>();
+        for (String t : traitDefinitions) {
             String[] kv = t.split("\\.", 2);
             String[] config = kv[1].split("=");
             Map<String, Object> cfg = Optional.ofNullable(out.get(kv[0])).orElse(new HashMap<>());
@@ -288,12 +293,47 @@ public class CamelKApp extends App {
 
     private Object deriveType(String value) {
         try {
-            int i = Integer.parseInt(value);
-            return i;
+            return Integer.parseInt(value);
         } catch (NumberFormatException e) {
             // no-op
         }
         return "true".equalsIgnoreCase(value) || "false".equalsIgnoreCase(value) ? Boolean.parseBoolean(value)
             : value;
+    }
+
+    /**
+     * Waits until the knative resource is ready. There can be multiple knative resources created by the integration and there is no other common
+     * interface than HasMetadata that would allow access to status, so serialize it to json and check the status that way.
+     *
+     * @param supplier supplier that returns the object
+     */
+    private void waitForKnativeResource(Supplier<HasMetadata> supplier) {
+        HasMetadata item = supplier.get();
+        WaitUtils.waitFor(() -> {
+            HasMetadata i = supplier.get();
+            JSONObject json = new JSONObject(Serialization.asJson(i));
+            JSONObject status;
+            try {
+                status = json.getJSONObject("status");
+            } catch (JSONException e) {
+                return false;
+            }
+            JSONArray conditions;
+            try {
+                conditions = status.getJSONArray("conditions");
+            } catch (JSONException e) {
+                return false;
+            }
+            if (conditions.length() == 0) {
+                return false;
+            }
+
+            final List<Condition> conditionsList = StreamSupport.stream(conditions.spliterator(), false)
+                .map(c -> Serialization.unmarshal(c.toString(), Condition.class))
+                .collect(Collectors.toList());
+            LOG.debug("Knative {} {}: {}", i.getKind(), i.getMetadata().getName(), conditionsList.stream()
+                .map(c -> c.getType() + ": " + c.getStatus()).collect(Collectors.joining(", ")));
+            return conditionsList.stream().allMatch(c -> "True".equals(c.getStatus()));
+        }, 12, 5000L, "Waiting for the Knative " + item.getKind() + " " + item.getMetadata().getName() + " to be ready");
     }
 }
