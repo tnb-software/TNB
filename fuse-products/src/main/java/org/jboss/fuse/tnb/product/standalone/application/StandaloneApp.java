@@ -9,6 +9,7 @@ import org.jboss.fuse.tnb.product.log.MavenLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,7 @@ public class StandaloneApp extends App {
                 .withProperties(Map.of(
                     "archetypeGroupId", "org.apache.camel.archetypes",
                     "archetypeArtifactId", "camel-archetype-main",
-                    "archetypeVersion", TestConfiguration.camelVersion(),
+                    "archetypeVersion", TestConfiguration.camelArchetypeVersion(),
                     "groupId", TestConfiguration.appGroupId(),
                     "artifactId", TestConfiguration.appTemplateName()))
                 .withLogFile(TestConfiguration.appLocation().resolve("app-template-generate.log"))
@@ -106,6 +107,9 @@ public class StandaloneApp extends App {
 
         Model model = Maven.loadPom(pom);
         dependencies.forEach(dep -> model.getDependencies().add(Maven.toDependency(dep)));
+        final Dependency camelBom = model.getDependencyManagement().getDependencies().stream()
+            .filter(d -> "camel-bom".equals(d.getArtifactId())).findFirst().get();
+        camelBom.setVersion(TestConfiguration.camelVersion());
         Maven.writePom(pom, model);
     }
 }

@@ -10,6 +10,7 @@ import java.util.Arrays;
 
 public class TestConfiguration extends Configuration {
     public static final String CAMEL_VERSION = "camel.version";
+    public static final String CAMEL_ARCHETYPE_VERSION = "camel.archetype.version";
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
@@ -30,6 +31,10 @@ public class TestConfiguration extends Configuration {
 
     public static String camelVersion() {
         return getProperty(CAMEL_VERSION);
+    }
+
+    public static String camelArchetypeVersion() {
+        return getProperty(CAMEL_ARCHETYPE_VERSION, "3.11.1");
     }
 
     public static ProductType product() {
