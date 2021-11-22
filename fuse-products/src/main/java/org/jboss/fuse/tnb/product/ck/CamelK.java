@@ -16,13 +16,11 @@ import org.jboss.fuse.tnb.product.ck.application.CamelKApp;
 import org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration;
 import org.jboss.fuse.tnb.product.ck.generated.Kamelet;
 import org.jboss.fuse.tnb.product.ck.generated.KameletBinding;
-import org.jboss.fuse.tnb.product.ck.generated.KameletBindingList;
 import org.jboss.fuse.tnb.product.ck.generated.KameletList;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,18 +30,15 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -60,15 +55,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
     private static final CustomResourceDefinitionContext KAMELET_CONTEXT =
         CamelKSupport.kameletCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-    private static final CustomResourceDefinitionContext KAMELET_BINDING_CONTEXT =
-        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
     private static final CustomResourceDefinitionContext INTEGRATIONPLATFORM_CONTEXT =
         CamelKSupport.integrationPlatformCRDContext(CamelKSettings.API_VERSION_DEFAULT);
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
-    private NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
-    private final ConcurrentMap<String, CamelKApp> integrations = new ConcurrentHashMap<>();
+    private final Map<String, App> integrations = new HashMap<>();
     private final List<String> kamelets = new ArrayList<>();
 
     // Count of all kamelets from camel-k operator
@@ -79,8 +71,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
         // and then the desired one is returned
         kameletClient = OpenshiftClient.get().customResources(KAMELET_CONTEXT, Kamelet.class, KameletList.class)
-            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
-        kameletBindingClient = OpenshiftClient.get().customResources(KAMELET_BINDING_CONTEXT, KameletBinding.class, KameletBindingList.class)
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
 
         if (!isReady()) {
@@ -196,39 +186,47 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public App createIntegration(IntegrationBuilder integrationBuilder) {
-        CamelKApp app = new CamelKApp(integrationBuilder);
-        integrations.put(integrationBuilder.getIntegrationName(), app);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return createIntegrations(new IntegrationBuilder[] {integrationBuilder}).get(integrationBuilder.getIntegrationName());
     }
 
-    public App createIntegration(String name, IntegrationData integrationData) {
-        CamelKApp app = new CamelKApp(name, integrationData);
-        integrations.put(name, app);
-        app.start();
-        app.waitUntilReady();
-        return app;
+    public Map<String, App> createIntegrations(IntegrationBuilder... integrationBuilders) {
+        return createIntegrations((Object[]) integrationBuilders);
+    }
+
+    public Map<String, App> createKameletBindings(KameletBinding... kameletBindings) {
+        return createIntegrations((Object[]) kameletBindings);
+    }
+
+    private Map<String, App> createIntegrations(Object... integrationSources) {
+        // Return only integrations created in this invocation, not all created integrations
+        Map<String, App> apps = new HashMap<>();
+        for (Object integrationSource : integrationSources) {
+            App app = createApp(integrationSource);
+            apps.put(app.getName(), app);
+            app.start();
+        }
+
+        apps.values().forEach(App::waitUntilReady);
+
+        return apps;
     }
 
     public App createKameletBinding(KameletBinding kameletBinding) {
-        CamelKApp app = new CamelKApp(kameletBinding);
-        integrations.put(kameletBinding.getMetadata().getName(), app);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return createKameletBindings(new KameletBinding[] {kameletBinding}).get(kameletBinding.getMetadata().getName());
     }
 
-    public App createKameletBinding(File kameletBindingFile) {
-        if (kameletBindingFile == null) {
-            LOG.error("File is null");
-            throw new RuntimeException("File is null");
+    private App createApp(Object integrationSource) {
+        App app;
+        if (integrationSource instanceof IntegrationBuilder) {
+            app = new CamelKApp((IntegrationBuilder) integrationSource);
+        } else if (integrationSource instanceof KameletBinding) {
+            app = new CamelKApp((KameletBinding) integrationSource);
+        } else {
+            throw new IllegalArgumentException("Creating Camel-K integrations is possible only with IntegrationBuilders and KameletBindings (was "
+                + integrationSource.getClass().getSimpleName() + ")");
         }
-        try (FileInputStream is = new FileInputStream(kameletBindingFile)) {
-            return createKameletBinding(kameletBindingClient.load(is).get());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load KameletBinding: ", e);
-        }
+        integrations.put(app.getName(), app);
+        return app;
     }
 
     @Override
@@ -238,25 +236,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     @Override
-    public void createKamelet(File file) {
-        if (file == null) {
-            LOG.error("File is null");
-            throw new RuntimeException("File is null");
-        }
-        try (FileInputStream is = new FileInputStream(file)) {
-            createKamelet(kameletClient.load(is).get());
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to load Kamelet", e);
-        }
-    }
-
-    @Override
     public void createKamelet(Kamelet kamelet) {
         if (kamelet == null) {
             LOG.error("Null kamelet");
             throw new RuntimeException("Null kamelet");
         }
-        LOG.info("Create Kamelet " + kamelet.getMetadata().getName());
+        LOG.info("Creating Kamelet " + kamelet.getMetadata().getName());
         kameletClient.createOrReplace(kamelet);
         kamelets.add(kamelet.getMetadata().getName());
         WaitUtils.waitFor(() -> isKameletReady(kamelet), "Waiting for Kamelet to be ready");
@@ -316,7 +301,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public void removeKamelet(String kameletName) {
-        LOG.info("Delete Kamelet " + kameletName);
+        LOG.info("Deleting Kamelet " + kameletName);
         if (kameletClient != null) {
             kameletClient.withName(kameletName).delete();
         }

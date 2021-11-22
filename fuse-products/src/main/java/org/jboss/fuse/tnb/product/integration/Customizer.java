@@ -16,7 +16,7 @@ public abstract class Customizer {
     public abstract void customize();
 
     public Properties getApplicationProperties() {
-        return getIntegrationBuilder().getAppProperties();
+        return getIntegrationBuilder().getProperties();
     }
 
     public CompilationUnit getRouteBuilder() {

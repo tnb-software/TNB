@@ -48,6 +48,10 @@ public abstract class App {
         return log;
     }
 
+    public String getName() {
+        return name;
+    }
+
     public void waitUntilReady() {
         WaitUtils.waitFor(this::isReady, this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
     }

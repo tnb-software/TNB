@@ -1,5 +1,8 @@
 package org.jboss.fuse.tnb.common.utils;
 
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -49,5 +52,15 @@ public final class PropertiesUtils {
 
     public static String toUriParameters(Properties properties) {
         return toString(properties).replaceAll("\n", "&");
+    }
+
+    public static Properties fromFile(String filePath) {
+        Properties properties = new Properties();
+        try (InputStream is = new FileInputStream(filePath)) {
+            properties.load(is);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load properties from " + filePath, e);
+        }
+        return properties;
     }
 }
