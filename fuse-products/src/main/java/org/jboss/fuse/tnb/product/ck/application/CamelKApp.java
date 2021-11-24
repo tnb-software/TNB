@@ -259,7 +259,9 @@ public class CamelKApp extends App {
             is.setResources(new ArrayList<>());
             integrationData.getResources().forEach(resource -> {
                 IntegrationSpec.Resource res =
-                    new IntegrationSpec.Resource(resource.getType().getValue(), "/etc/camel/resources/" + resource.getName(),
+                    new IntegrationSpec.Resource(resource.getType().getValue(),
+                        // add data resources to the integration classpath
+                        resource.getType().equals(IntegrationData.ResourceType.DATA) ? "/etc/camel/resources/" + resource.getName() : null,
                         new File(resource.getName()).getName(),
                         resource.getContent());
                 is.getResources().add(res);
