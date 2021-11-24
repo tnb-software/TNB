@@ -1,6 +1,16 @@
 package org.jboss.fuse.tnb.common.utils;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
 import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.Map;
 
 import okhttp3.Headers;
@@ -91,5 +101,47 @@ public final class HTTPUtils {
         public String getBody() {
             return body;
         }
+    }
+
+    private static final TrustManager[] trustAllCerts = new TrustManager[] {
+        new X509TrustManager() {
+            @Override
+            public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) throws CertificateException {
+            }
+
+            @Override
+            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                return new java.security.cert.X509Certificate[] {};
+            }
+        }
+    };
+    private static final SSLContext trustAllSslContext;
+
+    static {
+        try {
+            trustAllSslContext = SSLContext.getInstance("SSL");
+            trustAllSslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+        } catch (NoSuchAlgorithmException | KeyManagementException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private static final SSLSocketFactory trustAllSslSocketFactory = trustAllSslContext.getSocketFactory();
+
+    public static OkHttpClient trustAllSslClient() {
+
+        OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
+        builder.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0]);
+        builder.hostnameVerifier(new HostnameVerifier() {
+            @Override
+            public boolean verify(String hostname, SSLSession session) {
+                return true;
+            }
+        });
+        return builder.build();
     }
 }
