@@ -25,12 +25,14 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(KNative.class)
 public class KNative implements Service, ReusableOpenshiftDeployable {
+    public static final String OPENSHIFT_SERVERLESS_NAMESPACE = "openshift.serverless.namespace";
+
     private static final String CHANNEL = "stable";
     private static final String OPERATOR_NAME = "serverless-operator";
     private static final String SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-knative";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
-    private static final String TARGET_NAMESPACE = "openshift-serverless";
+    private static final String TARGET_NAMESPACE = System.getProperty(OPENSHIFT_SERVERLESS_NAMESPACE, "openshift-serverless");
 
     private static final String EVENTING_NAMESPACE = "knative-eventing";
     private static final String EVENTING_CR_NAME = "knative-eventing";
