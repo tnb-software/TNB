@@ -75,6 +75,8 @@ public final class WaitUtils {
 
     /**
      * Waits until the check or fail condition return true.
+     * <p>
+     * If a wait duration specified by {@link TestConfiguration#testWaitKillTimeout()} is reached, the wait is killed to prevent infinite waiting
      *
      * @param check booleansupplier instance
      * @param fail booleansupplier instance
@@ -84,11 +86,15 @@ public final class WaitUtils {
      */
     public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
         LOG.info(logMessage);
+        Instant start = Instant.now();
         while (true) {
             if (check.getAsBoolean()) {
                 break;
             } else if (fail.getAsBoolean()) {
                 throw new FailureConditionMetException("Specified fail condition met");
+            } else if (Duration.between(start, Instant.now()).compareTo(TestConfiguration.testWaitKillTimeout()) > 0) {
+                LOG.error("Wait killed after {} minutes", TestConfiguration.testWaitKillTimeout().toMinutes());
+                break;
             } else {
                 LOG.debug("Condition not met yet, sleeping for {}", timeout);
                 sleep(timeout);
