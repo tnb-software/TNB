@@ -18,6 +18,7 @@ public class TestConfiguration extends Configuration {
     public static final String APP_LOCATION = "app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
+    public static final String TEST_WAIT_KILL_TIMEOUT = "test.wait.kill.timeout";
     public static final String TEST_SKIP_TEARDOWN = "test.skip.teardown";
     public static final String MAVEN_REPOSITORY = "test.maven.repository";
     public static final String MAVEN_SETTINGS = "test.maven.settings";
@@ -65,6 +66,10 @@ public class TestConfiguration extends Configuration {
 
     public static Duration testWaitTime() {
         return Duration.of(getInteger(TEST_WAIT_TIME, 60), ChronoUnit.SECONDS);
+    }
+
+    public static Duration testWaitKillTimeout() {
+        return Duration.of(getInteger(TEST_WAIT_KILL_TIMEOUT, 2), ChronoUnit.HOURS);
     }
 
     public static String mavenRepository() {
