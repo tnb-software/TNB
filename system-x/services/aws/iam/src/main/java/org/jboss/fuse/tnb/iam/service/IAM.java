@@ -1,14 +1,10 @@
 package org.jboss.fuse.tnb.iam.service;
 
 import org.jboss.fuse.tnb.aws.account.AWSAccount;
-import org.jboss.fuse.tnb.common.account.Accounts;
-import org.jboss.fuse.tnb.common.service.Service;
+import org.jboss.fuse.tnb.aws.service.AWSService;
 import org.jboss.fuse.tnb.iam.validation.IAMValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
@@ -17,43 +13,22 @@ import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.iam.IamClient;
 
 @AutoService(IAM.class)
-public class IAM implements Service {
-    private static final Logger LOG = LoggerFactory.getLogger(IAM.class);
-
-    private AWSAccount account;
-    private IamClient client;
-    private IAMValidation validation;
-
-    public AWSAccount account() {
-        if (account == null) {
-            account = Accounts.get(AWSAccount.class);
-        }
-        return account;
-    }
-
-    protected IamClient client() {
-        LOG.debug("Creating new IAM client");
-        client = IamClient.builder()
-            .region(Region.AWS_GLOBAL)
-            .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
-            .build();
-        return client;
-    }
-
-    public IAMValidation validation() {
-        return validation;
-    }
-
+public class IAM extends AWSService<AWSAccount, IamClient, IAMValidation> {
     @Override
-    public void afterAll(ExtensionContext context) throws Exception {
-        if (client != null) {
-            client.close();
+    protected IamClient client(Class<IamClient> clazz) {
+        // IAM client doesn't have the "create" method as other clients, probably because it's not tied to any region
+        if (client == null) {
+            client = IamClient.builder()
+                .region(Region.AWS_GLOBAL)
+                .credentialsProvider(() -> AwsBasicCredentials.create(account().accessKey(), account().secretKey()))
+                .build();
         }
+        return client;
     }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         LOG.debug("Creating new IAM validation");
-        validation = new IAMValidation(client());
+        validation = new IAMValidation(client(IamClient.class));
     }
 }

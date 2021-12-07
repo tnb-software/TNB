@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.sqs.service;
 
+import org.jboss.fuse.tnb.aws.service.AWSService;
 import org.jboss.fuse.tnb.common.account.Accounts;
-import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.sqs.account.SQSAccount;
 import org.jboss.fuse.tnb.sqs.validation.SQSValidation;
 
@@ -12,18 +12,13 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sqs.SqsClient;
 
 @AutoService(SQS.class)
-public class SQS implements Service {
+public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(SQS.class);
 
-    private SQSAccount account;
-    private SqsClient client;
-    private SQSValidation validation;
-
+    @Override
     public SQSAccount account() {
         if (account == null) {
             LOG.debug("Creating new SQS account");
@@ -35,29 +30,9 @@ public class SQS implements Service {
         return account;
     }
 
-    protected SqsClient client() {
-        LOG.debug("Creating new SQS client");
-        client = SqsClient.builder()
-            .region(Region.of(account().region()))
-            .credentialsProvider(() -> AwsBasicCredentials.create(account.accessKey(), account().secretKey()))
-            .build();
-        return client;
-    }
-
-    public SQSValidation validation() {
-        return validation;
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        if (client != null) {
-            client.close();
-        }
-    }
-
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         LOG.debug("Creating new SQS validation");
-        validation = new SQSValidation(client(), account());
+        validation = new SQSValidation(client(SqsClient.class), account());
     }
 }

@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.s3.validation;
 
-import org.jboss.fuse.tnb.aws.account.AWSAccount;
+import org.jboss.fuse.tnb.common.service.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,16 +16,14 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
-public class S3Validation {
+public class S3Validation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(S3Validation.class);
 
     private final S3Client client;
-    private final AWSAccount account;
 
-    public S3Validation(S3Client client, AWSAccount account) {
+    public S3Validation(S3Client client) {
         this.client = client;
-        this.account = account;
     }
 
     public void createS3Bucket(String name) {

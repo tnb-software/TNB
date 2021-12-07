@@ -11,4 +11,11 @@
 
     <artifactId>system-x-aws-common</artifactId>
 
+    <dependencies>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>sdk-core</artifactId>
+            <version>${aws.clients.version}</version>
+        </dependency>
+    </dependencies>
 </project>
