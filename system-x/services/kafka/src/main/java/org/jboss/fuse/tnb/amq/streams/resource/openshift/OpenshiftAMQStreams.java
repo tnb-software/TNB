@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.amq.streams.resource.openshift;
 import org.jboss.fuse.tnb.amq.streams.service.Kafka;
 import org.jboss.fuse.tnb.amq.streams.validation.KafkaValidation;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -77,12 +78,14 @@ public class OpenshiftAMQStreams extends Kafka implements ReusableOpenshiftDeplo
     @Override
     public void undeploy() {
         // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
-        KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
-            .timeout(120_000).waitFor();
-        OpenshiftClient.get().deleteSubscription("amq-streams");
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/kind", "cluster-operator")
-            .timeout(120_000).waitFor();
+        if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
+            KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
+                .timeout(120_000).waitFor();
+            OpenshiftClient.get().deleteSubscription("amq-streams");
+            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/kind", "cluster-operator")
+                .timeout(120_000).waitFor();
+        }
     }
 
     @Override

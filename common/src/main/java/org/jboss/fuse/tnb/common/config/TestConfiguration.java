@@ -20,6 +20,7 @@ public class TestConfiguration extends Configuration {
     public static final String TEST_WAIT_TIME = "test.wait.time";
     public static final String TEST_WAIT_KILL_TIMEOUT = "test.wait.kill.timeout";
     public static final String TEST_SKIP_TEARDOWN = "test.skip.teardown";
+    public static final String TEST_SKIP_TEARDOWN_OPENSHIFT_AMQSTREAMS = "test.skip.teardown.openshift.amqstreams";
     public static final String MAVEN_REPOSITORY = "test.maven.repository";
     public static final String MAVEN_SETTINGS = "test.maven.settings";
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
@@ -94,6 +95,10 @@ public class TestConfiguration extends Configuration {
 
     public static boolean skipTearDown() {
         return getBoolean(TEST_SKIP_TEARDOWN, false);
+    }
+
+    public static boolean skipTearDownOpenshiftAMQStreams() {
+        return getBoolean(TEST_SKIP_TEARDOWN_OPENSHIFT_AMQSTREAMS, false);
     }
 
     public static String user() {
