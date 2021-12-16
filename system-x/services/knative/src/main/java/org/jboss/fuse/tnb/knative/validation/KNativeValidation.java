@@ -12,8 +12,9 @@ import java.util.List;
 import io.fabric8.knative.client.KnativeClient;
 import io.fabric8.knative.eventing.v1.Broker;
 import io.fabric8.knative.eventing.v1.BrokerBuilder;
+import io.fabric8.knative.messaging.v1.Channel;
+import io.fabric8.knative.messaging.v1.ChannelBuilder;
 import io.fabric8.knative.messaging.v1.InMemoryChannel;
-import io.fabric8.knative.messaging.v1.InMemoryChannelBuilder;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 
 public class KNativeValidation {
@@ -30,14 +31,20 @@ public class KNativeValidation {
 
     public InMemoryChannel createInMemoryChannel(String name) {
         LOG.debug("Creating In-Memory Channel {}", name);
-        final InMemoryChannel channel = new InMemoryChannelBuilder()
+        final Channel channel = new ChannelBuilder()
             .withNewMetadata()
             .withName(name)
             .endMetadata()
+            .withNewSpec()
+            .withNewChannelTemplate()
+            .withApiVersion("messaging.knative.dev/v1")
+            .withNewKind("InMemoryChannel")//other type: e.g. KafkaChannel https://knative.dev/docs/eventing/channels/create-default-channel/)
+            .endChannelTemplate()
+            .endSpec()
             .build();
-        client.inMemoryChannels().createOrReplace(channel);
+        client.channels().createOrReplace(channel);
         createdItems.add(channel);
-        return channel;
+        return client.inMemoryChannels().withName(name).get();
     }
 
     public Broker createBroker(String name) {
