@@ -1,27 +1,21 @@
 package org.jboss.fuse.tnb.jira.validation;
 
-import org.jboss.fuse.tnb.common.utils.HTTPUtils;
 import org.jboss.fuse.tnb.jira.account.JiraAccount;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.atlassian.jira.rest.client.api.GetCreateIssueMetadataOptionsBuilder;
 import com.atlassian.jira.rest.client.api.JiraRestClient;
+import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 import com.atlassian.jira.rest.client.api.domain.Comment;
 import com.atlassian.jira.rest.client.api.domain.Issue;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
 
-import java.io.IOException;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
-
-import okhttp3.Credentials;
-import okhttp3.MediaType;
-import okhttp3.RequestBody;
 
 public class JiraValidation {
     private static final Logger LOG = LoggerFactory.getLogger(JiraValidation.class);
@@ -42,33 +36,25 @@ public class JiraValidation {
      * @return id of created issue
      */
     public String createIssue(String projectKey, String issueSummary) {
-        try {
-            Map<String, Object> fields = new HashMap<>();
-            fields.put("project", Map.of("key", projectKey));
-            fields.put("summary", issueSummary);
-            fields.put("issuetype", Map.of("id", "1"));
-            Map<String, Object> inputMap = Map.of("fields", fields);
-            String input = new ObjectMapper().writeValueAsString(inputMap);
-            RequestBody body = RequestBody.create(MediaType.parse("application/json"), input);
-
-            //added multiple attempts due to FUSEQE-12463
-            String issueJson = null;
-            boolean unsuccessful = true;
-            for (int i = 0; i < 2 && unsuccessful; i++) {
-                try {
-                    issueJson = HTTPUtils.getInstance().post(account.getJiraUrl() + "/rest/api/2/issue", body,
-                        Map.of("Authorization", Credentials.basic(account.getUsername(), account.getPassword()))).getBody();
-                    unsuccessful = false;
-                } catch (Exception e) {
-                    LOG.debug(i + ". attempt to create issue failed");
-                }
+        long issueTypeId = client.getIssueClient().getCreateIssueMetadata(
+            new GetCreateIssueMetadataOptionsBuilder().withIssueTypeNames("Bug").withProjectKeys(projectKey).withExpandedIssueTypesFields().build())
+            .claim().iterator().next().getIssueTypes().iterator().next().getId(); // (long) 10005
+        BasicIssue issue = null;
+        boolean unsuccessful = true;
+        for (int i = 0; i < 2 && unsuccessful; i++) {
+            try {
+                issue =
+                    client.getIssueClient().createIssue(new IssueInputBuilder(projectKey, issueTypeId).setSummary(issueSummary).build()).claim();
+                unsuccessful = false;
+            } catch (Exception e) {
+                LOG.debug(i + ". attempt to create issue failed");
             }
-
-            LOG.debug("Created issue: " + issueJson);
-            return new ObjectMapper().readValue(issueJson, Map.class).get("key").toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to create issue", e);
         }
+        if (unsuccessful) {
+            throw new RuntimeException("Failed to create issue");
+        }
+        LOG.debug("Created issue: " + issue.getKey());
+        return issue.getKey();
     }
 
     public void deleteIssue(String issueKey) {
