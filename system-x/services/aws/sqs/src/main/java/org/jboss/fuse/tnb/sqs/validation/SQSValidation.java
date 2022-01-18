@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.sqs.validation;
 
+import org.jboss.fuse.tnb.common.service.Validation;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.sqs.account.SQSAccount;
 
@@ -16,7 +17,7 @@ import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
 
-public class SQSValidation {
+public class SQSValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SQSValidation.class);
 
     private final SqsClient client;

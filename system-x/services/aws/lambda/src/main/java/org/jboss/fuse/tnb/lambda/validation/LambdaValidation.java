@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.lambda.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import org.jboss.fuse.tnb.common.service.Validation;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.iam.service.IAM;
 
@@ -26,7 +27,7 @@ import software.amazon.awssdk.services.lambda.model.InvokeResponse;
 import software.amazon.awssdk.services.lambda.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.lambda.model.Runtime;
 
-public class LambdaValidation {
+public class LambdaValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(LambdaValidation.class);
     private static final String ROLE_NAME = "tnb-lambda-role";
 
@@ -48,20 +49,19 @@ public class LambdaValidation {
 
     public void createFunction(String name, Runtime runtime, String handler, SdkBytes zipFile) {
         LOG.info("Creating Lambda function with name {}", name);
-        final String arn;
-        if (iam.validation().roleExists(ROLE_NAME)) {
-            arn = iam.validation().getRoleArn(ROLE_NAME).get();
-        } else {
-            try (InputStream is = this.getClass().getResourceAsStream("/role-policy.json")) {
-                arn = iam.validation().createRole(
-                    ROLE_NAME,
-                    "Used in TNB lambda service, if deleted, it will be automatically recreated when running the tests again",
-                    IOUtils.toString(is, Charset.defaultCharset())
-                );
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to load role-policy.json", e);
-            }
+        String rolePolicy = null;
+        final String roleArn;
+        try (InputStream is = this.getClass().getResourceAsStream("/role-policy.json")) {
+            rolePolicy = IOUtils.toString(is, Charset.defaultCharset());
+        } catch (IOException e) {
+            fail("Unable to read role-policy.json file", e);
         }
+
+        roleArn = iam.validation().createRole(
+            ROLE_NAME,
+            "Used in TNB lambda service, if deleted, it will be automatically recreated when running the tests again",
+            rolePolicy
+        );
 
         // It takes some time until you can use the role (usually around ~10 seconds)
         int retries = 0;
@@ -69,7 +69,7 @@ public class LambdaValidation {
             try {
                 client.createFunction(builder -> builder
                     .functionName(name)
-                    .role(arn)
+                    .role(roleArn)
                     .runtime(runtime)
                     .handler(handler)
                     .publish(true)

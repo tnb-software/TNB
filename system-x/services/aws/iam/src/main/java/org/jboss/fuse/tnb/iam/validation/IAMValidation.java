@@ -1,14 +1,17 @@
 package org.jboss.fuse.tnb.iam.validation;
 
+import org.jboss.fuse.tnb.common.service.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 
 import software.amazon.awssdk.services.iam.IamClient;
+import software.amazon.awssdk.services.iam.model.AttachedPolicy;
 import software.amazon.awssdk.services.iam.model.Role;
 
-public class IAMValidation {
+public class IAMValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(IAMValidation.class);
 
     private final IamClient client;
@@ -18,12 +21,31 @@ public class IAMValidation {
     }
 
     public String createRole(String name, String description, String rolePolicyDocument) {
-        LOG.debug("Creating IAM role {}", name);
-        return client.createRole(b -> b.roleName(name)
-            .description(description)
-            .assumeRolePolicyDocument(rolePolicyDocument)
-            .build()
-        ).role().arn();
+        if (roleExists(name)) {
+            LOG.debug("Role {} already exists, skipping creation.", name);
+            return getRoleArn(name).get();
+        } else {
+            LOG.debug("Creating IAM role {}", name);
+            return client.createRole(b -> b.roleName(name)
+                .description(description)
+                .assumeRolePolicyDocument(rolePolicyDocument)
+            ).role().arn();
+        }
+    }
+
+    public String createPolicy(String name, String policyDocument) {
+        return client.createPolicy(b -> b.policyName(name)
+            .policyDocument(policyDocument)
+        ).policy().arn();
+    }
+
+    public void attachPolicy(String role, String policyArn) {
+        final Optional<AttachedPolicy> policy = client.listAttachedRolePolicies(b -> b.roleName(role)).attachedPolicies().stream()
+            .filter(p -> policyArn.equals(p.policyArn())).findFirst();
+        if (policy.isEmpty()) {
+            LOG.debug("Attaching policy {} to role {}", policyArn, role);
+            client.attachRolePolicy(b -> b.roleName(role).policyArn(policyArn));
+        }
     }
 
     public boolean roleExists(String name) {

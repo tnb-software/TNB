@@ -18,6 +18,11 @@
             <version>${project.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.jboss.fuse.tnb</groupId>
+            <artifactId>system-x-aws-iam</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>software.amazon.awssdk</groupId>
             <artifactId>firehose</artifactId>
             <version>${aws.clients.version}</version>

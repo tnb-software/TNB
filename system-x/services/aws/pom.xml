@@ -19,6 +19,7 @@
     <modules>
         <module>aws-common</module>
         <module>cloudwatch</module>
+        <module>dynamo-db</module>
         <module>iam</module>
         <module>kinesis</module>
         <module>kinesis-firehose</module>

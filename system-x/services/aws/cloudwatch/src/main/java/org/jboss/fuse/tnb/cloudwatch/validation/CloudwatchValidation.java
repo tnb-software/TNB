@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.cloudwatch.validation;
 
-import org.jboss.fuse.tnb.aws.account.AWSAccount;
+import org.jboss.fuse.tnb.common.service.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,15 +17,13 @@ import software.amazon.awssdk.services.cloudwatch.model.MetricDataQuery;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDataResult;
 import software.amazon.awssdk.services.cloudwatch.model.MetricStat;
 
-public class CloudwatchValidation {
+public class CloudwatchValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(CloudwatchValidation.class);
 
     private final CloudWatchClient client;
-    private final AWSAccount account;
 
-    public CloudwatchValidation(CloudWatchClient client, AWSAccount account) {
+    public CloudwatchValidation(CloudWatchClient client) {
         this.client = client;
-        this.account = account;
     }
 
     public List<MetricDataResult> getMetrics(String namespace, String metricName, Instant start) {

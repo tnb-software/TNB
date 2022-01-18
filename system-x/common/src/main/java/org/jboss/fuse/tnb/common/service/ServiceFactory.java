@@ -26,7 +26,7 @@ public final class ServiceFactory {
     public static <S extends Service> S create(Class<S> clazz) {
         final ServiceLoader<S> loader = ServiceLoader.load(clazz);
 
-        if (loader.stream().count() == 0) {
+        if (loader.stream().findAny().isEmpty()) {
             LOG.error("No Service class implementation for class {} found!", clazz.getSimpleName());
             throw new IllegalArgumentException();
         }

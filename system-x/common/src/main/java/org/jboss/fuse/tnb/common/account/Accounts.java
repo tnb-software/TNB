@@ -67,9 +67,8 @@ public final class Accounts {
                 return instance;
             }
         } catch (Exception e) {
-            fail("Unable to create instance of " + accountClass.getName() + " class: ", e);
+            throw new RuntimeException("Unable to create instance of " + accountClass.getName() + " class: ", e);
         }
-        return null;
     }
 
     /**

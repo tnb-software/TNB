@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.kinesis.validation;
 
-import org.jboss.fuse.tnb.aws.account.AWSAccount;
+import org.jboss.fuse.tnb.common.service.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,15 +15,13 @@ import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.Shard;
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 
-public class KinesisValidation {
+public class KinesisValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(KinesisValidation.class);
 
     private final KinesisClient client;
-    private final AWSAccount account;
 
-    public KinesisValidation(KinesisClient client, AWSAccount account) {
+    public KinesisValidation(KinesisClient client) {
         this.client = client;
-        this.account = account;
     }
 
     public void createDataStream(String name) {

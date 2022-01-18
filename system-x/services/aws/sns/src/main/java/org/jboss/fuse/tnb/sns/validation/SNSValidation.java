@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.sns.validation;
 
+import org.jboss.fuse.tnb.common.service.Validation;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.sns.account.SNSAccount;
 import org.jboss.fuse.tnb.sqs.service.SQS;
@@ -10,7 +11,7 @@ import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.sns.SnsClient;
 import software.amazon.awssdk.services.sns.model.CreateTopicResponse;
 
-public class SNSValidation {
+public class SNSValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SNSValidation.class);
 
     private final SnsClient client;
@@ -47,7 +48,8 @@ public class SNSValidation {
     }
 
     public void createSQSSubscription(String topic, String queue) {
-        client.subscribe(builder -> builder.topicArn(account.topicArnPrefix() + topic).protocol("sqs").endpoint(sqs.account().queueArnPrefix() + queue));
+        client.subscribe(builder -> builder.topicArn(account.topicArnPrefix() + topic).protocol("sqs")
+            .endpoint(sqs.account().queueArnPrefix() + queue));
     }
 
     public boolean topicExists(String topicArn) {
