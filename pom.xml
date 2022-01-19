@@ -23,7 +23,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>1.15.2</testcontainers.version>
-        <xtf.version>0.21</xtf.version>
+        <xtf.version>0.24</xtf.version>
     </properties>
 
     <dependencyManagement>
