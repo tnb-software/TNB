@@ -6,6 +6,7 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
+import org.jboss.fuse.tnb.product.standalone.utils.RemoveQuarkusAnnotationsCustomizer;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -72,7 +73,28 @@ public final class IntegrationGenerator {
     public static void toFile(IntegrationBuilder integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
 
-        //Add additional classes to the application
+        // Add additional resources to the application
+        final Path resourcesPath = location.resolve("src/main/resources");
+        integrationBuilder.getResources().forEach((resource, type) -> {
+            final Path destination = resourcesPath.resolve(resource);
+            final URL resourceUrl = IntegrationGenerator.class.getClassLoader().getResource(resource);
+            LOG.info("Adding resource '{}' to application under '{}'", resource, destination);
+            try {
+                FileUtils.copyURLToFile(resourceUrl, destination.toFile());
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to copy resource: ", e);
+            }
+        });
+
+        if (!integrationBuilder.getResources().isEmpty()) {
+            final String nativeResourcesIncludes = String.join(",", integrationBuilder.getResources().keySet());
+            integrationBuilder.addToApplicationProperties(ProductType.CAMEL_QUARKUS, "quarkus.native.resources.includes", nativeResourcesIncludes);
+        }
+
+        final IntegrationData integrationData = create(integrationBuilder);
+
+        // Add additional classes to the application
+        // Do it after running create(integrationBuilder) as it might modify the CUs for added classes
         integrationBuilder.getAdditionalClasses().forEach(cu -> {
             final String originalPackageName = cu.getPackageDeclaration().get().getNameAsString();
             cu.setPackageDeclaration(TestConfiguration.appGroupId());
@@ -93,26 +115,6 @@ public final class IntegrationGenerator {
                 integrationBuilder.getRouteBuilder().addImport(importDeclaration);
             }
         });
-
-        // Add additional resources to the application
-        final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach((resource, type) -> {
-            final Path destination = resourcesPath.resolve(resource);
-            final URL resourceUrl = IntegrationGenerator.class.getClassLoader().getResource(resource);
-            LOG.info("Adding resource '{}' to application under '{}'", resource, destination);
-            try {
-                FileUtils.copyURLToFile(resourceUrl, destination.toFile());
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to copy resource: ", e);
-            }
-        });
-
-        if (!integrationBuilder.getResources().isEmpty()) {
-            final String nativeResourcesIncludes = String.join(",", integrationBuilder.getResources().keySet());
-            integrationBuilder.addToApplicationProperties(ProductType.CAMEL_QUARKUS, "quarkus.native.resources.includes", nativeResourcesIncludes);
-        }
-
-        final IntegrationData integrationData = create(integrationBuilder);
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
         String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getAppProperties());
@@ -143,6 +145,10 @@ public final class IntegrationGenerator {
 
         if (TestConfiguration.product() == ProductType.CAMEL_K) {
             integrationBuilder.addCustomizer(new ModelineCustomizer());
+        }
+
+        if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
+            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
         }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
