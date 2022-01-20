@@ -18,6 +18,8 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 
 public class KNativeValidation {
     private static final Logger LOG = LoggerFactory.getLogger(KNativeValidation.class);
+    // This string is from the error message when you try to create a resource with invalid name
+    private static final String NAME_VALIDATION_REGEX = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
 
     private final KnativeClient client;
 
@@ -29,6 +31,7 @@ public class KNativeValidation {
     }
 
     public InMemoryChannel createInMemoryChannel(String name) {
+        validateName(name);
         LOG.debug("Creating In-Memory Channel {}", name);
         final InMemoryChannel channel = new InMemoryChannelBuilder()
             .withNewMetadata()
@@ -41,6 +44,7 @@ public class KNativeValidation {
     }
 
     public Broker createBroker(String name) {
+        validateName(name);
         LOG.debug("Creating Broker {}", name);
         final Broker broker = new BrokerBuilder()
             .withNewMetadata()
@@ -63,5 +67,12 @@ public class KNativeValidation {
 
     public String getRouteUrl(String serviceName) {
         return client.routes().withName(serviceName).get().getStatus().getUrl();
+    }
+
+    private void validateName(String name) {
+        if (!name.matches(NAME_VALIDATION_REGEX)) {
+            throw new IllegalArgumentException("Name must consist of lower case alphanumeric characters, '-' or '.',"
+                + " and must start and end with an alphanumeric character (was: " + name + ")");
+        }
     }
 }
