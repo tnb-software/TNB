@@ -26,6 +26,12 @@
             <groupId>io.strimzi</groupId>
             <artifactId>api</artifactId>
             <version>${strimzi.api.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.apache.kafka</groupId>
