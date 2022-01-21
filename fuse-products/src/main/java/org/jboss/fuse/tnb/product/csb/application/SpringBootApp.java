@@ -1,10 +1,7 @@
 package org.jboss.fuse.tnb.product.csb.application;
 
-import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 
-import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.application.App;
@@ -19,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
@@ -68,32 +64,11 @@ public abstract class SpringBootApp extends App {
      * @param dependencies dependencies to add to the project
      */
     private void customizeProject(List<String> dependencies) {
-        /*File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
-
-        // For community versions use camel platform bom only, for productized append the camel platform bom (quarkus bom already present)
-        Dependency camelQuarkusBom = new Dependency();
-        camelQuarkusBom.setGroupId(QuarkusConfiguration.camelPlatformGroupId());
-        camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelPlatformArtifactId());
-        camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusVersion());
-        camelQuarkusBom.setType("pom");
-        camelQuarkusBom.setScope("import");
-        if (isProd) {
-            model.getDependencyManagement().getDependencies().add(camelQuarkusBom);
-        } else {
-            model.getDependencyManagement().setDependencies(List.of(camelQuarkusBom));
-        }
-
-        if (!OpenshiftConfiguration.isOpenshift()) {
-            // quarkus-resteasy is needed for the openshift.yml to be generated, but the resteasy itself is not used anywhere
-            // remove quarkus-resteasy in local deployments as it can throw exceptions for occupied 8080 port
-            model.setDependencies(
-                model.getDependencies().stream().filter(d -> !"quarkus-resteasy".equals(d.getArtifactId())).collect(Collectors.toList())
-            );
-        }
 
         dependencies.forEach(dep -> model.getDependencies().add(Maven.toDependency(dep)));
 
-        Maven.writePom(pom, model);*/
+        Maven.writePom(pom, model);
     }
 }
