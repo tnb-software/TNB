@@ -47,7 +47,7 @@ public final class IntegrationGenerator {
             final String originalPackageName = cu.getPackageDeclaration().get().getNameAsString();
             cu.setPackageDeclaration(TestConfiguration.appGroupId());
             final String packageName = cu.getPackageDeclaration().get().getNameAsString();
-            final String typeName = cu.getPrimaryTypeName().get();
+            final String typeName = cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString());
 
             final Path packageFolder = sources.resolve(packageName.replace(".", "/"));
             packageFolder.toFile().mkdirs();
