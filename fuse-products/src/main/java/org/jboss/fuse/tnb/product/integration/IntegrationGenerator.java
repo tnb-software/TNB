@@ -6,6 +6,7 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
+import org.jboss.fuse.tnb.product.csb.customizer.ComponentCustomizer;
 import org.jboss.fuse.tnb.product.standalone.utils.RemoveQuarkusAnnotationsCustomizer;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 
@@ -108,6 +109,14 @@ public final class IntegrationGenerator {
                 integrationBuilder.addCustomizer(new ModelineCustomizer());
                 integrationBuilder.addCustomizer(new InlineCustomizer());
             }
+
+            if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
+                integrationBuilder.addCustomizer(new ComponentCustomizer());
+                integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
+                
+                integrationBuilder.addToProperties("camel.springboot.main-run-controller", "true");
+            }
+
             if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
                 integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
             }

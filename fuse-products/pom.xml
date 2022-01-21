@@ -20,6 +20,7 @@
         <maven.model.version>3.6.3</maven.model.version>
         <cdi.api.version>2.0.SP1</cdi.api.version>
         <jackson.module.version>2.11.3</jackson.module.version>
+        <spring.context.version>5.3.7</spring.context.version>
     </properties>
 
     <dependencies>
@@ -77,6 +78,11 @@
             <groupId>javax.enterprise</groupId>
             <artifactId>cdi-api</artifactId>
             <version>${cdi.api.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <version>${spring.context.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
