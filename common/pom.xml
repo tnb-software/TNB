@@ -39,18 +39,4 @@
             <artifactId>core</artifactId>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <releases>
-                <enabled>true</enabled>
-            </releases>
-            <snapshots>
-                <enabled>false</enabled>
-            </snapshots>
-            <id>bintray-xtf-cz-xtf</id>
-            <name>Bintray XTF</name>
-            <url>https://dl.bintray.com/xtf-cz/xtf</url>
-        </repository>
-    </repositories>
 </project>
