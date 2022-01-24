@@ -1,15 +1,16 @@
 package org.jboss.fuse.tnb.product.csb.application;
 
-import org.apache.maven.model.Model;
-
+import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +54,22 @@ public abstract class SpringBootApp extends App {
                 "skipTests", "true"
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+
+        if (OpenshiftConfiguration.isOpenshift()) {
+            requestBuilder.withProperties(Map.of(
+                "skipTests", "true"
+                , "openshift-maven-plugin-version", "1.5.1"
+                , "openshift-maven-plugin-group-id", "org.eclipse.jkube"
+                , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
+                , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
+                    : OpenshiftClient.get().getMasterUrl().toString()
+                , "jkube.username", OpenshiftConfiguration.openshiftUsername() != null ? OpenshiftConfiguration.openshiftUsername()
+                    : OpenshiftClient.get().currentUser().getMetadata().getName()
+                , "jkube.generator.from", "registry.access.redhat.com/ubi8/openjdk-17:latest"
+            ));
+            requestBuilder.withGoals("clean", "oc:deploy");
+            requestBuilder.withProfiles("openshift");
+        }
 
         LOG.info("Building {} application project", name);
         Maven.invoke(requestBuilder.build());
