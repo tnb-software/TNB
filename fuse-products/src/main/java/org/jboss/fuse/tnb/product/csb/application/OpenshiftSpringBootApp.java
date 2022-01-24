@@ -13,6 +13,7 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.PodBuilder;
+import io.fabric8.kubernetes.client.internal.readiness.Readiness;
 import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 import io.fabric8.openshift.api.model.BuildBuilder;
 import io.fabric8.openshift.api.model.BuildConfigBuilder;
@@ -77,7 +78,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isReady() {
         WaitUtils.waitFor(() -> OpenshiftClient.get().pods().withLabels(Map.of("app", name, "provider", "jkube"))
-            .list().getItems().stream().allMatch(pod -> PodStatusUtil.isRunning(pod))
+            .list().getItems().stream().allMatch(pod -> Readiness.isPodReady(pod))
             , 6, 10 * 1000L, "Waiting for application deployed"
         );
         return true;
