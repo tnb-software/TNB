@@ -2,11 +2,7 @@ package org.jboss.fuse.tnb.product.cq.utils;
 
 import org.jboss.fuse.tnb.product.integration.Customizer;
 
-import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
-import com.github.javaparser.ast.visitor.ModifierVisitor;
-import com.github.javaparser.ast.visitor.Visitable;
-
-import javax.enterprise.context.ApplicationScoped;
+import com.github.javaparser.ast.CompilationUnit;
 
 /**
  * For camel quarkus we add @ApplicationScoped to RouteBuilder class
@@ -14,15 +10,17 @@ import javax.enterprise.context.ApplicationScoped;
 public class ApplicationScopeCustomizer extends Customizer {
     @Override
     public void customize() {
-        getIntegrationBuilder().getRouteBuilder().accept(new ModifierVisitor<>() {
-            @Override
-            public Visitable visit(ClassOrInterfaceDeclaration n, Object arg) {
-                super.visit(n, arg);
-                if (n.getExtendedTypes().stream().anyMatch(x -> x.getNameAsString().equals("RouteBuilder"))) {
-                    n.addAnnotation(ApplicationScoped.class);
-                }
-                return n;
-            }
-        }, null);
+        CompilationUnit routeBuilderCU = getIntegrationBuilder().getRouteBuilder();
+
+        routeBuilderCU.addImport("javax.enterprise.context.ApplicationScoped");
+
+        // Add ApplicationScoped annotation to the class that extends RouteBuilder
+        routeBuilderCU.getTypes().stream()
+            .filter(type -> type.asClassOrInterfaceDeclaration().getExtendedTypes()
+                .stream()
+                .anyMatch(extendedType -> "RouteBuilder".equals(extendedType.getNameAsString()))
+            )
+            .findAny()
+            .ifPresent(routeBuilderType -> routeBuilderType.addAnnotation("ApplicationScoped"));
     }
 }
