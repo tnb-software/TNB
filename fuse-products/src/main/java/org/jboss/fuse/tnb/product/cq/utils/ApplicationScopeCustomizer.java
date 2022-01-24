@@ -1,8 +1,9 @@
 package org.jboss.fuse.tnb.product.cq.utils;
 
 import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.util.jparser.AnnotationUtils;
 
-import com.github.javaparser.ast.CompilationUnit;
+import java.util.List;
 
 /**
  * For camel quarkus we add @ApplicationScoped to RouteBuilder class
@@ -10,17 +11,8 @@ import com.github.javaparser.ast.CompilationUnit;
 public class ApplicationScopeCustomizer extends Customizer {
     @Override
     public void customize() {
-        CompilationUnit routeBuilderCU = getIntegrationBuilder().getRouteBuilder();
-
-        routeBuilderCU.addImport("javax.enterprise.context.ApplicationScoped");
-
-        // Add ApplicationScoped annotation to the class that extends RouteBuilder
-        routeBuilderCU.getTypes().stream()
-            .filter(type -> type.asClassOrInterfaceDeclaration().getExtendedTypes()
-                .stream()
-                .anyMatch(extendedType -> "RouteBuilder".equals(extendedType.getNameAsString()))
-            )
-            .findAny()
-            .ifPresent(routeBuilderType -> routeBuilderType.addAnnotation("ApplicationScoped"));
+        AnnotationUtils.addAnnotationsToRouteBuilder(getIntegrationBuilder().getRouteBuilder(),
+            List.of("javax.enterprise.context.ApplicationScoped"),
+            List.of("ApplicationScoped"));
     }
 }
