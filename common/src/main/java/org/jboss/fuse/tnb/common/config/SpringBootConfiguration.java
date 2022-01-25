@@ -15,7 +15,7 @@ public class SpringBootConfiguration extends Configuration {
     public static final String CAMEL_SPRINGBOOT_ARCHETYPE_VERSION = "camel.springboot.archetype.version";
 
     public static String springBootVersion() {
-        return getProperty(SPRINGBOOT_VERSION, "2.6.2");
+        return getProperty(SPRINGBOOT_VERSION, "2.6.1");
     }
 
     public static String camelSpringBootVersion() {
