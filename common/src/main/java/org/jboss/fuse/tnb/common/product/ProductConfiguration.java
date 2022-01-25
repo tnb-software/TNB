@@ -2,7 +2,6 @@ package org.jboss.fuse.tnb.common.product;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
-import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 
 public enum ProductConfiguration {
