@@ -46,9 +46,32 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
             case CAMEL_QUARKUS:
                 customizeQuarkus();
                 break;
+            case CAMEL_SPRINGBOOT:
+                customizeSpringboot();
+                break;
             default:
                 throw new UnsupportedOperationException("Customizer is not supported for selected product!");
         }
+    }
+
+    private void customizeSpringboot() {
+        final Properties appProperties = getApplicationProperties();
+
+        appProperties.putAll(
+            Map.of("spring.datasource.url", url,
+                "spring.datasource.username", username,
+                "spring.datasource.password", password,
+                "spring.datasource.driver-class-name", driver)
+        );
+
+        final String[] dbDependencies = getDbAllocatorDependencies();
+        final List<String> dependencies = new LinkedList<>();
+        dependencies.addAll(Arrays.asList(dbDependencies));
+        dependencies.add("org.springframework.boot:spring-boot-starter-jdbc");
+        if (dbDependencies.length == 0 && "postgresql".equals(type)) {
+            dependencies.add("org.postgresql:postgresql");
+        }
+        getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
     }
 
     private void customizeStandalone() {
