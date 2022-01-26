@@ -16,9 +16,9 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationData;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
+import org.jboss.fuse.tnb.product.integration.ResourceType;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
 import org.json.JSONArray;
@@ -63,62 +63,48 @@ import io.fabric8.kubernetes.client.utils.Serialization;
 
 public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
+
     private static final CustomResourceDefinitionContext INTEGRATIONS_CONTEXT =
         CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
+    private static final CustomResourceDefinitionContext kameletBindingCtx =
+        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
 
     private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
         OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
             .inNamespace(OpenshiftConfiguration.openshiftNamespace());
-    private final IntegrationData integrationData;
 
     private static final OpenshiftClient client = OpenshiftClient.get();
-    private static final CustomResourceDefinitionContext kameletBindingCtx =
-        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
     private static final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient =
         client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
 
-    private KameletBinding kameletBinding = null;
-    private IntegrationBuilder integrationBuilder = null;
+    private Object integrationSource;
 
-    public CamelKApp(IntegrationBuilder integrationBuilder) {
-        this(integrationBuilder.getIntegrationName(), IntegrationGenerator.toIntegrationData(integrationBuilder));
-        this.integrationBuilder = integrationBuilder;
-    }
-
-    public CamelKApp(String name, IntegrationData data) {
+    private CamelKApp(String name) {
         super(name);
         if (name.length() > 63) {
             throw new RuntimeException("Camel-K integration name " + name + " must be shorter than 63 characters");
         }
-        integrationData = data;
+    }
 
-        // If there are any properties set, create a config map with the same map as the integration
-        // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
-        if (!integrationData.getProperties().isEmpty()) {
-            ConfigMap integrationProperties = OpenshiftClient.get()
-                .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationData.getProperties())));
-            EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationProperties, name));
-        }
+    public CamelKApp(IntegrationBuilder integrationBuilder) {
+        this(integrationBuilder.getIntegrationName());
+        this.integrationSource = integrationBuilder;
     }
 
     public CamelKApp(KameletBinding kameletBinding) {
-        //name of created integration is same as name of kameletbinding
-        super(kameletBinding.getMetadata().getName());
-        if (name.length() > 63) {
-            throw new RuntimeException("Camel-K KameletBinding name " + name + " must be shorter than 63 characters");
-        }
-        this.kameletBinding = kameletBinding;
-        integrationData = null;
+        // name of created integration is same as name of kameletbinding
+        this(kameletBinding.getMetadata().getName());
+        this.integrationSource = kameletBinding;
     }
 
     @Override
     public void start() {
-        if (kameletBinding == null) {
-            integrationClient.create(createIntegrationResource(name, integrationData));
+        if (integrationSource instanceof KameletBinding) {
+            LOG.info("Creating KameletBinding {}", name);
+            kameletBindingClient.createOrReplace((KameletBinding) integrationSource);
         } else {
-            LOG.info("Create KameletBinding " + kameletBinding.getMetadata().getName());
-            kameletBindingClient.createOrReplace(kameletBinding);
+            createIntegrationResources((IntegrationBuilder) integrationSource);
         }
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"))
@@ -136,11 +122,12 @@ public class CamelKApp extends App {
             IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
         }
         LOG.info("Removing integration {}", name);
-        if (kameletBinding != null) {
-            LOG.info("Delete KameletBinding " + kameletBinding.getMetadata().getName());
-            kameletBindingClient.delete(kameletBinding);
+        if (integrationSource instanceof KameletBinding) {
+            LOG.info("Deleting KameletBinding {}", name);
+            kameletBindingClient.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        } else {
+            integrationClient.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         }
-        integrationClient.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
                 .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
             "Waiting until the integration " + name + " is undeployed");
@@ -184,31 +171,30 @@ public class CamelKApp extends App {
     }
 
     /**
-     * Creates an Integration object in OpenShift.
+     * Creates all integration related objects needed.
      *
-     * @param name name of the object
-     * @param integrationData integration data object
-     * @return integration instance
+     * @param integrationBuilder integrationbuilder instance
      */
-    private Integration createIntegrationResource(String name, IntegrationData integrationData) {
+    private void createIntegrationResources(IntegrationBuilder integrationBuilder) {
         IntegrationSpec is = new IntegrationSpec();
-        if (integrationData.getSourceName().endsWith(".yaml")) {
+
+        String integrationSourceCode = IntegrationGenerator.toString(integrationBuilder);
+        if (integrationBuilder.getSourceName().endsWith(".yaml")) {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             try {
-                is.setFlows(mapper.readValue(integrationData.getIntegration(), List.class));
+                is.setFlows(mapper.readValue(integrationSourceCode, List.class));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Can't parse yaml flow from source file.");
             }
         } else {
             IntegrationSpec.Source issrc = new IntegrationSpec.Source();
-            issrc.setName(integrationData.getSourceName());
-            issrc.setContent(integrationData.getIntegration());
-
+            issrc.setName(integrationBuilder.getSourceName());
+            issrc.setContent(integrationSourceCode);
             is.setSources(Collections.singletonList(issrc));
         }
 
-        String modelinePrefix = integrationData.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
-        List<String> modelines = integrationData.getIntegration().lines()
+        String modelinePrefix = integrationBuilder.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
+        List<String> modelines = integrationSourceCode.lines()
             .filter(l -> l.trim().startsWith(modelinePrefix))
             .map(l -> l.replaceAll(modelinePrefix, ""))
             .flatMap(l -> Stream.of(l.split("\\s")))
@@ -243,41 +229,50 @@ public class CamelKApp extends App {
 
         is.setConfiguration(new ArrayList<>());
         // if there are any properties set, use the configmap in the integration's configuration
-        if (!integrationData.getProperties().isEmpty()) {
+        if (!integrationBuilder.getProperties().isEmpty()) {
             IntegrationSpec.Configuration isc = new IntegrationSpec.Configuration("configmap", name);
             is.getConfiguration().add(isc);
         }
 
         // add the named secret to configuration
-        if (integrationData.getSecretName() != null) {
-            IntegrationSpec.Configuration iss = new IntegrationSpec.Configuration("secret", integrationData.getSecretName());
+        if (integrationBuilder.getSecret() != null) {
+            IntegrationSpec.Configuration iss = new IntegrationSpec.Configuration("secret", integrationBuilder.getSecret());
             is.getConfiguration().add(iss);
         }
 
         // add resources
-        if (integrationData.getResources() != null && !integrationData.getResources().isEmpty()) {
+        if (integrationBuilder.getResources() != null && !integrationBuilder.getResources().isEmpty()) {
             is.setResources(new ArrayList<>());
-            integrationData.getResources().forEach(resource -> {
+            integrationBuilder.getResources().forEach(resource -> {
                 IntegrationSpec.Resource res =
                     new IntegrationSpec.Resource(resource.getType().getValue(),
                         // add data resources to the integration classpath
-                        resource.getType().equals(IntegrationData.ResourceType.DATA) ? "/etc/camel/resources/" + resource.getName() : null,
+                        resource.getType().equals(ResourceType.DATA) ? "/etc/camel/resources/" + resource.getName() : null,
                         new File(resource.getName()).getName(),
                         resource.getContent());
                 is.getResources().add(res);
             });
         }
 
-        if (integrationBuilder != null) {
-            integrationBuilder.getCustomizers().stream()
-                .filter(IntegrationSpecCustomizer.class::isInstance)
-                .map(IntegrationSpecCustomizer.class::cast)
-                .forEach(i -> i.customizeIntegration(is));
-        }
+        // Process all integration spec customizers
+        integrationBuilder.getCustomizers().stream()
+            .filter(IntegrationSpecCustomizer.class::isInstance)
+            .map(IntegrationSpecCustomizer.class::cast)
+            .forEach(i -> i.customizeIntegration(is));
 
-        return new Integration.Builder()
+        // Create the Integration object
+        integrationClient.createOrReplace(new Integration.Builder()
             .name(name)
-            .build(is);
+            .build(is)
+        );
+
+        // If there are any properties set, create a config map with the same map as the integration
+        // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
+        if (!integrationBuilder.getProperties().isEmpty()) {
+            ConfigMap integrationProperties = OpenshiftClient.get()
+                .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationBuilder.getProperties())));
+            EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationProperties, name));
+        }
     }
 
     private Map<String, Map<String, Object>> processTraits(Collection<String> traitDefinitions) {

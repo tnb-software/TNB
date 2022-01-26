@@ -2,9 +2,9 @@ package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 
 import org.apache.camel.builder.RouteBuilder;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,44 +22,45 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import io.fabric8.kubernetes.api.model.Secret;
+
 /**
  * Wrapper around creating integrations.
  */
 public class IntegrationBuilder {
     public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
-    private String integrationName;
-
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
-
     private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit");
+    private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
     private final List<String> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
-    private final Map<String, IntegrationData.ResourceType> resources = new HashMap<>();
-    private CompilationUnit routeBuilder;
-    private Properties appProperties = new Properties();
+    private final List<Resource> resources = new ArrayList<>();
+    private final Properties properties = new Properties();
 
-    final String basePackage = TestConfiguration.appGroupId();
+    private CompilationUnit routeBuilder;
+    private String integrationName;
+    private String sourceName = "MyRouteBuilder.java";
+    private String sourceContent;
+    private String secret;
 
     public IntegrationBuilder(String name) {
         this.integrationName = name;
-        //replicate user behavior by specifying route endpoints as hardcoded strings
-        //camel-k needs this to register components automagically
-        addCustomizer(new InlineCustomizer());
     }
 
     public IntegrationBuilder fromRouteBuilder(RouteBuilder routeBuilder) {
@@ -94,7 +95,7 @@ public class IntegrationBuilder {
             }
         }
         processRouteBuilder(routeBuilder, className, cu);
-        cu.setPackageDeclaration(basePackage);
+        cu.setPackageDeclaration(BASE_PACKAGE);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
         this.routeBuilder = cu;
         return this;
@@ -103,22 +104,44 @@ public class IntegrationBuilder {
     /**
      * Add classpath resource (represented by string path) into integration and the resource type
      *
-     * @param resource
-     * @return
+     * @param resource path to the resource
+     * @param type resource type
+     * @return this
      */
-    public IntegrationBuilder addResource(final String resource, IntegrationData.ResourceType type) {
-        resources.put(resource, type);
+    public IntegrationBuilder addResource(ResourceType type, String resource) {
+        String resourceData;
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource)) {
+            resourceData = IOUtils.toString(is, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read resource: ", e);
+        }
+        addResource(new Resource(type, resource, resourceData));
         return this;
     }
 
-    public IntegrationBuilder addToApplicationProperties(String key, String value) {
-        appProperties.setProperty(key, value);
+    public IntegrationBuilder addResource(Resource resource) {
+        resources.add(resource);
         return this;
     }
 
-    public IntegrationBuilder addToApplicationProperties(ProductType forType, String key, String value) {
+    public IntegrationBuilder addResource(String resource) {
+        addResource(ResourceType.DATA, resource);
+        return this;
+    }
+
+    public IntegrationBuilder addToProperties(String key, String value) {
+        properties.setProperty(key, value);
+        return this;
+    }
+
+    public IntegrationBuilder addToProperties(Properties properties) {
+        properties.forEach((key, value) -> this.properties.setProperty(key.toString(), value.toString()));
+        return this;
+    }
+
+    public IntegrationBuilder addToProperties(ProductType forType, String key, String value) {
         if (forType == TestConfiguration.product()) {
-            addToApplicationProperties(key, value);
+            addToProperties(key, value);
         }
         return this;
     }
@@ -130,12 +153,12 @@ public class IntegrationBuilder {
 
     private CompilationUnit getCompilationUnit(Class<?> clazz) {
         return getSourceRoots(clazz).map(sr -> {
-            try {
-                return sr.parse(clazz.getPackageName(), getClassName(clazz) + ".java");
-            } catch (ParseProblemException ex) {
-                return null;
-            }
-        }).filter(Objects::nonNull).findFirst()
+                try {
+                    return sr.parse(clazz.getPackageName(), getClassName(clazz) + ".java");
+                } catch (ParseProblemException ex) {
+                    return null;
+                }
+            }).filter(Objects::nonNull).findFirst()
             .orElseThrow(() -> new RuntimeException(String
                 .format("Couldn't parse class %s in source roots [%s]. Make sure the sources are available.", clazz.getName(),
                     getSourceRoots(clazz).collect(
@@ -284,6 +307,38 @@ public class IntegrationBuilder {
         return this;
     }
 
+    public IntegrationBuilder sourceName(String sourceName) {
+        this.sourceName = sourceName;
+        return this;
+    }
+
+    public IntegrationBuilder fromString(String source) {
+        this.sourceContent = source;
+        return this;
+    }
+
+    public IntegrationBuilder secret(String secret) {
+        this.secret = secret;
+        return this;
+    }
+
+    public IntegrationBuilder secrets(Secret secret) {
+        this.secret = secret.getMetadata().getName();
+        return this;
+    }
+
+    public String getSecret() {
+        return secret;
+    }
+
+    public String getSourceName() {
+        return sourceName;
+    }
+
+    public String getSourceContent() {
+        return sourceContent;
+    }
+
     public List<CompilationUnit> getAdditionalClasses() {
         return this.classesToAdd;
     }
@@ -300,11 +355,11 @@ public class IntegrationBuilder {
         return routeBuilder;
     }
 
-    public Properties getAppProperties() {
-        return appProperties;
+    public Properties getProperties() {
+        return properties;
     }
 
-    public Map<String, IntegrationData.ResourceType> getResources() {
+    public List<Resource> getResources() {
         return resources;
     }
 

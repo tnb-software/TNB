@@ -10,6 +10,15 @@ public final class StringUtils {
         return UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
     }
 
+    public static String replaceCamelCaseWith(String s, String replacement) {
+        String ret = Character.toLowerCase(s.charAt(0)) + s.substring(1);
+        if (org.apache.commons.lang3.StringUtils.isAllLowerCase(ret)) {
+            return ret;
+        } else {
+            return ret.replaceAll("([A-Z])", replacement + "$1").toLowerCase();
+        }
+    }
+
     public static String replaceUnderscoreWithCamelCase(String s) {
         int underscorePosition = s.indexOf("_");
         while (underscorePosition != -1) {

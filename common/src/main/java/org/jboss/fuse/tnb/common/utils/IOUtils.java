@@ -32,6 +32,11 @@ public final class IOUtils {
 
     public static void writeFile(Path file, String content) {
         try {
+            Path dir = file.getParent();
+            if (!Files.exists(dir)) {
+                LOG.debug("Creating directory " + dir);
+                Files.createDirectory(dir);
+            }
             Files.write(file, content.getBytes());
         } catch (IOException e) {
             throw new RuntimeException("Unable to write to " + file, e);
