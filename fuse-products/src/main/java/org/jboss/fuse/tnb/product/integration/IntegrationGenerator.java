@@ -63,6 +63,9 @@ public final class IntegrationGenerator {
             }
         });
 
+        // Clear additional classes, so they are not inlined when calling toString(integrationBuilder)
+        integrationBuilder.getAdditionalClasses().clear();
+
         // Add additional resources to the application
         final Path resourcesPath = location.resolve("src/main/resources");
         integrationBuilder.getResources().forEach(resource -> IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent()));
