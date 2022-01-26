@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.product.standalone.utils;
+package org.jboss.fuse.tnb.product.util;
 
 import org.jboss.fuse.tnb.product.integration.Customizer;
 

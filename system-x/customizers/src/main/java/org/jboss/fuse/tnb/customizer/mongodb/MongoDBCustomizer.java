@@ -23,9 +23,7 @@ public class MongoDBCustomizer extends Customizer {
 
     @Override
     public void customize() {
-        if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
-            customizeStandalone();
-        } else if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
+        if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
             customizeSpringBoot();
         } else {
             customizeQuarkus();

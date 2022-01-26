@@ -5,13 +5,11 @@ import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 
 public enum ProductConfiguration {
-    ALL, STANDALONE, QUARKUS_JVM, QUARKUS_JVM_LOCAL, QUARKUS_JVM_OPENSHIFT, QUARKUS_NATIVE, QUARKUS_NATIVE_LOCAL, QUARKUS_NATIVE_OPENSHIFT, CAMEL_K,
+    ALL, QUARKUS_JVM, QUARKUS_JVM_LOCAL, QUARKUS_JVM_OPENSHIFT, QUARKUS_NATIVE, QUARKUS_NATIVE_LOCAL, QUARKUS_NATIVE_OPENSHIFT, CAMEL_K,
         SPRINGBOOT_JVM_LOCAL, SPRINGBOOT_JVM_OPENSHIFT;
 
     public boolean isCurrentEnv() {
         switch (this) {
-            case STANDALONE:
-                return TestConfiguration.product() == ProductType.CAMEL_STANDALONE;
             case QUARKUS_JVM:
                 return TestConfiguration.product() == ProductType.CAMEL_QUARKUS && !QuarkusConfiguration.isQuarkusNative();
             case QUARKUS_JVM_LOCAL:

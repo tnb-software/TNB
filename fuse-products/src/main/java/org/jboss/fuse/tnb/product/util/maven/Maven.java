@@ -290,10 +290,7 @@ public final class Maven {
                 dependency.setVersion(parts[2]);
             }
         } else {
-            if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
-                dependency.setGroupId("org.apache.camel");
-                dependency.setArtifactId("camel-" + s);
-            } else if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
+            if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
                 dependency.setGroupId("org.apache.camel.springboot");
                 dependency.setArtifactId("camel-" + s + "-starter");
             } else {
