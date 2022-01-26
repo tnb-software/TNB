@@ -108,7 +108,7 @@ public class IntegrationBuilder {
      * @param type resource type
      * @return this
      */
-    public IntegrationBuilder addResource(ResourceType type, String resource) {
+    public IntegrationBuilder addClasspathResource(ResourceType type, String resource) {
         String resourceData;
         try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource)) {
             resourceData = IOUtils.toString(is, StandardCharsets.UTF_8);
@@ -124,8 +124,8 @@ public class IntegrationBuilder {
         return this;
     }
 
-    public IntegrationBuilder addResource(String resource) {
-        addResource(ResourceType.DATA, resource);
+    public IntegrationBuilder addClasspathResource(String resource) {
+        addClasspathResource(ResourceType.DATA, resource);
         return this;
     }
 
