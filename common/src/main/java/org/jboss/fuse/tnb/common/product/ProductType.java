@@ -3,7 +3,8 @@ package org.jboss.fuse.tnb.common.product;
 public enum ProductType {
     CAMEL_STANDALONE("camelstandalone"),
     CAMEL_QUARKUS("camelquarkus"),
-    CAMEL_K("camelk");
+    CAMEL_K("camelk"),
+    CAMEL_SPRINGBOOT("camelspringboot");
 
     private final String value;
 

@@ -18,7 +18,6 @@
         <log4j.version>2.17.0</log4j.version>
         <maven.invoker.version>3.1.0</maven.invoker.version>
         <maven.model.version>3.6.3</maven.model.version>
-        <cdi.api.version>2.0.SP1</cdi.api.version>
         <jackson.module.version>2.11.3</jackson.module.version>
     </properties>
 
@@ -72,11 +71,6 @@
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-slf4j-impl</artifactId>
             <version>${log4j.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>javax.enterprise</groupId>
-            <artifactId>cdi-api</artifactId>
-            <version>${cdi.api.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.module</groupId>
