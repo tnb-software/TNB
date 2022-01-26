@@ -23,10 +23,6 @@ public class LocalCamelSpringBoot extends LocalProduct {
         return app;
     }
 
-    public void waitForIntegration(String name) {
-        LOG.info("Waiting until integration {} is running", name);
-    }
-
     @Override
     public void removeIntegrations() {
         if (app != null) {

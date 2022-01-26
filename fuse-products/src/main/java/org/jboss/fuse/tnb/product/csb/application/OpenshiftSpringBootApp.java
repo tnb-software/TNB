@@ -12,14 +12,8 @@ import org.slf4j.LoggerFactory;
 import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
-import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
 import io.fabric8.kubernetes.client.utils.PodStatusUtil;
-import io.fabric8.openshift.api.model.BuildBuilder;
-import io.fabric8.openshift.api.model.BuildConfigBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
-import io.fabric8.openshift.api.model.ImageStreamBuilder;
-import io.fabric8.openshift.api.model.RouteBuilder;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
 
@@ -46,39 +40,22 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         final Map<String, String> labelMap = Map.of("app", name, "provider", "jkube");
         labels.setLabels(labelMap);
         //builds
-        OpenshiftClient.get().buildConfigs().delete(new BuildConfigBuilder()
-                .withMetadata(labels)
-            .build());
-        OpenshiftClient.get().builds().delete(new BuildBuilder()
-                .withMetadata(labels)
-            .build());
-        OpenshiftClient.get().imageStreams().delete(new ImageStreamBuilder()
-                .withMetadata(labels)
-            .build());
+        OpenshiftClient.get().buildConfigs().withLabels(labelMap).delete();
+        OpenshiftClient.get().builds().withLabels(labelMap).delete();
+        OpenshiftClient.get().imageStreams().withLabels(labelMap).delete();
         //app
-        OpenshiftClient.get().deploymentConfigs().delete(new DeploymentConfigBuilder()
-            .withMetadata(labels)
-            .build());
+        OpenshiftClient.get().deploymentConfigs().withLabels(labelMap).delete();
         //network
-        OpenshiftClient.get().services().inNamespace(OpenshiftClient.get().getNamespace())
-            .withLabels(labelMap).list().getItems().stream()
-            .forEach(service -> OpenshiftClient.get().services().inNamespace(OpenshiftClient.get().getNamespace())
-                .withName(service.getMetadata().getName()).delete());
-
-        OpenshiftClient.get().routes().delete(new RouteBuilder()
-                .withMetadata(labels)
-            .build());
-        //remaining pods
-        OpenshiftClient.get().pods().delete(new PodBuilder()
-                .withMetadata(labels)
-            .build());
-
+        OpenshiftClient.get().services().withLabels(labelMap).delete();
+        OpenshiftClient.get().routes().withLabels(labelMap).delete();
+        //remaning pods
+        OpenshiftClient.get().pods().withLabels(labelMap).delete();
     }
 
     @Override
     public boolean isReady() {
-        WaitUtils.waitFor(() -> OpenshiftClient.get().pods().withLabels(Map.of("app", name, "provider", "jkube"))
-            .list().getItems().stream().allMatch(pod -> Readiness.isPodReady(pod))
+        WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
+                .stream().allMatch(pod -> Readiness.isPodReady(pod))
             , 6, 10 * 1000L, "Waiting for application deployed"
         );
         return true;
@@ -89,6 +66,6 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
             .stream().map(PodStatusUtil::getContainerStatus)
             .allMatch(containerStatuses -> containerStatuses.stream()
-                .noneMatch(containerStatus ->  "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
+                .noneMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
     }
 }

@@ -37,7 +37,7 @@ public abstract class SpringBootApp extends App {
                 "artifactId", name,
                 "version", "1.0.0-SNAPSHOT",
                 "package", TestConfiguration.appGroupId(),
-                "maven-compiler-plugin-version", "3.8.1",
+                "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
                 "spring-boot-version", SpringBootConfiguration.springBootVersion(),
                 "camel-version", SpringBootConfiguration.camelSpringBootVersion()))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
@@ -58,8 +58,8 @@ public abstract class SpringBootApp extends App {
         if (OpenshiftConfiguration.isOpenshift()) {
             requestBuilder.withProperties(Map.of(
                 "skipTests", "true"
-                , "openshift-maven-plugin-version", "1.5.1"
-                , "openshift-maven-plugin-group-id", "org.eclipse.jkube"
+                , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
+                , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
                 , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
                 , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
                     : OpenshiftClient.get().getMasterUrl().toString()

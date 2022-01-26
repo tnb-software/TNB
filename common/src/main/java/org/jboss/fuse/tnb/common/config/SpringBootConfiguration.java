@@ -14,6 +14,11 @@ public class SpringBootConfiguration extends Configuration {
     public static final String CAMEL_SPRINGBOOT_ARCHETYPE_ARTIFACT_ID = "camel.springboot.archetype.artifact.id";
     public static final String CAMEL_SPRINGBOOT_ARCHETYPE_VERSION = "camel.springboot.archetype.version";
 
+    public static final String OPENSHIFT_MAVEN_PLUGIN_GROUP_ID = "openshift-maven-plugin-group-id";
+    public static final String OPENSHIFT_MAVEN_PLUGIN_VERSION = "openshift-maven-plugin-version";
+
+    public static final String MAVEN_COMPILER_PLUGIN_VERSION = "maven-compiler-plugin-version";
+
     public static String springBootVersion() {
         return getProperty(SPRINGBOOT_VERSION, "2.6.1");
     }
@@ -48,5 +53,17 @@ public class SpringBootConfiguration extends Configuration {
 
     public static String camelSpringBootArchetypeVersion() {
         return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "1.0.2");
+    }
+
+    public static String openshiftMavenPluginGroupId() {
+        return getProperty(OPENSHIFT_MAVEN_PLUGIN_GROUP_ID, "org.eclipse.jkube");
+    }
+
+    public static String openshiftMavenPluginVersion() {
+        return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, "1.5.1");
+    }
+
+    public static String mavenCompilerPluginVersion() {
+        return getProperty(MAVEN_COMPILER_PLUGIN_VERSION, "3.8.1");
     }
 }

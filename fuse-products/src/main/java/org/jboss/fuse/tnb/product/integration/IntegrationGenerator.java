@@ -42,6 +42,8 @@ public final class IntegrationGenerator {
     public static void toFile(IntegrationBuilder integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
 
+        processCustomizers(integrationBuilder);
+
         //Add additional classes to the application
         integrationBuilder.getAdditionalClasses().forEach(cu -> {
             final String originalPackageName = cu.getPackageDeclaration().get().getNameAsString();
@@ -89,7 +91,9 @@ public final class IntegrationGenerator {
         final PackageDeclaration packageDeclaration = integrationBuilder.getRouteBuilder().getPackageDeclaration().get();
         final Path destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
         destination.toFile().mkdirs();
-        IOUtils.writeFile(destination.resolve(integrationBuilder.getSourceName()), toString(integrationBuilder));
+        String integrationClass = integrationBuilder.getRouteBuilder().toString();
+        LOG.debug("Integration class:\n{}", integrationClass);
+        IOUtils.writeFile(destination.resolve(integrationBuilder.getSourceName()), integrationClass);
     }
 
     /**
@@ -101,30 +105,7 @@ public final class IntegrationGenerator {
     public static String toString(IntegrationBuilder integrationBuilder) {
         String result;
         if (integrationBuilder.getRouteBuilder() != null) {
-            if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
-                integrationBuilder.addCustomizer(new ApplicationScopeCustomizer());
-            }
-
-            if (TestConfiguration.product() == ProductType.CAMEL_K) {
-                integrationBuilder.addCustomizer(new ModelineCustomizer());
-                integrationBuilder.addCustomizer(new InlineCustomizer());
-            }
-
-            if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
-                integrationBuilder.addCustomizer(new ComponentCustomizer());
-                integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
-                
-                integrationBuilder.addToProperties("camel.springboot.main-run-controller", "true");
-            }
-
-            if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
-                integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
-            }
-
-            for (Customizer customizer : integrationBuilder.getCustomizers()) {
-                customizer.setIntegrationBuilder(integrationBuilder);
-                customizer.customize();
-            }
+            processCustomizers(integrationBuilder);
 
             //Inline classes to the routebuilder
             integrationBuilder.getAdditionalClasses().forEach(cu -> {
@@ -157,5 +138,35 @@ public final class IntegrationGenerator {
 
         LOG.debug("Integration class:\n{}", result);
         return result;
+    }
+
+    private static void processCustomizers(IntegrationBuilder integrationBuilder) {
+        if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
+            integrationBuilder.addCustomizer(new ApplicationScopeCustomizer());
+        }
+
+        if (TestConfiguration.product() == ProductType.CAMEL_K) {
+            integrationBuilder.addCustomizer(new ModelineCustomizer());
+            integrationBuilder.addCustomizer(new InlineCustomizer());
+        }
+
+        if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
+            integrationBuilder.addCustomizer(new ComponentCustomizer());
+            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
+
+            integrationBuilder.addToProperties("camel.springboot.main-run-controller", "true");
+        }
+
+        if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
+            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
+        }
+
+        for (Customizer customizer : integrationBuilder.getCustomizers()) {
+            customizer.setIntegrationBuilder(integrationBuilder);
+            customizer.customize();
+        }
+
+        // Clear the customizers so they are processed only once
+        integrationBuilder.getCustomizers().clear();
     }
 }

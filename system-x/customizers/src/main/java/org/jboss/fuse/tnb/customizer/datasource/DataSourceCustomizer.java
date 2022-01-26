@@ -64,6 +64,8 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
                 "spring.datasource.driver-class-name", driver)
         );
 
+        getIntegrationBuilder().addToProperties(appProperties);
+
         final String[] dbDependencies = getDbAllocatorDependencies();
         final List<String> dependencies = new LinkedList<>();
         dependencies.addAll(Arrays.asList(dbDependencies));
