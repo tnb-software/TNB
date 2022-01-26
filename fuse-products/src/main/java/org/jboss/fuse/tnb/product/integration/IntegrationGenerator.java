@@ -143,6 +143,8 @@ public final class IntegrationGenerator {
     private static void processCustomizers(IntegrationBuilder integrationBuilder) {
         if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
             integrationBuilder.addCustomizer(new ApplicationScopeCustomizer());
+        } else {
+            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
         }
 
         if (TestConfiguration.product() == ProductType.CAMEL_K) {
@@ -152,13 +154,8 @@ public final class IntegrationGenerator {
 
         if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
             integrationBuilder.addCustomizer(new ComponentCustomizer());
-            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
 
             integrationBuilder.addToProperties("camel.springboot.main-run-controller", "true");
-        }
-
-        if (TestConfiguration.product() == ProductType.CAMEL_STANDALONE) {
-            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
         }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
