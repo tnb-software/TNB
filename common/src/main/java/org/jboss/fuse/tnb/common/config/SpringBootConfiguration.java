@@ -19,6 +19,8 @@ public class SpringBootConfiguration extends Configuration {
 
     public static final String MAVEN_COMPILER_PLUGIN_VERSION = "maven-compiler-plugin-version";
 
+    public static final String OPENSHIFT_SB_BASE_IMAGE = "openshift-sb-base-image";
+
     public static String springBootVersion() {
         return getProperty(SPRINGBOOT_VERSION, "2.6.1");
     }
@@ -65,5 +67,9 @@ public class SpringBootConfiguration extends Configuration {
 
     public static String mavenCompilerPluginVersion() {
         return getProperty(MAVEN_COMPILER_PLUGIN_VERSION, "3.8.1");
+    }
+
+    public static String openshiftBaseImage() {
+        return getProperty(OPENSHIFT_SB_BASE_IMAGE, "registry.access.redhat.com/ubi8/openjdk-17:latest");
     }
 }

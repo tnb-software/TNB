@@ -65,7 +65,7 @@ public abstract class SpringBootApp extends App {
                     : OpenshiftClient.get().getMasterUrl().toString()
                 , "jkube.username", OpenshiftConfiguration.openshiftUsername() != null ? OpenshiftConfiguration.openshiftUsername()
                     : OpenshiftClient.get().currentUser().getMetadata().getName()
-                , "jkube.generator.from", "registry.access.redhat.com/ubi8/openjdk-17:latest"
+                , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
             ));
             requestBuilder.withGoals("clean", "oc:deploy");
             requestBuilder.withProfiles("openshift");
