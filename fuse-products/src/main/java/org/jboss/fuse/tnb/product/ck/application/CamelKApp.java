@@ -20,6 +20,7 @@ import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.integration.ResourceType;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.rp.Attachments;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -32,6 +33,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -69,15 +71,12 @@ public class CamelKApp extends App {
         CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT);
     private static final CustomResourceDefinitionContext kameletBindingCtx =
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-
-    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
-        OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
-            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
-
     private static final OpenshiftClient client = OpenshiftClient.get();
     private static final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient =
         client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class).inNamespace(client.getNamespace());
-
+    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
+        OpenshiftClient.get().customResources(INTEGRATIONS_CONTEXT, Integration.class, IntegrationList.class)
+            .inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private Object integrationSource;
 
     private CamelKApp(String name) {
@@ -119,7 +118,9 @@ public class CamelKApp extends App {
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
         if (getLog() != null) {
-            IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
+            final Path logPath = TestConfiguration.appLocation().resolve(name + ".log");
+            IOUtils.writeFile(logPath, getLog().toString());
+            Attachments.addAttachment(logPath);
         }
         LOG.info("Removing integration {}", name);
         if (integrationSource instanceof KameletBinding) {

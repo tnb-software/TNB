@@ -25,6 +25,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_SETTINGS = "test.maven.settings";
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
+    public static final String REPORT_PORTAL = "test.report.portal.enabled";
 
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
@@ -91,6 +92,10 @@ public class TestConfiguration extends Configuration {
 
     public static boolean skipTearDownOpenshiftAMQStreams() {
         return getBoolean(TEST_SKIP_TEARDOWN_OPENSHIFT_AMQSTREAMS, false);
+    }
+
+    public static boolean reportPortalEnabled() {
+        return getBoolean(REPORT_PORTAL, false);
     }
 
     public static String user() {
