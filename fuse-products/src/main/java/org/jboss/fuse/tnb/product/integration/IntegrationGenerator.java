@@ -7,8 +7,8 @@ import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.ComponentCustomizer;
-import org.jboss.fuse.tnb.product.standalone.utils.RemoveQuarkusAnnotationsCustomizer;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
+import org.jboss.fuse.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,9 +66,6 @@ public final class IntegrationGenerator {
             }
         });
 
-        // Clear additional classes, so they are not inlined when calling toString(integrationBuilder)
-        integrationBuilder.getAdditionalClasses().clear();
-
         // Add additional resources to the application
         final Path resourcesPath = location.resolve("src/main/resources");
         integrationBuilder.getResources().forEach(resource -> IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent()));
@@ -80,7 +77,9 @@ public final class IntegrationGenerator {
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
         String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
-        LOG.debug("Application properties:\n{}", applicationPropertiesContent);
+        if (!applicationPropertiesContent.trim().isEmpty()) {
+            LOG.debug("Application properties:\n{}", applicationPropertiesContent);
+        }
         try {
             // Properties#store() escapes stuff by default, so construct the property file manually
             Files.write(applicationPropertiesPath, applicationPropertiesContent.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
@@ -162,8 +161,5 @@ public final class IntegrationGenerator {
             customizer.setIntegrationBuilder(integrationBuilder);
             customizer.customize();
         }
-
-        // Clear the customizers so they are processed only once
-        integrationBuilder.getCustomizers().clear();
     }
 }

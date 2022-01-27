@@ -23,8 +23,6 @@ import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -60,7 +58,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private NonNamespaceOperation<Kamelet, KameletList, Resource<Kamelet>> kameletClient;
-    private final Map<String, App> integrations = new HashMap<>();
     private final List<String> kamelets = new ArrayList<>();
 
     // Count of all kamelets from camel-k operator
@@ -185,7 +182,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     @Override
-    public App createIntegration(IntegrationBuilder integrationBuilder) {
+    protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
         return createIntegrations(new IntegrationBuilder[] {integrationBuilder}).get(integrationBuilder.getIntegrationName());
     }
 
@@ -207,6 +204,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         }
 
         apps.values().forEach(App::waitUntilReady);
+        integrations.putAll(apps);
 
         return apps;
     }
@@ -315,15 +313,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         kamelets.clear();
     }
 
-    public void removeIntegration(String name) {
-        integrations.get(name).stop();
-        integrations.remove(name);
-    }
-
     @Override
     public void removeIntegrations() {
         CountDownLatch latch = new CountDownLatch(integrations.size());
-        //can't be reused removeIntegration - changing underlying map
         integrations.values().forEach(app -> EXECUTOR_SERVICE.submit(() -> {
             try {
                 app.stop();
@@ -338,11 +330,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             LOG.warn("Latch await thread interrupted");
         }
         integrations.clear();
-    }
-
-    @Override
-    public void afterEach(ExtensionContext extensionContext) throws Exception {
-        removeIntegrations();
     }
 
     private void saveOperatorLog() {

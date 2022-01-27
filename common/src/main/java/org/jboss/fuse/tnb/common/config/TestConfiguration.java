@@ -31,14 +31,6 @@ public class TestConfiguration extends Configuration {
 
     public static final String USER = "tnb.user";
 
-    public static String camelVersion() {
-        return getProperty(CAMEL_VERSION);
-    }
-
-    public static String camelArchetypeVersion() {
-        return getProperty(CAMEL_ARCHETYPE_VERSION, "3.11.1");
-    }
-
     public static ProductType product() {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
             .orElseThrow(

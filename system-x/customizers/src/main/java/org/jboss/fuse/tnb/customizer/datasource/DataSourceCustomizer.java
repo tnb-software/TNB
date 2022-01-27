@@ -39,9 +39,6 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
     @Override
     public void customize() {
         switch (TestConfiguration.product()) {
-            case CAMEL_STANDALONE:
-                customizeStandalone();
-                break;
             case CAMEL_K:
             case CAMEL_QUARKUS:
                 customizeQuarkus();
@@ -72,27 +69,6 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
         dependencies.add("org.springframework.boot:spring-boot-starter-jdbc");
         if (dbDependencies.length == 0 && "postgresql".equals(type)) {
             dependencies.add("org.postgresql:postgresql");
-        }
-        getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
-    }
-
-    private void customizeStandalone() {
-        final Properties appProperties = getApplicationProperties();
-
-        appProperties.putAll(
-            Map.of("camel.beans.myDS", "#class:org.apache.commons.dbcp2.BasicDataSource",
-                "camel.beans.myDS.url", url,
-                "camel.beans.myDS.username", username,
-                "camel.beans.myDS.password", password,
-                "camel.beans.myDS.driverClassName", driver)
-        );
-
-        final String[] dbDependencies = getDbAllocatorDependencies();
-        final List<String> dependencies = new LinkedList<>();
-        dependencies.add("org.apache.commons:commons-dbcp2:2.8.0");
-        dependencies.addAll(Arrays.asList(dbDependencies));
-        if (dbDependencies.length == 0 && "postgresql".equals(type)) {
-            dependencies.add("org.postgresql:postgresql:42.2.21");
         }
         getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
     }
