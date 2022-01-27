@@ -3,7 +3,6 @@ package org.jboss.fuse.tnb.product.csb.application;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
@@ -60,14 +59,8 @@ public abstract class SpringBootApp extends App {
                 "skipTests", "true"
                 , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
                 , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
-                , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
-                , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
-                    : OpenshiftClient.get().getMasterUrl().toString()
-                , "jkube.username", OpenshiftConfiguration.openshiftUsername() != null ? OpenshiftConfiguration.openshiftUsername()
-                    : OpenshiftClient.get().currentUser().getMetadata().getName()
-                , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
             ));
-            requestBuilder.withGoals("clean", "oc:deploy");
+            requestBuilder.withGoals("clean", "package", "oc:resource");
             requestBuilder.withProfiles("openshift");
         }
 
