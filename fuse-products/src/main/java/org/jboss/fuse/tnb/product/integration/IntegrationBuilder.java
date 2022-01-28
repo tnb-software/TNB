@@ -139,11 +139,28 @@ public class IntegrationBuilder {
         return this;
     }
 
-    public IntegrationBuilder addToProperties(ProductType forType, String key, String value) {
-        if (forType == TestConfiguration.product()) {
+    /**
+     * Add property if:
+     *  <ul>
+     *  <li>match == true : add property only for the product passed as parameter</li>
+     *  <li>match == false : add property for all product except for the product passed as parameter</li>
+     *  </ul>
+     * @param forType {@link ProductType}, the product to check
+     * @param key {@link String}, the key of the property
+     * @param value {@link String}, the value of the property
+     * @param match boolean, true to include, exclude otherwise
+     * @return IntegrationBuilder, self reference for fluent API
+     */
+    public IntegrationBuilder addToProperties(ProductType forType, String key, String value, boolean match) {
+        if ((forType == TestConfiguration.product() && match)
+            || (!match && forType != TestConfiguration.product())) {
             addToProperties(key, value);
         }
         return this;
+    }
+
+    public IntegrationBuilder addToProperties(ProductType forType, String key, String value) {
+        return addToProperties(forType, key, value, true);
     }
 
     private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
