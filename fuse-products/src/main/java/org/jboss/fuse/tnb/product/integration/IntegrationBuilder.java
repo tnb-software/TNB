@@ -276,6 +276,13 @@ public class IntegrationBuilder {
         return this;
     }
 
+    public IntegrationBuilder dependencies(ProductType forType, String... dependencies) {
+        if (forType == TestConfiguration.product()) {
+            this.dependencies.addAll(Arrays.asList(dependencies));
+        }
+        return this;
+    }
+
     public IntegrationBuilder name(String name) {
         this.integrationName = name;
         return this;
