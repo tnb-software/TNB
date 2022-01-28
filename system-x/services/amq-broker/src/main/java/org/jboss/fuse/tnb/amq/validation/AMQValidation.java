@@ -12,6 +12,8 @@ import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import java.util.Map;
+
 public class AMQValidation {
 
     private Connection connection;
@@ -29,44 +31,44 @@ public class AMQValidation {
         this.queueName = queueName;
     }
 
-    public void sendMessage(String message) {
-        Session session = null;
-        try {
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+    /**
+     * If used in a camel route message and props are mapped to ${body} and ${headers.key} respectively
+     *
+     * @param message
+     * @param props
+     */
+    public void sendMessage(String message, Map<String, String> props) {
+        try (Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);) {
             Destination destination = session.createQueue(getQueueName());
             MessageProducer producer = session.createProducer(destination);
-            producer.send(session.createTextMessage(message));
+            TextMessage textMessage = session.createTextMessage(message);
+            if (props != null) {
+                props.forEach((key, value) -> {
+                    try {
+                        textMessage.setStringProperty(key, value);
+                    } catch (JMSException e) {
+                        throw new RuntimeException("Exception occurred during string property set.", e);
+                    }
+                });
+            }
+            producer.send(textMessage);
         } catch (JMSException e) {
             throw new RuntimeException("The message was not sent.", e);
-        } finally {
-            if (session != null) {
-                try {
-                    session.close();
-                } catch (JMSException e) {
-                    throw new RuntimeException("Can't close session.", e);
-                }
-            }
         }
     }
 
-    public String waitForMessage(long timeout) {
-        Session session = null;
+    public void sendMessage(String message) {
+        sendMessage(message, null);
+    }
+
+    public String waitForMessage(long timeout, String queue) {
         Message message = null;
-        try {
-            session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-            Destination destination = session.createQueue(getQueueName());
+        try (Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE)) {
+            Destination destination = session.createQueue(queue);
             MessageConsumer consumer = session.createConsumer(destination);
             message = consumer.receive(timeout);
         } catch (JMSException e) {
             throw new RuntimeException(e);
-        } finally {
-            if (session != null) {
-                try {
-                    session.close();
-                } catch (JMSException e) {
-                    throw new RuntimeException("Can't close session.", e);
-                }
-            }
         }
 
         if (message instanceof TextMessage) {
@@ -88,5 +90,9 @@ public class AMQValidation {
             }
         }
         return null;
+    }
+
+    public String waitForMessage(long timeout) {
+        return waitForMessage(timeout, getQueueName());
     }
 }
