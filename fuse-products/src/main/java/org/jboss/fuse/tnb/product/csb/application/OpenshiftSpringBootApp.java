@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
 import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
@@ -58,20 +57,23 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
         org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
-        LOG.info("Undeploying integration resources");
-        final ObjectMeta labels = new ObjectMeta();
+        LOG.info("Undeploy integration resources");
         final Map<String, String> labelMap = Map.of("app", name, "provider", "jkube");
-        labels.setLabels(labelMap);
         //builds
-        OpenshiftClient.get().buildConfigs().withLabels(labelMap).delete();
+        //delete build's pod
+        OpenshiftClient.get().builds().withLabels(labelMap).list()
+            .getItems().stream().forEach(build -> OpenshiftClient.get().pods()
+                .withLabels(Map.of("openshift.io/build.name", build.getMetadata().getName())).delete()
+            );
         OpenshiftClient.get().builds().withLabels(labelMap).delete();
+        OpenshiftClient.get().buildConfigs().withLabels(labelMap).delete();
         OpenshiftClient.get().imageStreams().withLabels(labelMap).delete();
         //app
         OpenshiftClient.get().deploymentConfigs().withLabels(labelMap).delete();
         //network
         OpenshiftClient.get().services().withLabels(labelMap).delete();
         OpenshiftClient.get().routes().withLabels(labelMap).delete();
-        //remaning pods
+        //remaining pods
         OpenshiftClient.get().pods().withLabels(labelMap).delete();
     }
 
