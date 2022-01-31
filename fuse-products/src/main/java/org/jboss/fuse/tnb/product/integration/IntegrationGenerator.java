@@ -112,7 +112,7 @@ public final class IntegrationGenerator {
                 final TypeDeclaration<?> routeBuilder = integrationBuilder.getRouteBuilder().getClassByName(IntegrationBuilder.ROUTE_BUILDER_NAME)
                     .get();
                 //sourceClass is modified to be inlinable
-                final TypeDeclaration<?> sourceClass = cu.getPrimaryType().get();
+                final TypeDeclaration<?> sourceClass = cu.getPrimaryType().orElseGet(() -> cu.getType(0));
                 sourceClass.setPublic(true);
                 sourceClass.addModifier(Modifier.Keyword.STATIC);
 

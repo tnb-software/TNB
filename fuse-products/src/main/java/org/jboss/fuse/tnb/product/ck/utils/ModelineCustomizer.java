@@ -14,10 +14,15 @@ public class ModelineCustomizer extends Customizer {
     public void customize() {
         StringBuilder modeline = new StringBuilder(MODELINE_PREFIX + " language=java");
         for (String dependency : getIntegrationBuilder().getDependencies()) {
-            final Dependency dep = Maven.toDependency(dependency);
-            modeline.append(" dependency=mvn:").append(dep.getGroupId()).append(":").append(dep.getArtifactId());
-            if (dep.getVersion() != null) {
-                modeline.append(":").append(dep.getVersion());
+            if (dependency.startsWith("github")) {
+                modeline.append(" dependency=").append(dependency);
+            } else {
+                final Dependency dep = Maven.toDependency(dependency);
+
+                modeline.append(" dependency=mvn:").append(dep.getGroupId()).append(":").append(dep.getArtifactId());
+                if (dep.getVersion() != null) {
+                    modeline.append(":").append(dep.getVersion());
+                }
             }
         }
         String prevModelines =
