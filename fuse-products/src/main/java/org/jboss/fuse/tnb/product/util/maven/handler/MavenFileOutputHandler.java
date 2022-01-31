@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product.util.maven.handler;
 
 import org.jboss.fuse.tnb.common.utils.IOUtils;
+import org.jboss.fuse.tnb.product.rp.Attachments;
 
 import java.io.Closeable;
 import java.io.FileWriter;
@@ -16,6 +17,7 @@ public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
     public MavenFileOutputHandler(Path outputFile) throws IOException {
         this.in = new PrintWriter(new FileWriter(outputFile.toFile()), true);
         this.file = outputFile;
+        Attachments.addAttachment(file);
     }
 
     @Override
