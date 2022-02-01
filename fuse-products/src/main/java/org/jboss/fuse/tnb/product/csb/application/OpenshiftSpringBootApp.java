@@ -4,7 +4,6 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
@@ -79,19 +78,23 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public boolean isReady() {
-        WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
-                .stream().allMatch(Readiness::isPodReady)
-            , 6, 10 * 1000L, "Waiting for application deployed"
-        );
-        return true;
+        try {
+            return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
+                .stream().allMatch(Readiness::isPodReady) && isCamelStarted();
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     @Override
     public boolean isFailed() {
-        return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
-            .stream().map(PodStatusUtil::getContainerStatus)
-            .allMatch(containerStatuses -> containerStatuses.stream()
-                .noneMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
+        try {
+            return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
+                .stream().map(PodStatusUtil::getContainerStatus)
+                .allMatch(containerStatuses -> containerStatuses.stream()
+                    .anyMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
+        } catch (Exception ignored) {
+            return false;
+        }
     }
-
 }

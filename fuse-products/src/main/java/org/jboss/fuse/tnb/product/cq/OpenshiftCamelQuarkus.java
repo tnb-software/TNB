@@ -32,9 +32,6 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct {
 
     @Override
     protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
-        App app = new OpenshiftQuarkusApp(integrationBuilder);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return new OpenshiftQuarkusApp(integrationBuilder);
     }
 }
