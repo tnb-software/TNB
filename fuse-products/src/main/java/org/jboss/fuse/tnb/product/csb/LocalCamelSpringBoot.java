@@ -12,9 +12,6 @@ import com.google.auto.service.AutoService;
 public class LocalCamelSpringBoot extends LocalProduct {
     @Override
     public App createIntegrationApp(IntegrationBuilder integrationBuilder) {
-        App app = new LocalSpringBootApp(integrationBuilder);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return new LocalSpringBootApp(integrationBuilder);
     }
 }

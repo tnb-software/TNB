@@ -32,9 +32,6 @@ public class OpenshiftCamelSpringBoot extends OpenshiftProduct {
 
     @Override
     protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
-        App app = new OpenshiftSpringBootApp(integrationBuilder);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return new OpenshiftSpringBootApp(integrationBuilder);
     }
 }

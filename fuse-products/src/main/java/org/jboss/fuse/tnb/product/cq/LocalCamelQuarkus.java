@@ -12,9 +12,6 @@ import com.google.auto.service.AutoService;
 public class LocalCamelQuarkus extends LocalProduct {
     @Override
     protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
-        App app = new LocalQuarkusApp(integrationBuilder);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        return new LocalQuarkusApp(integrationBuilder);
     }
 }

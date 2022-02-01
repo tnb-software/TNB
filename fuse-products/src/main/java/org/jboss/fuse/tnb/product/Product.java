@@ -21,6 +21,8 @@ public abstract class Product implements BeforeAllCallback, AfterAllCallback {
         }
         App app = createIntegrationApp(integrationBuilder);
         integrations.put(integrationBuilder.getIntegrationName(), app);
+        app.start();
+        app.waitUntilReady();
         return app;
     }
 

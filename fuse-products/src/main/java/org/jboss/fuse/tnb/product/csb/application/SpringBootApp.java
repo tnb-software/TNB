@@ -28,7 +28,6 @@ import java.util.Map;
 
 public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
-    private final boolean isProd = SpringBootConfiguration.camelSpringBootVersion().contains("redhat");
 
     public SpringBootApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
