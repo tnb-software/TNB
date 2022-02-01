@@ -1,12 +1,14 @@
 package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
+import org.jboss.fuse.tnb.product.csb.customizer.CamelMainCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.ComponentCustomizer;
+import org.jboss.fuse.tnb.product.customizer.Customizer;
+import org.jboss.fuse.tnb.product.customizer.Customizers;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 import org.jboss.fuse.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
@@ -42,6 +44,19 @@ public final class IntegrationGenerator {
     public static void toFile(IntegrationBuilder integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
 
+        // Add additional resources to the application
+        final Path resourcesPath = location.resolve("src/main/resources");
+        integrationBuilder.getResources().forEach(resource -> IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent()));
+
+        if (!integrationBuilder.getResources().isEmpty()) {
+            integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->
+                    i.addToProperties("quarkus.native.resources.includes",
+                        integrationBuilder.getResources().stream().map(Resource::getName).collect(Collectors.joining(","))
+                    )
+                )
+            );
+        }
+
         processCustomizers(integrationBuilder);
 
         //Add additional classes to the application
@@ -65,15 +80,6 @@ public final class IntegrationGenerator {
                 integrationBuilder.getRouteBuilder().addImport(importDeclaration);
             }
         });
-
-        // Add additional resources to the application
-        final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach(resource -> IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent()));
-
-        if (!integrationBuilder.getResources().isEmpty()) {
-            final String nativeResourcesIncludes = integrationBuilder.getResources().stream().map(Resource::getName).collect(Collectors.joining(","));
-            integrationBuilder.addToProperties(ProductType.CAMEL_QUARKUS, "quarkus.native.resources.includes", nativeResourcesIncludes);
-        }
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
         String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
@@ -126,6 +132,10 @@ public final class IntegrationGenerator {
                     imp -> imp.getNameAsString().equals(cu.getPackageDeclaration().get().getNameAsString() + "." + sourceClass.getNameAsString()));
             });
 
+            String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
+            if (!applicationPropertiesContent.trim().isEmpty()) {
+                LOG.debug("Application properties:\n{}", applicationPropertiesContent);
+            }
             result = integrationBuilder.getRouteBuilder().toString();
         } else {
             // RouteBuilder is null, so we should have integration directly in string (quickstarts case)
@@ -140,26 +150,18 @@ public final class IntegrationGenerator {
     }
 
     private static void processCustomizers(IntegrationBuilder integrationBuilder) {
-        if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS) {
-            integrationBuilder.addCustomizer(new ApplicationScopeCustomizer());
-        } else {
-            integrationBuilder.addCustomizer(new RemoveQuarkusAnnotationsCustomizer());
-        }
-
-        if (TestConfiguration.product() == ProductType.CAMEL_K) {
-            integrationBuilder.addCustomizer(new ModelineCustomizer());
-            integrationBuilder.addCustomizer(new InlineCustomizer());
-        }
-
-        if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {
-            integrationBuilder.addCustomizer(new ComponentCustomizer());
-
-            integrationBuilder.addToProperties("camel.springboot.main-run-controller", "true");
-        }
+        integrationBuilder.addCustomizer(
+            new ApplicationScopeCustomizer(),
+            new RemoveQuarkusAnnotationsCustomizer(),
+            new ModelineCustomizer(),
+            new InlineCustomizer(),
+            new ComponentCustomizer(),
+            new CamelMainCustomizer()
+        );
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setIntegrationBuilder(integrationBuilder);
-            customizer.customize();
+            customizer.doCustomize();
         }
     }
 }

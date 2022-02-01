@@ -41,7 +41,6 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.stream.Stream;
 
 import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -195,7 +194,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     public Map<String, App> createIntegration(IntegrationBuilder integrationBuilder, IntegrationBuilder... integrationBuilders) {
-        return createIntegration(Stream.concat(Stream.of(integrationBuilder), Arrays.stream(integrationBuilders)).toArray());
+        List<Object> integrationSources = new ArrayList<>();
+        integrationSources.add(integrationBuilder);
+        integrationSources.addAll(Arrays.asList(integrationBuilders));
+        return createIntegration(integrationSources.toArray());
     }
 
     public Map<String, App> createKameletBindings(KameletBinding... kameletBindings) {

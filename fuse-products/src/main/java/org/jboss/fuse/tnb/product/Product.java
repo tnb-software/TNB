@@ -6,11 +6,12 @@ import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public abstract class Product implements BeforeAllCallback, AfterAllCallback {
     protected Map<String, App> integrations = new ConcurrentHashMap<>();
@@ -28,8 +29,10 @@ public abstract class Product implements BeforeAllCallback, AfterAllCallback {
 
     public Map<String, App> createIntegration(IntegrationBuilder integrationBuilder, IntegrationBuilder... other) {
         // Return only integrations created in this invocation, not all created integrations
-        return Stream.concat(Stream.of(integrationBuilder), Arrays.stream(other))
-            .collect(Collectors.toMap(IntegrationBuilder::getIntegrationName, this::createIntegration));
+        List<IntegrationBuilder> integrationBuilders = new ArrayList<>();
+        integrationBuilders.add(integrationBuilder);
+        integrationBuilders.addAll(Arrays.asList(other));
+        return integrationBuilders.stream().collect(Collectors.toMap(IntegrationBuilder::getIntegrationName, this::createIntegration));
     }
 
     protected abstract App createIntegrationApp(IntegrationBuilder integrationBuilder);

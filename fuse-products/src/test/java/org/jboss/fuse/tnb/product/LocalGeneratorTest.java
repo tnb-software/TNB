@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.product;
 
 import org.jboss.fuse.tnb.common.product.ProductType;
+import org.jboss.fuse.tnb.product.customizer.Customizers;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -23,7 +24,6 @@ public class LocalGeneratorTest {
     @CsvSource({
         "camelspringboot,@Component,camel-direct-starter",
         "camelquarkus,@ApplicationScoped,camel-quarkus-direct"
-        //"camelstandalone,,camel-direct"
     })
     public void test(String productName, String routeBuilderAnnotation, String directArtifactId) throws Exception {
         log.info("testing product {} with annotation {}", productName, routeBuilderAnnotation);
@@ -38,9 +38,11 @@ public class LocalGeneratorTest {
 
         product.createIntegration(new IntegrationBuilder(appName)
             .fromRouteBuilder(new DirectToLogRoute())
-            .addCustomizer(new AddClassCustomizer(emptyClass))
+            .addCustomizer(
+                new AddClassCustomizer(emptyClass),
+                Customizers.QUARKUS.customize(i -> i.addToProperties("test.prop.not.exists", "not exists"))
+            )
             .addToProperties("test.prop", "test prop")
-            .addToProperties(ProductType.CAMEL_QUARKUS, "test.prop.not.exists", "not exists")
             .dependencies("direct")
         );
 

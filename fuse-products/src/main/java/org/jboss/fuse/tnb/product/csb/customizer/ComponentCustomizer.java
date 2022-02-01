@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.csb.customizer;
 
-import org.jboss.fuse.tnb.product.integration.Customizer;
 import org.jboss.fuse.tnb.product.util.jparser.AnnotationUtils;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.List;
 /**
  * For camel spring boot we add @Component to RouteBuilder class
  */
-public class ComponentCustomizer extends Customizer {
+public class ComponentCustomizer extends SpringbootCustomizer {
 
     @Override
     public void customize() {
