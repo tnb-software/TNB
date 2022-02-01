@@ -22,6 +22,7 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -52,6 +53,7 @@ public class IntegrationBuilder {
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
     private final Properties properties = new Properties();
+    private final List<Resource> xmlCamelContext = new ArrayList<>();
 
     private CompilationUnit routeBuilder;
     private String integrationName;
@@ -61,6 +63,51 @@ public class IntegrationBuilder {
 
     public IntegrationBuilder(String name) {
         this.integrationName = name;
+    }
+
+    ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
+    private static String getClassName(String className) {
+        final String typeName = className.substring(className.lastIndexOf(".") + 1);
+        if (typeName.contains("$")) {
+            return typeName.substring(typeName.lastIndexOf("$") + 1);
+        }
+        return typeName;
+    }
+
+    ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
+    private static String getClassName(Class<?> clazz) {
+        return getClassName(clazz.getName());
+    }
+
+    /**
+     * Processes imports - right now any tnb related import has to be removed as the classes are not present in the generated application.
+     */
+    private static void processImports(CompilationUnit cu) {
+        cu.accept(new ModifierVisitor<>() {
+            @Override
+            public Node visit(ImportDeclaration importDecl, Object arg) {
+                super.visit(importDecl, arg);
+                final String importClass = importDecl.getName().asString();
+                //Remove internal classes
+                if (IGNORED_PACKAGES.stream().anyMatch(importClass::startsWith)) {
+                    return null;
+                }
+                return importDecl;
+            }
+        }, null);
+    }
+
+    public IntegrationBuilder fromSpringBootXmlCamelContext(String camelContextPath) {
+        String resourceData;
+        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(camelContextPath)) {
+            resourceData = IOUtils.toString(is, StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read resource: ", e);
+        }
+
+        xmlCamelContext.add(
+            new Resource(ResourceType.XML_CAMEL_CONTEXT, camelContextPath.substring(camelContextPath.lastIndexOf(File.separator) + 1), resourceData));
+        return this;
     }
 
     public IntegrationBuilder fromRouteBuilder(RouteBuilder routeBuilder) {
@@ -141,10 +188,11 @@ public class IntegrationBuilder {
 
     /**
      * Add property if:
-     *  <ul>
-     *  <li>match == true : add property only for the product passed as parameter</li>
-     *  <li>match == false : add property for all product except for the product passed as parameter</li>
-     *  </ul>
+     * <ul>
+     * <li>match == true : add property only for the product passed as parameter</li>
+     * <li>match == false : add property for all product except for the product passed as parameter</li>
+     * </ul>
+     *
      * @param forType {@link ProductType}, the product to check
      * @param key {@link String}, the key of the property
      * @param value {@link String}, the value of the property
@@ -180,20 +228,6 @@ public class IntegrationBuilder {
                 .format("Couldn't parse class %s in source roots [%s]. Make sure the sources are available.", clazz.getName(),
                     getSourceRoots(clazz).collect(
                         Collectors.toList()))));
-    }
-
-    ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
-    private static String getClassName(String className) {
-        final String typeName = className.substring(className.lastIndexOf(".") + 1);
-        if (typeName.contains("$")) {
-            return typeName.substring(typeName.lastIndexOf("$") + 1);
-        }
-        return typeName;
-    }
-
-    ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
-    private static String getClassName(Class<?> clazz) {
-        return getClassName(clazz.getName());
     }
 
     private void processRouteBuilder(RouteBuilder routeBuilder, String className, CompilationUnit cu) {
@@ -241,7 +275,7 @@ public class IntegrationBuilder {
         if (value == null) {
             return "null";
         } else if (value instanceof String) {
-            //Escape escaped characters so javaparser can compile and unescape them 
+            //Escape escaped characters so javaparser can compile and unescape them
             return "\"" + StringEscapeUtils.escapeJava((String) value) + "\"";
         } else if (value.getClass().isArray()) {
             StringBuilder expressionBuilder = new StringBuilder();
@@ -261,24 +295,6 @@ public class IntegrationBuilder {
             throw new RuntimeException("Can't process final field with type " + value.getClass().getName()
                 + " please consider not making this field final if you don't want it processed");
         }
-    }
-
-    /**
-     * Processes imports - right now any tnb related import has to be removed as the classes are not present in the generated application.
-     */
-    private static void processImports(CompilationUnit cu) {
-        cu.accept(new ModifierVisitor<>() {
-            @Override
-            public Node visit(ImportDeclaration importDecl, Object arg) {
-                super.visit(importDecl, arg);
-                final String importClass = importDecl.getName().asString();
-                //Remove internal classes
-                if (IGNORED_PACKAGES.stream().anyMatch(importClass::startsWith)) {
-                    return null;
-                }
-                return importDecl;
-            }
-        }, null);
     }
 
     /**
@@ -385,6 +401,10 @@ public class IntegrationBuilder {
 
     public List<Resource> getResources() {
         return resources;
+    }
+
+    public List<Resource> getXmlCamelContext() {
+        return xmlCamelContext;
     }
 
     public List<Customizer> getCustomizers() {
