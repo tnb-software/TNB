@@ -30,6 +30,7 @@
         <module>salesforce</module>
         <module>servicenow</module>
         <module>telegram</module>
+        <module>cassandra</module>
     </modules>
 
     <dependencies>
