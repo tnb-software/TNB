@@ -17,11 +17,6 @@
 
 package org.jboss.fuse.tnb.product.ck.generated;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -30,13 +25,20 @@ import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({"definition", "dependencies", "types", "sources", "authorization", "flow", "template"})
+@JsonPropertyOrder({"definition", "dependencies", "types", "sources", "authorization", "template"})
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
+@JsonIgnoreProperties("flow")
 public class KameletSpec implements KubernetesResource {
 
     @JsonProperty("definition")
@@ -49,8 +51,6 @@ public class KameletSpec implements KubernetesResource {
     private List<Source> sources;
     @JsonProperty("authorization")
     private AuthorizationSpec authorization;
-    @JsonProperty("flow")
-    private Map<String, Object> flow;
     @JsonProperty("template")
     private Map<String, Object> template;
 
@@ -92,14 +92,6 @@ public class KameletSpec implements KubernetesResource {
 
     public void setTypes(Map<String, TypeSpec> types) {
         this.types = types;
-    }
-
-    public Map<String, Object> getFlow() {
-        return flow;
-    }
-
-    public void setFlow(Map<String, Object> flow) {
-        this.flow = flow;
     }
 
     public Map<String, Object> getTemplate() {

@@ -1,4 +1,5 @@
 package org.jboss.fuse.tnb.product.ck.generated;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one or more
  * contributor license agreements. See the NOTICE file distributed with
@@ -33,7 +34,7 @@ import io.fabric8.kubernetes.model.annotation.Group;
 import io.fabric8.kubernetes.model.annotation.Version;
 
 /**
- * 
+ * Manually created Kamelet k8s resource
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Group(CamelKSupport.CAMELK_CRD_GROUP)
@@ -56,7 +57,7 @@ public class Kamelet extends CustomResource<KameletSpec, KameletStatus> {
      */
     public static class Builder {
         private String name;
-        private String flow;
+        private String template;
         private KameletSpec.Definition definition = new KameletSpec.Definition();
         private Map<String, KameletSpec.TypeSpec> types = new HashMap<>();
         private List<String> dependencies = new ArrayList<>();
@@ -84,7 +85,7 @@ public class Kamelet extends CustomResource<KameletSpec, KameletStatus> {
         }
 
         public Builder flow(String flow) {
-            this.flow = flow;
+            this.template = flow;
             return this;
         }
 
@@ -108,8 +109,8 @@ public class Kamelet extends CustomResource<KameletSpec, KameletStatus> {
             kamelet.getMetadata().setName(name);
             kamelet.getSpec().setDefinition(definition);
 
-            if (flow != null && !flow.isEmpty()) {
-                kamelet.getSpec().setFlow(KubernetesSupport.yaml().load(flow));
+            if (template != null && !template.isEmpty()) {
+                kamelet.getSpec().setTemplate(KubernetesSupport.yaml().load(template));
             }
 
             if (source != null) {
