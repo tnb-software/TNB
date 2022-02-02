@@ -53,7 +53,7 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     @Override
     public boolean isReady() {
-        return appProcess.isAlive() && isCamelStarted();
+        return appProcess.isAlive();
     }
 
     @Override

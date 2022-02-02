@@ -18,6 +18,7 @@ public abstract class App {
 
     protected final String name;
     protected Log log;
+    protected boolean started = false;
 
     public App(String name) {
         this.name = name;
@@ -53,10 +54,15 @@ public abstract class App {
     }
 
     public void waitUntilReady() {
-        WaitUtils.waitFor(this::isReady, this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
+        WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
+        started = true;
     }
 
-    protected boolean isCamelStarted() {
+    private boolean isCamelStarted() {
         return getLog().containsRegex(LOG_STARTED_REGEX);
+    }
+
+    public boolean isStarted() {
+        return started;
     }
 }

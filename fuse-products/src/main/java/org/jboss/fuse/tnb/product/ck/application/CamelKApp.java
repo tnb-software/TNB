@@ -57,7 +57,6 @@ import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
-import io.fabric8.kubernetes.api.model.PodConditionBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -107,10 +106,6 @@ public class CamelKApp extends App {
         }
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"))
-            // find such pod where all containers are ready - sometimes in case of knative integrations it's possible that it gets the pod
-            // that is in terminating state
-            && "True".equals(p.getStatus().getConditions().stream().filter(c -> "ContainersReady".equals(c.getType())).findFirst()
-            .orElse(new PodConditionBuilder().withStatus("False").build()).getStatus())
         );
     }
 
@@ -119,7 +114,7 @@ public class CamelKApp extends App {
         LOG.info("Collecting logs of integration {}", name);
         if (getLog() != null) {
             final Path logPath = TestConfiguration.appLocation().resolve(name + ".log");
-            IOUtils.writeFile(logPath, getLog().toString());
+            IOUtils.writeFile(logPath, ((OpenshiftLog) getLog()).toString(started));
             Attachments.addAttachment(logPath);
         }
         LOG.info("Removing integration {}", name);
@@ -138,8 +133,7 @@ public class CamelKApp extends App {
     public boolean isReady() {
         try {
             return "running".equalsIgnoreCase(integrationClient.withName(name).get().getStatus().getPhase())
-                && ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name))
-                && isCamelStarted();
+                && ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name));
         } catch (Exception ignored) {
             return false;
         }

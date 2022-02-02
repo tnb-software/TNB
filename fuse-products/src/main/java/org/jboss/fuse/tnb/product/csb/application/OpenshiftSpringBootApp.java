@@ -55,13 +55,16 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
+        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(
+            TestConfiguration.appLocation().resolve(name + ".log"),
+            ((OpenshiftLog) getLog()).toString(started)
+        );
         LOG.info("Undeploy integration resources");
         final Map<String, String> labelMap = Map.of("app", name, "provider", "jkube");
         //builds
         //delete build's pod
         OpenshiftClient.get().builds().withLabels(labelMap).list()
-            .getItems().stream().forEach(build -> OpenshiftClient.get().pods()
+            .getItems().forEach(build -> OpenshiftClient.get().pods()
                 .withLabels(Map.of("openshift.io/build.name", build.getMetadata().getName())).delete()
             );
         OpenshiftClient.get().builds().withLabels(labelMap).delete();
@@ -80,7 +83,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     public boolean isReady() {
         try {
             return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
-                .stream().allMatch(Readiness::isPodReady) && isCamelStarted();
+                .stream().allMatch(Readiness::isPodReady);
         } catch (Exception ignored) {
             return false;
         }

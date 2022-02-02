@@ -60,7 +60,10 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     @Override
     public void stop() {
         LOG.info("Collecting logs of integration {}", name);
-        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(TestConfiguration.appLocation().resolve(name + ".log"), getLog().toString());
+        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(
+            TestConfiguration.appLocation().resolve(name + ".log"),
+            ((OpenshiftLog) getLog()).toString(started)
+        );
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
@@ -70,8 +73,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsRunning(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name))
-            && isCamelStarted();
+        return ResourceFunctions.areExactlyNPodsRunning(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name));
     }
 
     @Override
