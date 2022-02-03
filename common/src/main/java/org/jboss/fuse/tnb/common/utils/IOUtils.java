@@ -163,4 +163,20 @@ public final class IOUtils {
         }
         return zipFile;
     }
+
+    public static String getExecInPath(String execName) throws IOException {
+        return Arrays.stream(System.getenv("PATH").split(File.pathSeparator)).map(Path::of)
+            .filter(pathEntry -> {
+                try {
+                    return Files.find(pathEntry, 1, (filePath, basicFileAttributes) ->
+                        Files.exists(filePath)
+                            && !Files.isDirectory(filePath)
+                            && filePath.getFileName().toString().equals(execName)).count() > 0;
+                } catch (IOException e) {
+                    //just skip
+                    return false;
+                }
+            }).findFirst().orElseThrow(() -> new IOException("unable to find " + execName + " in PATH"))
+            .resolve(execName).toAbsolutePath().toString();
+    }
 }
