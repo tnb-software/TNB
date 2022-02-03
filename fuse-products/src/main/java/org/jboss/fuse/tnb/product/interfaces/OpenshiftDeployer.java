@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.product.interfaces;
 
 import org.jboss.fuse.tnb.product.log.Log;
 
-public interface OpenshiftDeployable {
+public interface OpenshiftDeployer {
 
     void deploy(String name);
 

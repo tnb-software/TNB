@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.product.deploystrategy;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.product.interfaces.OpenshiftDeployable;
+import org.jboss.fuse.tnb.product.interfaces.OpenshiftDeployer;
 import org.jboss.fuse.tnb.product.log.Log;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class OpenshiftBaseDeployer implements OpenshiftDeployable {
+public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftBaseDeployer.class);
 
@@ -19,7 +19,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployable {
     public Log getLog(String app) {
         final String openshiftDeploymentLabel = OpenshiftConfiguration.openshiftDeploymentLabel();
         return new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey(openshiftDeploymentLabel)
-            && app.equals(p.getMetadata().getLabels().get(openshiftDeploymentLabel)));
+            && app.equals(p.getMetadata().getLabels().get(openshiftDeploymentLabel)), app);
     }
 
     @Override
