@@ -31,6 +31,7 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -40,6 +41,7 @@ import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.stream.Stream;
 
 import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -183,18 +185,24 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     @Override
     protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
-        return createIntegrations(new IntegrationBuilder[] {integrationBuilder}).get(integrationBuilder.getIntegrationName());
+        return this.createIntegration(integrationBuilder);
     }
 
-    public Map<String, App> createIntegrations(IntegrationBuilder... integrationBuilders) {
-        return createIntegrations((Object[]) integrationBuilders);
+    @Override
+    public App createIntegration(IntegrationBuilder integrationBuilder) {
+        return createIntegration(integrationBuilder, new IntegrationBuilder[] {}).get(integrationBuilder.getIntegrationName());
+    }
+
+    @Override
+    public Map<String, App> createIntegration(IntegrationBuilder integrationBuilder, IntegrationBuilder... integrationBuilders) {
+        return createIntegration(Stream.concat(Stream.of(integrationBuilder), Arrays.stream(integrationBuilders)).toArray());
     }
 
     public Map<String, App> createKameletBindings(KameletBinding... kameletBindings) {
-        return createIntegrations((Object[]) kameletBindings);
+        return createIntegration((Object[]) kameletBindings);
     }
 
-    private Map<String, App> createIntegrations(Object... integrationSources) {
+    private Map<String, App> createIntegration(Object... integrationSources) {
         // Return only integrations created in this invocation, not all created integrations
         Map<String, App> apps = new HashMap<>();
         for (Object integrationSource : integrationSources) {
