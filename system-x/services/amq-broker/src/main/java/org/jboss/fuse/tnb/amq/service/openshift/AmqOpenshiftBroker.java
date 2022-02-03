@@ -12,21 +12,23 @@ import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.google.common.io.Resources;
 
 import javax.jms.Connection;
 import javax.jms.JMSException;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.HashMap;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -52,7 +54,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     private static final String SUBSCRIPTION_NAME = "tnb-amq-broker";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
 
-    private CustomResourceDefinitionContext artemisContext = new CustomResourceDefinitionContext.Builder()
+    private static final CustomResourceDefinitionContext ARTEMIS_CTX = new CustomResourceDefinitionContext.Builder()
         .withName("ActiveMQArtemis")
         .withGroup("broker.amq.io")
         .withVersion("v2alpha5")
@@ -60,8 +62,8 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
         .withScope("Namespaced")
         .build();
 
-    private NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>>
-        amqbrokerCli = OpenshiftClient.get().customResources(artemisContext, ActiveMQArtemis.class, ActiveMQArtemisList.class)
+    private final NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>>
+        amqbrokerCli = OpenshiftClient.get().customResources(ARTEMIS_CTX, ActiveMQArtemis.class, ActiveMQArtemisList.class)
         .inNamespace(OpenshiftClient.get().getNamespace());
 
     @Override
@@ -81,7 +83,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
                 LOG.debug("Amq broker operator pod is already present");
             }
             // Create amq-broker custom resource
-            amqbrokerCli.createOrReplace(createBrokerCR(BROKER_NAME));
+            amqbrokerCli.createOrReplace(createBrokerCR());
         }
     }
 
@@ -139,13 +141,17 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     private Connection createConnection() {
         try {
             final String tsPath = materializeTrustStore().toAbsolutePath().toString();
+            // Set the amq related properties for truststore and don't use truststore as part of the broker url
+            // on jenkins, the mvn is invoked with -Djavax.net.ssl.trustStore=... -Djavax.net.ssl.trustStorePassword=... due to nexus https
+            // and those takes precedence over whatever is used in the broker url
+            System.setProperty("org.apache.activemq.ssl.trustStore", tsPath);
+            System.setProperty("org.apache.activemq.ssl.trustStorePassword", account().truststorePassword());
 
             // use route for external clients
             final String brokerUrl = brokerRoute().getSpec().getHost();
 
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String
-                .format("tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true&trustStorePath=%s&trustStorePassword=changeme", brokerUrl, 443,
-                    tsPath), account().username(), account().password());
+                .format("tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true", brokerUrl, 443), account().username(), account().password());
 
             // Create a Connection
             Connection connection = connectionFactory.createConnection();
@@ -171,23 +177,19 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
         return routes.get(0);
     }
 
-    private ActiveMQArtemis createBrokerCR(String name) {
-        final Map<String, String> data = new HashMap<>();
-        data.put("keyStorePassword", Base64.getEncoder().encodeToString("changeme".getBytes()));
-        data.put("trustStorePassword", Base64.getEncoder().encodeToString("changeme".getBytes()));
-        try {
-
-            data.put("client.ts", Base64.getEncoder().encodeToString(Resources.toByteArray(Resources.getResource("broker.ts"))));
-            data.put("broker.ks", Base64.getEncoder().encodeToString(Resources.toByteArray(Resources.getResource("broker.ks"))));
-        } catch (Exception e) {
-            throw new IllegalStateException("Can't load broker.ks file", e);
-        }
+    private ActiveMQArtemis createBrokerCR() {
+        final Map<String, String> data = Map.of(
+            "keyStorePassword", encode(account().keystorePassword().getBytes()),
+            "trustStorePassword", encode(account().truststorePassword().getBytes()),
+            "client.ts", encodeResource("broker.ts"),
+            "broker.ks", encodeResource("broker.ks")
+        );
 
         SecretBuilder sb = new SecretBuilder().editOrNewMetadata().withName(SSL_SECRET_NAME).endMetadata().withData(data);
         OpenshiftClient.get().secrets().createOrReplace(sb.build());
 
         final ActiveMQArtemis broker = new ActiveMQArtemis();
-        broker.getMetadata().setName(name);
+        broker.getMetadata().setName(BROKER_NAME);
 
         // see https://access.redhat.com/documentation/en-us/red_hat_amq/2020
         //.q4/html/deploying_amq_broker_on_openshift/deploying-broker-on-ocp-using-operator_broker-ocp#operator-based-broker-deployment
@@ -233,8 +235,24 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     }
 
     private Path materializeTrustStore() throws IOException {
-        final Path ts = Files.createTempFile("tnb-trust-store", ".ts");
-        Files.copy(this.getClass().getResourceAsStream("/client.ts"), ts, REPLACE_EXISTING);
+        final Path ts = Paths.get("target", "tnb-trust-store" + new Date().getTime() + ".ts");
+        try (InputStream is = this.getClass().getResourceAsStream("/client.ts")) {
+            Files.copy(is, ts, REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create truststore", e);
+        }
         return ts;
+    }
+
+    private String encode(byte[] content) {
+        return Base64.getEncoder().encodeToString(content);
+    }
+
+    private String encodeResource(String resource) {
+        try {
+            return encode(IOUtils.toByteArray(this.getClass().getResource("/" + resource)));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to encode resource " + resource, e);
+        }
     }
 }
