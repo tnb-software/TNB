@@ -1,7 +1,8 @@
 package org.jboss.fuse.tnb.product.integration;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.common.product.ProductType;
+import org.jboss.fuse.tnb.common.utils.MapUtils;
+import org.jboss.fuse.tnb.product.customizer.Customizer;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.commons.io.IOUtils;
@@ -31,6 +32,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Properties;
 import java.util.Set;
@@ -44,6 +46,8 @@ import io.fabric8.kubernetes.api.model.Secret;
  */
 public class IntegrationBuilder {
     public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
+    public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
+
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
     private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit");
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
@@ -177,38 +181,16 @@ public class IntegrationBuilder {
     }
 
     public IntegrationBuilder addToProperties(String key, String value) {
-        properties.setProperty(key, value);
-        return this;
+        return addToProperties(MapUtils.toProperties(Map.of(key, value)));
+    }
+
+    public IntegrationBuilder addToProperties(Map<String, String> properties) {
+        return addToProperties(MapUtils.toProperties(properties));
     }
 
     public IntegrationBuilder addToProperties(Properties properties) {
         properties.forEach((key, value) -> this.properties.setProperty(key.toString(), value.toString()));
         return this;
-    }
-
-    /**
-     * Add property if:
-     * <ul>
-     * <li>match == true : add property only for the product passed as parameter</li>
-     * <li>match == false : add property for all product except for the product passed as parameter</li>
-     * </ul>
-     *
-     * @param forType {@link ProductType}, the product to check
-     * @param key {@link String}, the key of the property
-     * @param value {@link String}, the value of the property
-     * @param match boolean, true to include, exclude otherwise
-     * @return IntegrationBuilder, self reference for fluent API
-     */
-    public IntegrationBuilder addToProperties(ProductType forType, String key, String value, boolean match) {
-        if ((forType == TestConfiguration.product() && match)
-            || (!match && forType != TestConfiguration.product())) {
-            addToProperties(key, value);
-        }
-        return this;
-    }
-
-    public IntegrationBuilder addToProperties(ProductType forType, String key, String value) {
-        return addToProperties(forType, key, value, true);
     }
 
     private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
@@ -309,20 +291,16 @@ public class IntegrationBuilder {
         return this;
     }
 
-    public IntegrationBuilder dependencies(ProductType forType, String... dependencies) {
-        if (forType == TestConfiguration.product()) {
-            this.dependencies.addAll(Arrays.asList(dependencies));
-        }
-        return this;
-    }
-
     public IntegrationBuilder name(String name) {
         this.integrationName = name;
         return this;
     }
 
-    public IntegrationBuilder addCustomizer(Customizer c) {
+    public IntegrationBuilder addCustomizer(Customizer c, Customizer... others) {
         customizers.add(c);
+        if (others != null) {
+            customizers.addAll(Arrays.asList(others));
+        }
         return this;
     }
 

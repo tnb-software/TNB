@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.product.util;
 
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.ck.customizer.CamelKCustomizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +19,7 @@ import java.util.Set;
  * Inlines values from final fields to specified methods
  * Mainly serves as a workaround for ENTESB-16531.
  */
-public class InlineCustomizer extends Customizer {
+public class InlineCustomizer extends CamelKCustomizer {
 
     private static final Set<String> INLINE_METHODS = Set.of("from", "to", "fromF", "toF");
     private static final Logger LOG = LoggerFactory.getLogger(InlineCustomizer.class);
@@ -85,9 +85,7 @@ public class InlineCustomizer extends Customizer {
         }
         //matches normal field access, fromEndpoint for example
         if (expression.isNameExpr()) {
-            return expression.toNameExpr().map(nameExpr -> {
-                return replaceExpr(nameExpr.getNameAsString(), expression);
-            }).orElse(expression);
+            return expression.toNameExpr().map(nameExpr -> replaceExpr(nameExpr.getNameAsString(), expression)).orElse(expression);
         }
         if (expression.isBinaryExpr()) {
             return expression.toBinaryExpr().map(binaryExpr -> {

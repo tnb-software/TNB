@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.customizer.activemq;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.customizer.Customizer;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.Modifier;

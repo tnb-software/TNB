@@ -1,8 +1,7 @@
 package org.jboss.fuse.tnb.customizer.datasource;
 
-import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 
 import org.slf4j.Logger;
@@ -16,9 +15,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
-public class DataSourceCustomizer extends Customizer implements IntegrationSpecCustomizer {
+public class DataSourceCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataSourceCustomizer.class);
 
@@ -37,35 +35,21 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
     }
 
     @Override
-    public void customize() {
-        switch (TestConfiguration.product()) {
-            case CAMEL_K:
-            case CAMEL_QUARKUS:
-                customizeQuarkus();
-                break;
-            case CAMEL_SPRINGBOOT:
-                customizeSpringboot();
-                break;
-            default:
-                throw new UnsupportedOperationException("Customizer is not supported for selected product!");
-        }
+    public void customizeCamelK() {
+        customizeQuarkus();
     }
 
-    private void customizeSpringboot() {
-        final Properties appProperties = getApplicationProperties();
-
-        appProperties.putAll(
+    @Override
+    public void customizeSpringboot() {
+        getIntegrationBuilder().addToProperties(
             Map.of("spring.datasource.url", url,
                 "spring.datasource.username", username,
                 "spring.datasource.password", password,
                 "spring.datasource.driver-class-name", driver)
         );
 
-        getIntegrationBuilder().addToProperties(appProperties);
-
         final String[] dbDependencies = getDbAllocatorDependencies();
-        final List<String> dependencies = new LinkedList<>();
-        dependencies.addAll(Arrays.asList(dbDependencies));
+        final List<String> dependencies = new LinkedList<>(Arrays.asList(dbDependencies));
         dependencies.add("org.springframework.boot:spring-boot-starter-jdbc");
         if (dbDependencies.length == 0 && "postgresql".equals(type)) {
             dependencies.add("org.postgresql:postgresql");
@@ -73,12 +57,16 @@ public class DataSourceCustomizer extends Customizer implements IntegrationSpecC
         getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
     }
 
-    private void customizeQuarkus() {
-        final Properties appProperties = getApplicationProperties();
-        appProperties.put("quarkus.datasource.db-kind", type);
-        appProperties.put("quarkus.datasource.jdbc.url", url);
-        appProperties.put("quarkus.datasource.username", username);
-        appProperties.put("quarkus.datasource.password", password);
+    @Override
+    public void customizeQuarkus() {
+        getIntegrationBuilder().addToProperties(
+            Map.of(
+                "quarkus.datasource.db-kind", type,
+                "quarkus.datasource.jdbc.url", url,
+                "quarkus.datasource.username", username,
+                "quarkus.datasource.password", password
+                )
+        );
 
         final String[] dbDependencies = getDbAllocatorDependencies();
 

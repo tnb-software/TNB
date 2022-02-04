@@ -1,14 +1,24 @@
 package org.jboss.fuse.tnb.product.ck.utils;
 
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.ck.customizer.CamelKCustomizer;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.maven.model.Dependency;
 
+import com.github.javaparser.ast.comments.Comment;
+
 import java.util.stream.Collectors;
 
-public class ModelineCustomizer extends Customizer {
+public class ModelineCustomizer extends CamelKCustomizer {
     private static final String MODELINE_PREFIX = "camel-k:";
+    private String append;
+
+    public ModelineCustomizer() {
+    }
+
+    public ModelineCustomizer(String append) {
+        this.append = append;
+    }
 
     @Override
     public void customize() {
@@ -26,11 +36,15 @@ public class ModelineCustomizer extends Customizer {
             }
         }
         String prevModelines =
-            getIntegrationBuilder().getRouteBuilder().getComment().stream().map(c -> c.getContent())
+            getIntegrationBuilder().getRouteBuilder().getComment().stream().map(Comment::getContent)
                 .filter(c -> c.startsWith(MODELINE_PREFIX))
                 .map(c -> c.replaceAll(MODELINE_PREFIX + "\\s*", ""))
                 .collect(Collectors.joining(" "));
-        modeline.append(" " + prevModelines);
+        modeline.append(" ");
+        if (append != null) {
+            modeline.append(append).append(" ");
+        }
+        modeline.append(prevModelines);
         getIntegrationBuilder().getRouteBuilder().setLineComment(modeline.append("\n").toString());
     }
 }

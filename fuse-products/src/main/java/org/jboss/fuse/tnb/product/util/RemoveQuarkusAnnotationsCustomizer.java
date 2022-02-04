@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.product.util;
 
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
 
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.body.ClassOrInterfaceDeclaration;
@@ -12,9 +12,8 @@ import java.util.List;
 
 import io.quarkus.runtime.annotations.RegisterForReflection;
 
-public class RemoveQuarkusAnnotationsCustomizer extends Customizer {
-    @Override
-    public void customize() {
+public class RemoveQuarkusAnnotationsCustomizer extends ProductsCustomizer {
+    private void removeAnnotation() {
         List<CompilationUnit> compilationUnits = new ArrayList<>();
         compilationUnits.add(getIntegrationBuilder().getRouteBuilder());
         compilationUnits.addAll(getIntegrationBuilder().getAdditionalClasses());
@@ -31,5 +30,20 @@ public class RemoveQuarkusAnnotationsCustomizer extends Customizer {
             // Remove import if present
             cu.getImports().removeIf(i -> i.getName().getIdentifier().contains(RegisterForReflection.class.getSimpleName()));
         }
+    }
+
+    @Override
+    public void customizeCamelK() {
+        removeAnnotation();
+    }
+
+    @Override
+    public void customizeQuarkus() {
+        // no-op
+    }
+
+    @Override
+    public void customizeSpringboot() {
+        removeAnnotation();
     }
 }

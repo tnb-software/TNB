@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.product;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
-import org.jboss.fuse.tnb.product.integration.Customizer;
+import org.jboss.fuse.tnb.product.customizer.Customizer;
 
 import com.github.javaparser.ast.CompilationUnit;
 
