@@ -52,7 +52,7 @@ public class LocalSpringBootApp extends SpringBootApp {
 
     @Override
     public boolean isReady() {
-        return appProcess.isAlive() && isCamelStarted();
+        return appProcess.isAlive();
     }
 
     @Override
@@ -61,11 +61,10 @@ public class LocalSpringBootApp extends SpringBootApp {
     }
 
     private List<String> getCommand() {
-        List<String> cmd = new ArrayList<>();
         String fileName;
         Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
 
-        cmd.addAll(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
+        List<String> cmd = new ArrayList<>(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
         fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT.jar").toAbsolutePath().toString();
 
         cmd.add(fileName);
