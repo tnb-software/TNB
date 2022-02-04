@@ -1,6 +1,9 @@
 package org.jboss.fuse.tnb.product.deploystrategy;
 
-public enum OpenshiftDeployStrategy {
-    JKUBE,
-    DEVFILE
+import org.jboss.fuse.tnb.common.product.ProductType;
+
+public interface OpenshiftDeployStrategy {
+    ProductType[] products();
+
+    OpenshiftDeployStrategyType deployType();
 }

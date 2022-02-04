@@ -4,21 +4,33 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
-import org.jboss.fuse.tnb.product.deploystrategy.DeployableWith;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategy;
+import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import com.google.auto.service.AutoService;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 
-@DeployableWith(strategy = OpenshiftDeployStrategy.DEVFILE, product = ProductType.CAMEL_SPRINGBOOT)
+@AutoService(OpenshiftDeployStrategy.class)
 public class DevfileStrategy extends OpenshiftBaseDeployer {
 
     private static final Logger LOG = LoggerFactory.getLogger(DevfileStrategy.class);
+
+    @Override
+    public ProductType[] products() {
+        return new ProductType[]{ProductType.CAMEL_SPRINGBOOT};
+    }
+
+    @Override
+    public OpenshiftDeployStrategyType deployType() {
+        return OpenshiftDeployStrategyType.DEVFILE;
+    }
 
     @Override
     public void deploy(String name) {

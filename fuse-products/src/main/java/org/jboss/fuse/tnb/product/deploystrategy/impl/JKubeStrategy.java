@@ -5,16 +5,28 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.product.deploystrategy.DeployableWith;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategy;
+import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import com.google.auto.service.AutoService;
+
 import java.util.Map;
 
-@DeployableWith(strategy = OpenshiftDeployStrategy.JKUBE, product = ProductType.CAMEL_SPRINGBOOT)
+@AutoService(OpenshiftDeployStrategy.class)
 public class JKubeStrategy extends OpenshiftBaseDeployer {
+
+    @Override
+    public ProductType[] products() {
+        return new ProductType[]{ProductType.CAMEL_SPRINGBOOT};
+    }
+
+    @Override
+    public OpenshiftDeployStrategyType deployType() {
+        return OpenshiftDeployStrategyType.JKUBE;
+    }
 
     public void deploy(String name) {
         final String plugin = String.format("%s:openshift-maven-plugin:%s"

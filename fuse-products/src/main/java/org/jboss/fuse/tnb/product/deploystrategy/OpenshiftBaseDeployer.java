@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer {
+public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, OpenshiftDeployStrategy {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftBaseDeployer.class);
 
@@ -29,7 +29,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer {
         //builds
         //delete build's pod
         OpenshiftClient.get().builds().withLabels(labelMap).list()
-            .getItems().stream().forEach(build -> OpenshiftClient.get().pods()
+            .getItems().forEach(build -> OpenshiftClient.get().pods()
                 .withLabels(Map.of("openshift.io/build.name", build.getMetadata().getName())).delete()
             );
         OpenshiftClient.get().builds().withLabels(labelMap).delete();
