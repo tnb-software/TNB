@@ -20,7 +20,7 @@ public final class Attachments {
     }
 
     static void startTestClass(String testClass) {
-        currentTestClass = "TEST-" + testClass;
+        currentTestClass = testClass;
     }
 
     static void startTestCase(String testCase) {
@@ -36,7 +36,7 @@ public final class Attachments {
 
     private static void createAttachments() {
         try {
-            final Path testCaseDir = Path.of("target", "attachments", currentTestClass, currentTestCase);
+            final Path testCaseDir = Path.of("target", "attachments", currentTestClass + "." + currentTestCase);
             Files.createDirectories(testCaseDir);
 
             for (Path p : attachments) {
