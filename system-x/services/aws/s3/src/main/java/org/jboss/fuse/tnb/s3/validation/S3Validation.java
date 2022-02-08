@@ -29,6 +29,7 @@ public class S3Validation implements Validation {
     public void createS3Bucket(String name) {
         LOG.debug("Creating S3 bucket {}", name);
         client.createBucket(b -> b.bucket(name));
+        waitForBucket(name);
     }
 
     public void waitForBucket(String name) {
@@ -37,9 +38,11 @@ public class S3Validation implements Validation {
     }
 
     public void deleteS3Bucket(String name) {
-        deleteS3BucketContent(name);
-        LOG.debug("Deleting S3 bucket {}", name);
-        client.deleteBucket(b -> b.bucket(name));
+        if (bucketExists(name)) {
+            deleteS3BucketContent(name);
+            LOG.debug("Deleting S3 bucket {}", name);
+            client.deleteBucket(b -> b.bucket(name));
+        }
     }
 
     public void deleteS3BucketContent(String name) {
@@ -49,6 +52,10 @@ public class S3Validation implements Validation {
 
     public List<String> listKeysInBucket(String bucketName) {
         return client.listObjects(b -> b.bucket(bucketName)).contents().stream().map(S3Object::key).collect(Collectors.toList());
+    }
+
+    public boolean bucketExists(String bucketName) {
+        return client.listBuckets().buckets().stream().anyMatch(b -> bucketName.equals(b.name()));
     }
 
     public String readFileFromBucket(String bucketName, String key) {
@@ -72,6 +79,10 @@ public class S3Validation implements Validation {
 
     public void createFile(String bucketName, String key, Path file) {
         createFromBody(bucketName, key, RequestBody.fromFile(file));
+    }
+
+    public void createFolder(String bucketName, String key) {
+        createFromBody(bucketName, key.endsWith("/") ? key : key + "/", RequestBody.empty());
     }
 
     private void createFromBody(String bucketName, String key, RequestBody body) {
