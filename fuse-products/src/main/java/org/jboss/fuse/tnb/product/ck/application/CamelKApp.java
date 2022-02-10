@@ -105,17 +105,14 @@ public class CamelKApp extends App {
             createIntegrationResources((IntegrationBuilder) integrationSource);
         }
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
-            && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"))
+            && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration")), getName()
         );
     }
 
     @Override
     public void stop() {
-        LOG.info("Collecting logs of integration {}", name);
         if (getLog() != null) {
-            final Path logPath = TestConfiguration.appLocation().resolve(name + ".log");
-            IOUtils.writeFile(logPath, ((OpenshiftLog) getLog()).toString(started));
-            Attachments.addAttachment(logPath);
+            ((OpenshiftLog)getLog()).save(started);
         }
         LOG.info("Removing integration {}", name);
         if (integrationSource instanceof KameletBinding) {

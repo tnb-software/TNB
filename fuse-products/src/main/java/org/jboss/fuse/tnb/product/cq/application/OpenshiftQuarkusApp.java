@@ -54,16 +54,14 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         }
         OpenshiftClient.get().doS2iBuild(name, filePath);
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
-            && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")));
+            && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")), getName());
     }
 
     @Override
     public void stop() {
-        LOG.info("Collecting logs of integration {}", name);
-        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(
-            TestConfiguration.appLocation().resolve(name + ".log"),
-            ((OpenshiftLog) getLog()).toString(started)
-        );
+        if (getLog() != null) {
+            ((OpenshiftLog) getLog()).save(started);
+        }
         LOG.info("Undeploying integration resources");
         for (HasMetadata createdResource : createdResources) {
             LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
