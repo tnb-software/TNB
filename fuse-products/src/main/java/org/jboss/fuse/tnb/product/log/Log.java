@@ -20,4 +20,6 @@ public abstract class Log {
     public boolean containsAfter(String message, int skipLines) {
         return toString().lines().skip(skipLines).anyMatch(s -> s.contains(message));
     }
+
+    public abstract void save();
 }

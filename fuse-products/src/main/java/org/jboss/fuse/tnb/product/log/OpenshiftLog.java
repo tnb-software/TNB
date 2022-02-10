@@ -1,13 +1,17 @@
 package org.jboss.fuse.tnb.product.log;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.exception.TimeoutException;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 
+import org.jboss.fuse.tnb.product.rp.Attachments;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -18,9 +22,11 @@ import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 public class OpenshiftLog extends Log {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLog.class);
     private final Predicate<Pod> podPredicate;
+    private final String name;
 
-    public OpenshiftLog(Predicate<Pod> podPredicate) {
+    public OpenshiftLog(Predicate<Pod> podPredicate, String name) {
         this.podPredicate = podPredicate;
+        this.name = name;
     }
 
     @Override
@@ -71,5 +77,20 @@ public class OpenshiftLog extends Log {
     private boolean podFailed(Pod p) {
         return PodStatusUtil.getContainerStatus(p).stream().anyMatch(containerStatus ->
             "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason()));
+    }
+
+    public void save(boolean started) {
+        LOG.info("Collecting logs of integration {}", name);
+        final Path logPath = TestConfiguration.appLocation().resolve(name + ".log");
+        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(
+            logPath,
+            toString(started)
+        );
+        Attachments.addAttachment(logPath);
+    }
+
+    @Override
+    public void save() {
+        save(true);
     }
 }

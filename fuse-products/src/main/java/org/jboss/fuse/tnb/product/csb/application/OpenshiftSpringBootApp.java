@@ -41,7 +41,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
                 , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
                 , "jkube.build.recreate", "all"
                 , "jkube.docker.logStdout", "true"
-             )).withGoals("oc:build", "oc:apply")
+            )).withGoals("oc:build", "oc:apply")
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"));
         Maven.invoke(requestBuilder.build());
@@ -49,16 +49,14 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app")
             && name.equals(p.getMetadata().getLabels().get("app"))
             && p.getMetadata().getLabels().containsKey("provider")
-            && "jkube".equals(p.getMetadata().getLabels().get("provider")));
+            && "jkube".equals(p.getMetadata().getLabels().get("provider")), getName());
     }
 
     @Override
     public void stop() {
-        LOG.info("Collecting logs of integration {}", name);
-        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(
-            TestConfiguration.appLocation().resolve(name + ".log"),
-            ((OpenshiftLog) getLog()).toString(started)
-        );
+        if (getLog() != null) {
+            ((OpenshiftLog) getLog()).save(started);
+        }
         LOG.info("Undeploy integration resources");
         final Map<String, String> labelMap = Map.of("app", name, "provider", "jkube");
         //builds
