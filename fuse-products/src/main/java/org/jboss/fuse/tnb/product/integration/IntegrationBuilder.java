@@ -49,7 +49,7 @@ public class IntegrationBuilder {
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
 
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
-    private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit");
+    private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit", "io.fabric8");
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
     private final List<String> dependencies = new ArrayList<>();
