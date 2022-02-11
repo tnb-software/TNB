@@ -24,6 +24,7 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder);
+
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }

@@ -87,6 +87,11 @@
             <artifactId>camel-k-client</artifactId>
             <version>${kubernetes.client.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.eclipse.jgit</groupId>
+            <artifactId>org.eclipse.jgit</artifactId>
+            <version>${jgit.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

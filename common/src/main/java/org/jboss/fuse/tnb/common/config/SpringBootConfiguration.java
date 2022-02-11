@@ -33,7 +33,7 @@ public class SpringBootConfiguration extends Configuration {
         return getProperty(SPRINGBOOT_PLATFORM_GROUP_ID, "org.springframework.boot");
     }
 
-    public static String springbootPlatformArtifactId() {
+    public static String springBootPlatformArtifactId() {
         return getProperty(SPRINGBOOT_PLATFORM_ARTIFACT_ID, "spring-boot-dependencies");
     }
 

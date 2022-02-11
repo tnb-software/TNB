@@ -5,34 +5,76 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
+import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
 import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
-
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSpringBootApp.class);
+    private GitIntegrationBuilder gitIntegrationBuilder = null;
+    private Path baseDirectory;
+    private final String finalName;
 
     public OpenshiftSpringBootApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder);
+
+        if (integrationBuilder instanceof GitIntegrationBuilder) {
+            gitIntegrationBuilder = (GitIntegrationBuilder) integrationBuilder;
+
+            baseDirectory = mavenGitApp.getProjectLocation();
+            Path jkubeFolder = Path.of(baseDirectory.toAbsolutePath().toString(), "src", "main", "jkube");
+            jkubeFolder.toFile().mkdirs();
+
+            String properties = gitIntegrationBuilder.getJavaProperties().entrySet().stream()
+                .map(entry -> "    " + entry.getKey() + "=" + entry.getValue())
+                .collect(Collectors.joining(System.lineSeparator()));
+
+            String jkubeFileContent = "data:" + System.lineSeparator()
+                + "  application.properties: |" + System.lineSeparator()
+                + properties;
+
+            try {
+                Files.copy(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/deployment.yaml"),
+                    jkubeFolder.resolve("deployment.yaml"));
+                FileUtils.writeStringToFile(new File(jkubeFolder.toFile(), "configmap.yaml"), jkubeFileContent, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                throw new RuntimeException("Error creating jkube configmap.yaml", e);
+            }
+
+            finalName = gitIntegrationBuilder.getFinalName().orElse(getName());
+        } else {
+            baseDirectory = TestConfiguration.appLocation().resolve(name);
+
+            finalName = getName();
+        }
     }
 
     @Override
     public void start() {
-
+        String oc = SpringBootConfiguration.openshiftMavenPluginGroupId()
+            + ":openshift-maven-plugin:"
+            + SpringBootConfiguration.openshiftMavenPluginVersion();
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
-            .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
+            .withBaseDirectory(baseDirectory)
             .withProperties(Map.of(
                 "skipTests", "true"
                 , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
@@ -44,16 +86,16 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
                 , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
                 , "jkube.build.recreate", "all"
                 , "jkube.docker.logStdout", "true"
-            )).withGoals("oc:build", "oc:apply")
+            )).withGoals(oc + ":resource", oc + ":build", oc + ":apply")
             .withProfiles("openshift")
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"));
+            .withLogFile(TestConfiguration.appLocation().resolve(finalName + "-deploy.log"));
         Maven.invoke(requestBuilder.build());
 
         endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
-            .withName(name).get().getSpec().getHost());
+            .withName(finalName).get().getSpec().getHost());
 
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app")
-            && name.equals(p.getMetadata().getLabels().get("app"))
+            && finalName.equals(p.getMetadata().getLabels().get("app"))
             && p.getMetadata().getLabels().containsKey("provider")
             && "jkube".equals(p.getMetadata().getLabels().get("provider")), getName());
     }
@@ -64,7 +106,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
             ((OpenshiftLog) getLog()).save(started);
         }
         LOG.info("Undeploy integration resources");
-        final Map<String, String> labelMap = Map.of("app", name, "provider", "jkube");
+        final Map<String, String> labelMap = Map.of("app", finalName, "provider", "jkube");
         //builds
         //delete build's pod
         OpenshiftClient.get().builds().withLabels(labelMap).list()
@@ -86,7 +128,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isReady() {
         try {
-            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"));
+            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", finalName, "provider", "jkube"));
             return !pods.isEmpty() && pods.stream().allMatch(Readiness::isPodReady);
         } catch (Exception ignored) {
             return false;
@@ -96,7 +138,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isFailed() {
         try {
-            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"));
+            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", finalName, "provider", "jkube"));
             return !pods.isEmpty() && pods.stream().map(PodStatusUtil::getContainerStatus)
                 .allMatch(containerStatuses -> containerStatuses.stream()
                     .anyMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
