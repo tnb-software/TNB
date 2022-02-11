@@ -16,11 +16,16 @@ import com.google.auto.service.AutoService;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 @AutoService(OpenshiftDeployStrategy.class)
 public class DevfileStrategy extends OpenshiftBaseDeployer {
 
     private static final Logger LOG = LoggerFactory.getLogger(DevfileStrategy.class);
+
+    private static final String SB_DEVFILE = "https://raw.githubusercontent.com/mcarlett/registry/ubi/stacks/java-springboot-ubi8/devfile.yaml";
 
     @Override
     public ProductType[] products() {
@@ -35,12 +40,14 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     @Override
     public void deploy(String name) {
         try {
-            runOdoCmd(new String[]{"create", "java:openjdk-8-ubi8", "--s2i", "--app", name, "--context", "."
-                    , "--env", String.format("MAVEN_MIRROR_URL=%s", TestConfiguration.mavenRepository())
-                    , "--kubeconfig", OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString()
-                }
+            login(name);
+            runOdoCmd(Arrays.asList("create", "java-springboot-ubi8", "--app", name, "--context", "."
+                , "--devfile", SB_DEVFILE)
                 , TestConfiguration.appLocation().resolve(name + "-devfile.log").toFile(), name);
-            runOdoCmd(new String[]{"push", "--show-log", "-v", "5"}
+
+            setEnvVar(name, "MAVEN_MIRROR_URL", TestConfiguration.mavenRepository());
+
+            runOdoCmd(Arrays.asList("push", "--show-log", "-v", "5")
                 , TestConfiguration.appLocation().resolve(name + "-deploy.log").toFile(), name);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
@@ -50,25 +57,50 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     @Override
     public void undeploy(String name) {
         try {
+            login(name);
             final File logFile = TestConfiguration.appLocation().resolve(name + "-undeploy.log").toFile();
-            runOdoCmd(new String[]{"delete", "--app", name, "-f"}, logFile, name);
+            runOdoCmd(Arrays.asList("delete", "--app", name, "-f"), logFile, name);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private void runOdoCmd(String[] args, File logFile, String name) throws IOException, InterruptedException {
-        String odoBinaryPath = IOUtils.getExecInPath("odo");
-        Path baseDir = TestConfiguration.appLocation().resolve(name);
-        String[] cmd = new String[args.length + 1];
-        cmd[0] = odoBinaryPath;
-        for (int i = 1; i < cmd.length; i++) {
-            cmd[i] = args[i - 1];
-        }
+    private void setEnvVar(String name, String envName, String envValue) throws IOException, InterruptedException {
+        runOdoCmd(Arrays.asList("config", "set", "--env", String.format("%s=%s", envName, envValue)), name);
+    }
+
+    private void login(String name) throws IOException, InterruptedException {
+        runOdoCmd(Arrays.asList("login", OpenshiftConfiguration.openshiftUrl(),
+            String.format("--username=%s", OpenshiftConfiguration.openshiftUsername()),
+            String.format("--password=%s", OpenshiftConfiguration.openshiftPassword())
+        ), name);
+        runOdoCmd(Arrays.asList("project", "set", OpenshiftConfiguration.openshiftNamespace()), name);
+    }
+
+    private void runOdoCmd(final List<String> args, String name) throws IOException, InterruptedException {
+        this.runOdoCmd(args, null, name);
+    }
+
+    private void runOdoCmd(final List<String> args, File logFile, String name) throws IOException, InterruptedException {
+        final String odoBinaryPath = System.getProperty("odo.path", IOUtils.getExecInPath("odo"));
+        assert odoBinaryPath != null;
+        final Path baseDir = TestConfiguration.appLocation().resolve(name);
+
+        final List<String> cmd = new ArrayList<>(args.size() + 1);
+        cmd.add(odoBinaryPath);
+        cmd.addAll(args);
+        cmd.add("--kubeconfig");
+        cmd.add(OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString());
+
         ProcessBuilder processBuilder = new ProcessBuilder(cmd)
-            .redirectOutput(logFile)
-            .redirectError(logFile)
             .directory(baseDir.toFile());
+        if (logFile != null) {
+            processBuilder.redirectOutput(logFile)
+                .redirectError(logFile);
+        } else {
+            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
+                .redirectError(ProcessBuilder.Redirect.INHERIT);
+        }
 
         LOG.info("Starting odo command {}", String.join(" ", cmd));
 
