@@ -5,7 +5,6 @@ import org.jboss.fuse.tnb.common.exception.TimeoutException;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-
 import org.jboss.fuse.tnb.product.rp.Attachments;
 
 import org.slf4j.Logger;
@@ -62,7 +61,13 @@ public class OpenshiftLog extends Log {
 
         try {
             WaitUtils.waitFor(
-                () -> OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().filter(this::podFailed).isPresent(),
+                () -> {
+                    try {
+                        return OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().filter(this::podFailed).isPresent();
+                    } catch (Exception ignored) {
+                        return false;
+                    }
+                },
                 12,
                 5000,
                 "Waiting until the pod is terminated to collect logs from failed integration");
