@@ -16,14 +16,19 @@
 
     <properties>
         <auto-service.version>1.0-rc7</auto-service.version>
-        <kubernetes.client.version>5.7.3</kubernetes.client.version>
+        <!--
+          Careful when upgrading this version, as it also defines the camel-k-client version in fuse-products,
+          that brings model classes aligned to a specific camel-k-release version
+         -->
+        <kubernetes.client.version>5.12.1</kubernetes.client.version>
         <javaparser.version>3.20.2</javaparser.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>1.15.2</testcontainers.version>
-        <xtf.version>0.24</xtf.version>
+        <!-- >= 0.25 version is aligned to >= 5.11 client -->
+        <xtf.version>0.25-SNAPSHOT</xtf.version>
         <junit.version>5.8.2</junit.version>
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>

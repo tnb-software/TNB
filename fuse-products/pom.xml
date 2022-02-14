@@ -82,6 +82,11 @@
             <artifactId>javaparser-symbol-solver-core</artifactId>
             <version>${javaparser.version}</version>
         </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>camel-k-client</artifactId>
+            <version>${kubernetes.client.version}</version>
+        </dependency>
     </dependencies>
     <build>
         <plugins>

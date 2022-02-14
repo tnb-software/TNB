@@ -1,30 +1,24 @@
 package org.jboss.fuse.tnb.product.ck.utils;
 
-import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
-import org.jboss.fuse.tnb.product.ck.generated.Integration;
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationList;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
+import io.fabric8.camelk.client.CamelKClient;
+import io.fabric8.camelk.v1.Integration;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
 
 /**
  * Runnable that sets the owner reference of a given openshift resource to the integration object.
  */
 public class OwnerReferenceSetter implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(OwnerReferenceSetter.class);
-    private final NonNamespaceOperation<Integration, IntegrationList, Resource<Integration>> integrationClient =
-        OpenshiftClient.get().customResources(CamelKSupport.integrationCRDContext(CamelKSettings.API_VERSION_DEFAULT),
-            Integration.class, IntegrationList.class).inNamespace(OpenshiftConfiguration.openshiftNamespace());
     private final String integrationNameSubstring;
     private final HasMetadata target;
 
@@ -35,13 +29,15 @@ public class OwnerReferenceSetter implements Runnable {
 
     @Override
     public void run() {
+        CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
+
         Integration i = null;
         int maxRetries = 30;
         int retries = 0;
         while (i == null) {
             WaitUtils.sleep(1000);
-            i = integrationClient.list().getItems().stream().filter(integration -> integration.getMetadata().getName().contains(
-                integrationNameSubstring)).findFirst().orElse(null);
+            i = client.v1().integrations().list().getItems().stream().filter(integration -> integration.getMetadata().getName()
+                .contains(integrationNameSubstring)).findFirst().orElse(null);
             retries++;
             if (retries > maxRetries) {
                 LOG.warn(

@@ -39,4 +39,16 @@
             <artifactId>core</artifactId>
         </dependency>
     </dependencies>
+
+    <!-- Temporary until XTF 0.25 is released -->
+    <repositories>
+        <repository>
+            <id>jboss-snapshots</id>
+            <name>JBoss Snapshots</name>
+            <url>https://repository.jboss.org/nexus/content/repositories/snapshots</url>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
 </project>

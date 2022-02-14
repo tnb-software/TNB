@@ -1,8 +1,8 @@
 package org.jboss.fuse.tnb.product.interfaces;
 
-import org.jboss.fuse.tnb.product.ck.generated.Kamelet;
-
 import java.util.Properties;
+
+import io.fabric8.camelk.v1alpha1.Kamelet;
 
 public interface KameletOps {
     void createKamelet(Kamelet kamelet);

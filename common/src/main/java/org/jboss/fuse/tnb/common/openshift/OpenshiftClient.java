@@ -9,7 +9,6 @@ import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -46,19 +45,15 @@ public final class OpenshiftClient extends OpenShift {
 
     private static OpenshiftClient createClient() {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
-            try {
-                OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
-                LOG.info("Using cluster {}", config.getMasterUrl());
-                config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
-                config.setHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy());
-                config.setBuildTimeout(10 * 60 * 1000);
-                config.setRequestTimeout(120_000);
-                config.setConnectionTimeout(120_000);
-                config.setTrustCerts(true);
-                return new OpenshiftClient(config);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to create openshift config: ", e);
-            }
+            OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
+            LOG.info("Using cluster {}", config.getMasterUrl());
+            config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
+            config.setHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy());
+            config.setBuildTimeout(10 * 60 * 1000);
+            config.setRequestTimeout(120_000);
+            config.setConnectionTimeout(120_000);
+            config.setTrustCerts(true);
+            return new OpenshiftClient(config);
         } else {
             return new OpenshiftClient(
                 new OpenShiftConfigBuilder()

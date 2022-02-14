@@ -1,11 +1,11 @@
 package org.jboss.fuse.tnb.product.integration;
 
-import org.jboss.fuse.tnb.product.ck.generated.IntegrationSpec;
+import io.fabric8.camelk.v1.IntegrationSpecBuilder;
 
 /**
  * Abstract class for customizations for routebuilder / application properties.
  */
 public interface IntegrationSpecCustomizer {
 
-    void customizeIntegration(IntegrationSpec integrationSpec);
+    void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder);
 }
