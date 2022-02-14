@@ -2,10 +2,12 @@ package org.jboss.fuse.tnb.product.cq.application;
 
 import static org.jboss.fuse.tnb.common.utils.IOUtils.createTar;
 
+import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
@@ -53,6 +55,10 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             filePath = createTar(integrationTarget.resolve("quarkus-app"));
         }
         OpenshiftClient.get().doS2iBuild(name, filePath);
+
+        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get(OpenshiftConfiguration.openshiftNamespace()).routes()
+            .withName(name).get().getSpec().getHost());
+
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")), getName());
     }

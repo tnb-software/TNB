@@ -53,6 +53,7 @@ public class IntegrationBuilder {
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
     private final List<String> dependencies = new ArrayList<>();
+    private final List<MavenDependency> mavenDependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
@@ -64,6 +65,8 @@ public class IntegrationBuilder {
     private String sourceName = "MyRouteBuilder.java";
     private String sourceContent;
     private String secret;
+
+    private int port = 8080;
 
     public IntegrationBuilder(String name) {
         this.integrationName = name;
@@ -291,6 +294,11 @@ public class IntegrationBuilder {
         return this;
     }
 
+    public IntegrationBuilder dependencies(MavenDependency... dependencies) {
+        this.mavenDependencies.addAll(Arrays.asList(dependencies));
+        return this;
+    }
+
     public IntegrationBuilder name(String name) {
         this.integrationName = name;
         return this;
@@ -301,6 +309,11 @@ public class IntegrationBuilder {
         if (others != null) {
             customizers.addAll(Arrays.asList(others));
         }
+        return this;
+    }
+
+    public IntegrationBuilder port(int port) {
+        this.port = port;
         return this;
     }
 
@@ -369,6 +382,10 @@ public class IntegrationBuilder {
         return dependencies;
     }
 
+    public List<MavenDependency> getMavenDependencies() {
+        return mavenDependencies;
+    }
+
     public CompilationUnit getRouteBuilder() {
         return routeBuilder;
     }
@@ -387,5 +404,9 @@ public class IntegrationBuilder {
 
     public List<Customizer> getCustomizers() {
         return customizers;
+    }
+
+    public int getPort() {
+        return port;
     }
 }

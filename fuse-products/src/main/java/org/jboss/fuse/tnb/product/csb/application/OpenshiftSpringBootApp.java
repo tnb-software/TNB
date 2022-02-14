@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
@@ -47,6 +48,9 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"));
         Maven.invoke(requestBuilder.build());
+
+        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get(OpenshiftConfiguration.openshiftNamespace()).routes()
+            .withName(name).get().getSpec().getHost());
 
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app")
             && name.equals(p.getMetadata().getLabels().get("app"))

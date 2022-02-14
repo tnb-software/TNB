@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.cq.application;
 import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.FileLog;
 
@@ -24,6 +25,7 @@ public class LocalQuarkusApp extends QuarkusApp {
     public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder);
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
+        endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
 
     @Override

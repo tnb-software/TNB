@@ -7,10 +7,13 @@ import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.integration.MavenDependency;
 import org.jboss.fuse.tnb.product.integration.ResourceType;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,6 +28,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
@@ -55,6 +59,7 @@ public abstract class SpringBootApp extends App {
         customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
         customizeProject(integrationBuilder.getDependencies());
+        customizeDependencies(integrationBuilder.getMavenDependencies());
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
@@ -76,6 +81,29 @@ public abstract class SpringBootApp extends App {
 
         LOG.info("Building {} application project", name);
         Maven.invoke(requestBuilder.build());
+    }
+
+    private void customizeDependencies(List<MavenDependency> mavenDependencies) {
+        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        Model model = Maven.loadPom(pom);
+
+        mavenDependencies.forEach(dep -> {
+            Dependency dependency = Maven.toDependency(dep.getDependency());
+
+            dependency.setExclusions(
+                dep.getExclusions().stream().map(strExclusion -> {
+                    Dependency exclusionDependency = Maven.toDependency(strExclusion);
+                    Exclusion exclusion = new Exclusion();
+                    exclusion.setGroupId(exclusionDependency.getGroupId());
+                    exclusion.setArtifactId(exclusionDependency.getArtifactId());
+
+                    return exclusion;
+                }).collect(Collectors.toList()));
+
+            model.getDependencies().add(Maven.toDependency(dep.getDependency()));
+        });
+
+        Maven.writePom(pom, model);
     }
 
     private void customizeMain(IntegrationBuilder integrationBuilder, Path location) {
