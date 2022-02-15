@@ -12,8 +12,10 @@ import org.jboss.fuse.tnb.product.util.maven.Maven;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
 
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
 import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
@@ -80,8 +82,8 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isReady() {
         try {
-            return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
-                .stream().allMatch(Readiness::isPodReady);
+            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"));
+            return !pods.isEmpty() && pods.stream().allMatch(Readiness::isPodReady);
         } catch (Exception ignored) {
             return false;
         }
@@ -90,8 +92,8 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isFailed() {
         try {
-            return OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"))
-                .stream().map(PodStatusUtil::getContainerStatus)
+            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of("app", name, "provider", "jkube"));
+            return !pods.isEmpty() && pods.stream().map(PodStatusUtil::getContainerStatus)
                 .allMatch(containerStatuses -> containerStatuses.stream()
                     .anyMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
         } catch (Exception ignored) {
