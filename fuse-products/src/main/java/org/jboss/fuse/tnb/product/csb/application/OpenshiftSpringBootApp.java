@@ -49,7 +49,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"));
         Maven.invoke(requestBuilder.build());
 
-        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get(OpenshiftConfiguration.openshiftNamespace()).routes()
+        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
             .withName(name).get().getSpec().getHost());
 
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app")

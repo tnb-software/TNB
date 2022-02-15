@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product.ck.utils;
 
 import org.jboss.fuse.tnb.product.ck.customizer.CamelKCustomizer;
-import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.maven.model.Dependency;
 
@@ -23,16 +22,14 @@ public class ModelineCustomizer extends CamelKCustomizer {
     @Override
     public void customize() {
         StringBuilder modeline = new StringBuilder(MODELINE_PREFIX + " language=java");
-        for (String dependency : getIntegrationBuilder().getDependencies()) {
-            if (dependency.startsWith("github")) {
-                modeline.append(" dependency=").append(dependency);
-            } else {
-                final Dependency dep = Maven.toDependency(dependency);
-
-                modeline.append(" dependency=mvn:").append(dep.getGroupId()).append(":").append(dep.getArtifactId());
-                if (dep.getVersion() != null) {
-                    modeline.append(":").append(dep.getVersion());
-                }
+        for (Dependency dependency : getIntegrationBuilder().getDependencies()) {
+            modeline.append(" dependency=");
+            if (!dependency.getGroupId().equals("github")) {
+                modeline.append("mvn:");
+            }
+            modeline.append(dependency.getGroupId()).append(":").append(dependency.getArtifactId());
+            if (dependency.getVersion() != null) {
+                modeline.append(":").append(dependency.getVersion());
             }
         }
         String prevModelines =

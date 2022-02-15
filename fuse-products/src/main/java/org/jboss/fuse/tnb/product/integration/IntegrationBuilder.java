@@ -3,10 +3,12 @@ package org.jboss.fuse.tnb.product.integration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.customizer.Customizer;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.camel.builder.RouteBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ClassUtils;
+import org.apache.maven.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -52,8 +54,7 @@ public class IntegrationBuilder {
     private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit", "io.fabric8");
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
-    private final List<String> dependencies = new ArrayList<>();
-    private final List<MavenDependency> mavenDependencies = new ArrayList<>();
+    private final List<Dependency> dependencies = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
@@ -290,12 +291,12 @@ public class IntegrationBuilder {
      * @return this
      */
     public IntegrationBuilder dependencies(String... dependencies) {
-        this.dependencies.addAll(Arrays.asList(dependencies));
+        this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::toDependency).collect(Collectors.toList()));
         return this;
     }
 
-    public IntegrationBuilder dependencies(MavenDependency... dependencies) {
-        this.mavenDependencies.addAll(Arrays.asList(dependencies));
+    public IntegrationBuilder dependencies(Dependency... dependencies) {
+        this.dependencies.addAll(Arrays.asList(dependencies));
         return this;
     }
 
@@ -378,12 +379,8 @@ public class IntegrationBuilder {
         return integrationName;
     }
 
-    public List<String> getDependencies() {
+    public List<Dependency> getDependencies() {
         return dependencies;
-    }
-
-    public List<MavenDependency> getMavenDependencies() {
-        return mavenDependencies;
     }
 
     public CompilationUnit getRouteBuilder() {

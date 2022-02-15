@@ -3,7 +3,7 @@ package org.jboss.fuse.tnb.customizer.rest;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
-import org.jboss.fuse.tnb.product.integration.MavenDependency;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -31,9 +31,9 @@ public class RestCustomizer extends ProductsCustomizer implements IntegrationSpe
     @Override
     public void customizeSpringboot() {
         if (!OpenshiftConfiguration.isOpenshift()) {
-            getIntegrationBuilder().dependencies(new MavenDependency("org.springframework.boot:spring-boot-starter-web",
-                    List.of("org.springframework.boot:spring-boot-starter-tomcat")),
-                new MavenDependency("org.springframework.boot:spring-boot-starter-undertow"));
+            getIntegrationBuilder().dependencies(Maven.createDependency("org.springframework.boot:spring-boot-starter-web",
+                    "org.springframework.boot:spring-boot-starter-tomcat"),
+                Maven.createDependency("org.springframework.boot:spring-boot-starter-undertow"));
         }
     }
 
