@@ -7,6 +7,7 @@ import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
@@ -103,6 +104,10 @@ public class CamelKApp extends App {
         } else {
             createIntegrationResources((IntegrationBuilder) integrationSource);
         }
+
+        endpoint = new Endpoint(() -> OpenshiftClient.get().adapt(KnativeClient.class).routes()
+            .withName(name).get().getStatus().getUrl());
+
         log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration")), getName()
         );

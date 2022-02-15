@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.log.Log;
 
 import org.apache.commons.io.FileUtils;
@@ -18,6 +19,7 @@ public abstract class App {
 
     protected final String name;
     protected Log log;
+    protected Endpoint endpoint;
     protected boolean started = false;
 
     public App(String name) {
@@ -47,6 +49,10 @@ public abstract class App {
 
     public Log getLog() {
         return log;
+    }
+
+    public String getEndpoint() {
+        return endpoint.getAddress();
     }
 
     public String getName() {

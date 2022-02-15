@@ -11,6 +11,7 @@ import org.jboss.fuse.tnb.product.integration.ResourceType;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public abstract class SpringBootApp extends App {
 
         customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
-        customizeProject(integrationBuilder.getDependencies());
+        customizeDependencies(integrationBuilder.getDependencies());
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
@@ -76,6 +77,15 @@ public abstract class SpringBootApp extends App {
 
         LOG.info("Building {} application project", name);
         Maven.invoke(requestBuilder.build());
+    }
+
+    private void customizeDependencies(List<Dependency> mavenDependencies) {
+        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        Model model = Maven.loadPom(pom);
+
+        mavenDependencies.forEach(model.getDependencies()::add);
+
+        Maven.writePom(pom, model);
     }
 
     private void customizeMain(IntegrationBuilder integrationBuilder, Path location) {

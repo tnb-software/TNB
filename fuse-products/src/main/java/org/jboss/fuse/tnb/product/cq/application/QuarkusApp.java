@@ -70,7 +70,7 @@ public abstract class QuarkusApp extends App {
      *
      * @param dependencies dependencies to add to the project
      */
-    private void customizeProject(List<String> dependencies) {
+    private void customizeProject(List<Dependency> dependencies) {
         // Remove the GreetingResource.java file that is not used
         final File greetingResource = TestConfiguration.appLocation().resolve(name).resolve("src/main/java/com/test/GreetingResource.java").toFile();
         if (greetingResource.exists()) {
@@ -101,7 +101,7 @@ public abstract class QuarkusApp extends App {
             );
         }
 
-        dependencies.forEach(dep -> model.getDependencies().add(Maven.toDependency(dep)));
+        dependencies.forEach(model.getDependencies()::add);
 
         Maven.writePom(pom, model);
     }

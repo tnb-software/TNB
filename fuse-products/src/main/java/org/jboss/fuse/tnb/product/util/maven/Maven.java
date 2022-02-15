@@ -5,6 +5,7 @@ import org.jboss.fuse.tnb.common.product.ProductType;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
@@ -36,6 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.stream.Collectors;
 
 /**
  * Class for invoking maven.
@@ -272,6 +274,24 @@ public final class Maven {
         } catch (IOException e) {
             throw new RuntimeException("Unable to write settings file ", e);
         }
+    }
+
+    public static Dependency createDependency(String dep, String... exclusions) {
+        Dependency dependency = toDependency(dep);
+
+        if (exclusions != null) {
+            dependency.setExclusions(Arrays.stream(exclusions).map(e -> {
+                Exclusion exclusion = new Exclusion();
+                Dependency depExclusion = toDependency(e);
+
+                exclusion.setArtifactId(depExclusion.getArtifactId());
+                exclusion.setGroupId(depExclusion.getGroupId());
+
+                return exclusion;
+            }).collect(Collectors.toList()));
+        }
+
+        return dependency;
     }
 
     /**

@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.csb.application;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.FileLog;
 
@@ -23,6 +24,7 @@ public class LocalSpringBootApp extends SpringBootApp {
     public LocalSpringBootApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder);
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
+        endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
 
     @Override
