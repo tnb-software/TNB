@@ -3,7 +3,7 @@ package org.jboss.fuse.tnb.product.integration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
-import org.jboss.fuse.tnb.product.ck.utils.ModelineCustomizer;
+import org.jboss.fuse.tnb.product.ck.customizer.DependenciesToModelineCustomizer;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.CamelMainCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.ComponentCustomizer;
@@ -153,7 +153,7 @@ public final class IntegrationGenerator {
         integrationBuilder.addCustomizer(
             new ApplicationScopeCustomizer(),
             new RemoveQuarkusAnnotationsCustomizer(),
-            new ModelineCustomizer(),
+            new DependenciesToModelineCustomizer(),
             new InlineCustomizer(),
             new ComponentCustomizer(),
             new CamelMainCustomizer()

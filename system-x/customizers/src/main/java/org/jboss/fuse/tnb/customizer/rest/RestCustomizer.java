@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.customizer.rest;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
-import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
+import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.customizer.datasource;
 
 import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
-import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
+import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
