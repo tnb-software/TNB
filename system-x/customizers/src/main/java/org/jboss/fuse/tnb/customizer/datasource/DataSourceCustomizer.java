@@ -1,23 +1,19 @@
 package org.jboss.fuse.tnb.customizer.datasource;
 
-import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
 import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
+import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
 import io.fabric8.camelk.v1.IntegrationSpecBuilder;
-import io.fabric8.camelk.v1.TraitSpec;
 
 public class DataSourceCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
 
@@ -82,11 +78,8 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
 
     @Override
     public void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder) {
-        TraitSpec builderSpec = new TraitSpec(new ObjectMapper().valueToTree(Map.of("properties", List.of("quarkus.datasource.db-kind=" + type))));
-        if (integrationSpecBuilder.getTraits() == null) {
-            integrationSpecBuilder.withTraits(new HashMap<>());
-        }
-        integrationSpecBuilder.addToTraits("builder", builderSpec);
+        Map<String, Object> configuration = Map.of("properties", List.of("quarkus.datasource.db-kind=" + type));
+        mergeTraitConfiguration(integrationSpecBuilder, "builder", configuration);
     }
 
     private String[] getDbAllocatorDependencies() {
