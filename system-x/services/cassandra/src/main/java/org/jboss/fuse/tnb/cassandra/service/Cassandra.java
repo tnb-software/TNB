@@ -7,6 +7,8 @@ import org.jboss.fuse.tnb.common.service.Service;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 
+import java.util.Map;
+
 public abstract class Cassandra implements Service {
 
     public static final int CASSANDRA_PORT = 9042;
@@ -34,6 +36,14 @@ public abstract class Cassandra implements Service {
 
     public String cassandraUrl(String keyspace) {
         return String.format("cql:%s:%s/%s?username=%s&password=%s", host(), port(), keyspace, account().username(), account().password());
+    }
+
+    public Map<String, String> containerEnvironment() {
+        return Map.of(
+            "CASSANDRA_USER", account().username(),
+            "CASSANDRA_PASSWORD", account().password(),
+            "CASSANDRA_PASSWORD_SEEDER", "yes"
+        );
     }
 
     public CassandraAccount account() {
