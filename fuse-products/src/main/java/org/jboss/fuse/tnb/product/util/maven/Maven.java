@@ -45,6 +45,7 @@ import java.util.stream.Collectors;
 public final class Maven {
     private static final Logger LOG = LoggerFactory.getLogger(Maven.class);
     private static Invoker invoker;
+    private static boolean initialized = false;
 
     private Maven() {
     }
@@ -60,6 +61,10 @@ public final class Maven {
      * Maven invoker needs to have maven.home property set, so try to find it in multiple places.
      */
     public static void setupMaven() {
+        if (initialized) {
+            return;
+        }
+
         LOG.info("Setting up maven");
         if (TestConfiguration.mavenSettings() == null) {
             createSettingsXmlFile();
@@ -98,6 +103,8 @@ public final class Maven {
         if (mvnLocation == null) {
             throw new RuntimeException("No maven found in system/environment properties nor in PATH");
         }
+
+        initialized = true;
     }
 
     /**
