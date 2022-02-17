@@ -4,13 +4,13 @@ import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
-import org.jboss.fuse.tnb.product.integration.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.integration.ResourceType;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
