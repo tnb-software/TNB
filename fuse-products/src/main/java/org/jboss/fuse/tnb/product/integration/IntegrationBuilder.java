@@ -12,6 +12,7 @@ import org.apache.maven.model.Dependency;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseProblemException;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
@@ -31,6 +32,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -336,6 +338,20 @@ public class IntegrationBuilder {
      */
     public IntegrationBuilder addClass(CompilationUnit cu) {
         classesToAdd.add(cu);
+        return this;
+    }
+
+    /**
+     * Loads the class from given path into a CompilationUnit.
+     * @param file path to the file
+     * @return this
+     */
+    public IntegrationBuilder addClass(Path file) {
+        try {
+            classesToAdd.add(new JavaParser().parse(file).getResult().get());
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to parse file " + file, e);
+        }
         return this;
     }
 
