@@ -5,6 +5,8 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.git.MavenGitRepository;
+import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.integration.ResourceType;
@@ -29,54 +31,60 @@ import java.util.Map;
 
 public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
+    protected MavenGitRepository mavenGitApp = null;
 
     public SpringBootApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
-        LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
-        Maven.invoke(new BuildRequest.Builder()
-            .withBaseDirectory(TestConfiguration.appLocation())
-            .withGoals("archetype:generate")
-            .withProperties(Map.of(
-                "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
-                "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
-                "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
-                "groupId", TestConfiguration.appGroupId(),
-                "artifactId", name,
-                "version", "1.0.0-SNAPSHOT",
-                "package", TestConfiguration.appGroupId(),
-                "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-                "spring-boot-version", SpringBootConfiguration.springBootVersion(),
-                "camel-version", SpringBootConfiguration.camelSpringBootVersion()))
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
-            .build());
+        if (integrationBuilder instanceof GitIntegrationBuilder) {
+            mavenGitApp = new MavenGitRepository((GitIntegrationBuilder) integrationBuilder, getName());
+        } else {
+            LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
-        IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
+            Maven.invoke(new BuildRequest.Builder()
+                .withBaseDirectory(TestConfiguration.appLocation())
+                .withGoals("archetype:generate")
+                .withProperties(Map.of(
+                    "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
+                    "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
+                    "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
+                    "groupId", TestConfiguration.appGroupId(),
+                    "artifactId", name,
+                    "version", "1.0.0-SNAPSHOT",
+                    "package", TestConfiguration.appGroupId(),
+                    "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
+                    "spring-boot-version", SpringBootConfiguration.springBootVersion(),
+                    "camel-version", SpringBootConfiguration.camelSpringBootVersion()))
+                .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
+                .build());
 
-        customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
+            IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
-        customizeDependencies(integrationBuilder.getDependencies());
+            customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
-        BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
-            .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
-            .withGoals("clean", "package")
-            .withProperties(Map.of(
-                "skipTests", "true"
-            ))
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+            customizeDependencies(integrationBuilder.getDependencies());
 
-        if (OpenshiftConfiguration.isOpenshift()) {
-            requestBuilder.withProperties(Map.of(
-                "skipTests", "true"
-                , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
-                , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
-            ));
-            requestBuilder.withGoals("clean", "package", "oc:resource");
-            requestBuilder.withProfiles("openshift");
+            BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
+                .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
+                .withGoals("clean", "package")
+                .withProperties(Map.of(
+                    "skipTests", "true"
+                ))
+                .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+
+            if (OpenshiftConfiguration.isOpenshift()) {
+                requestBuilder.withProperties(Map.of(
+                    "skipTests", "true"
+                    , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
+                    , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
+                ));
+                requestBuilder.withGoals("clean", "package", "oc:resource");
+                requestBuilder.withProfiles("openshift");
+            }
+
+            LOG.info("Building {} application project", name);
+            Maven.invoke(requestBuilder.build());
         }
-
-        LOG.info("Building {} application project", name);
-        Maven.invoke(requestBuilder.build());
     }
 
     private void customizeDependencies(List<Dependency> mavenDependencies) {

@@ -33,6 +33,7 @@
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.7</jacoco.maven.plugin.version>
+        <jgit.version>5.12.0.202106070339-r</jgit.version>
     </properties>
 
     <dependencyManagement>

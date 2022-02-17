@@ -10,6 +10,7 @@ import com.google.auto.service.AutoService;
 
 @AutoService(Product.class)
 public class LocalCamelSpringBoot extends LocalProduct {
+
     @Override
     public App createIntegrationApp(IntegrationBuilder integrationBuilder) {
         return new LocalSpringBootApp(integrationBuilder);
