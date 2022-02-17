@@ -25,6 +25,7 @@ public class LocalSpringBootApp extends SpringBootApp {
     private Process appProcess;
     private Supplier<List<String>> command;
     private String fileName;
+    private Path projectPath;
 
     public LocalSpringBootApp(IntegrationBuilder integrationBuilder) {
         super(integrationBuilder);
@@ -36,13 +37,15 @@ public class LocalSpringBootApp extends SpringBootApp {
             args = ((GitIntegrationBuilder) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
             jarName = mavenGitApp.getFinalName().map(n -> n + "-" + SpringBootConfiguration.camelSpringBootVersion() + ".jar").orElse(name);
+            projectPath = mavenGitApp.getProjectLocation();
         } else {
             args = new ArrayList<>();
             jarName = name + "-1.0.0-SNAPSHOT.jar";
+            projectPath = TestConfiguration.appLocation().resolve(name);
         }
 
         command = () -> {
-            Path integrationTarget = mavenGitApp.getProjectLocation().resolve("target");
+            Path integrationTarget = projectPath.resolve("target");
 
             List<String> cmd = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
 
