@@ -14,10 +14,14 @@ import com.google.auto.service.AutoService;
 
 import java.net.InetSocketAddress;
 import java.time.Duration;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
@@ -52,6 +56,8 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
                             .addNewContainer()
                                 .withName(name())
                                 .withImage(image())
+                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
+                                    .collect(Collectors.toList()))
                                 .addNewPort()
                                     .withContainerPort(port())
                                     .withName(name())
@@ -146,8 +152,11 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
+        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
+        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
+            return OpenshiftClient.get().getLogs(pods.get(0)).contains("Startup complete");
+        }
+        return false;
     }
 
     @Override

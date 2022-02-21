@@ -24,7 +24,7 @@ public class LocalCassandra extends Cassandra implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting cassandra container");
-        container = new CassandraContainer(image(), CASSANDRA_PORT);
+        container = new CassandraContainer(image(), CASSANDRA_PORT, containerEnvironment());
         container.start();
     }
 
