@@ -4,6 +4,7 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.Map;
 
 public class CassandraContainer extends GenericContainer<CassandraContainer> {
@@ -14,7 +15,11 @@ public class CassandraContainer extends GenericContainer<CassandraContainer> {
         super(image);
         this.port = port;
         withExposedPorts(port);
-        withEnv(env);
+        Map<String, String> localEnv = new HashMap<>(env);
+        localEnv.put("MAX_HEAP_SIZE", "256M");
+        localEnv.put("HEAP_NEWSIZE", "128M");
+        withEnv(localEnv);
+        withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMemory(1024L * 1024 * 1024));
         waitingFor(Wait
             .forLogMessage(".*Startup complete.*", 1)
             .withStartupTimeout(Duration.ofMinutes(5))
