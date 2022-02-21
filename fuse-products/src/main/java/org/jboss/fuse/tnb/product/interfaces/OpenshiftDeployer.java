@@ -1,12 +1,24 @@
 package org.jboss.fuse.tnb.product.interfaces;
 
+import org.jboss.fuse.tnb.product.endpoint.Endpoint;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.Log;
+
+import java.nio.file.Path;
 
 public interface OpenshiftDeployer {
 
-    void deploy(String name);
+    OpenshiftDeployer setIntegrationBuilder(AbstractIntegrationBuilder<?> integrationBuilder);
 
-    void undeploy(String name);
+    OpenshiftDeployer setBaseDirectory(Path baseDirectory);
 
-    Log getLog(String app);
+    OpenshiftDeployer setName(String name);
+
+    void deploy();
+
+    void undeploy();
+
+    Log getLog();
+
+    Endpoint getEndpoint();
 }
