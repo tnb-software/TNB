@@ -42,6 +42,7 @@ public abstract class AWSService<A extends AWSAccount, C extends SdkClient, V ex
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         if (client != null) {
             client.close();
+            client = null;
         }
     }
 }
