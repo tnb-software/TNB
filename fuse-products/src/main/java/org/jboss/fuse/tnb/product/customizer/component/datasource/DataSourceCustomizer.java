@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.customizer.datasource;
+package org.jboss.fuse.tnb.product.customizer.component.datasource;
 
 import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;

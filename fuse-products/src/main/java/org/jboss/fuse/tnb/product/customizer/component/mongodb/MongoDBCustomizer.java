@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.customizer.mongodb;
+package org.jboss.fuse.tnb.product.customizer.component.mongodb;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.customizer.ProductsCustomizer;

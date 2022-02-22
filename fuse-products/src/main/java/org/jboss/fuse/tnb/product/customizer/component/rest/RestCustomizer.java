@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.customizer.rest;
+package org.jboss.fuse.tnb.product.customizer.component.rest;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
