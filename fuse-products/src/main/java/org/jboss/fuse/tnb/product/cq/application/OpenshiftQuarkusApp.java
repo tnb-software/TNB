@@ -7,7 +7,7 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
 import org.apache.commons.io.IOUtils;
@@ -30,7 +30,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     // Resources generated from quarkus maven plugin and created in openshift
     private List<HasMetadata> createdResources;
 
-    public OpenshiftQuarkusApp(IntegrationBuilder integrationBuilder) {
+    public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
     }
 

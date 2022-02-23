@@ -1,7 +1,7 @@
 package org.jboss.fuse.tnb.product;
 
 import org.jboss.fuse.tnb.product.application.App;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public abstract class Product implements BeforeAllCallback, AfterAllCallback {
     protected Map<String, App> integrations = new ConcurrentHashMap<>();
 
-    public App createIntegration(IntegrationBuilder integrationBuilder) {
+    public App createIntegration(AbstractIntegrationBuilder<?> integrationBuilder) {
         if (integrations.containsKey(integrationBuilder.getIntegrationName())) {
             throw new IllegalArgumentException("Integration with name " + integrationBuilder.getIntegrationName() + " is already running!");
         }
@@ -27,15 +27,15 @@ public abstract class Product implements BeforeAllCallback, AfterAllCallback {
         return app;
     }
 
-    public Map<String, App> createIntegration(IntegrationBuilder integrationBuilder, IntegrationBuilder... other) {
+    public Map<String, App> createIntegration(AbstractIntegrationBuilder<?> integrationBuilder, AbstractIntegrationBuilder<?>... other) {
         // Return only integrations created in this invocation, not all created integrations
-        List<IntegrationBuilder> integrationBuilders = new ArrayList<>();
+        List<AbstractIntegrationBuilder<?>> integrationBuilders = new ArrayList<>();
         integrationBuilders.add(integrationBuilder);
         integrationBuilders.addAll(Arrays.asList(other));
-        return integrationBuilders.stream().collect(Collectors.toMap(IntegrationBuilder::getIntegrationName, this::createIntegration));
+        return integrationBuilders.stream().collect(Collectors.toMap(AbstractIntegrationBuilder::getIntegrationName, this::createIntegration));
     }
 
-    protected abstract App createIntegrationApp(IntegrationBuilder integrationBuilder);
+    protected abstract App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder);
 
     public void removeIntegrations() {
         integrations.values().forEach(App::stop);

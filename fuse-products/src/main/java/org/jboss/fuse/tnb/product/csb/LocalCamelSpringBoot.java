@@ -4,7 +4,7 @@ import org.jboss.fuse.tnb.product.LocalProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.csb.application.LocalSpringBootApp;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 
 import com.google.auto.service.AutoService;
 
@@ -12,7 +12,7 @@ import com.google.auto.service.AutoService;
 public class LocalCamelSpringBoot extends LocalProduct {
 
     @Override
-    public App createIntegrationApp(IntegrationBuilder integrationBuilder) {
+    public App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         return new LocalSpringBootApp(integrationBuilder);
     }
 }

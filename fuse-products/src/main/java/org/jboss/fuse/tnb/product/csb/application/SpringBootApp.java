@@ -5,11 +5,12 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
 import org.jboss.fuse.tnb.product.git.MavenGitRepository;
-import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
-import org.jboss.fuse.tnb.product.integration.ResourceType;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractGitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -33,11 +34,12 @@ public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
     protected MavenGitRepository mavenGitApp = null;
 
-    public SpringBootApp(IntegrationBuilder integrationBuilder) {
+    public SpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
 
-        if (integrationBuilder instanceof GitIntegrationBuilder) {
-            mavenGitApp = new MavenGitRepository((GitIntegrationBuilder) integrationBuilder, getName());
+        if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
+            && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
+            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder, getName());
         } else {
             LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
@@ -96,21 +98,20 @@ public abstract class SpringBootApp extends App {
         Maven.writePom(pom, model);
     }
 
-    private void customizeMain(IntegrationBuilder integrationBuilder, Path location) {
-        addXmlResourceImport(integrationBuilder, location);
+    private void customizeMain(AbstractIntegrationBuilder<?> integrationBuilder, Path location) {
+        if (integrationBuilder instanceof SpringBootIntegrationBuilder) {
+            addXmlResourceImport((SpringBootIntegrationBuilder) integrationBuilder, location);
+        }
     }
 
-    private void addXmlResourceImport(IntegrationBuilder integrationBuilder, Path location) {
+    private void addXmlResourceImport(SpringBootIntegrationBuilder integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
         final Path resourcesPath = location.resolve("src/main/resources");
 
         List<String> xmlImportFiles = new ArrayList<>();
         integrationBuilder.getXmlCamelContext().forEach(resource -> {
-            if (ResourceType.XML_CAMEL_CONTEXT.equals(resource.getType())) {
-                IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent());
-
-                xmlImportFiles.add("\"classpath:" + resource.getName() + "\"");
-            }
+            IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent());
+            xmlImportFiles.add("\"classpath:" + resource.getName() + "\"");
         });
 
         if (!xmlImportFiles.isEmpty()) {

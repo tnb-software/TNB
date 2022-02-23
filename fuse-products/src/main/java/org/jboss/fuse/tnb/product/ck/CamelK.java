@@ -15,7 +15,7 @@ import org.jboss.fuse.tnb.product.ck.application.CamelKApp;
 import org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -171,17 +171,18 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     }
 
     @Override
-    protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
+    protected App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         return this.createIntegration(integrationBuilder);
     }
 
     @Override
-    public App createIntegration(IntegrationBuilder integrationBuilder) {
-        return createIntegration(integrationBuilder, new IntegrationBuilder[] {}).get(integrationBuilder.getIntegrationName());
+    public App createIntegration(AbstractIntegrationBuilder<?> integrationBuilder) {
+        return createIntegration(integrationBuilder, new AbstractIntegrationBuilder[] {}).get(integrationBuilder.getIntegrationName());
     }
 
     @Override
-    public Map<String, App> createIntegration(IntegrationBuilder integrationBuilder, IntegrationBuilder... integrationBuilders) {
+    public Map<String, App> createIntegration(AbstractIntegrationBuilder<?> integrationBuilder,
+        AbstractIntegrationBuilder<?>... integrationBuilders) {
         List<Object> integrationSources = new ArrayList<>();
         integrationSources.add(integrationBuilder);
         integrationSources.addAll(Arrays.asList(integrationBuilders));
@@ -213,8 +214,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
     private App createApp(Object integrationSource) {
         App app;
-        if (integrationSource instanceof IntegrationBuilder) {
-            app = new CamelKApp((IntegrationBuilder) integrationSource);
+        if (integrationSource instanceof AbstractIntegrationBuilder) {
+            app = new CamelKApp((AbstractIntegrationBuilder<?>) integrationSource);
         } else if (integrationSource instanceof KameletBinding) {
             app = new CamelKApp((KameletBinding) integrationSource);
         } else {

@@ -4,8 +4,8 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
-import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.FileLog;
 
 import org.slf4j.Logger;
@@ -16,25 +16,24 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class LocalSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSpringBootApp.class);
     private final Path logFile;
+    private final List<String> command;
+    private final String fileName;
     private Process appProcess;
-    private Supplier<List<String>> command;
-    private String fileName;
-    private Path projectPath;
 
-    public LocalSpringBootApp(IntegrationBuilder integrationBuilder) {
+    public LocalSpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
         List<String> args;
         String jarName;
 
-        if (integrationBuilder instanceof GitIntegrationBuilder) {
-            args = ((GitIntegrationBuilder) integrationBuilder).getJavaProperties().entrySet()
+        final Path projectPath;
+        if (mavenGitApp != null) {
+            args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
             jarName = mavenGitApp.getFinalName().map(n -> n + "-" + SpringBootConfiguration.camelSpringBootVersion() + ".jar").orElse(name);
             projectPath = mavenGitApp.getProjectLocation();
@@ -44,18 +43,15 @@ public class LocalSpringBootApp extends SpringBootApp {
             projectPath = TestConfiguration.appLocation().resolve(name);
         }
 
-        command = () -> {
-            Path integrationTarget = projectPath.resolve("target");
+        Path integrationTarget = projectPath.resolve("target");
 
-            List<String> cmd = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
+        command = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
 
-            cmd.addAll(args);
-            cmd.add("-jar");
-            fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
+        command.addAll(args);
+        command.add("-jar");
+        fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
-            cmd.add(fileName);
-            return cmd;
-        };
+        command.add(fileName);
 
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
@@ -97,12 +93,11 @@ public class LocalSpringBootApp extends SpringBootApp {
     }
 
     private List<String> getCommand() {
-        List<String> cmd = command.get();
         if (!new File(fileName).exists()) {
             throw new IllegalArgumentException("Expected file " + fileName + " does not exist, check if the maven build was successful");
         }
 
-        LOG.debug("ProcessBuilder command: " + String.join(" ", cmd));
-        return cmd;
+        LOG.debug("ProcessBuilder command: " + String.join(" ", command));
+        return command;
     }
 }

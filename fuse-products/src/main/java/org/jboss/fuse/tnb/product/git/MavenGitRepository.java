@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.product.git;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.git.customizer.UpdateProjectVersionCustomizer;
-import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -19,12 +19,10 @@ public class MavenGitRepository extends GitRepository {
     protected Path projectLocation;
     protected Optional<String> finalName;
 
-    public MavenGitRepository(GitIntegrationBuilder gitIntegrationBuilder, String name) {
+    public MavenGitRepository(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name) {
         super(gitIntegrationBuilder);
 
-        projectLocation = gitIntegrationBuilder.getProjectPath().map(project ->
-                TestConfiguration.appLocation().resolve(parentFolderName).resolve(project))
-            .orElse(TestConfiguration.appLocation().resolve(parentFolderName));
+        projectLocation = gitIntegrationBuilder.getSubDirectory().map(project -> getPath().resolve(project)).orElse(getPath());
 
         finalName = gitIntegrationBuilder.getFinalName();
 
@@ -33,11 +31,9 @@ public class MavenGitRepository extends GitRepository {
                 new UpdateProjectVersionCustomizer(gitIntegrationBuilder.getProjectVersion(), name));
         }
 
-        gitIntegrationBuilder.getPreMavenBuildCustomizers().forEach(
-            customizer -> customizer.accept(projectLocation));
+        gitIntegrationBuilder.getPreMavenBuildCustomizers().forEach(customizer -> customizer.accept(projectLocation));
 
-        Map<String, String> mavenBuildProperties = new HashMap<>();
-        mavenBuildProperties.putAll(gitIntegrationBuilder.getMavenProperties());
+        Map<String, String> mavenBuildProperties = new HashMap<>(gitIntegrationBuilder.getMavenProperties());
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)

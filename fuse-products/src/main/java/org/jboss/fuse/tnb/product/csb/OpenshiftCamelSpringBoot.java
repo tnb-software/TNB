@@ -4,7 +4,7 @@ import org.jboss.fuse.tnb.product.OpenshiftProduct;
 import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.csb.application.OpenshiftSpringBootApp;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import com.google.auto.service.AutoService;
@@ -31,7 +31,7 @@ public class OpenshiftCamelSpringBoot extends OpenshiftProduct {
     }
 
     @Override
-    protected App createIntegrationApp(IntegrationBuilder integrationBuilder) {
+    protected App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         return new OpenshiftSpringBootApp(integrationBuilder);
     }
 }
