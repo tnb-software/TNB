@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.util.maven;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
+import org.jboss.fuse.tnb.common.utils.IOUtils;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
@@ -247,7 +248,7 @@ public final class Maven {
      * Creates a settings xml file with 1 profile with specified maven repository. This file is later used as maven global settings and will be
      * merged by user's settings by default by maven.
      */
-    private static void createSettingsXmlFile() {
+    public static String createSettingsXmlFile() {
         // Create settings.xml file with the user defined repository
         Settings settings = new Settings();
 
@@ -274,6 +275,11 @@ public final class Maven {
             p.setPluginRepositories(Collections.singletonList(r));
 
             settings.setProfiles(Collections.singletonList(p));
+
+            if (TestConfiguration.product() == ProductType.CAMEL_K) {
+                // For camel-k also activate that profile
+                settings.addActiveProfile("tnb-maven-repo");
+            }
         }
         File out = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
         try (OutputStream os = new FileOutputStream(out)) {
@@ -281,6 +287,8 @@ public final class Maven {
         } catch (IOException e) {
             throw new RuntimeException("Unable to write settings file ", e);
         }
+
+        return IOUtils.readFile(out.toPath());
     }
 
     public static Dependency createDependency(String dep, String... exclusions) {

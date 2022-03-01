@@ -17,6 +17,7 @@ import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -40,7 +41,6 @@ import java.util.concurrent.Executors;
 import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.ConfigurationSpecBuilder;
 import io.fabric8.camelk.v1.IntegrationPlatform;
 import io.fabric8.camelk.v1.IntegrationPlatformBuilder;
 import io.fabric8.camelk.v1.IntegrationPlatformSpecBuilder;
@@ -106,28 +106,22 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                 .withTimeout(new Duration(java.time.Duration.of(30, ChronoUnit.MINUTES)))
             .endBuild();
 
-        if (TestConfiguration.mavenSettings() != null) {
+        if (TestConfiguration.mavenSettings() == null) {
+            OpenshiftClient.get().createConfigMap("tnb-maven-settings", Map.of("settings.xml", Maven.createSettingsXmlFile()));
+        } else {
             OpenshiftClient.get()
                 .createConfigMap("tnb-maven-settings", Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
-
-            specBuilder
-                .editBuild()
-                    .withNewMaven()
-                        .withNewSettings()
-                            .withConfigMapKeyRef(new ConfigMapKeySelector("settings.xml", "tnb-maven-settings", false))
-                        .endSettings()
-                    .endMaven()
-                .endBuild()
-                .build();
-        } else {
-            specBuilder
-                .withConfiguration(new ConfigurationSpecBuilder()
-                    .withType("repository")
-                    .withValue(TestConfiguration.mavenRepository())
-                    .build()
-                )
-                .build();
         }
+
+        specBuilder
+            .editBuild()
+                .withNewMaven()
+                    .withNewSettings()
+                        .withConfigMapKeyRef(new ConfigMapKeySelector("settings.xml", "tnb-maven-settings", false))
+                    .endSettings()
+                .endMaven()
+            .endBuild()
+            .build();
         // @formatter:on
 
         ip.setSpec(specBuilder.build());
