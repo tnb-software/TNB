@@ -35,7 +35,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -43,12 +42,12 @@ import java.util.stream.Collectors;
 /**
  * Class for invoking maven.
  */
-public final class Maven {
+public class Maven {
     private static final Logger LOG = LoggerFactory.getLogger(Maven.class);
-    private static Invoker invoker;
-    private static boolean initialized = false;
+    protected static Invoker invoker;
+    protected static boolean initialized = false;
 
-    private Maven() {
+    protected Maven() {
     }
 
     private static InvocationRequest newRequest() {
@@ -106,36 +105,6 @@ public final class Maven {
         }
 
         initialized = true;
-    }
-
-    /**
-     * Creates a project from archetype.
-     *
-     * @param archetypeGroupId archetype group id
-     * @param archetypeArtifactId archetype artifact id
-     * @param archetypeVersion archetype version
-     * @param appGroupId application group id
-     * @param appArtifactId application artifact id
-     * @param location path where the project will be generated
-     */
-    public static void createFromArchetype(String archetypeGroupId, String archetypeArtifactId, String archetypeVersion, String appGroupId,
-        String appArtifactId, File location) {
-        if (!location.exists()) {
-            if (!location.mkdirs()) {
-                throw new RuntimeException("Unable to create directory: " + location.getAbsolutePath());
-            }
-        }
-        invoke(new BuildRequest.Builder()
-            .withBaseDirectory(location)
-            .withGoals("archetype:generate")
-            .withProperties(Map.of(
-                "archetypeGroupId", archetypeGroupId,
-                "archetypeArtifactId", archetypeArtifactId,
-                "archetypeVersion", archetypeVersion,
-                "groupId", appGroupId,
-                "artifactId", appArtifactId))
-            .build()
-        );
     }
 
     /**
@@ -270,7 +239,7 @@ public final class Maven {
             r.setSnapshots(enabled);
 
             org.apache.maven.settings.Profile p = new org.apache.maven.settings.Profile();
-            p.setId("tnb-maven-repo");
+            p.setId(TestConfiguration.mavenRepositoryId());
             p.setRepositories(Collections.singletonList(r));
             p.setPluginRepositories(Collections.singletonList(r));
 
@@ -278,7 +247,7 @@ public final class Maven {
 
             if (TestConfiguration.product() == ProductType.CAMEL_K) {
                 // For camel-k also activate that profile
-                settings.addActiveProfile("tnb-maven-repo");
+                settings.addActiveProfile(TestConfiguration.mavenRepositoryId());
             }
         }
         File out = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
@@ -292,12 +261,12 @@ public final class Maven {
     }
 
     public static Dependency createDependency(String dep, String... exclusions) {
-        Dependency dependency = toDependency(dep);
+        Dependency dependency = createDependency(dep);
 
         if (exclusions != null) {
             dependency.setExclusions(Arrays.stream(exclusions).map(e -> {
                 Exclusion exclusion = new Exclusion();
-                Dependency depExclusion = toDependency(e);
+                Dependency depExclusion = createDependency(e);
 
                 exclusion.setArtifactId(depExclusion.getArtifactId());
                 exclusion.setGroupId(depExclusion.getGroupId());
@@ -315,14 +284,19 @@ public final class Maven {
      * @param s dependency string
      * @return dependency object
      */
-    public static Dependency toDependency(String s) {
+    public static Dependency createDependency(String s) {
         Dependency dependency = new Dependency();
         if (s.contains(":")) {
             String[] parts = s.split(":");
-            dependency.setGroupId(parts[0]);
-            dependency.setArtifactId(parts[1]);
-            if (parts.length > 2) {
-                dependency.setVersion(parts[2]);
+            int index = 0;
+            if ("github".equals(parts[0])) {
+                index++;
+                dependency.setType("github");
+            }
+            dependency.setGroupId(parts[index]);
+            dependency.setArtifactId(parts[index + 1]);
+            if (parts.length > index + 2) {
+                dependency.setVersion(parts[index + 2]);
             }
         } else {
             if (TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT) {

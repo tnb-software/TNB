@@ -18,7 +18,7 @@
         <log4j.version>2.17.0</log4j.version>
         <maven.invoker.version>3.1.0</maven.invoker.version>
         <maven.model.version>3.6.3</maven.model.version>
-        <jackson.module.version>2.11.3</jackson.module.version>
+        <jackson.module.version>2.13.1</jackson.module.version>
     </properties>
 
     <dependencies>
@@ -92,7 +92,32 @@
             <artifactId>org.eclipse.jgit</artifactId>
             <version>${jgit.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>${junit.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>io.fabric8</groupId>
+            <artifactId>openshift-server-mock</artifactId>
+            <version>${kubernetes.client.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.awaitility</groupId>
+            <artifactId>awaitility</artifactId>
+            <version>${awaitility.version}</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
+
     <build>
         <plugins>
             <plugin>
@@ -111,4 +136,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

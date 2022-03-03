@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.integration.generator;
 
-import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.customizer.DependenciesToModelineCustomizer;
@@ -64,8 +63,6 @@ public final class IntegrationGenerator {
 
         //Add additional classes to the application
         integrationBuilder.getAdditionalClasses().forEach(cu -> {
-            final String originalPackageName = cu.getPackageDeclaration().get().getNameAsString();
-            cu.setPackageDeclaration(TestConfiguration.appGroupId());
             final String packageName = cu.getPackageDeclaration().get().getNameAsString();
             final String typeName = cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString());
 
@@ -74,15 +71,12 @@ public final class IntegrationGenerator {
             final Path fileName = packageFolder.resolve(typeName + ".java");
             //fully qualified class name
             final String fqn = packageName + "." + typeName;
-            LOG.info("Adding class '{}' to application as class '{}'", originalPackageName + "." + typeName, fqn);
+            LOG.info("Adding class '{}' to application as class '{}'", packageName + "." + typeName, fqn);
             IOUtils.writeFile(fileName, cu.toString());
 
             integrationBuilder.getRouteBuilder().ifPresent(rb -> {
-                //If the class is in the same package, it needs to be imported explicitly
-                final ImportDeclaration importDeclaration = new ImportDeclaration(fqn, false, false);
-                if (!rb.getImports().contains(importDeclaration)) {
-                    rb.addImport(importDeclaration);
-                }
+                //If the class isn't in the same package, it needs to be imported explicitly
+                rb.addImport(new ImportDeclaration(fqn, false, false));
             });
         });
 
@@ -90,12 +84,12 @@ public final class IntegrationGenerator {
         String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
         if (!applicationPropertiesContent.trim().isEmpty()) {
             LOG.debug("Application properties:\n{}", applicationPropertiesContent);
-        }
-        try {
-            // Properties#store() escapes stuff by default, so construct the property file manually
-            Files.write(applicationPropertiesPath, applicationPropertiesContent.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to write application.properties: ", e);
+            try {
+                // Properties#store() escapes stuff by default, so construct the property file manually
+                Files.write(applicationPropertiesPath, applicationPropertiesContent.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to write application.properties: ", e);
+            }
         }
 
         integrationBuilder.getRouteBuilder().ifPresent(rb -> {

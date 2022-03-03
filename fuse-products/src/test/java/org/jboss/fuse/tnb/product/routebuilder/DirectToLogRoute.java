@@ -1,4 +1,4 @@
-package org.jboss.fuse.tnb.product;
+package org.jboss.fuse.tnb.product.routebuilder;
 
 import org.apache.camel.builder.RouteBuilder;
 

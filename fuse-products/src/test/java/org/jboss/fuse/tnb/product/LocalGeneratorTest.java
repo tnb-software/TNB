@@ -3,9 +3,11 @@ package org.jboss.fuse.tnb.product;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.product.customizer.Customizers;
 import org.jboss.fuse.tnb.product.integration.builder.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.util.maven.Maven;
+import org.jboss.fuse.tnb.product.routebuilder.DirectToLogRoute;
+import org.jboss.fuse.tnb.util.maven.TestMaven;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 
@@ -17,6 +19,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+@Tag("integration")
 public class LocalGeneratorTest {
     private static final Logger log = LoggerFactory.getLogger(LoggerFactory.class);
 
@@ -29,7 +32,7 @@ public class LocalGeneratorTest {
         log.info("testing product {} with annotation {}", productName, routeBuilderAnnotation);
 
         System.setProperty("test.product", productName);
-        Maven.setupMaven();
+        TestMaven.setupDefaultMaven();
         Product product = ProductFactory.create();
 
         String emptyClass = "TestEmptyClass";
