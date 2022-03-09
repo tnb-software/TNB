@@ -1,14 +1,17 @@
-package org.jboss.fuse.tnb.product.integration;
+package org.jboss.fuse.tnb.product.integration.generator;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.customizer.DependenciesToModelineCustomizer;
+import org.jboss.fuse.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.CamelMainCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.ComponentCustomizer;
 import org.jboss.fuse.tnb.product.customizer.Customizer;
 import org.jboss.fuse.tnb.product.customizer.Customizers;
+import org.jboss.fuse.tnb.product.integration.Resource;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.InlineCustomizer;
 import org.jboss.fuse.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
@@ -41,7 +44,7 @@ public final class IntegrationGenerator {
      * @param integrationBuilder integration builder instance
      * @param location location of the root of the app
      */
-    public static void toFile(IntegrationBuilder integrationBuilder, Path location) {
+    public static void toFile(AbstractIntegrationBuilder<?> integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
 
         // Add additional resources to the application
@@ -73,12 +76,14 @@ public final class IntegrationGenerator {
             final String fqn = packageName + "." + typeName;
             LOG.info("Adding class '{}' to application as class '{}'", originalPackageName + "." + typeName, fqn);
             IOUtils.writeFile(fileName, cu.toString());
-            //If the class is in the same package, it needs to be imported explicitly
-            final ImportDeclaration importDeclaration =
-                new ImportDeclaration(fqn, false, false);
-            if (!integrationBuilder.getRouteBuilder().getImports().contains(importDeclaration)) {
-                integrationBuilder.getRouteBuilder().addImport(importDeclaration);
-            }
+
+            integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+                //If the class is in the same package, it needs to be imported explicitly
+                final ImportDeclaration importDeclaration = new ImportDeclaration(fqn, false, false);
+                if (!rb.getImports().contains(importDeclaration)) {
+                    rb.addImport(importDeclaration);
+                }
+            });
         });
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
@@ -93,12 +98,14 @@ public final class IntegrationGenerator {
             throw new RuntimeException("Unable to write application.properties: ", e);
         }
 
-        final PackageDeclaration packageDeclaration = integrationBuilder.getRouteBuilder().getPackageDeclaration().get();
-        final Path destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
-        destination.toFile().mkdirs();
-        String integrationClass = integrationBuilder.getRouteBuilder().toString();
-        LOG.debug("Integration class:\n{}", integrationClass);
-        IOUtils.writeFile(destination.resolve(integrationBuilder.getSourceName()), integrationClass);
+        integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+            final PackageDeclaration packageDeclaration = rb.getPackageDeclaration().get();
+            final Path destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
+            destination.toFile().mkdirs();
+            String integrationClass = rb.toString();
+            LOG.debug("Integration class:\n{}", integrationClass);
+            IOUtils.writeFile(destination.resolve(integrationBuilder.getFileName()), integrationClass);
+        });
     }
 
     /**
@@ -107,16 +114,17 @@ public final class IntegrationGenerator {
      * @param integrationBuilder integration builder instance
      * @return integration class as a String
      */
-    public static String toString(IntegrationBuilder integrationBuilder) {
+    public static String toString(AbstractIntegrationBuilder<?> integrationBuilder) {
         String result;
-        if (integrationBuilder.getRouteBuilder() != null) {
-            processCustomizers(integrationBuilder);
 
+        processCustomizers(integrationBuilder);
+
+        if (integrationBuilder.getRouteBuilder().isPresent()) {
             //Inline classes to the routebuilder
             integrationBuilder.getAdditionalClasses().forEach(cu -> {
                 //newClass is an empty class added to the route builder
-                final TypeDeclaration<?> routeBuilder = integrationBuilder.getRouteBuilder().getClassByName(IntegrationBuilder.ROUTE_BUILDER_NAME)
-                    .get();
+                final TypeDeclaration<?> routeBuilder = integrationBuilder.getRouteBuilder().get()
+                    .getClassByName(AbstractIntegrationBuilder.ROUTE_BUILDER_NAME).get();
                 //sourceClass is modified to be inlinable
                 final TypeDeclaration<?> sourceClass = cu.getPrimaryType().orElseGet(() -> cu.getType(0));
                 sourceClass.setPublic(true);
@@ -125,10 +133,10 @@ public final class IntegrationGenerator {
                 routeBuilder.addMember(sourceClass);
                 //merge imports from the source class
                 for (ImportDeclaration imp : cu.getImports()) {
-                    integrationBuilder.getRouteBuilder().addImport(imp.getNameAsString());
+                    integrationBuilder.getRouteBuilder().get().addImport(imp.getNameAsString());
                 }
                 //Remove the import to the class itself (won't be present in the generated app)
-                integrationBuilder.getRouteBuilder().getImports().removeIf(
+                integrationBuilder.getRouteBuilder().get().getImports().removeIf(
                     imp -> imp.getNameAsString().equals(cu.getPackageDeclaration().get().getNameAsString() + "." + sourceClass.getNameAsString()));
             });
 
@@ -136,20 +144,23 @@ public final class IntegrationGenerator {
             if (!applicationPropertiesContent.trim().isEmpty()) {
                 LOG.debug("Application properties:\n{}", applicationPropertiesContent);
             }
-            result = integrationBuilder.getRouteBuilder().toString();
-        } else {
+            result = integrationBuilder.getRouteBuilder().get().toString();
+        } else if (integrationBuilder instanceof CamelKIntegrationBuilder) {
             // RouteBuilder is null, so we should have integration directly in string (quickstarts case)
-            if (integrationBuilder.getSourceContent() == null) {
+            CamelKIntegrationBuilder ckib = (CamelKIntegrationBuilder) integrationBuilder;
+            if (ckib.getContent() == null) {
                 throw new IllegalArgumentException("Missing either RouteBuilder class or String source content in IntegrationBuilder class");
             }
-            result = integrationBuilder.getSourceContent();
+            result = ckib.getContent();
+        } else {
+            throw new IllegalArgumentException("You need to specify either integration content or RouteBuilder");
         }
 
         LOG.debug("Integration class:\n{}", result);
         return result;
     }
 
-    private static void processCustomizers(IntegrationBuilder integrationBuilder) {
+    private static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder) {
         integrationBuilder.addCustomizer(
             new ApplicationScopeCustomizer(),
             new RemoveQuarkusAnnotationsCustomizer(),

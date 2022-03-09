@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.product.customizer;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -25,7 +25,7 @@ public abstract class Customizer {
         this.product = product;
     }
 
-    private IntegrationBuilder integrationBuilder;
+    private AbstractIntegrationBuilder<?> integrationBuilder;
 
     public void doCustomize() {
         if (product == null || TestConfiguration.product() == product) {
@@ -40,20 +40,20 @@ public abstract class Customizer {
 
     public abstract void customize();
 
-    public IntegrationBuilder getIntegrationBuilder() {
+    public AbstractIntegrationBuilder<?> getIntegrationBuilder() {
         return integrationBuilder;
     }
 
     public ClassOrInterfaceDeclaration getRouteBuilderClass() {
-        return getIntegrationBuilder().getRouteBuilder().getClassByName(IntegrationBuilder.ROUTE_BUILDER_NAME)
-            .orElseThrow(() -> new IllegalArgumentException("There is no class with name " + IntegrationBuilder.ROUTE_BUILDER_NAME));
+        return getIntegrationBuilder().getRouteBuilder().get().getClassByName(AbstractIntegrationBuilder.ROUTE_BUILDER_NAME)
+            .orElseThrow(() -> new IllegalArgumentException("There is no class with name " + AbstractIntegrationBuilder.ROUTE_BUILDER_NAME));
     }
 
     public MethodDeclaration getConfigureMethod() {
-        return getRouteBuilderClass().getMethodsBySignature(IntegrationBuilder.ROUTE_BUILDER_METHOD_NAME).get(0);
+        return getRouteBuilderClass().getMethodsBySignature(AbstractIntegrationBuilder.ROUTE_BUILDER_METHOD_NAME).get(0);
     }
 
-    public void setIntegrationBuilder(IntegrationBuilder integrationBuilder) {
+    public void setIntegrationBuilder(AbstractIntegrationBuilder<?> integrationBuilder) {
         this.integrationBuilder = integrationBuilder;
     }
 }

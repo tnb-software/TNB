@@ -5,8 +5,8 @@ import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
-import org.jboss.fuse.tnb.product.integration.GitIntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
@@ -30,21 +30,20 @@ import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSpringBootApp.class);
-    private GitIntegrationBuilder gitIntegrationBuilder = null;
-    private Path baseDirectory;
+    private final Path baseDirectory;
     private final String finalName;
 
-    public OpenshiftSpringBootApp(IntegrationBuilder integrationBuilder) {
+    public OpenshiftSpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
-        if (integrationBuilder instanceof GitIntegrationBuilder) {
-            gitIntegrationBuilder = (GitIntegrationBuilder) integrationBuilder;
+        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
+            AbstractMavenGitIntegrationBuilder<?> mavenGitIntegrationBuilder = (AbstractMavenGitIntegrationBuilder<?>) integrationBuilder;
 
             baseDirectory = mavenGitApp.getProjectLocation();
             Path jkubeFolder = Path.of(baseDirectory.toAbsolutePath().toString(), "src", "main", "jkube");
             jkubeFolder.toFile().mkdirs();
 
-            String properties = gitIntegrationBuilder.getJavaProperties().entrySet().stream()
+            String properties = mavenGitIntegrationBuilder.getJavaProperties().entrySet().stream()
                 .map(entry -> "    " + entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
 
@@ -60,7 +59,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
                 throw new RuntimeException("Error creating jkube configmap.yaml", e);
             }
 
-            finalName = gitIntegrationBuilder.getFinalName().orElse(getName());
+            finalName = mavenGitIntegrationBuilder.getFinalName().orElse(getName());
         } else {
             baseDirectory = TestConfiguration.appLocation().resolve(name);
 

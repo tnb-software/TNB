@@ -4,7 +4,7 @@ import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.FileLog;
 
 import org.slf4j.Logger;
@@ -22,7 +22,7 @@ public class LocalQuarkusApp extends QuarkusApp {
     private final Path logFile;
     private Process appProcess;
 
-    public LocalQuarkusApp(IntegrationBuilder integrationBuilder) {
+    public LocalQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
         logFile = TestConfiguration.appLocation().resolve(name + ".log");

@@ -30,7 +30,7 @@ public class InlineCustomizer extends CamelKCustomizer {
     }
 
     private void inlineVars() {
-        getConfigureMethod().getBody().ifPresent(body -> {
+        getIntegrationBuilder().getRouteBuilder().flatMap(rb -> getConfigureMethod().getBody()).ifPresent(body -> {
             //Visit all method calls & inline values if necessary
             body.accept(new GenericVisitorAdapter<>() {
                 @Override

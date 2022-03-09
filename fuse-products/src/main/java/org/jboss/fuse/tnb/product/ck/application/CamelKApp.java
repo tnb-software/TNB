@@ -5,13 +5,15 @@ import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
+import org.jboss.fuse.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
+import org.jboss.fuse.tnb.product.ck.integration.resource.CamelKResource;
+import org.jboss.fuse.tnb.product.ck.integration.resource.ResourceType;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
-import org.jboss.fuse.tnb.product.integration.ResourceType;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 
 import org.json.JSONArray;
@@ -26,6 +28,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -43,6 +46,7 @@ import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.camelk.v1.ConfigurationSpecBuilder;
 import io.fabric8.camelk.v1.IntegrationSpecBuilder;
+import io.fabric8.camelk.v1.ResourceSpec;
 import io.fabric8.camelk.v1.ResourceSpecBuilder;
 import io.fabric8.camelk.v1.SourceSpecBuilder;
 import io.fabric8.camelk.v1.TraitSpec;
@@ -85,7 +89,7 @@ public class CamelKApp extends App {
         camelKClient = client.adapt(CamelKClient.class);
     }
 
-    public CamelKApp(IntegrationBuilder integrationBuilder) {
+    public CamelKApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         this(integrationBuilder.getIntegrationName());
         this.integrationSource = integrationBuilder;
     }
@@ -102,7 +106,7 @@ public class CamelKApp extends App {
             LOG.info("Creating KameletBinding {}", name);
             kameletBindingClient.createOrReplace((KameletBinding) integrationSource);
         } else {
-            createIntegrationResources((IntegrationBuilder) integrationSource);
+            createIntegrationResources((AbstractIntegrationBuilder<?>) integrationSource);
         }
 
         endpoint = new Endpoint(() -> OpenshiftClient.get().adapt(KnativeClient.class).routes()
@@ -171,7 +175,7 @@ public class CamelKApp extends App {
      *
      * @param integrationBuilder integrationbuilder instance
      */
-    private void createIntegrationResources(IntegrationBuilder integrationBuilder) {
+    private void createIntegrationResources(AbstractIntegrationBuilder<?> integrationBuilder) {
         ObjectMapper jsonMapper = new ObjectMapper();
 
         io.fabric8.camelk.v1.IntegrationBuilder integration = new io.fabric8.camelk.v1.IntegrationBuilder()
@@ -182,7 +186,8 @@ public class CamelKApp extends App {
         IntegrationSpecBuilder specBuilder = new IntegrationSpecBuilder();
 
         String integrationSourceCode = IntegrationGenerator.toString(integrationBuilder);
-        if (integrationBuilder.getSourceName().endsWith(".yaml")) {
+
+        if (integrationBuilder.getFileName().endsWith(".yaml")) {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             try {
                 specBuilder.withFlows(mapper.readValue(integrationSourceCode, JsonNode[].class));
@@ -191,13 +196,13 @@ public class CamelKApp extends App {
             }
         } else {
             specBuilder.addToSources(new SourceSpecBuilder()
-                .withName(integrationBuilder.getSourceName())
+                .withName(integrationBuilder.getFileName())
                 .withContent(integrationSourceCode)
                 .build()
             );
         }
 
-        String modelinePrefix = integrationBuilder.getSourceName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
+        String modelinePrefix = integrationBuilder.getFileName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
         List<String> modelines = integrationSourceCode.lines()
             .filter(l -> l.trim().startsWith(modelinePrefix))
             .map(l -> l.replaceAll(modelinePrefix, ""))
@@ -240,24 +245,30 @@ public class CamelKApp extends App {
             );
         }
 
-        // add the named secret to configuration
-        if (integrationBuilder.getSecret() != null) {
-            specBuilder.withConfiguration(new ConfigurationSpecBuilder()
-                .withType("secret")
-                .withValue(integrationBuilder.getSecret())
-                .build()
-            );
+        if (integrationBuilder instanceof CamelKIntegrationBuilder) {
+            CamelKIntegrationBuilder ckib = (CamelKIntegrationBuilder) integrationBuilder;
+            // add the named secret to configuration
+            if (ckib.getSecret() != null) {
+                specBuilder.withConfiguration(new ConfigurationSpecBuilder()
+                    .withType("secret")
+                    .withValue(ckib.getSecret())
+                    .build()
+                );
+            }
         }
 
         // add resources
-        specBuilder.withResources(
-            integrationBuilder.getResources().stream().map(r -> new ResourceSpecBuilder()
-                .withType(r.getType().getValue())
-                .withMountPath(r.getType().equals(ResourceType.DATA) ? "/etc/camel/resources/" + r.getName() : null)
-                .withName(new File(r.getName()).getName())
-                .withContent(r.getContent())
-                .build()
-            ).collect(Collectors.toList()));
+        List<ResourceSpec> resources = new ArrayList<>();
+        for (org.jboss.fuse.tnb.product.integration.Resource resource : integrationBuilder.getResources()) {
+            ResourceSpecBuilder rsb = new ResourceSpecBuilder()
+                .withName(new File(resource.getName()).getName())
+                .withContent(resource.getContent());
+            ResourceType type = resource instanceof CamelKResource ? ((CamelKResource) resource).getType() : ResourceType.DATA;
+            rsb.withType(type.getValue());
+            rsb.withMountPath(type == ResourceType.DATA ? "/etc/camel/resources/" + resource.getName() : null);
+            resources.add(rsb.build());
+        }
+        specBuilder.withResources(resources);
 
         // Process all integration spec customizers
         integrationBuilder.getCustomizers().stream()

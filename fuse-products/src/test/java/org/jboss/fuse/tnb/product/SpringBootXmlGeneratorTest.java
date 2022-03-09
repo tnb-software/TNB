@@ -1,7 +1,8 @@
 package org.jboss.fuse.tnb.product;
 
+import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.junit.jupiter.api.Assertions;
@@ -25,8 +26,7 @@ public class SpringBootXmlGeneratorTest {
 
         String appName = "xml-timer-app-" + productName;
 
-        App application = product.createIntegration(new IntegrationBuilder(appName)
-            .fromRouteBuilder(new DirectToLogRoute())
+        App application = product.createIntegration(new SpringBootIntegrationBuilder(appName)
             .fromSpringBootXmlCamelContext(
                 SpringBootXmlGeneratorTest.class.getPackageName().replace(".", File.separator) + File.separator
                     + "camel-context.xml")
@@ -39,6 +39,8 @@ public class SpringBootXmlGeneratorTest {
             .findAny();
 
         Assertions.assertTrue(routeBuilderFile.isPresent(), "camel context xml not present");
+
+        WaitUtils.sleep(3000L);
 
         Assertions.assertTrue(application.getLog().contains("The message contains I was fired at"));
     }

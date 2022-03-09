@@ -11,8 +11,8 @@ import java.util.List;
 public class ApplicationScopeCustomizer extends QuarkusCustomizer {
     @Override
     public void customize() {
-        AnnotationUtils.addAnnotationsToRouteBuilder(getIntegrationBuilder().getRouteBuilder(),
-            List.of("javax.enterprise.context.ApplicationScoped"),
-            List.of("ApplicationScoped"));
+        getIntegrationBuilder().getRouteBuilder().ifPresent(rb ->
+            AnnotationUtils.addAnnotationsToRouteBuilder(rb, List.of("javax.enterprise.context.ApplicationScoped"), List.of("ApplicationScoped"))
+        );
     }
 }

@@ -1,10 +1,9 @@
-package org.jboss.fuse.tnb.product.integration;
+package org.jboss.fuse.tnb.product.ck.integration.resource;
 
 public enum ResourceType {
     DATA("data"),
     CONFIG("config"),
-    OPENAPI("openapi"),
-    XML_CAMEL_CONTEXT("xmlCamelContext");
+    OPENAPI("openapi");
 
     private final String value;
 

@@ -4,8 +4,8 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.application.App;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
-import org.jboss.fuse.tnb.product.integration.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -23,7 +23,7 @@ public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
     private final boolean isProd = QuarkusConfiguration.camelQuarkusVersion().contains("redhat");
 
-    public QuarkusApp(IntegrationBuilder integrationBuilder) {
+    public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
         LOG.info("Creating Camel Quarkus application project for integration {}", name);
 

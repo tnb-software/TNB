@@ -1,8 +1,9 @@
-package org.jboss.fuse.tnb.product.integration;
+package org.jboss.fuse.tnb.product.integration.builder;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.customizer.Customizer;
+import org.jboss.fuse.tnb.product.integration.Resource;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.camel.builder.RouteBuilder;
@@ -26,7 +27,6 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -38,21 +38,20 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import io.fabric8.kubernetes.api.model.Secret;
-
 /**
  * Wrapper around creating integrations.
  */
-public class IntegrationBuilder {
+public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegrationBuilder<SELF>> {
     public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
 
-    private static final Logger LOG = LoggerFactory.getLogger(IntegrationBuilder.class);
+    private static final Logger LOG = LoggerFactory.getLogger(AbstractIntegrationBuilder.class);
     private static final Set<String> IGNORED_PACKAGES = Set.of("org.jboss.fuse.tnb", "org.junit", "io.fabric8");
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
@@ -61,19 +60,18 @@ public class IntegrationBuilder {
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
     private final Properties properties = new Properties();
-    private final List<Resource> xmlCamelContext = new ArrayList<>();
 
     private CompilationUnit routeBuilder;
     private String integrationName;
-    private String sourceName = "MyRouteBuilder.java";
-    private String sourceContent;
-    private String secret;
+    private String fileName = "MyRouteBuilder.java";
 
     private int port = 8080;
 
-    public IntegrationBuilder(String name) {
+    public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
     }
+
+    protected abstract SELF self();
 
     ///Get TypeName of the class ie. tnb.tests.SlackTestIt$RouteBuilder -> RouteBuilder
     private static String getClassName(String className) {
@@ -107,20 +105,7 @@ public class IntegrationBuilder {
         }, null);
     }
 
-    public IntegrationBuilder fromSpringBootXmlCamelContext(String camelContextPath) {
-        String resourceData;
-        try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(camelContextPath)) {
-            resourceData = IOUtils.toString(is, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read resource: ", e);
-        }
-
-        xmlCamelContext.add(
-            new Resource(ResourceType.XML_CAMEL_CONTEXT, camelContextPath.substring(camelContextPath.lastIndexOf(File.separator) + 1), resourceData));
-        return this;
-    }
-
-    public IntegrationBuilder fromRouteBuilder(RouteBuilder routeBuilder) {
+    public SELF fromRouteBuilder(RouteBuilder routeBuilder) {
         Class<?> clazz = routeBuilder.getClass();
         //If class is nested we need to find the top-most parent
         while (clazz.getEnclosingClass() != null) {
@@ -155,48 +140,42 @@ public class IntegrationBuilder {
         cu.setPackageDeclaration(BASE_PACKAGE);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
         this.routeBuilder = cu;
-        return this;
+        return self();
     }
 
     /**
      * Add classpath resource (represented by string path) into integration and the resource type
      *
      * @param resource path to the resource
-     * @param type resource type
      * @return this
      */
-    public IntegrationBuilder addClasspathResource(ResourceType type, String resource) {
+    public SELF addClasspathResource(String resource) {
         String resourceData;
         try (InputStream is = this.getClass().getClassLoader().getResourceAsStream(resource)) {
             resourceData = IOUtils.toString(is, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read resource: ", e);
         }
-        addResource(new Resource(type, resource, resourceData));
-        return this;
+        addResource(new Resource(resource, resourceData));
+        return self();
     }
 
-    public IntegrationBuilder addResource(Resource resource) {
+    public SELF addResource(Resource resource) {
         resources.add(resource);
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder addClasspathResource(String resource) {
-        addClasspathResource(ResourceType.DATA, resource);
-        return this;
-    }
-
-    public IntegrationBuilder addToProperties(String key, String value) {
+    public SELF addToProperties(String key, String value) {
         return addToProperties(MapUtils.toProperties(Map.of(key, value)));
     }
 
-    public IntegrationBuilder addToProperties(Map<String, String> properties) {
+    public SELF addToProperties(Map<String, String> properties) {
         return addToProperties(MapUtils.toProperties(properties));
     }
 
-    public IntegrationBuilder addToProperties(Properties properties) {
+    public SELF addToProperties(Properties properties) {
         properties.forEach((key, value) -> this.properties.setProperty(key.toString(), value.toString()));
-        return this;
+        return self();
     }
 
     private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
@@ -292,32 +271,32 @@ public class IntegrationBuilder {
      * @param dependencies dependencies to add
      * @return this
      */
-    public IntegrationBuilder dependencies(String... dependencies) {
+    public SELF dependencies(String... dependencies) {
         this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::toDependency).collect(Collectors.toList()));
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder dependencies(Dependency... dependencies) {
+    public SELF dependencies(Dependency... dependencies) {
         this.dependencies.addAll(Arrays.asList(dependencies));
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder name(String name) {
+    public SELF name(String name) {
         this.integrationName = name;
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder addCustomizer(Customizer c, Customizer... others) {
+    public SELF addCustomizer(Customizer c, Customizer... others) {
         customizers.add(c);
         if (others != null) {
             customizers.addAll(Arrays.asList(others));
         }
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder port(int port) {
+    public SELF port(int port) {
         this.port = port;
-        return this;
+        return self();
     }
 
     /**
@@ -326,7 +305,7 @@ public class IntegrationBuilder {
      * @param clazz class to be added to the application
      * @return this
      */
-    public IntegrationBuilder addClass(Class<?> clazz) {
+    public SELF addClass(Class<?> clazz) {
         return addClass(getCompilationUnit(clazz));
     }
 
@@ -336,9 +315,9 @@ public class IntegrationBuilder {
      * @param cu compilation unit that represents the class to be added
      * @return this
      */
-    public IntegrationBuilder addClass(CompilationUnit cu) {
+    public SELF addClass(CompilationUnit cu) {
         classesToAdd.add(cu);
-        return this;
+        return self();
     }
 
     /**
@@ -346,45 +325,22 @@ public class IntegrationBuilder {
      * @param file path to the file
      * @return this
      */
-    public IntegrationBuilder addClass(Path file) {
+    public SELF addClass(Path file) {
         try {
             classesToAdd.add(new JavaParser().parse(file).getResult().get());
         } catch (IOException e) {
             throw new RuntimeException("Unable to parse file " + file, e);
         }
-        return this;
+        return self();
     }
 
-    public IntegrationBuilder sourceName(String sourceName) {
-        this.sourceName = sourceName;
-        return this;
+    public SELF fileName(String fileName) {
+        this.fileName = fileName;
+        return self();
     }
 
-    public IntegrationBuilder fromString(String source) {
-        this.sourceContent = source;
-        return this;
-    }
-
-    public IntegrationBuilder secret(String secret) {
-        this.secret = secret;
-        return this;
-    }
-
-    public IntegrationBuilder secrets(Secret secret) {
-        this.secret = secret.getMetadata().getName();
-        return this;
-    }
-
-    public String getSecret() {
-        return secret;
-    }
-
-    public String getSourceName() {
-        return sourceName;
-    }
-
-    public String getSourceContent() {
-        return sourceContent;
+    public String getFileName() {
+        return fileName;
     }
 
     public List<CompilationUnit> getAdditionalClasses() {
@@ -399,8 +355,14 @@ public class IntegrationBuilder {
         return dependencies;
     }
 
-    public CompilationUnit getRouteBuilder() {
-        return routeBuilder;
+    /**
+     * Gets the route builder compilation unit.
+     *
+     * The RB may be null in case the integration is loaded from string (Camel-K), or from XML file (CSB)
+     * @return optional
+     */
+    public Optional<CompilationUnit> getRouteBuilder() {
+        return Optional.ofNullable(routeBuilder);
     }
 
     public Properties getProperties() {
@@ -409,10 +371,6 @@ public class IntegrationBuilder {
 
     public List<Resource> getResources() {
         return resources;
-    }
-
-    public List<Resource> getXmlCamelContext() {
-        return xmlCamelContext;
     }
 
     public List<Customizer> getCustomizers() {

@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.product;
 
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.product.customizer.Customizers;
-import org.jboss.fuse.tnb.product.integration.IntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.junit.jupiter.api.Assertions;

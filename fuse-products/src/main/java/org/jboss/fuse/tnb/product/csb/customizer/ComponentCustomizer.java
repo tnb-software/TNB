@@ -11,8 +11,7 @@ public class ComponentCustomizer extends SpringbootCustomizer {
 
     @Override
     public void customize() {
-        AnnotationUtils.addAnnotationsToRouteBuilder(getIntegrationBuilder().getRouteBuilder(),
-            List.of("org.springframework.stereotype.Component"),
-            List.of("Component"));
+        getIntegrationBuilder().getRouteBuilder().ifPresent(rb ->
+            AnnotationUtils.addAnnotationsToRouteBuilder(rb, List.of("org.springframework.stereotype.Component"), List.of("Component")));
     }
 }
