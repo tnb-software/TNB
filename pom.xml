@@ -28,7 +28,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>1.15.2</testcontainers.version>
         <!-- >= 0.25 version is aligned to >= 5.11 client -->
-        <xtf.version>0.25-SNAPSHOT</xtf.version>
+        <xtf.version>0.25</xtf.version>
         <junit.version>5.8.2</junit.version>
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
