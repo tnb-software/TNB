@@ -14,6 +14,8 @@ public class SpringBootConfiguration extends Configuration {
     public static final String CAMEL_SPRINGBOOT_ARCHETYPE_ARTIFACT_ID = "camel.springboot.archetype.artifact.id";
     public static final String CAMEL_SPRINGBOOT_ARCHETYPE_VERSION = "camel.springboot.archetype.version";
 
+    public static final String CAMEL_SPRINGBOOT_EXAMPLES_BRANCH = "camel.springboot.examples.branch";
+
     public static final String OPENSHIFT_MAVEN_PLUGIN_GROUP_ID = "openshift-maven-plugin-group-id";
     public static final String OPENSHIFT_MAVEN_PLUGIN_VERSION = "openshift-maven-plugin-version";
 
@@ -27,6 +29,10 @@ public class SpringBootConfiguration extends Configuration {
 
     public static String camelSpringBootVersion() {
         return getProperty(CAMEL_SPRINGBOOT_VERSION, "3.14.0");
+    }
+
+    public static String camelSpringBootExamplesBranch() {
+        return getProperty(CAMEL_SPRINGBOOT_EXAMPLES_BRANCH, "camel-spring-boot-examples-3.14.2-branch");
     }
 
     public static String springBootPlatformGroupId() {

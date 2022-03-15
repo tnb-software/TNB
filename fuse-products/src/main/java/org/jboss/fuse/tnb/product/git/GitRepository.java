@@ -5,10 +5,15 @@ import org.jboss.fuse.tnb.product.integration.builder.AbstractGitIntegrationBuil
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
+import org.eclipse.jgit.errors.ConfigInvalidException;
+import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.eclipse.jgit.util.FS;
+import org.eclipse.jgit.util.SystemReader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 
 public class GitRepository {
@@ -27,7 +32,11 @@ public class GitRepository {
     }
 
     private String getFolder() {
-        return repositoryUrl.substring(repositoryUrl.lastIndexOf("/") + 1, repositoryUrl.lastIndexOf(".git"));
+        if (repositoryUrl.toLowerCase().endsWith(".git")) {
+            return repositoryUrl.substring(repositoryUrl.lastIndexOf("/") + 1, repositoryUrl.lastIndexOf(".git"));
+        } else {
+            return repositoryUrl.substring(repositoryUrl.lastIndexOf("/") + 1);
+        }
     }
 
     public Path getPath() {
@@ -38,6 +47,15 @@ public class GitRepository {
         File projectDirectory = getPath().toFile();
         if (!projectDirectory.exists()) {
             LOG.info("Check out {} on branch {}", repositoryUrl, branch);
+
+            try {
+                FileBasedConfig fileBasedConfig = SystemReader.getInstance().openJGitConfig(null, FS.DETECTED);
+                fileBasedConfig.load();
+                fileBasedConfig.setBoolean("http", null, "sslVerify", false);
+                fileBasedConfig.save();
+            } catch (IOException | ConfigInvalidException e) {
+                throw new IllegalStateException("Can't update git config", e);
+            }
 
             try (Git ignored = Git.cloneRepository()
                 .setURI(repositoryUrl)
