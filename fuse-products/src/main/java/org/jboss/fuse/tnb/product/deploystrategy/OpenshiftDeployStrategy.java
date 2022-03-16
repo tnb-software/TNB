@@ -10,5 +10,5 @@ public interface OpenshiftDeployStrategy {
 
     default boolean applicable(AbstractIntegrationBuilder<?> integrationBuilder) {
         return true;
-    };
+    }
 }
