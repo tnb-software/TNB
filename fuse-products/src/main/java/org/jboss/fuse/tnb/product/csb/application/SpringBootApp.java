@@ -64,6 +64,17 @@ public abstract class SpringBootApp extends App {
             customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
             customizeDependencies(integrationBuilder.getDependencies());
+
+            BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
+                .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
+                .withGoals("clean", "package")
+                .withProperties(Map.of(
+                    "skipTests", "true"
+                ))
+                .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+
+            LOG.info("Building {} application project", name);
+            Maven.invoke(requestBuilder.build());
         }
     }
 
