@@ -164,7 +164,7 @@ public final class IOUtils {
         return zipFile;
     }
 
-    public static String getExecInPath(String execName) throws IOException {
+    public static String getExecInPath(String execName) {
         return Arrays.stream(System.getenv("PATH").split(File.pathSeparator)).map(Path::of)
             .filter(pathEntry -> {
                 try {
@@ -176,7 +176,6 @@ public final class IOUtils {
                     //just skip
                     return false;
                 }
-            }).findFirst().orElseThrow(() -> new IOException("unable to find " + execName + " in PATH"))
-            .resolve(execName).toAbsolutePath().toString();
+            }).map(p -> p.resolve(execName).toAbsolutePath().toString()).findFirst().orElse(null);
     }
 }

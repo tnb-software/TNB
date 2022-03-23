@@ -43,7 +43,7 @@ public class OpenshiftConfiguration extends Configuration {
     }
 
     public static String openshiftHttpsProxy() {
-        return getProperty(OPENSHIFT_HTTPS_PROXY, null);
+        return getProperty(OPENSHIFT_HTTPS_PROXY, (String) null);
     }
 
     public static String openshiftNamespace() {

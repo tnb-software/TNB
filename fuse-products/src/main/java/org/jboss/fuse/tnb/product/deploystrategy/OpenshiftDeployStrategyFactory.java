@@ -15,7 +15,6 @@ public abstract class OpenshiftDeployStrategyFactory {
         return ((OpenshiftDeployer) StreamSupport.stream(ServiceLoader.load(OpenshiftDeployStrategy.class).spliterator(), false)
             .filter(s -> OpenshiftDeployStrategyType.valueOf(OpenshiftConfiguration.getDeployStrategy().toUpperCase()) == s.deployType())
             .filter(s -> Arrays.stream(s.products()).anyMatch(p -> p == TestConfiguration.product()))
-            .filter(s -> s.applicable(integrationBuilder))
             .findFirst().orElseThrow(() -> new RuntimeException("unable to find strategy implementation for "
                 + OpenshiftConfiguration.getDeployStrategy()
                 + " for product " + TestConfiguration.product().name())))
