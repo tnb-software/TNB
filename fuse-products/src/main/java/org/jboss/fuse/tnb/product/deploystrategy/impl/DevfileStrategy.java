@@ -1,7 +1,5 @@
 package org.jboss.fuse.tnb.product.deploystrategy.impl;
 
-import org.apache.commons.io.FileUtils;
-
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -12,6 +10,7 @@ import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

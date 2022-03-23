@@ -30,7 +30,9 @@ commands:
   - id: init-compile
     exec:
       component: tools
-      commandLine: 'source /opt/jboss/container/maven/default/maven.sh && maven_init && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments'
+      commandLine: 'source /opt/jboss/container/maven/default/maven.sh && maven_init 
+        && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml 
+        && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments'
       workingDir: $PROJECT_SOURCE
   - id: dev-run
     exec:
