@@ -11,6 +11,7 @@ import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +70,11 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
                     , "--devfile", getDevfile())
                     , TestConfiguration.appLocation().resolve(name + "-devfile.log").toFile());
 
-            setEnvVar("MAVEN_MIRROR_URL", TestConfiguration.mavenRepository());
+            if (TestConfiguration.isMavenMirror()) {
+                setEnvVar("MAVEN_MIRROR_URL", StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@mirrorOf"));
+            } else {
+                setEnvVar("MAVEN_MIRROR_URL", TestConfiguration.mavenRepository());
+            }
 
             if (gitIntegrationBuilder != null && !gitIntegrationBuilder.getJavaProperties().isEmpty()) {
                 String properties = gitIntegrationBuilder.getJavaProperties().entrySet().stream()
