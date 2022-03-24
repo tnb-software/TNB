@@ -10,6 +10,7 @@ import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateCollectionOptions;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -25,9 +26,19 @@ public class MongoDBValidation {
         this.account = account;
     }
 
-    public void createDocument(String collectionName, Document document) {
+    public String createDocument(String collectionName, Document document) {
         LOG.info("Publishing document {} into a collection named {}", document.toJson(), collectionName);
         client.getDatabase(account.database()).getCollection(collectionName).insertOne(document);
+        // Insert mutates the original object
+        return document.get("_id").toString();
+    }
+
+    public List<String> createDocuments(String collectionName, Document... documents) {
+        List<String> ids = new ArrayList<>();
+        for (Document document : documents) {
+            ids.add(createDocument(collectionName, document));
+        }
+        return ids;
     }
 
     public List<Document> getDocuments(String collectionName) {
