@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.csb.application;
 
-import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -73,16 +72,6 @@ public abstract class SpringBootApp extends App {
                     "skipTests", "true"
                 ))
                 .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
-
-            if (OpenshiftConfiguration.isOpenshift()) {
-                requestBuilder.withProperties(Map.of(
-                    "skipTests", "true"
-                    , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
-                    , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
-                ));
-                requestBuilder.withGoals("clean", "package", "oc:resource");
-                requestBuilder.withProfiles("openshift");
-            }
 
             LOG.info("Building {} application project", name);
             Maven.invoke(requestBuilder.build());

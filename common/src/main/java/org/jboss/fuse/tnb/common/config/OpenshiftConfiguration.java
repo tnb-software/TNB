@@ -20,6 +20,8 @@ public class OpenshiftConfiguration extends Configuration {
 
     private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
+    private static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
+
     private static final String NAMESPACE_PREFIX = "tnb-test-";
 
     private static boolean isTemporaryNamespace = false;
@@ -41,7 +43,7 @@ public class OpenshiftConfiguration extends Configuration {
     }
 
     public static String openshiftHttpsProxy() {
-        return getProperty(OPENSHIFT_HTTPS_PROXY, null);
+        return getProperty(OPENSHIFT_HTTPS_PROXY, (String) null);
     }
 
     public static String openshiftNamespace() {
@@ -65,5 +67,9 @@ public class OpenshiftConfiguration extends Configuration {
 
     public static boolean isTemporaryNamespace() {
         return isTemporaryNamespace;
+    }
+
+    public static String getDeployStrategy() {
+        return getProperty(OPENSHIFT_DEPLOY_STRATEGY, "jkube");
     }
 }

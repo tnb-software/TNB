@@ -5,17 +5,23 @@ import org.eclipse.microprofile.config.ConfigProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.function.Supplier;
+
 public abstract class Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
 
     private static Config config;
 
     protected static String getProperty(String name) {
-        return getProperty(name, null);
+        return getProperty(name, (String) null);
     }
 
     protected static String getProperty(String name, String defaultValue) {
         return config.getOptionalValue(name, String.class).orElse(defaultValue);
+    }
+
+    protected static String getProperty(String name, Supplier<String> defaultValue) {
+        return config.getOptionalValue(name, String.class).orElseGet(defaultValue);
     }
 
     protected static void setProperty(String name, String value) {
