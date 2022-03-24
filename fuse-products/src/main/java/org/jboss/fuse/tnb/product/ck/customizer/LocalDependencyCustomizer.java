@@ -51,7 +51,7 @@ public class LocalDependencyCustomizer extends CamelKCustomizer {
 
     @Override
     public void customize() {
-        Dependency dep = Maven.toDependency(mavenCoordinates);
+        Dependency dep = Maven.createDependency(mavenCoordinates);
 
         if (dep.getVersion() == null) {
             throw new IllegalArgumentException("Maven coordinates for local dependency must always contain a version"

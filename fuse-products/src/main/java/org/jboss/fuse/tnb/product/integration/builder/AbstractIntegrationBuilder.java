@@ -272,7 +272,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      * @return this
      */
     public SELF dependencies(String... dependencies) {
-        this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::toDependency).collect(Collectors.toList()));
+        this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::createDependency).collect(Collectors.toList()));
         return self();
     }
 

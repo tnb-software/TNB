@@ -71,7 +71,7 @@ public abstract class AbstractMavenGitIntegrationBuilder<SELF extends AbstractMa
     }
 
     public Optional<String> getFinalName() {
-        return Optional.of(finalName);
+        return Optional.ofNullable(finalName);
     }
 
     public String getProjectVersion() {

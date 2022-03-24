@@ -3,9 +3,10 @@ package org.jboss.fuse.tnb.product;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
-import org.jboss.fuse.tnb.product.util.maven.Maven;
+import org.jboss.fuse.tnb.util.maven.TestMaven;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 
+@Tag("integration")
 public class SpringBootXmlGeneratorTest {
 
     @Test
@@ -21,7 +23,7 @@ public class SpringBootXmlGeneratorTest {
         String productName = "camelspringboot";
 
         System.setProperty("test.product", productName);
-        Maven.setupMaven();
+        TestMaven.setupDefaultMaven();
         Product product = ProductFactory.create();
 
         String appName = "xml-timer-app-" + productName;

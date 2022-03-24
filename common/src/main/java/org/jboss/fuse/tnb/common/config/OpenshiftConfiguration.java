@@ -9,16 +9,15 @@ import java.util.UUID;
 
 public class OpenshiftConfiguration extends Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftConfiguration.class);
+
     public static final String USE_OPENSHIFT = "test.use.openshift";
-
-    private static final String OPENSHIFT_URL = "openshift.url";
-    private static final String OPENSHIFT_USERNAME = "openshift.username";
-    private static final String OPENSHIFT_PASSWORD = "openshift.password";
-    private static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
-    private static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
-    private static final String OPENSHIFT_HTTPS_PROXY = "openshift.https.proxy";
-
-    private static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
+    public static final String OPENSHIFT_URL = "openshift.url";
+    public static final String OPENSHIFT_USERNAME = "openshift.username";
+    public static final String OPENSHIFT_PASSWORD = "openshift.password";
+    public static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
+    public static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
+    public static final String OPENSHIFT_HTTPS_PROXY = "openshift.https.proxy";
+    public static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
     private static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
 

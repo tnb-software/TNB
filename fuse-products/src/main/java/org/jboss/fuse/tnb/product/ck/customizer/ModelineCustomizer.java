@@ -22,20 +22,22 @@ public class ModelineCustomizer extends CamelKCustomizer {
     public void customize() {
         final String commentSign = getIntegrationBuilder().getFileName().contains(".java") ? "//" : "#";
 
-        final String modelineRegex = commentSign + "\\s*" + MODELINE_PREFIX + ".*";
+        final String modelineRegex;
 
-        StringBuilder modeline = new StringBuilder(MODELINE_PREFIX);
+        StringBuilder modeline = new StringBuilder(MODELINE_PREFIX).append(" ");
         modeline.append(toPrepend).append(" ");
 
         // Collect previous modelines
         if (getIntegrationBuilder().getRouteBuilder().isPresent()) {
+            modelineRegex = "\\s*" + MODELINE_PREFIX + ".*";
             modeline.append(getIntegrationBuilder().getRouteBuilder().get().getComment().stream().map(Comment::getContent)
                 .filter(c -> c.matches(modelineRegex))
                 .map(c -> c.replaceAll(MODELINE_PREFIX + "\\s*", ""))
                 .collect(Collectors.joining(" ")));
 
-            getIntegrationBuilder().getRouteBuilder().get().setLineComment(modeline.append("\n").toString());
+            getIntegrationBuilder().getRouteBuilder().get().setLineComment(modeline.toString());
         } else {
+            modelineRegex = commentSign + "\\s*" + MODELINE_PREFIX + ".*";
             // Parse the modeline from string if no route builder class is present
             CamelKIntegrationBuilder ckib = (CamelKIntegrationBuilder) getIntegrationBuilder();
             StringBuilder remaining = new StringBuilder();

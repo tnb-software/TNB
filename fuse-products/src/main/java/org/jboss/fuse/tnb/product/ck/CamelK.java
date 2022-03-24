@@ -1,7 +1,6 @@
 package org.jboss.fuse.tnb.product.ck;
 
 import static org.jboss.fuse.tnb.common.utils.IOUtils.writeFile;
-import static org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration.SUBSCRIPTION_NAME;
 
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
@@ -26,7 +25,6 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.auto.service.AutoService;
 
 import java.nio.file.Paths;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -47,7 +45,6 @@ import io.fabric8.camelk.v1.IntegrationPlatformSpecBuilder;
 import io.fabric8.camelk.v1alpha1.Kamelet;
 import io.fabric8.camelk.v1alpha1.KameletBinding;
 import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
-import io.fabric8.kubernetes.api.model.Duration;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.utils.Serialization;
 
@@ -61,7 +58,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     // Count of all kamelets from camel-k operator
     private int operatorKameletCount = -1;
 
-    private CamelKClient camelKClient;
+    protected CamelKClient camelKClient;
 
     @Override
     public void setupProduct() {
@@ -69,9 +66,10 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         // and then the desired one is returned
         camelKClient = OpenshiftClient.get().adapt(CamelKClient.class);
 
+        CamelKConfiguration config = CamelKConfiguration.getConfiguration();
+
         if (!isReady()) {
             LOG.info("Deploying Camel-K");
-            CamelKConfiguration config = CamelKConfiguration.getConfiguration();
             if (CamelKConfiguration.forceUpstream()) {
                 LOG.warn(
                     "You are going to deploy upstream version of Camel-K. "
@@ -88,36 +86,35 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                 throw new RuntimeException("Operator Hub catalog source " + config.subscriptionSource() + " not found!");
             }
             OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
-                SUBSCRIPTION_NAME,
-                config.subscriptionSourceNamespace());
-            OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+                config.subscriptionName(), config.subscriptionSourceNamespace());
+            OpenshiftClient.get().waitForInstallPlanToComplete(config.subscriptionName());
         }
 
         // @formatter:off
         IntegrationPlatform ip = new IntegrationPlatformBuilder()
             .withNewMetadata()
                 .withLabels(Map.of("app", "camel-k"))
-                .withName("camel-k")
+                .withName(config.integrationPlatformName())
             .endMetadata()
             .build();
 
         IntegrationPlatformSpecBuilder specBuilder = new IntegrationPlatformSpecBuilder()
             .withNewBuild()
-                .withTimeout(new Duration(java.time.Duration.of(30, ChronoUnit.MINUTES)))
+                .withTimeout(config.mavenBuildTimeout())
             .endBuild();
 
         if (TestConfiguration.mavenSettings() == null) {
-            OpenshiftClient.get().createConfigMap("tnb-maven-settings", Map.of("settings.xml", Maven.createSettingsXmlFile()));
+            OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(), Map.of("settings.xml", Maven.createSettingsXmlFile()));
         } else {
-            OpenshiftClient.get()
-                .createConfigMap("tnb-maven-settings", Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
+            OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(),
+                Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
         }
 
         specBuilder
             .editBuild()
                 .withNewMaven()
                     .withNewSettings()
-                        .withConfigMapKeyRef(new ConfigMapKeySelector("settings.xml", "tnb-maven-settings", false))
+                        .withConfigMapKeyRef(new ConfigMapKeySelector("settings.xml", config.mavenSettingsConfigMapName(), false))
                     .endSettings()
                 .endMaven()
             .endBuild()
@@ -165,7 +162,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     public void teardownProduct() {
         if (!TestConfiguration.skipTearDown()) {
             saveOperatorLog();
-            OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+            OpenshiftClient.get().deleteSubscription(CamelKConfiguration.getConfiguration().subscriptionName());
             removeKamelets();
         }
     }

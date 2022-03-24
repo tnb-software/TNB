@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * For camel spring boot we add @Component to RouteBuilder class
  */
-public class ComponentCustomizer extends SpringbootCustomizer {
+public class ComponentCustomizer extends SpringBootCustomizer {
 
     @Override
     public void customize() {

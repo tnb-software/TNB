@@ -35,11 +35,11 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
-public final class OpenshiftClient extends OpenShift {
+public class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
-    private static OpenshiftClient client;
+    protected static OpenshiftClient client;
 
-    private OpenshiftClient(OpenShiftConfig openShiftConfig) {
+    protected OpenshiftClient(OpenShiftConfig openShiftConfig) {
         super(openShiftConfig);
     }
 

@@ -49,25 +49,26 @@ public final class Accounts {
      * @return new instance of given class
      */
     public static <T extends Account> T get(Class<T> accountClass) {
+        Function<WithId, String> getId = WithId::getId;
+        T instance;
         try {
-            Function<WithId, String> getId = WithId::getId;
-            T instance = accountClass.getDeclaredConstructor().newInstance();
-            if (instance instanceof WithId) {
-                LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
-                if (credentials == null) {
-                    load();
-                }
-                String credentialsId = getId.apply((WithId) instance);
-                if (!credentials.containsKey(credentialsId)) {
-                    fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
-                }
-                return accountClass.cast(mapper.convertValue(credentials.get(credentialsId).get("credentials"), accountClass));
-            } else {
-                LOG.debug("Initialization of {}. No credentials loading needed.", accountClass.getSimpleName());
-                return instance;
-            }
+            instance = accountClass.getDeclaredConstructor().newInstance();
         } catch (Exception e) {
             throw new RuntimeException("Unable to create instance of " + accountClass.getName() + " class: ", e);
+        }
+        if (instance instanceof WithId) {
+            LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
+            if (credentials == null) {
+                load();
+            }
+            String credentialsId = getId.apply((WithId) instance);
+            if (!credentials.containsKey(credentialsId)) {
+                throw new IllegalArgumentException("Credentials with id " + credentialsId + " not found in credentials.yaml file");
+            }
+            return accountClass.cast(mapper.convertValue(credentials.get(credentialsId).get("credentials"), accountClass));
+        } else {
+            LOG.debug("Initialization of {}. No credentials loading needed.", accountClass.getSimpleName());
+            return instance;
         }
     }
 
