@@ -11,6 +11,14 @@ The integration code is generated from a "meta" [Integration Builder](src/main/j
 class and 0..x [Customizer](src/main/java/org/jboss/fuse/tnb/product/customizer/Customizer.java)s for given system-x services using
 the [javaparser](https://javaparser.org/) framework. See [RouteBuilders guide](RouteBuilders.md) for more details.
 
+In order to deploy the integration in Openshift, it is possible to implement a specific strategy listed in 
+[OpenshiftDeployStrategyType](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategyType.java)
+enum and instantiated by [OpenshiftDeployStrategyFactory](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategyFactory.java) 
+searching for [OpenshiftDeployStrategy](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategy.java) classes. 
+The implementation class must be a [OpenshiftDeployer](src/main/java/org/jboss/fuse/tnb/product/interfaces/OpenshiftDeployer.java) 
+in order to execute all deployment phases. 
+You can run the deployment strategy via property `openshift.deploy.strategy`
+
 There are several integration builder classes to use dependending on the use-case:
 - [AbstractIntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/builder/AbstractIntegrationBuilder.java) serves as a base
 for creating integrations on all products (so there are methods related to every product only)
