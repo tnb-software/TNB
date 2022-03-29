@@ -33,9 +33,6 @@ public class LocalKafka extends Kafka implements Deployable {
 
     @Override
     public KafkaValidation validation() {
-        if (validation == null) {
-            validation = new KafkaValidation(producer, consumer);
-        }
         return validation;
     }
 
@@ -74,11 +71,13 @@ public class LocalKafka extends Kafka implements Deployable {
 
         producer = new KafkaProducer<>(props);
         consumer = new KafkaConsumer<>(props);
+        validation = new KafkaValidation(producer, consumer);
     }
 
     @Override
     public void closeResources() {
         producer.close();
         consumer.close();
+        validation = null;
     }
 }
