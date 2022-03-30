@@ -32,7 +32,7 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String camelSpringBootExamplesBranch() {
-        return getProperty(CAMEL_SPRINGBOOT_EXAMPLES_BRANCH, "camel-spring-boot-examples-3.14.2-branch");
+        return getProperty(CAMEL_SPRINGBOOT_EXAMPLES_BRANCH, camelSpringBootVersion());
     }
 
     public static String springBootPlatformGroupId() {
