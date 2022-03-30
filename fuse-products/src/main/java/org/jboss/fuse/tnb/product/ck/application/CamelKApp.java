@@ -59,6 +59,7 @@ import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -157,11 +158,27 @@ public class CamelKApp extends App {
     public void waitUntilReady() {
         super.waitUntilReady();
         KnativeClient knClient = OpenshiftClient.get().adapt(KnativeClient.class);
-        Service svc = knClient.services().withName(name).get();
+        Service svc = null;
+        try {
+            svc = knClient.services().withName(name).get();
+        } catch (KubernetesClientException ex) {
+            // If knative is not installed, ignore the exception
+            if (!ex.getMessage().contains("Not Found")) {
+                throw ex;
+            }
+        }
         if (svc != null) {
             waitForKnativeResource(() -> knClient.services().withName(name).get());
         }
-        final List<Trigger> triggers = knClient.triggers().withLabel("camel.apache.org/integration", name).list().getItems();
+        List<Trigger> triggers = new ArrayList<>();
+        try {
+            triggers = knClient.triggers().withLabel("camel.apache.org/integration", name).list().getItems();
+        } catch (KubernetesClientException ex) {
+            // If knative is not installed, ignore the exception
+            if (!ex.getMessage().contains("Not Found")) {
+                throw ex;
+            }
+        }
         if (triggers.size() > 0) {
             Trigger trigger = knClient.triggers().withName(triggers.get(0).getMetadata().getName()).get();
             waitForKnativeResource(() -> knClient.triggers().withName(trigger.getMetadata().getName()).get());
