@@ -11,8 +11,12 @@ import org.jboss.fuse.tnb.product.log.OpenshiftLog;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
+import java.util.Optional;
 
 public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, OpenshiftDeployStrategy {
 
@@ -92,4 +96,24 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
     }
 
     public abstract void doDeploy();
+
+    protected void copyResources(Path contextPath, String destinationFolder) {
+        //copy resources
+        Optional.ofNullable(integrationBuilder.getResources())
+            .ifPresent(resources -> {
+                final Path resFolder = contextPath.resolve(destinationFolder);
+                try {
+                    Files.createDirectories(resFolder);
+                    resources.forEach(resource -> {
+                        try {
+                            Files.copy(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
+                        } catch (IOException e) {
+                            LOG.error("unable to copy resource " + resource.getContent() + " to " + destinationFolder, e);
+                        }
+                    });
+                } catch (IOException e) {
+                    LOG.error("unable to create directory " + resFolder, e);
+                }
+            });
+    }
 }

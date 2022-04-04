@@ -191,9 +191,18 @@ public class OpenshiftAMQStreams extends Kafka implements ReusableOpenshiftDeplo
 
     @Override
     public String bootstrapServers() {
+        return findBootstrapServers("plain");
+    }
+
+    @Override
+    public String bootstrapSSLServers() {
+        return findBootstrapServers("route");
+    }
+
+    private String findBootstrapServers(String listnerType) {
         return KAFKA_CRD_CLIENT.withName(name()).get().getStatus().getListeners()
             .stream()
-            .filter(l -> "plain".equals(l.getType()))
+            .filter(l -> listnerType.equals(l.getType()))
             .findFirst().get().getBootstrapServers();
     }
 
@@ -271,8 +280,7 @@ public class OpenshiftAMQStreams extends Kafka implements ReusableOpenshiftDeplo
 
     private Properties connectionProperties() {
         Properties props = defaultClientProperties();
-        props.setProperty("bootstrap.servers", OpenshiftClient.get().routes().withName(name() + "-kafka-route-bootstrap").get()
-            .getSpec().getHost() + ":443");
+        props.setProperty("bootstrap.servers", bootstrapSSLServers());
         props.setProperty("security.protocol", "SSL");
         props.setProperty("ssl.truststore.password", account().trustStorePassword());
         props.setProperty("ssl.truststore.location", new File(account().trustStore()).getAbsolutePath());

@@ -23,6 +23,8 @@ public abstract class Kafka implements Service {
 
     public abstract String bootstrapServers();
 
+    public abstract String bootstrapSSLServers();
+
     public abstract void createTopic(String name, int partitions, int replicas);
 
     public static String kafkaLocalImage() {

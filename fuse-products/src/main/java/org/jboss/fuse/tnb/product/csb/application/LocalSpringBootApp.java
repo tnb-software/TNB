@@ -1,6 +1,5 @@
 package org.jboss.fuse.tnb.product.csb.application;
 
-import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
@@ -35,7 +34,7 @@ public class LocalSpringBootApp extends SpringBootApp {
         if (mavenGitApp != null) {
             args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
-            jarName = mavenGitApp.getFinalName().map(n -> n + "-" + SpringBootConfiguration.camelSpringBootVersion() + ".jar").orElse(name);
+            jarName = mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
             projectPath = mavenGitApp.getProjectLocation();
         } else {
             args = new ArrayList<>();
