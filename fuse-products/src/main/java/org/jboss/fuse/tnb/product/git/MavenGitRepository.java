@@ -6,9 +6,11 @@ import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegratio
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
@@ -34,6 +36,12 @@ public class MavenGitRepository extends GitRepository {
         gitIntegrationBuilder.getPreMavenBuildCustomizers().forEach(customizer -> customizer.accept(projectLocation));
 
         Map<String, String> mavenBuildProperties = new HashMap<>(gitIntegrationBuilder.getMavenProperties());
+        finalName.ifPresent(fName -> {
+            final File pom = projectLocation.resolve("pom.xml").toFile();
+            final Model model = Maven.loadPom(pom);
+            model.getBuild().setFinalName(finalName.get());
+            Maven.writePom(pom, model);
+        });
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)

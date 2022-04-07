@@ -60,13 +60,15 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
             this.contextPath = baseDirectory;
             this.folderName = ".";
         }
+        //copy resources
+        copyResources(contextPath, "devfile-resources");
     }
 
     @Override
     public void doDeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("create", "java-springboot-ubi8", "--app", name, "--context" , "."
+            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context" , "."
                     , "--devfile", getDevfile())
                     , TestConfiguration.appLocation().resolve(name + "-devfile.log").toFile());
 

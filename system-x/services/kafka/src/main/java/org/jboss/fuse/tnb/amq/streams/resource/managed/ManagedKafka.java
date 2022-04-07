@@ -16,6 +16,11 @@ public class ManagedKafka extends Kafka {
     }
 
     @Override
+    public String bootstrapSSLServers() {
+        return bootstrapServers(); // keep the same bootstrap servers
+    }
+
+    @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op, needs to be created manually beforehand
     }

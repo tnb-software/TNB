@@ -27,6 +27,11 @@ public class LocalKafka extends Kafka implements Deployable {
     }
 
     @Override
+    public String bootstrapSSLServers() {
+        return bootstrapServers(); //always plain for local kafka
+    }
+
+    @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op
     }

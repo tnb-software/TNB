@@ -68,7 +68,7 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String openshiftMavenPluginVersion() {
-        return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, "1.5.1");
+        return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, "1.7.0");
     }
 
     public static String mavenCompilerPluginVersion() {

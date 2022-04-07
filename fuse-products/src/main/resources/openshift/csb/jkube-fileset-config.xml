@@ -1,0 +1,24 @@
+<configuration>
+    <images>
+        <image>
+            <name>jkube-resources</name>
+            <build>
+                <from>${jkube.generator.from}</from>
+                <assembly>
+                    <targetDir>/deployments</targetDir>
+                    <layers>
+                        <layer>
+                            <id>jkube-resources</id>
+                            <fileSets>
+                                <fileSet>
+                                    <directory>jkube-resources</directory>
+                                    <outputDirectory>data</outputDirectory>
+                                </fileSet>
+                            </fileSets>
+                        </layer>
+                    </layers>
+                </assembly>
+            </build>
+        </image>
+    </images>
+</configuration>

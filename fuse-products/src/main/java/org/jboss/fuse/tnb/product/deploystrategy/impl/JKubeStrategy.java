@@ -14,19 +14,29 @@ import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
+import org.codehaus.plexus.util.xml.Xpp3DomBuilder;
+import org.codehaus.plexus.util.xml.Xpp3DomUtils;
+import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 
 import com.google.auto.service.AutoService;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @AutoService(OpenshiftDeployStrategy.class)
 public class JKubeStrategy extends OpenshiftBaseDeployer {
+
+    public static final String OPENSHIFT_MAVEN_PLUGIN_AID = "openshift-maven-plugin";
 
     @Override
     public ProductType[] products() {
@@ -40,9 +50,9 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public void doDeploy() {
-        String oc = SpringBootConfiguration.openshiftMavenPluginGroupId()
-            + ":openshift-maven-plugin:"
-            + SpringBootConfiguration.openshiftMavenPluginVersion();
+        String oc = String.format("%s:%s:%s", SpringBootConfiguration.openshiftMavenPluginGroupId()
+            , OPENSHIFT_MAVEN_PLUGIN_AID
+            , SpringBootConfiguration.openshiftMavenPluginVersion());
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
             .withProperties(Map.of(
@@ -83,6 +93,50 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
             } catch (IOException e) {
                 throw new RuntimeException("Error creating jkube configmap.yaml", e);
             }
+
+            //copy resources
+            copyResources(baseDirectory, "jkube-resources");
+
+            //add resources via plugin config
+            final File pomFile = baseDirectory.resolve("pom.xml").toFile();
+
+            try (InputStreamReader reader =
+                new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
+
+                final Xpp3Dom ompConfig = Xpp3DomBuilder.build(reader);
+
+                final Model model = Maven.loadPom(pomFile);
+
+                final Optional<Plugin> existingOmp = model.getBuild().getPlugins().stream()
+                    .filter(plugin -> plugin.getArtifactId().equals(OPENSHIFT_MAVEN_PLUGIN_AID))
+                    .findFirst();
+                existingOmp.ifPresentOrElse(plugin -> {
+                    if (existingOmp.get().getConfiguration() != null  //existing plugin in pom.xml
+                        && ((Xpp3Dom) existingOmp.get().getConfiguration()).getChild("images") != null) { //existing plugin config
+                        existingOmp.get().setConfiguration(Xpp3DomUtils.mergeXpp3Dom(ompConfig
+                            , ((Xpp3Dom) existingOmp.get().getConfiguration())));
+                    } else {
+                        existingOmp.get().setConfiguration(ompConfig); //non existing config in existing plugin
+                    }
+                }, () -> { //non existing plugin in pom.xml
+                    final Plugin omp = new Plugin();
+                    omp.setArtifactId(OPENSHIFT_MAVEN_PLUGIN_AID);
+                    omp.setGroupId(SpringBootConfiguration.openshiftMavenPluginGroupId());
+                    omp.setVersion(SpringBootConfiguration.openshiftMavenPluginVersion());
+                    omp.setConfiguration(ompConfig);
+                    model.getBuild().getPlugins().add(omp);
+                });
+
+                Maven.writePom(pomFile, model);
+
+            } catch (IOException | XmlPullParserException e) {
+                throw new RuntimeException("Error configuring jkube plugin", e);
+            }
+
+            //patch to avoid too characters on OCP resource names
+            final Model model = Maven.loadPom(pomFile);
+            model.setArtifactId(model.getArtifactId().replaceAll("camel-example-spring-boot-", "csb-"));
+            Maven.writePom(pomFile, model);
         }
     }
 }

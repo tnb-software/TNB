@@ -1,11 +1,11 @@
-schemaVersion: 2.0.0
+schemaVersion: 2.1.0
 metadata:
-  name: java-springboot-ubi8
+  name: csb-ubi8
   version: 0.0.1
-  displayName: Spring Boot® Java ubi8
-  description: Spring Boot® with Java and ubi8 image
+  displayName: CSB Java ubi8
+  description: CSB and ubi8 image
   icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/java-maven.jpg
-  tags: ['Java', 'Spring']
+  tags: ['Java', 'Spring', 'Camel']
   projectType: 'spring'
   language: 'java'
 components:
@@ -32,7 +32,8 @@ commands:
       component: tools
       commandLine: 'source /opt/jboss/container/maven/default/maven.sh && maven_init 
         && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml 
-        && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments'
+        && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments
+        && [ -d "$PROJECT_SOURCE/devfile-resources" ] && cp $PROJECT_SOURCE/devfile-resources/* /deployments/data'
       workingDir: $PROJECT_SOURCE
   - id: dev-run
     exec:
