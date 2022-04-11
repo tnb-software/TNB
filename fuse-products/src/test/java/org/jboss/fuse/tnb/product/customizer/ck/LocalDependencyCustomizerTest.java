@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.ck.customizer.LocalDependencyCustomizer;
+import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.integration.builder.IntegrationBuilder;
 import org.jboss.fuse.tnb.product.openshift.ck.CamelKTestParent;
 import org.jboss.fuse.tnb.util.maven.TestMaven;

@@ -4,7 +4,7 @@ import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.ElementType.TYPE;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
-import org.jboss.fuse.tnb.common.product.ProductConfiguration;
+import org.jboss.fuse.tnb.product.configuration.ProductConfiguration;
 
 import java.lang.annotation.Repeatable;
 import java.lang.annotation.Retention;

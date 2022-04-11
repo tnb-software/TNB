@@ -3,10 +3,10 @@ package org.jboss.fuse.tnb.product.app;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.product.cq.application.LocalQuarkusApp;
+import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
 

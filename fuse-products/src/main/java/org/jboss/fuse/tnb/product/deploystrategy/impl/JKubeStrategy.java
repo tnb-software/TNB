@@ -1,11 +1,11 @@
 package org.jboss.fuse.tnb.product.deploystrategy.impl;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.product.csb.application.OpenshiftSpringBootApp;
+import org.jboss.fuse.tnb.product.csb.configuration.SpringBootConfiguration;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;

@@ -1,9 +1,9 @@
 package org.jboss.fuse.tnb.product.junit;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.HTTPUtils;
+import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.junit.jira.Jira;
 import org.jboss.fuse.tnb.product.junit.jira.Jiras;
 import org.jboss.fuse.tnb.product.junit.product.RunOn;

@@ -1,8 +1,8 @@
 package org.jboss.fuse.tnb.amq.streams.resource.managed;
 
+import org.jboss.fuse.tnb.amq.streams.configuration.RhoasConfiguration;
 import org.jboss.fuse.tnb.amq.streams.service.Kafka;
 import org.jboss.fuse.tnb.amq.streams.validation.KafkaValidation;
-import org.jboss.fuse.tnb.common.config.RhoasConfiguration;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
