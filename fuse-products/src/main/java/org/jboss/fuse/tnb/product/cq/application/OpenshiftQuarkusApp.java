@@ -2,10 +2,10 @@ package org.jboss.fuse.tnb.product.cq.application;
 
 import static org.jboss.fuse.tnb.common.utils.IOUtils.createTar;
 
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
+import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;

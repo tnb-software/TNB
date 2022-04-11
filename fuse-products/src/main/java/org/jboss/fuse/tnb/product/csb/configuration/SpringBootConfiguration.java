@@ -1,4 +1,6 @@
-package org.jboss.fuse.tnb.common.config;
+package org.jboss.fuse.tnb.product.csb.configuration;
+
+import org.jboss.fuse.tnb.common.config.Configuration;
 
 public class SpringBootConfiguration extends Configuration {
     public static final String CAMEL_SPRINGBOOT_VERSION = "camel.springboot.version";

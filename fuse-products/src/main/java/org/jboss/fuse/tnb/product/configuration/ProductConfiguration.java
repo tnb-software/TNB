@@ -1,8 +1,9 @@
-package org.jboss.fuse.tnb.common.product;
+package org.jboss.fuse.tnb.product.configuration;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.QuarkusConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
+import org.jboss.fuse.tnb.common.product.ProductType;
+import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 
 public enum ProductConfiguration {
     ALL, QUARKUS_JVM, QUARKUS_JVM_LOCAL, QUARKUS_JVM_OPENSHIFT, QUARKUS_NATIVE, QUARKUS_NATIVE_LOCAL, QUARKUS_NATIVE_OPENSHIFT, CAMEL_K,

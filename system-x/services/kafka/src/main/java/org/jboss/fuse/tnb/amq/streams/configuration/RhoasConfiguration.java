@@ -1,4 +1,6 @@
-package org.jboss.fuse.tnb.common.config;
+package org.jboss.fuse.tnb.amq.streams.configuration;
+
+import org.jboss.fuse.tnb.common.config.Configuration;
 
 public class RhoasConfiguration extends Configuration {
 

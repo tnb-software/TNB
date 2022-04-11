@@ -1,4 +1,6 @@
-package org.jboss.fuse.tnb.common.config;
+package org.jboss.fuse.tnb.product.cq.configuration;
+
+import org.jboss.fuse.tnb.common.config.Configuration;
 
 public class QuarkusConfiguration extends Configuration {
     public static final String CAMEL_QUARKUS_VERSION = "camel.quarkus.version";

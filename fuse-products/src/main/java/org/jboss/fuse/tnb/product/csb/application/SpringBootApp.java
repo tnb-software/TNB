@@ -1,9 +1,9 @@
 package org.jboss.fuse.tnb.product.csb.application;
 
-import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.product.application.App;
+import org.jboss.fuse.tnb.product.csb.configuration.SpringBootConfiguration;
 import org.jboss.fuse.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
 import org.jboss.fuse.tnb.product.git.MavenGitRepository;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractGitIntegrationBuilder;

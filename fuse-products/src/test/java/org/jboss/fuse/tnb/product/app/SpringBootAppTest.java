@@ -5,10 +5,10 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
-import org.jboss.fuse.tnb.common.config.SpringBootConfiguration;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.product.csb.application.LocalSpringBootApp;
+import org.jboss.fuse.tnb.product.csb.configuration.SpringBootConfiguration;
 import org.jboss.fuse.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.Resource;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
