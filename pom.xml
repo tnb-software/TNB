@@ -15,7 +15,7 @@
     </modules>
 
     <properties>
-        <auto-service.version>1.0-rc7</auto-service.version>
+        <auto-service.version>1.0.1</auto-service.version>
         <!--
           Careful when upgrading this version, as it also defines the camel-k-client version in fuse-products,
           that brings model classes aligned to a specific camel-k-release version
