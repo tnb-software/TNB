@@ -1,7 +1,5 @@
 package org.jboss.fuse.tnb.product.cq.application;
 
-import static org.jboss.fuse.tnb.common.utils.IOUtils.createTar;
-
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.OpenshiftCamelQuarkus;
@@ -9,6 +7,8 @@ import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
+import org.jboss.fuse.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -19,16 +19,14 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.HasMetadata;
 
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
-    // Resources generated from quarkus maven plugin and created in openshift
-    private List<HasMetadata> createdResources;
 
     public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
@@ -36,24 +34,22 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
-        Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
-        Path openshiftResources = integrationTarget.resolve("kubernetes/openshift.yml");
-
-        try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
-            LOG.info("Creating openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
-            createdResources = OpenshiftClient.get().load(is).createOrReplace();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to read openshift.yml resource: ", e);
-        }
-
-        waitForImageStream(name);
-        Path filePath;
-        if (QuarkusConfiguration.isQuarkusNative()) {
-            filePath = createTar(integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner"));
-        } else {
-            filePath = createTar(integrationTarget.resolve("quarkus-app"));
-        }
-        OpenshiftClient.get().doS2iBuild(name, filePath);
+        Maven.invoke(new BuildRequest.Builder()
+            .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
+            .withGoals("package")
+            .withProperties(Map.of(
+                "quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
+                "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getOauthToken(),
+                "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
+                "quarkus.kubernetes-client.trust-certs", "true",
+                "quarkus.kubernetes.deploy", "true",
+                "quarkus.native.container-build", "true",
+                "skipTests", "true"
+            ))
+            .withProfiles(QuarkusConfiguration.isQuarkusNative() ? "native" : null)
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
+            .build()
+        );
 
         endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
             .withName(name).get().getSpec().getHost());
@@ -68,9 +64,13 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             ((OpenshiftLog) getLog()).save(started);
         }
         LOG.info("Undeploying integration resources");
-        for (HasMetadata createdResource : createdResources) {
-            LOG.debug("Undeploying {} {}", createdResource.getKind(), createdResource.getMetadata().getName());
-            OpenshiftClient.get().resource(createdResource).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        Path openshiftResources = TestConfiguration.appLocation().resolve(name).resolve("target").resolve("kubernetes/openshift.yml");
+
+        try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
+            LOG.info("Deleting openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
+            OpenshiftClient.get().load(is).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read openshift.yml resource: ", e);
         }
     }
 
