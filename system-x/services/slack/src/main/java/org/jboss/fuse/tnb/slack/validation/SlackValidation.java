@@ -6,6 +6,7 @@ import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.slack.account.SlackAccount;
 import org.jboss.fuse.tnb.slack.validation.util.ThrowingFunction;
 
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,8 +20,6 @@ import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.conversations.ConversationsListResponse;
 import com.slack.api.model.Conversation;
 import com.slack.api.model.Message;
-
-import javax.annotation.Nonnull;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -62,7 +61,7 @@ public class SlackValidation {
             .getMessages().stream().map(Message::getText).collect(Collectors.toList());
     }
 
-    @Nonnull
+    @NotNull
     private <T extends SlackApiTextResponse> T invoke(ThrowingFunction<Slack, T> consumer) {
         try {
             return consumer.apply(client);

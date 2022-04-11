@@ -6,10 +6,13 @@ import org.eclipse.microprofile.config.spi.ConfigSourceProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.auto.service.AutoService;
+
 import java.io.File;
 import java.net.MalformedURLException;
 import java.util.Collections;
 
+@AutoService(ConfigSourceProvider.class)
 public class TestPropertiesConfigSourceProvider implements ConfigSourceProvider {
     private static final Logger LOG = LoggerFactory.getLogger(TestPropertiesConfigSourceProvider.class);
     private static final String TEST_PROPERTIES = "test.properties";
