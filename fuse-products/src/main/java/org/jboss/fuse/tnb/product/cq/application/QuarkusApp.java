@@ -6,6 +6,7 @@ import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -42,6 +43,7 @@ public abstract class QuarkusApp extends App {
                 "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
+            .withLogMarker(LogStream.marker(name, "generate"))
             .build()
         );
 
@@ -56,7 +58,8 @@ public abstract class QuarkusApp extends App {
                 "skipTests", "true",
                 "quarkus.native.container-build", "true"
             ))
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
+            .withLogMarker(LogStream.marker(name, "build"));
         if (QuarkusConfiguration.isQuarkusNative()) {
             requestBuilder.withProfiles("native");
         }

@@ -10,6 +10,7 @@ import org.jboss.fuse.tnb.product.integration.builder.AbstractGitIntegrationBuil
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -57,6 +58,7 @@ public abstract class SpringBootApp extends App {
                     "spring-boot-version", SpringBootConfiguration.springBootVersion(),
                     "camel-version", SpringBootConfiguration.camelSpringBootVersion()))
                 .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
+                .withLogMarker(LogStream.marker(name, "generate"))
                 .build());
 
             IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
@@ -71,7 +73,8 @@ public abstract class SpringBootApp extends App {
                 .withProperties(Map.of(
                     "skipTests", "true"
                 ))
-                .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+                .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
+                .withLogMarker(LogStream.marker(name, "build"));
 
             LOG.info("Building {} application project", name);
             Maven.invoke(requestBuilder.build());

@@ -29,6 +29,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
     public static final String REPORT_PORTAL = "test.report.portal.enabled";
     public static final String ODO_PATH = "odo.path";
+    public static final String STREAM_LOGS = "stream.logs";
 
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
@@ -112,5 +113,9 @@ public class TestConfiguration extends Configuration {
         return Optional.of(getProperty(ODO_PATH, () -> IOUtils.getExecInPath("odo")))
             .orElseThrow(() -> new RuntimeException("Unable to find odo command: please provide '" + ODO_PATH
                 + "' property or add odo binary in system path"));
+    }
+
+    public static boolean streamLogs() {
+        return getBoolean(STREAM_LOGS, false);
     }
 }

@@ -3,6 +3,9 @@ package org.jboss.fuse.tnb.product.util.maven;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.product.ProductType;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
+import org.jboss.fuse.tnb.product.log.stream.FileLogStream;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
+import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
@@ -31,6 +34,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -113,7 +117,7 @@ public class Maven {
      * @param buildRequest MavenRequest class instance
      */
     public static void invoke(BuildRequest buildRequest) {
-        InvocationResult result;
+        InvocationResult result = null;
 
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
@@ -158,11 +162,16 @@ public class Maven {
         }
         LOG.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
 
+        Path file = ((MavenFileOutputHandler) buildRequest.getOutputHandler()).getFile();
+        String marker = buildRequest.getLogMarker() != null ? buildRequest.getLogMarker() : "[MARKER-MISSING]";
+
+        LogStream logStream = new FileLogStream(file, marker);
         try {
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
             throw new RuntimeException("Error while executing maven: ", e);
         } finally {
+            logStream.stop();
             if (buildRequest.getOutputHandler() instanceof Closeable) {
                 try {
                     ((Closeable) buildRequest.getOutputHandler()).close();

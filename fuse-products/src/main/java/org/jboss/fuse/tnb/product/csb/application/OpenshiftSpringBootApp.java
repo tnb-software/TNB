@@ -8,6 +8,8 @@ import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.OpenshiftDeployer;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
+import org.jboss.fuse.tnb.product.log.stream.OpenshiftLogStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +24,6 @@ import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSpringBootApp.class);
-    private final Path baseDirectory;
     private final String finalName;
     private final OpenshiftDeployer deploymentStrategy;
 
@@ -30,6 +31,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         super(integrationBuilder);
         deploymentStrategy = OpenshiftDeployStrategyFactory.getDeployStrategy(integrationBuilder);
 
+        Path baseDirectory;
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
             AbstractMavenGitIntegrationBuilder<?> mavenGitIntegrationBuilder = (AbstractMavenGitIntegrationBuilder<?>) integrationBuilder;
             baseDirectory = mavenGitApp.getProjectLocation();
@@ -45,14 +47,18 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public void start() {
-        LOG.info("deploy app using {}", deploymentStrategy.getClass().getSimpleName());
+        LOG.info("Deploy app using {}", deploymentStrategy.getClass().getSimpleName());
         deploymentStrategy.deploy();
         endpoint = deploymentStrategy.getEndpoint();
         log = deploymentStrategy.getLog();
+        logStream = new OpenshiftLogStream(deploymentStrategy.podSelector(), LogStream.marker(finalName));
     }
 
     @Override
     public void stop() {
+        if (logStream != null) {
+            logStream.stop();
+        }
         if (getLog() != null) {
             ((OpenshiftLog) getLog()).save(started);
         }

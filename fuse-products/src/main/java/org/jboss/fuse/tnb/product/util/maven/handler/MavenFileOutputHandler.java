@@ -14,10 +14,18 @@ public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
     private final PrintWriter in;
     private final Path file;
 
-    public MavenFileOutputHandler(Path outputFile) throws IOException {
-        this.in = new PrintWriter(new FileWriter(outputFile.toFile()), true);
+    public MavenFileOutputHandler(Path outputFile) {
+        try {
+            this.in = new PrintWriter(new FileWriter(outputFile.toFile()), true);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create file", e);
+        }
         this.file = outputFile;
         Attachments.addAttachment(file);
+    }
+
+    public Path getFile() {
+        return file;
     }
 
     @Override

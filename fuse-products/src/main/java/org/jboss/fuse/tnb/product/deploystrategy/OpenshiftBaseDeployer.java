@@ -17,6 +17,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.Pod;
 
 public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, OpenshiftDeployStrategy {
 
@@ -46,10 +49,15 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
     }
 
     @Override
-    public Log getLog() {
+    public Predicate<Pod> podSelector() {
         final String openshiftDeploymentLabel = OpenshiftConfiguration.openshiftDeploymentLabel();
-        return new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey(openshiftDeploymentLabel)
-            && name.equals(p.getMetadata().getLabels().get(openshiftDeploymentLabel)), name);
+        return p -> p.getMetadata().getLabels().containsKey(openshiftDeploymentLabel)
+            && name.equals(p.getMetadata().getLabels().get(openshiftDeploymentLabel));
+    }
+
+    @Override
+    public Log getLog() {
+        return new OpenshiftLog(podSelector(), name);
     }
 
     @Override

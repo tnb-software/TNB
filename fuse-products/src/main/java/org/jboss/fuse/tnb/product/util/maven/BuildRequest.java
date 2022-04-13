@@ -4,10 +4,8 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.MapUtils;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenFileOutputHandler;
 import org.jboss.fuse.tnb.product.util.maven.handler.MavenOutputHandler;
-import org.jboss.fuse.tnb.product.util.maven.handler.MavenStringOutputHandler;
 
 import java.io.File;
-import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -28,6 +26,7 @@ public final class BuildRequest {
     private Map<String, String> properties = new HashMap<>();
     private MavenOutputHandler outputHandler;
     private Path logFile;
+    private String logMarker;
 
     private BuildRequest() {
         logFile = TestConfiguration.appLocation().resolve("maven-invocation-" + FORMATTER.format(Instant.now()) + ".log");
@@ -81,6 +80,14 @@ public final class BuildRequest {
         this.logFile = logFile;
     }
 
+    public String getLogMarker() {
+        return logMarker;
+    }
+
+    public void setLogMarker(String logMarker) {
+        this.logMarker = logMarker;
+    }
+
     public static class Builder {
         private final BuildRequest request;
 
@@ -118,14 +125,17 @@ public final class BuildRequest {
             return this;
         }
 
+        public Builder withLogMarker(String logMarker) {
+            request.setLogMarker(logMarker);
+            return this;
+        }
+
         public BuildRequest build() {
-            try {
-                request.setOutputHandler(
-                    request.getLogFile() == null ? new MavenStringOutputHandler() : new MavenFileOutputHandler(request.getLogFile()));
-            } catch (IOException e) {
-                throw new RuntimeException("Can't create the log file", e);
+            if (request.getLogFile() == null) {
+                throw new IllegalArgumentException("You need to specify a log file for a maven build request");
             }
 
+            request.setOutputHandler(new MavenFileOutputHandler(request.getLogFile()));
             return request;
         }
     }

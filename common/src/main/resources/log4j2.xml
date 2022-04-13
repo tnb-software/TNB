@@ -8,6 +8,10 @@
             <PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} [%t] %logger{1}:%L - %msg%n"/>
             <ThresholdFilter level="${log_level}"/>
         </Console>
+        <!-- Special console appender for streaming logs into the logger -->
+        <Console name="LogStream" target="SYSTEM_OUT">
+            <PatternLayout pattern="%style{%markerSimpleName}{yellow} %style{%msg%n}{blue}"/>
+        </Console>
         <File name="Logfile" fileName="target/tests.log">
             <PatternLayout pattern="%date{HH:mm:ss,SSS} %highlight{%-5level} [%t] %logger{1}:%L - %msg%n"/>
         </File>
@@ -19,6 +23,9 @@
         <Logger name="org.jboss.fuse.tnb" level="TRACE" additivity="false">
             <AppenderRef ref="Logfile"/>
             <AppenderRef ref="Console"/>
+        </Logger>
+        <Logger name="org.jboss.fuse.tnb.product.log.stream" additivity="false">
+            <AppenderRef ref="LogStream"/>
         </Logger>
         <Logger name="cz.xtf">
             <AppenderRef ref="Console" level="INFO"/>

@@ -36,6 +36,7 @@ public class OpenshiftLog extends Log {
             "True".equals(p.getStatus().getConditions().stream().filter(c -> "ContainersReady".equals(c.getType())).findFirst()
                 .orElse(new PodConditionBuilder().withStatus("False").build()).getStatus()));
         Optional<Pod> podOptional = OpenshiftClient.get().getPods().stream().filter(readyPredicate).findFirst();
+
         if (podOptional.isEmpty()) {
             LOG.trace("Specified pod doesn't exist (yet), returning empty string as logs");
             return "";
@@ -68,8 +69,8 @@ public class OpenshiftLog extends Log {
                         return false;
                     }
                 },
-                12,
-                5000,
+                60,
+                1000,
                 "Waiting until the pod is terminated to collect logs from failed integration");
             Pod p = OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().get();
             return StringUtils.removeColorCodes(OpenshiftClient.get().pods().withName(p.getMetadata().getName()).terminated().getLog());

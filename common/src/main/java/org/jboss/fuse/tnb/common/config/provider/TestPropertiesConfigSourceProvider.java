@@ -21,6 +21,7 @@ public class TestPropertiesConfigSourceProvider implements ConfigSourceProvider 
     public Iterable<ConfigSource> getConfigSources(ClassLoader classLoader) {
         try {
             if (System.getProperty(TEST_PROPERTIES) == null) {
+                LOG.trace("No custom properties file defined, using test.properties file if it exists");
                 return Collections.emptyList();
             }
             File testProperties = new File(System.getProperty(TEST_PROPERTIES));
@@ -29,6 +30,7 @@ public class TestPropertiesConfigSourceProvider implements ConfigSourceProvider 
                     System.getProperty(TEST_PROPERTIES), TEST_PROPERTIES);
                 return Collections.emptyList();
             }
+            LOG.trace("Loading properties from " + testProperties.getAbsolutePath());
             return Collections.singletonList(new PropertyFileConfigSource(testProperties.toURI().toURL()));
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);

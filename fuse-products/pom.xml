@@ -15,7 +15,6 @@
     <properties>
         <camel.version>3.11.1</camel.version>
         <json.version>20210307</json.version>
-        <log4j.version>2.17.0</log4j.version>
         <maven.invoker.version>3.1.0</maven.invoker.version>
         <maven.model.version>3.6.3</maven.model.version>
         <jackson.module.version>2.13.1</jackson.module.version>
@@ -110,6 +109,11 @@
             <artifactId>awaitility</artifactId>
             <version>${awaitility.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.logging.log4j</groupId>
+            <artifactId>log4j-iostreams</artifactId>
+            <version>${log4j.version}</version>
         </dependency>
     </dependencies>
 </project>
