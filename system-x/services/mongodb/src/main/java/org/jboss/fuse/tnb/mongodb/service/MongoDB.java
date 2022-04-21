@@ -56,6 +56,6 @@ public abstract class MongoDB implements Service {
     }
 
     public static String mongoDbImage() {
-        return System.getProperty(MONGODB_IMAGE, "quay.io/bitnami/mongodb:4.4.5");
+        return System.getProperty(MONGODB_IMAGE, "docker.io/bitnami/mongodb:4.4.5");
     }
 }
