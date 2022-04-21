@@ -171,7 +171,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
 
     @Override
     public String host() {
-        return name();
+        return OpenshiftClient.get().getClusterHostname(name());
     }
 
     public class OpenShiftFtpClient implements CustomFtpClient {

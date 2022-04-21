@@ -52,7 +52,12 @@ public class LocalMongoDB extends MongoDB implements Deployable {
 
     @Override
     public String replicaSetUrl() {
-        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), container.getContainerIpAddress(),
+        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), hostname(),
             container.getPort(), account().database());
+    }
+
+    @Override
+    public String hostname() {
+        return container.getContainerIpAddress();
     }
 }

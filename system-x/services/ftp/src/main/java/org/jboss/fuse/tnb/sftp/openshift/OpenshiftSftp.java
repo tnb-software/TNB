@@ -194,7 +194,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
 
     @Override
     public String host() {
-        return name();
+        return OpenshiftClient.get().getClusterHostname(name());
     }
 
 }

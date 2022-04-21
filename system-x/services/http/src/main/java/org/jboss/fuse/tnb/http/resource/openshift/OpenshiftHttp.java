@@ -151,12 +151,12 @@ public class OpenshiftHttp extends HttpService implements ReusableOpenshiftDeplo
 
     @Override
     public String httpUrl() {
-        return "http://" + HTTP_SVC + "/";
+        return "http://" + OpenshiftClient.get().getClusterHostname(HTTP_SVC) + "/";
     }
 
     @Override
     public String httpsUrl() {
-        return "https://" + HTTPS_SVC + "/";
+        return "https://" + OpenshiftClient.get().getClusterHostname(HTTPS_SVC) + "/";
     }
 
     @Override

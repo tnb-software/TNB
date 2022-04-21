@@ -121,6 +121,6 @@ public class GenericOpenshiftDb implements OpenshiftDeployable, WithName {
 
     @Override
     public String name() {
-        return sqlService.hostname();
+        return sqlService.name();
     }
 }

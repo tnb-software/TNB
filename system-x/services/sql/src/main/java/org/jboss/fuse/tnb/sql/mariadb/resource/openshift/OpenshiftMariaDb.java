@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.sql.mariadb.resource.openshift;
 
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithName;
+import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.sql.common.resource.openshift.GenericOpenshiftDb;
 import org.jboss.fuse.tnb.sql.mariadb.service.MariaDb;
 
@@ -44,7 +45,7 @@ public class OpenshiftMariaDb extends MariaDb implements OpenshiftDeployable, Wi
 
     @Override
     public String hostname() {
-        return name();
+        return OpenshiftClient.get().getClusterHostname(name());
     }
 
     @Override
