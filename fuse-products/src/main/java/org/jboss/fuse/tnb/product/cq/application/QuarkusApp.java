@@ -75,7 +75,8 @@ public abstract class QuarkusApp extends App {
      */
     private void customizeProject(List<Dependency> dependencies) {
         // Remove the GreetingResource.java file that is not used
-        final File greetingResource = TestConfiguration.appLocation().resolve(name).resolve("src/main/java/com/test/GreetingResource.java").toFile();
+        final File greetingResource = TestConfiguration.appLocation().resolve(name)
+            .resolve("src/main/java/" + TestConfiguration.appGroupId().replace(".", "/") + "/GreetingResource.java").toFile();
         if (greetingResource.exists()) {
             greetingResource.delete();
         }
