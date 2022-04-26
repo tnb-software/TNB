@@ -29,7 +29,7 @@ import java.security.cert.X509Certificate;
 
 public abstract class Elasticsearch implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Elasticsearch.class);
-    private static final String CLUSTER_NAME = "tnb-elasticsearch";
+    private static final String CLUSTER_NAME = "tnb-es";
     private static final String ELASTICSEARCH_VERSION = "elasticsearch.version";
 
     protected ElasticsearchAccount account;
