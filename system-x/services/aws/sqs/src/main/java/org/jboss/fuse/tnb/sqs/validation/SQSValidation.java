@@ -79,6 +79,7 @@ public class SQSValidation implements Validation {
     }
 
     public void sendMessage(String queue, String message) {
+        LOG.debug("Sending message \"{}\" to queue {}", message, queue);
         client.sendMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).messageBody(message));
     }
 
@@ -86,7 +87,13 @@ public class SQSValidation implements Validation {
         return WaitUtils.withTimeout(() -> {
             List<Message> messages = new ArrayList<>();
             while (messages.size() != count) {
-                messages.addAll(client.receiveMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).maxNumberOfMessages(1)).messages());
+                List<Message> current = client.receiveMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).maxNumberOfMessages(10)).messages();
+                for (Message m : current) {
+                    if (!messages.contains(m)) {
+                        messages.add(m);
+                        client.deleteMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).receiptHandle(m.receiptHandle()));
+                    }
+                }
             }
             return messages;
         });
