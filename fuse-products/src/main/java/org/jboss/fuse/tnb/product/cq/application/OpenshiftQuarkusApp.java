@@ -7,6 +7,8 @@ import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
+import org.jboss.fuse.tnb.product.log.stream.OpenshiftLogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -20,10 +22,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.Pod;
 
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
@@ -34,7 +38,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
-        Maven.invoke(new BuildRequest.Builder()
+        final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
             .withGoals("package")
             .withProperties(Map.of(
@@ -46,20 +50,27 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
                 "quarkus.native.container-build", "true",
                 "skipTests", "true"
             ))
-            .withProfiles(QuarkusConfiguration.isQuarkusNative() ? "native" : null)
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
-            .build()
-        );
+            .withLogMarker(LogStream.marker(name, "deploy"));
+        if (QuarkusConfiguration.isQuarkusNative()) {
+            builder.withProfiles("native");
+        }
+        Maven.invoke(builder.build());
 
         endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
             .withName(name).get().getSpec().getHost());
 
-        log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
-            && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name")), getName());
+        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
+            && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));
+        log = new OpenshiftLog(podSelector, getName());
+        logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
     }
 
     @Override
     public void stop() {
+        if (logStream != null) {
+            logStream.stop();
+        }
         if (getLog() != null) {
             ((OpenshiftLog) getLog()).save(started);
         }

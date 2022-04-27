@@ -1,8 +1,10 @@
 package org.jboss.fuse.tnb.product.integration.generator;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.product.ck.customizer.DependenciesToModelineCustomizer;
+import org.jboss.fuse.tnb.product.ck.customizer.TraitCustomizer;
 import org.jboss.fuse.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import org.jboss.fuse.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import org.jboss.fuse.tnb.product.csb.customizer.CamelMainCustomizer;
@@ -26,6 +28,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -163,6 +166,11 @@ public final class IntegrationGenerator {
             new ComponentCustomizer(),
             new CamelMainCustomizer()
         );
+
+        if (TestConfiguration.streamLogs()) {
+            // Disable color for camel-k integration, as it breaks the log4j color configuration
+            integrationBuilder.addCustomizer(new TraitCustomizer("logging", Map.of("color", false)));
+        }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setIntegrationBuilder(integrationBuilder);

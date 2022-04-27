@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.product.ck.customizer;
 
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.cq.configuration.QuarkusConfiguration;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -108,6 +109,7 @@ public class LocalDependencyCustomizer extends CamelKCustomizer {
                 "quarkus.version", QuarkusConfiguration.quarkusVersion(),
                 "camel.quarkus.version", QuarkusConfiguration.camelQuarkusVersion()
             ))
+            .withLogMarker(LogStream.marker(folder.toFile().getName(), "build"))
             .build());
     }
 }

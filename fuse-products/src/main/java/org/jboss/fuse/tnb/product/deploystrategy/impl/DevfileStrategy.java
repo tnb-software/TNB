@@ -9,6 +9,8 @@ import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.log.stream.FileLogStream;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -68,9 +70,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public void doDeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context" , "."
-                    , "--devfile", getDevfile())
-                    , TestConfiguration.appLocation().resolve(name + "-devfile.log").toFile());
+            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context" , ".", "--devfile", getDevfile()), "create");
 
             if (TestConfiguration.isMavenMirror()) {
                 setEnvVar("MAVEN_MIRROR_URL", StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@mirrorOf"));
@@ -87,8 +87,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
             setEnvVar("SUB_FOLDER", folderName);
 
-            runOdoCmd(Arrays.asList("push", "--show-log", "-v", "5")
-                , TestConfiguration.appLocation().resolve(name + "-deploy.log").toFile());
+            runOdoCmd(Arrays.asList("push", "--show-log"), "deploy");
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -105,8 +104,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public void undeploy() {
         try {
             login();
-            final File logFile = TestConfiguration.appLocation().resolve(name + "-undeploy.log").toFile();
-            runOdoCmd(Arrays.asList("delete", "--app", name, "-f"), logFile);
+            runOdoCmd(Arrays.asList("delete", "--app", name, "-f"), "undeploy");
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -148,9 +146,11 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         this.runOdoCmd(args, null);
     }
 
-    private void runOdoCmd(final List<String> args, File logFile) throws IOException, InterruptedException {
+    private void runOdoCmd(final List<String> args, String phase) throws IOException, InterruptedException {
         final String odoBinaryPath = TestConfiguration.odoPath();
+        final File logFile = TestConfiguration.appLocation().resolve(name + "-" + phase + ".log").toFile();
         final List<String> cmd = new ArrayList<>(args.size() + 1);
+        LogStream logStream = null;
         cmd.add(odoBinaryPath);
         cmd.addAll(args);
         cmd.add("--kubeconfig");
@@ -158,23 +158,23 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
         ProcessBuilder processBuilder = new ProcessBuilder(cmd)
             .directory(contextPath.toFile());
-        if (logFile != null) {
-            processBuilder.redirectOutput(logFile)
-                .redirectError(logFile);
-        } else {
-            processBuilder.redirectOutput(ProcessBuilder.Redirect.INHERIT)
-                .redirectError(ProcessBuilder.Redirect.INHERIT);
+        if (phase != null) {
+            processBuilder.redirectOutput(logFile).redirectError(logFile);
+            logStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, phase));
         }
 
         LOG.debug("Starting odo command in folder {} : {}", processBuilder.directory(), String.join(" ", cmd));
 
         Process appProcess = processBuilder.start();
-        LOG.debug("running odo command with pid: {}", appProcess.pid());
+        LOG.debug("Running odo command with pid: {}", appProcess.pid());
         appProcess.waitFor();
-        LOG.debug("odo exited with code: {}", appProcess.exitValue());
+        LOG.debug("Odo exited with code: {}", appProcess.exitValue());
+        if (logStream != null) {
+            logStream.stop();
+        }
         if (appProcess.exitValue() != 0) {
             throw new RuntimeException("error on execution of the command '"
-                + String.join(" ", cmd) + "', check log in " + logFile.getAbsolutePath().toString());
+                + String.join(" ", cmd) + "'" + (phase != null ? ", check log in " + logFile.getAbsolutePath() : ""));
         }
     }
 }

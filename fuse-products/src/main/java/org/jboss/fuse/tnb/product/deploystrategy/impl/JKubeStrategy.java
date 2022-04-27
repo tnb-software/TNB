@@ -10,6 +10,7 @@ import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import org.jboss.fuse.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -40,7 +41,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public ProductType[] products() {
-        return new ProductType[]{ProductType.CAMEL_SPRINGBOOT};
+        return new ProductType[] {ProductType.CAMEL_SPRINGBOOT};
     }
 
     @Override
@@ -68,7 +69,8 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
                 , "jkube.docker.logStdout", "true"
             )).withGoals("clean", "package", oc + ":resource", oc + ":build", oc + ":apply")
             .withProfiles("openshift")
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"));
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
+            .withLogMarker(LogStream.marker(name, "deploy"));
         Maven.invoke(requestBuilder.build());
     }
 
@@ -101,7 +103,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
             final File pomFile = baseDirectory.resolve("pom.xml").toFile();
 
             try (InputStreamReader reader =
-                new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
+                     new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
 
                 final Xpp3Dom ompConfig = Xpp3DomBuilder.build(reader);
 
@@ -128,7 +130,6 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
                 });
 
                 Maven.writePom(pomFile, model);
-
             } catch (IOException | XmlPullParserException e) {
                 throw new RuntimeException("Error configuring jkube plugin", e);
             }

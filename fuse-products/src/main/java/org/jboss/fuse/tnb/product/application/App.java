@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.log.Log;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ public abstract class App {
 
     protected final String name;
     protected Log log;
+    protected LogStream logStream;
     protected Endpoint endpoint;
     protected boolean started = false;
 

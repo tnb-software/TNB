@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.product.ck.application;
 
+import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.PropertiesUtils;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
@@ -8,6 +9,8 @@ import org.jboss.fuse.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import org.jboss.fuse.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import org.jboss.fuse.tnb.product.ck.integration.resource.CamelKResource;
 import org.jboss.fuse.tnb.product.ck.integration.resource.ResourceType;
+import org.jboss.fuse.tnb.product.ck.log.IntegrationKitBuildLogHandler;
+import org.jboss.fuse.tnb.product.ck.log.MavenBuildLogHandler;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSettings;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
@@ -15,6 +18,9 @@ import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.integration.generator.IntegrationGenerator;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
+import org.jboss.fuse.tnb.product.log.stream.OpenshiftLogStream;
+import org.jboss.fuse.tnb.product.util.executor.Executor;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,8 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -59,6 +65,7 @@ import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -67,7 +74,6 @@ import io.fabric8.kubernetes.client.utils.Serialization;
 
 public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newSingleThreadExecutor();
 
     private static final CustomResourceDefinitionContext kameletBindingCtx =
         CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
@@ -75,6 +81,7 @@ public class CamelKApp extends App {
     private final CamelKClient camelKClient;
 
     private Object integrationSource;
+    private final List<Future<?>> logStreams = new ArrayList<>();
 
     private CamelKApp(String name) {
         super(name);
@@ -113,16 +120,28 @@ public class CamelKApp extends App {
         endpoint = new Endpoint(() -> OpenshiftClient.get().adapt(KnativeClient.class).routes()
             .withName(name).get().getStatus().getUrl());
 
-        log = new OpenshiftLog(p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
-            && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration")), getName()
-        );
+        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
+            && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"));
+        log = new OpenshiftLog(podSelector, getName());
+
+        if (TestConfiguration.streamLogs()) {
+            logStreams.add(Executor.get().submit(new MavenBuildLogHandler(getName())));
+            logStreams.add(Executor.get().submit(new IntegrationKitBuildLogHandler(getName())));
+            logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
+        }
     }
 
     @Override
     public void stop() {
+        logStreams.forEach(f -> f.cancel(true));
+        logStreams.clear();
+        if (logStream != null) {
+            logStream.stop();
+        }
         if (getLog() != null) {
             ((OpenshiftLog) getLog()).save(started);
         }
+
         LOG.info("Removing integration {}", name);
         if (integrationSource instanceof KameletBinding) {
             LOG.info("Deleting KameletBinding {}", name);
@@ -303,7 +322,7 @@ public class CamelKApp extends App {
         if (!integrationBuilder.getProperties().isEmpty()) {
             ConfigMap integrationProperties = OpenshiftClient.get()
                 .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationBuilder.getProperties())));
-            EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationProperties, name));
+            Executor.get().submit(new OwnerReferenceSetter(integrationProperties, name));
         }
     }
 

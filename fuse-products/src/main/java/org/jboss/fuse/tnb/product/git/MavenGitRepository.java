@@ -3,6 +3,7 @@ package org.jboss.fuse.tnb.product.git;
 import org.jboss.fuse.tnb.common.config.TestConfiguration;
 import org.jboss.fuse.tnb.product.git.customizer.UpdateProjectVersionCustomizer;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
+import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
@@ -47,7 +48,8 @@ public class MavenGitRepository extends GitRepository {
             .withBaseDirectory(projectLocation)
             .withGoals("clean", "package")
             .withProperties(mavenBuildProperties)
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"));
+            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
+            .withLogMarker(LogStream.marker(name, "build"));
 
         LOG.info("Building {} application project", name);
         Maven.invoke(requestBuilder.build());

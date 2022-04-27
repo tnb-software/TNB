@@ -12,12 +12,19 @@ import org.jboss.fuse.tnb.product.Product;
 import org.jboss.fuse.tnb.product.application.App;
 import org.jboss.fuse.tnb.product.ck.application.CamelKApp;
 import org.jboss.fuse.tnb.product.ck.configuration.CamelKConfiguration;
+import org.jboss.fuse.tnb.product.ck.log.CamelKOperatorLogFilter;
 import org.jboss.fuse.tnb.product.ck.utils.CamelKSupport;
 import org.jboss.fuse.tnb.product.ck.utils.OwnerReferenceSetter;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.KameletOps;
+import org.jboss.fuse.tnb.product.util.executor.Executor;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.Filter;
+import org.apache.logging.log4j.core.LoggerContext;
+import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.config.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,8 +40,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -51,7 +56,6 @@ import io.fabric8.kubernetes.client.utils.Serialization;
 @AutoService(Product.class)
 public class CamelK extends OpenshiftProduct implements KameletOps {
     private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private final List<String> kamelets = new ArrayList<>();
 
@@ -125,6 +129,25 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
         camelKClient.v1().integrationPlatforms().delete();
         camelKClient.v1().integrationPlatforms().create(ip);
+
+        if (TestConfiguration.streamLogs()) {
+            setupLogger();
+        }
+    }
+
+    /**
+     * To be able to display only the related portion of the camel-k operator logs, there is a special filter and this piece of code
+     * adds the filter to the LogStream appender
+     */
+    private void setupLogger() {
+        final LoggerContext ctx = (LoggerContext) LogManager.getContext(false);
+        final Configuration config = ctx.getConfiguration();
+
+        ConsoleAppender appender = config.getAppender("LogStream");
+        appender.addFilter(CamelKOperatorLogFilter.createFilter(Filter.Result.ACCEPT, Filter.Result.DENY));
+        appender.start();
+
+        ctx.updateLoggers();
     }
 
     private boolean kameletsDeployed() {
@@ -284,7 +307,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         // Set the later created integration object as the owner of the secret, so that the secret is deleted together with the integration
         Secret integrationSecret =
             OpenshiftClient.get().createApplicationPropertiesSecret(kameletName + "." + kameletName, camelCaseCredentials, labels, prefix);
-        EXECUTOR_SERVICE.submit(new OwnerReferenceSetter(integrationSecret, kameletName));
+        Executor.get().submit(new OwnerReferenceSetter(integrationSecret, kameletName));
     }
 
     @Override
@@ -307,7 +330,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void removeIntegrations() {
         CountDownLatch latch = new CountDownLatch(integrations.size());
-        integrations.values().forEach(app -> EXECUTOR_SERVICE.submit(() -> {
+        integrations.values().forEach(app -> Executor.get().submit(() -> {
             try {
                 app.stop();
             } finally {

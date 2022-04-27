@@ -10,7 +10,7 @@ import java.util.function.Supplier;
 public abstract class Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(Configuration.class);
 
-    private static Config config;
+    private static final Config config;
 
     protected static String getProperty(String name) {
         return getProperty(name, (String) null);
