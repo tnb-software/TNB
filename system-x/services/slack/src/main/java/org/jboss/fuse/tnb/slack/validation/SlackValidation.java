@@ -18,7 +18,7 @@ import com.slack.api.methods.request.conversations.ConversationsHistoryRequest;
 import com.slack.api.methods.request.conversations.ConversationsListRequest;
 import com.slack.api.methods.response.chat.ChatPostMessageResponse;
 import com.slack.api.methods.response.conversations.ConversationsListResponse;
-import com.slack.api.model.Conversation;
+import com.slack.api.model.ConversationType;
 import com.slack.api.model.Message;
 
 import java.util.List;
@@ -35,30 +35,46 @@ public class SlackValidation {
         this.account = account;
     }
 
-    public void sendMessage(String text) {
-        LOG.info("Sending message {} to Slack", text);
-
-        ConversationsListResponse conversationsList =
-            invoke((c) -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
-        Conversation chann = conversationsList.getChannels().stream().filter(c -> c.getName().contains(account.channel())).findFirst().get();
+    public void sendMessageToChannelId(String text, String conversationId) {
         final ChatPostMessageResponse chatPostMessageResponse = invoke((c) -> c.methods().chatPostMessage(ChatPostMessageRequest.builder()
             .token(account.token())
-            .channel(chann.getId())
+            .channel(conversationId)
             .text(text)
             .build()));
         LOG.debug("Send message response: " + chatPostMessageResponse);
     }
 
-    public List<String> getMessages() {
-        LOG.debug("Getting Slack messages");
-        ConversationsListResponse conversationsList = null;
-        conversationsList = invoke(c -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
-        String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().equals(account.channel())).findFirst().get().getId();
+    public void sendMessageToChannelName(String text, String channelName) {
+        LOG.info("Sending message {} to Slack", text);
+
+        ConversationsListResponse conversationsList =
+            invoke((c) -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
+        String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().contains(channelName)).findFirst().get().getId();
+        sendMessageToChannelId(text, channelId);
+    }
+
+    public List<String> getMessagesFromChannelId(String conversationId) {
+        LOG.debug("Getting Slack messages by channel ID");
         return invoke((c) -> client.methods().conversationsHistory(ConversationsHistoryRequest.builder()
             .token(account.token())
-            .channel(channelId)
+            .channel(conversationId)
             .build()))
             .getMessages().stream().map(Message::getText).collect(Collectors.toList());
+    }
+
+    public List<String> getMessagesFromChannelName(String channelName) {
+        LOG.debug("Getting Slack messages by channel name");
+
+        ConversationsListResponse conversationsList = null;
+        conversationsList = invoke(c -> c.methods().conversationsList(ConversationsListRequest.builder()
+            .token(account.token())
+            .types(List.of(ConversationType.IM,
+                ConversationType.MPIM,
+                ConversationType.PRIVATE_CHANNEL,
+                ConversationType.PUBLIC_CHANNEL))
+            .build()));
+        String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().equals(channelName)).findFirst().get().getId();
+        return getMessagesFromChannelId(channelId);
     }
 
     @NotNull
