@@ -62,10 +62,6 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
         .withScope("Namespaced")
         .build();
 
-    private final NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>>
-        amqbrokerCli = OpenshiftClient.get().customResources(ARTEMIS_CTX, ActiveMQArtemis.class, ActiveMQArtemisList.class)
-        .inNamespace(OpenshiftClient.get().getNamespace());
-
     @Override
     public void create() {
         if (isReady()) {
@@ -83,7 +79,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
                 LOG.debug("Amq broker operator pod is already present");
             }
             // Create amq-broker custom resource
-            amqbrokerCli.createOrReplace(createBrokerCR());
+            amqBrokerCli().createOrReplace(createBrokerCR());
         }
     }
 
@@ -95,12 +91,12 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     @Override
     public boolean isDeployed() {
         return OpenshiftClient.get().operatorHub().subscriptions().withName(SUBSCRIPTION_NAME).get() != null
-            && !amqbrokerCli.list().getItems().isEmpty();
+            && !amqBrokerCli().list().getItems().isEmpty();
     }
 
     @Override
     public void undeploy() {
-        amqbrokerCli.withName(BROKER_NAME).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        amqBrokerCli().withName(BROKER_NAME).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "ActiveMQArtemis", BROKER_NAME)
             .timeout(120_000).waitFor();
         OpenshiftClient.get().deleteSecret(SSL_SECRET_NAME);
@@ -254,5 +250,15 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
         } catch (IOException e) {
             throw new RuntimeException("Unable to encode resource " + resource, e);
         }
+    }
+
+    /**
+     * Lazy initialized amq broker CLI. This way it prevents issue with creating unnecessary TNB namespace
+     *
+     * @return
+     */
+    private NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>> amqBrokerCli() {
+        return OpenshiftClient.get().customResources(ARTEMIS_CTX, ActiveMQArtemis.class, ActiveMQArtemisList.class)
+            .inNamespace(OpenshiftClient.get().getNamespace());
     }
 }
