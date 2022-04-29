@@ -36,17 +36,18 @@ public class SlackValidation {
     }
 
     public void sendMessageToChannelId(String text, String conversationId) {
+        LOG.debug("Sending message {} to Slack conversation with id {}", text, conversationId);
         final ChatPostMessageResponse chatPostMessageResponse = invoke((c) -> c.methods().chatPostMessage(ChatPostMessageRequest.builder()
             .token(account.token())
             .channel(conversationId)
             .text(text)
             .build()));
-        LOG.debug("Send message response: " + chatPostMessageResponse);
+        if (!chatPostMessageResponse.isOk()) {
+            LOG.debug("Send message response: " + chatPostMessageResponse);
+        }
     }
 
     public void sendMessageToChannelName(String text, String channelName) {
-        LOG.info("Sending message {} to Slack", text);
-
         ConversationsListResponse conversationsList =
             invoke((c) -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
         String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().contains(channelName)).findFirst().get().getId();
