@@ -374,4 +374,8 @@ public class OpenshiftClient extends OpenShift {
     public void deleteSecret(String name) {
         client.secrets().withName(name).delete();
     }
+
+    public String getClusterHostname(String service) {
+        return String.format("%s.%s.svc.cluster.local", service, client.getNamespace());
+    }
 }

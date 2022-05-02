@@ -1,5 +1,6 @@
 package org.jboss.fuse.tnb.sql.common.service;
 
+import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.sql.common.account.SqlAccount;
 import org.jboss.fuse.tnb.sql.common.validation.SqlValidation;
@@ -9,7 +10,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class Sql implements Service {
+public abstract class Sql implements Service, WithName {
     private static final Logger LOG = LoggerFactory.getLogger(Sql.class);
 
     private SqlValidation validation;
@@ -18,9 +19,9 @@ public abstract class Sql implements Service {
 
     protected abstract String jdbcConnectionUrl();
 
-    public abstract java.lang.String sqlImage();
+    public abstract String sqlImage();
 
-    public abstract java.lang.String hostname();
+    public abstract String hostname();
 
     public abstract int port();
 
@@ -32,5 +33,5 @@ public abstract class Sql implements Service {
         return validation;
     }
 
-    public abstract Map<java.lang.String, java.lang.String> containerEnvironment();
+    public abstract Map<String, String> containerEnvironment();
 }
