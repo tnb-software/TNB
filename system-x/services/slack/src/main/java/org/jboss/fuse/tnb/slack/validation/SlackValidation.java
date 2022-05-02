@@ -55,7 +55,6 @@ public class SlackValidation {
     }
 
     public List<String> getMessagesFromChannelId(String conversationId) {
-        LOG.debug("Getting Slack messages by channel ID");
         return invoke((c) -> client.methods().conversationsHistory(ConversationsHistoryRequest.builder()
             .token(account.token())
             .channel(conversationId)
@@ -64,9 +63,7 @@ public class SlackValidation {
     }
 
     public List<String> getMessagesFromChannelName(String channelName) {
-        LOG.debug("Getting Slack messages by channel name");
-
-        ConversationsListResponse conversationsList = null;
+        ConversationsListResponse conversationsList;
         conversationsList = invoke(c -> c.methods().conversationsList(ConversationsListRequest.builder()
             .token(account.token())
             .types(List.of(ConversationType.IM,
