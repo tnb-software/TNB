@@ -3,35 +3,28 @@ package org.jboss.fuse.tnb.slack.account;
 import org.jboss.fuse.tnb.common.account.Account;
 import org.jboss.fuse.tnb.common.account.WithId;
 
+import java.util.Map;
+
+/**
+ * Requires following slack account definition:
+ *
+ *   slack-tnb:
+ *     credentials:
+ *       token: [token]
+ *       channels:
+ *         [identifier]:
+ *           name: [channelName] (optional, if not present, identifier is used)
+ *           webhook_url: [webhook url]
+ *           channel_id: [channel id]
+ *         ...
+ */
 public class SlackAccount implements Account, WithId {
     private String token;
-    private String webhook_url;
-    private String channel;
-    private String channel_id;
-
-    private String webhook_url_private;
-    private String channel_private;
-    private String channel_id_private;
-
-    private String webhook_url_im;
-    private String channel_im;
-    private String channel_id_im;
-
-    private String webhook_url_mpim;
-    private String channel_mpim;
-    private String channel_id_mpim;
+    private Map<String, ChannelAccount> channels;
 
     @Override
     public String credentialsId() {
         return "slack-tnb";
-    }
-
-    public String webhookUrl() {
-        return webhook_url;
-    }
-
-    public void setWebhook_url(String webhook_url) {
-        this.webhook_url = webhook_url;
     }
 
     public String token() {
@@ -42,91 +35,59 @@ public class SlackAccount implements Account, WithId {
         this.token = token;
     }
 
-    public String channel() {
-        return channel;
+    public String channelId(String channelName) {
+        return getChannel(channelName).channelId();
     }
 
-    public void setChannel(String channel) {
-        this.channel = channel;
+    public String webhookUrl(String channelName) {
+        return getChannel(channelName).webhookUrl();
     }
 
-    public String channelId() {
-        return channel_id;
+    public String channel(String channelName) {
+        ChannelAccount account = getChannel(channelName);
+        return account.name() == null ? channelName : account.name();
     }
 
-    public void setChannel_id(String channel_id) {
-        this.channel_id = channel_id;
+    public void setChannels(Map<String, ChannelAccount> channels) {
+        this.channels = channels;
     }
 
-    public String webhookUrlPrivate() {
-        return webhook_url_private;
+    private ChannelAccount getChannel(String channelName) {
+        ChannelAccount account = channels.get(channelName);
+        if (account == null) {
+            throw new IllegalArgumentException("Unknown channel " + channelName);
+        }
+        return account;
     }
 
-    public void setWebhook_url_private(String webhook_url_private) {
-        this.webhook_url_private = webhook_url_private;
+    public static class ChannelAccount {
+        private String name;
+        private String webhook_url;
+        private String channel_id;
+
+        public String name() {
+            return name;
+        }
+
+        public void setName(String name) {
+            this.name = name;
+        }
+
+        public String webhookUrl() {
+            return webhook_url;
+        }
+
+        public void setWebhook_url(String webhook_url) {
+            this.webhook_url = webhook_url;
+        }
+
+        public String channelId() {
+            return channel_id;
+        }
+
+        public void setChannel_id(String channel_id) {
+            this.channel_id = channel_id;
+        }
     }
 
-    public String channelPrivate() {
-        return channel_private;
-    }
-
-    public void setChannel_private(String channel_private) {
-        this.channel_private = channel_private;
-    }
-
-    public String channelIdPrivate() {
-        return channel_id_private;
-    }
-
-    public void setChannel_id_private(String channel_id_private) {
-        this.channel_id_private = channel_id_private;
-    }
-
-    public String webhookUrlIm() {
-        return webhook_url_im;
-    }
-
-    public void setWebhook_url_im(String webhook_url_im) {
-        this.webhook_url_im = webhook_url_im;
-    }
-
-    public String channelIm() {
-        return channel_im;
-    }
-
-    public void setChannel_im(String channel_im) {
-        this.channel_im = channel_im;
-    }
-
-    public String channelIdIm() {
-        return channel_id_im;
-    }
-
-    public void setChannel_id_im(String channel_id_im) {
-        this.channel_id_im = channel_id_im;
-    }
-
-    public String webhookUrlMpim() {
-        return webhook_url_mpim;
-    }
-
-    public void setWebhook_url_mpim(String webhook_url_mpim) {
-        this.webhook_url_mpim = webhook_url_mpim;
-    }
-
-    public String channelMpim() {
-        return channel_mpim;
-    }
-
-    public void setChannel_mpim(String channel_mpim) {
-        this.channel_mpim = channel_mpim;
-    }
-
-    public String channelIdMpim() {
-        return channel_id_mpim;
-    }
-
-    public void setChannel_id_mpim(String channel_id_mpim) {
-        this.channel_id_mpim = channel_id_mpim;
-    }
 }
