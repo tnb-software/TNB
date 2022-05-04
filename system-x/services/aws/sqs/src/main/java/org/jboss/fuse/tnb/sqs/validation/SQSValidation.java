@@ -16,6 +16,7 @@ import java.util.Map;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.Message;
 import software.amazon.awssdk.services.sqs.model.QueueAttributeName;
+import software.amazon.awssdk.services.sqs.model.QueueDoesNotExistException;
 
 public class SQSValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SQSValidation.class);
@@ -39,7 +40,7 @@ public class SQSValidation implements Validation {
         createQueueWithAttributes(name, Map.of(QueueAttributeName.FIFO_QUEUE, "true", QueueAttributeName.CONTENT_BASED_DEDUPLICATION, "true"));
     }
 
-    private void createQueueWithAttributes(String name, Map<QueueAttributeName, String> attributes) {
+    public void createQueueWithAttributes(String name, Map<QueueAttributeName, String> attributes) {
         LOG.debug("Creating SQS queue {}", name);
         client.createQueue(b -> b.queueName(name).attributes(attributes));
         WaitUtils.waitFor(() -> queueExists(name), "Waiting until the queue " + name + " is created");
@@ -75,7 +76,10 @@ public class SQSValidation implements Validation {
 
     public void deleteQueue(String name) {
         LOG.debug("Deleting SQS queue {}", name);
-        client.deleteQueue(b -> b.queueUrl(account.queueUrlPrefix() + name));
+        try {
+            client.deleteQueue(b -> b.queueUrl(account.queueUrlPrefix() + name));
+        } catch (QueueDoesNotExistException ignored) {
+        }
     }
 
     public void sendMessage(String queue, String message) {
