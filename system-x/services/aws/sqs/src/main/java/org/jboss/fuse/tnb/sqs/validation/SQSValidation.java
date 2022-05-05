@@ -95,12 +95,16 @@ public class SQSValidation implements Validation {
                 for (Message m : current) {
                     if (!messages.contains(m)) {
                         messages.add(m);
-                        client.deleteMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).receiptHandle(m.receiptHandle()));
                     }
                 }
             }
             return messages;
         });
+    }
+
+    public void deleteMessage(String queue, String receiptHandle) {
+        LOG.debug("Deleting message with receipt handle {} from queue {}", receiptHandle, queue);
+        client.deleteMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).receiptHandle(receiptHandle));
     }
 
     public boolean queueExists(String queue) {
