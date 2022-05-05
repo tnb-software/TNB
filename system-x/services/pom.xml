@@ -31,6 +31,8 @@
         <module>servicenow</module>
         <module>telegram</module>
         <module>cassandra</module>
+        <module>hyperfoil</module>
+        <module>cryostat</module>
     </modules>
 
     <dependencies>

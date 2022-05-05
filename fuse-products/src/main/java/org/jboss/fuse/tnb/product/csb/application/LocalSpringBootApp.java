@@ -16,6 +16,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -39,7 +40,8 @@ public class LocalSpringBootApp extends SpringBootApp {
             jarName = mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
             projectPath = mavenGitApp.getProjectLocation();
         } else {
-            args = new ArrayList<>();
+            args = integrationBuilder.getProperties() != null ? integrationBuilder.getProperties().entrySet().stream()
+                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList()) : Collections.emptyList();
             jarName = name + "-1.0.0-SNAPSHOT.jar";
             projectPath = TestConfiguration.appLocation().resolve(name);
         }
