@@ -1,5 +1,8 @@
 package org.jboss.fuse.tnb.common.utils;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSession;
@@ -19,6 +22,8 @@ import okhttp3.Request;
 import okhttp3.RequestBody;
 
 public final class HTTPUtils {
+
+    private static final Logger LOG = LoggerFactory.getLogger(HTTPUtils.class);
     private static HTTPUtils instance;
 
     private final OkHttpClient client;
@@ -27,50 +32,58 @@ public final class HTTPUtils {
         this.client = client;
     }
 
+    public Response get(String url, boolean throwError) {
+        return execute(new Request.Builder().get().url(url).build(), throwError);
+    }
+
     public Response get(String url) {
-        return execute(new Request.Builder().get().url(url).build());
+        return get(url, true);
     }
 
     public Response get(String url, Map<String, String> headers) {
-        return execute(new Request.Builder().get().url(url).headers(Headers.of(headers)).build());
+        return execute(new Request.Builder().get().url(url).headers(Headers.of(headers)).build(), true);
     }
 
     public Response post(String url, RequestBody body) {
-        return execute(new Request.Builder().post(body).url(url).build());
+        return execute(new Request.Builder().post(body).url(url).build(), true);
     }
 
     public Response post(String url, RequestBody body, Map<String, String> headers) {
-        return execute(new Request.Builder().post(body).url(url).headers(Headers.of(headers)).build());
+        return execute(new Request.Builder().post(body).url(url).headers(Headers.of(headers)).build(), true);
     }
 
     public Response put(String url, RequestBody body, Map<String, String> headers) {
-        return execute(new Request.Builder().put(body).url(url).headers(Headers.of(headers)).build());
+        return execute(new Request.Builder().put(body).url(url).headers(Headers.of(headers)).build(), true);
     }
 
     public Response put(String url, RequestBody body) {
-        return execute(new Request.Builder().put(body).url(url).build());
+        return execute(new Request.Builder().put(body).url(url).build(), true);
     }
 
     public void delete(String url) {
-        execute(new Request.Builder().url(url).delete().build());
+        execute(new Request.Builder().url(url).delete().build(), true);
     }
 
     public void delete(String url, Map<String, String> headers) {
-        execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build());
+        execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build(), true);
     }
 
-    private Response execute(Request request) {
+    private Response execute(Request request, boolean throwError) {
         try {
             okhttp3.Response response = client.newCall(request).execute();
-            int responseCode = response.code();
             String responseBody = null;
             if (response.body() != null) {
                 responseBody = response.body().string();
                 response.body().close();
             }
-            return new Response(responseCode, responseBody);
+            return new Response(response.code(), responseBody);
         } catch (IOException e) {
-            throw new RuntimeException("Unable to execute request: ", e);
+            if (throwError) {
+                throw new RuntimeException("Unable to execute request: ", e);
+            } else {
+                LOG.warn("execute error is ignored: {}", e.getMessage());
+                return new Response(0, null);
+            }
         }
     }
 
@@ -100,6 +113,10 @@ public final class HTTPUtils {
 
         public String getBody() {
             return body;
+        }
+
+        public boolean isSuccessful() {
+            return responseCode >= 200 && responseCode < 300;
         }
     }
 

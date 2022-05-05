@@ -14,7 +14,7 @@ import org.jboss.fuse.tnb.product.log.stream.LogStream;
 import org.jboss.fuse.tnb.product.util.maven.BuildRequest;
 import org.jboss.fuse.tnb.product.util.maven.Maven;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -28,7 +28,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
@@ -76,25 +75,14 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public void preDeploy() {
+        Path jkubeFolder = Path.of(baseDirectory.toAbsolutePath().toString(), "src", "main", "jkube");
+        jkubeFolder.toFile().mkdirs();
+        String properties = "";
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
-            Path jkubeFolder = Path.of(baseDirectory.toAbsolutePath().toString(), "src", "main", "jkube");
-            jkubeFolder.toFile().mkdirs();
 
-            String properties = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet().stream()
+            properties = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet().stream()
                 .map(entry -> "    " + entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
-
-            String jkubeFileContent = "data:" + System.lineSeparator()
-                + "  application.properties: |" + System.lineSeparator()
-                + properties;
-
-            try {
-                Files.copy(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/deployment.yaml"),
-                    jkubeFolder.resolve("deployment.yaml"));
-                FileUtils.writeStringToFile(new File(jkubeFolder.toFile(), "configmap.yaml"), jkubeFileContent, StandardCharsets.UTF_8);
-            } catch (IOException e) {
-                throw new RuntimeException("Error creating jkube configmap.yaml", e);
-            }
 
             //copy resources
             copyResources(baseDirectory, "jkube-resources");
@@ -139,5 +127,20 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
             model.setArtifactId(model.getArtifactId().replaceAll("camel-example-spring-boot-", "csb-"));
             Maven.writePom(pomFile, model);
         }
+
+        String jkubeFileContent = "data:" + System.lineSeparator()
+            + "  application.properties: |" + System.lineSeparator()
+            + properties;
+
+        org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("configmap.yaml"), jkubeFileContent);
+
+        try {
+            final String deploymentContent = IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8)
+                .replaceAll("XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder));
+            org.jboss.fuse.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("deployment.yaml"), deploymentContent);
+        } catch (IOException e) {
+            throw new RuntimeException("Error creating custom deployment.yaml", e);
+        }
+
     }
 }

@@ -4,6 +4,7 @@ import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.product.endpoint.Endpoint;
 import org.jboss.fuse.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import org.jboss.fuse.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import org.jboss.fuse.tnb.product.interfaces.OpenshiftDeployer;
 import org.jboss.fuse.tnb.product.log.Log;
 import org.jboss.fuse.tnb.product.log.OpenshiftLog;
@@ -15,9 +16,11 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.Pod;
 
@@ -123,5 +126,23 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
                     LOG.error("unable to create directory " + resFolder, e);
                 }
             });
+    }
+
+    protected String getPropertiesForJVM(AbstractIntegrationBuilder<?> integrationBuilder) {
+        if (integrationBuilder == null) {
+            return "";
+        }
+
+        Map<Object, Object> entries = new HashMap(integrationBuilder.getProperties());
+
+        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
+            entries.putAll(((AbstractMavenGitIntegrationBuilder) integrationBuilder).getJavaProperties());
+        }
+
+       return entries.entrySet().stream()
+            .filter(entry -> entry.getValue() != null)
+            .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
+            .map(entry -> "-D" + entry.getKey() + "=" + entry.getValue())
+            .collect(Collectors.joining(" "));
     }
 }

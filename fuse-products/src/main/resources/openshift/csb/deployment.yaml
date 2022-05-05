@@ -13,6 +13,9 @@ spec:
               - key: application.properties
                 path: application.properties
       containers:
-        - volumeMounts:
+        - env:
+            - name: JAVA_OPTS_APPEND
+              value: "XX_JAVA_OPTS_APPEND"
+          volumeMounts:
             - name: config
               mountPath: /deployments/config

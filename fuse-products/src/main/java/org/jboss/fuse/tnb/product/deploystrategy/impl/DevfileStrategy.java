@@ -26,7 +26,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 
@@ -78,12 +77,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
                 setEnvVar("MAVEN_MIRROR_URL", TestConfiguration.mavenRepository());
             }
 
-            if (gitIntegrationBuilder != null && !gitIntegrationBuilder.getJavaProperties().isEmpty()) {
-                String properties = gitIntegrationBuilder.getJavaProperties().entrySet().stream()
-                    .map(entry -> "-D" + entry.getKey() + "=" + entry.getValue())
-                    .collect(Collectors.joining(" "));
-                setEnvVar("JAVA_OPTS_APPEND", properties);
-            }
+            setEnvVar("JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder));
 
             setEnvVar("SUB_FOLDER", folderName);
 
@@ -114,7 +108,10 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public Endpoint getEndpoint() {
         return new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
             .list().getItems()
-            .stream().filter(route -> route.getMetadata().getLabels().get("app").equals(name))
+            .stream()
+            .filter(route -> route.getMetadata().getLabels() != null)
+            .filter(route -> route.getMetadata().getLabels().get("app") != null)
+            .filter(route -> route.getMetadata().getLabels().get("app").equals(name))
             .filter(route -> route.getMetadata().getName().startsWith("http-8080"))
             .findFirst().orElseThrow(() -> new IllegalStateException("no route found"))
             .getSpec().getHost());

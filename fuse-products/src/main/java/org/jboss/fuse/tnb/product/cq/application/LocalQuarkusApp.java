@@ -16,17 +16,20 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class LocalQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalQuarkusApp.class);
     private final Path logFile;
     private Process appProcess;
+    private final AbstractIntegrationBuilder<?> integrationBuilder;
 
     public LocalQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
+        this.integrationBuilder = integrationBuilder;
         logFile = TestConfiguration.appLocation().resolve(name + ".log");
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
@@ -79,7 +82,12 @@ public class LocalQuarkusApp extends QuarkusApp {
         if (QuarkusConfiguration.isQuarkusNative()) {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
         } else {
-            cmd.addAll(Arrays.asList(System.getProperty("java.home") + "/bin/java", "-jar"));
+            List<String> args = this.integrationBuilder.getProperties() != null ? this.integrationBuilder.getProperties().entrySet().stream()
+                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList()) : Collections.emptyList();
+
+            cmd.add(System.getProperty("java.home") + "/bin/java");
+            cmd.addAll(args);
+            cmd.add("-jar");
             fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
         }
         cmd.add(fileName);

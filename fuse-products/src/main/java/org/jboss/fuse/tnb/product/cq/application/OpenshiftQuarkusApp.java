@@ -20,9 +20,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerStatus;
@@ -32,8 +36,11 @@ import io.fabric8.kubernetes.api.model.Pod;
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
 
+    private final AbstractIntegrationBuilder<?> integrationBuilder;
+
     public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
+        this.integrationBuilder = integrationBuilder;
     }
 
     @Override
@@ -48,7 +55,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
                 "quarkus.kubernetes-client.trust-certs", "true",
                 "quarkus.kubernetes.deploy", "true",
                 "quarkus.native.container-build", "true",
-                "skipTests", "true"
+                "skipTests", "true",
+                "quarkus.openshift.command", getJavaCommand()
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
             .withLogMarker(LogStream.marker(name, "deploy"));
@@ -64,6 +72,19 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));
         log = new OpenshiftLog(podSelector, getName());
         logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
+    }
+
+    /**
+     * Return the java command to run into the container
+     * @return String, the command for running java app in the container, all parameters must be comma separated
+     */
+    private String getJavaCommand() {
+        final String defaultCmd = "java %s -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager "
+            + "-jar /deployments/quarkus-run.jar";
+        return Arrays.stream(String.format(defaultCmd, Optional.ofNullable(this.integrationBuilder.getProperties())
+                .orElse(new Properties()).entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue())
+                .collect(Collectors.joining(" ")))
+            .split(" ")).collect(Collectors.joining(","));
     }
 
     @Override
