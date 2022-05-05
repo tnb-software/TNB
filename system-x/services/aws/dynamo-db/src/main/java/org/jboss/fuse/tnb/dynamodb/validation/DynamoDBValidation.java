@@ -6,12 +6,14 @@ import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collections;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement;
 import software.amazon.awssdk.services.dynamodb.model.KeyType;
 import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
@@ -83,5 +85,22 @@ public class DynamoDBValidation implements Validation {
 
         client.putItem(PutItemRequest.builder().item(input).tableName(tableName).build());
         LOG.debug("Created item {} in table {}", record, tableName);
+    }
+
+    public Map<String, String> getItem(String tableName, String key, String keyVal) {
+        Map<String, AttributeValue> keyToGet = Collections.singletonMap(key, AttributeValue.builder()
+            .s(keyVal).build());
+
+        GetItemRequest request = GetItemRequest.builder()
+            .key(keyToGet)
+            .tableName(tableName)
+            .build();
+
+        Map<String, String> returnedItem = client.getItem(request).item().entrySet().stream().collect(Collectors.toMap(
+            Map.Entry::getKey,
+            entry -> entry.getValue().s()
+        ));
+
+        return returnedItem;
     }
 }
