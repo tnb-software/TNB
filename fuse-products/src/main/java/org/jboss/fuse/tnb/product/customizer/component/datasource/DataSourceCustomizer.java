@@ -50,8 +50,20 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
         final String[] dbDependencies = getDbAllocatorDependencies();
         final List<String> dependencies = new LinkedList<>(Arrays.asList(dbDependencies));
         dependencies.add("org.springframework.boot:spring-boot-starter-jdbc");
-        if (dbDependencies.length == 0 && "postgresql".equals(type)) {
-            dependencies.add("org.postgresql:postgresql");
+        if (dbDependencies.length == 0) {
+            if ("postgresql".equals(type)) {
+                dependencies.add("org.postgresql:postgresql");
+            } else if (type.contains("oracle")) {
+                dependencies.add("com.oracle.database.jdbc:ojdbc11");
+            } else if (type.contains("mssql")) {
+                dependencies.add("com.microsoft.sqlserver:mssql-jdbc");
+            } else if (type.contains("mysql")) {
+                dependencies.add("mysql:mysql-connector-java");
+            }  else if (type.contains("mariadb")) {
+                dependencies.add("org.mariadb.jdbc:mariadb-java-client");
+            } else if (type.contains("db2")) {
+                dependencies.add("com.ibm.db2:jcc");
+            }
         }
         getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
     }
