@@ -64,8 +64,8 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
                     : OpenshiftClient.get().getMasterUrl().toString()
                 , "jkube.username", OpenshiftConfiguration.openshiftUsername()
                 , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
-                , "jkube.build.recreate", "all"
-                , "jkube.docker.logStdout", "true"
+                , "jkube.enricher.jkube-service.port", "8080:8080"
+                , "jkube.enricher.jkube-service.expose", "true"
             )).withGoals("clean", "package", oc + ":resource", oc + ":build", oc + ":apply")
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
