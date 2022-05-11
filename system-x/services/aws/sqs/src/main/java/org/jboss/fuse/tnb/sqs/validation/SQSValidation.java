@@ -116,7 +116,17 @@ public class SQSValidation implements Validation {
 
     public int getQueueSize(String queue) {
         return Integer.parseInt(client.getQueueAttributes(qab -> qab.queueUrl(client.getQueueUrl(qub -> qub.queueName(queue)).queueUrl())
-            .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES))
+                .attributeNames(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES))
             .attributes().get(QueueAttributeName.APPROXIMATE_NUMBER_OF_MESSAGES));
+    }
+
+    public void purgeQueue(String queue) {
+        LOG.debug("Purging SQS queue {}", queue);
+        try {
+            client.purgeQueue(b -> b.queueUrl(account.queueUrlPrefix() + queue));
+            //The message deletion process takes up to 60 seconds. We recommend waiting for 60 seconds regardless of your queue's size.
+            WaitUtils.sleep(60000L);
+        } catch (QueueDoesNotExistException ignored) {
+        }
     }
 }
