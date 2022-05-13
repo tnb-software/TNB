@@ -18,6 +18,7 @@
         <maven.invoker.version>3.1.0</maven.invoker.version>
         <maven.model.version>3.6.3</maven.model.version>
         <jackson.module.version>2.13.1</jackson.module.version>
+        <junit-launcher.version>1.8.2</junit-launcher.version>
     </properties>
 
     <dependencies>
@@ -91,6 +92,11 @@
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.platform</groupId>
+            <artifactId>junit-platform-launcher</artifactId>
+            <version>${junit-launcher.version}</version>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
