@@ -21,9 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @AutoService(AmqBroker.class)
-public class AmqLocalBroker extends AmqBroker implements Deployable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(AmqLocalBroker.class);
+public class LocalAMQBroker extends AmqBroker implements Deployable {
+    private static final Logger LOG = LoggerFactory.getLogger(LocalAMQBroker.class);
     private AmqBrokerContainer container;
 
     @Override

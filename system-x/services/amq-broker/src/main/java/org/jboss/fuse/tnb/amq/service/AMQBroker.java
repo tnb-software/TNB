@@ -14,6 +14,7 @@ public abstract class AmqBroker implements Service {
     protected Connection connection;
 
     protected AmqBrokerAccount account;
+    private AMQValidation validation;
 
     protected IMqttClient mqttClient;
 
@@ -26,8 +27,11 @@ public abstract class AmqBroker implements Service {
 
     public abstract String brokerUrl();
 
-    public AMQValidation getValidation() {
-        return new AMQValidation(connection);
+    public AMQValidation validation() {
+        if (validation == null) {
+            validation = new AMQValidation(connection);
+        }
+        return validation;
     }
 
     public MQTTValidation getMQTTValidation() {
