@@ -20,6 +20,11 @@
 
     <dependencies>
         <dependency>
+            <groupId>org.jboss.fuse.tnb</groupId>
+            <artifactId>system-x-jms</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
             <groupId>org.apache.activemq</groupId>
             <artifactId>artemis-jms-client</artifactId>
             <version>${artemis.jms.client.version}</version>

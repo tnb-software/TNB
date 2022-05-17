@@ -85,6 +85,9 @@ public abstract class JMSClient {
     public abstract Message receiveMessage(long timeout);
 
     public String getBody(Message message) {
+        if (message == null) {
+            return null;
+        }
         if (message instanceof TextMessage) {
             try {
                 return ((TextMessage) message).getText();

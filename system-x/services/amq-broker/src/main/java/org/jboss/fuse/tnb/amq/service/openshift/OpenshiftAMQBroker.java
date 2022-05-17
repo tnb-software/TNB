@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.amq.service.openshift;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
-import org.jboss.fuse.tnb.amq.service.AmqBroker;
+import org.jboss.fuse.tnb.amq.service.AMQBroker;
 import org.jboss.fuse.tnb.amq.service.openshift.generated.Acceptor;
 import org.jboss.fuse.tnb.amq.service.openshift.generated.ActiveMQArtemis;
 import org.jboss.fuse.tnb.amq.service.openshift.generated.ActiveMQArtemisList;
@@ -49,9 +49,9 @@ import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 
-@AutoService(AmqBroker.class)
-public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname {
-    private static final Logger LOG = LoggerFactory.getLogger(AmqOpenshiftBroker.class);
+@AutoService(AMQBroker.class)
+public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQBroker.class);
 
     public static final String BROKER_NAME = "tnb-amq-broker";
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";

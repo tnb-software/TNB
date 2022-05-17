@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.amq.service.local;
 
-import org.jboss.fuse.tnb.amq.service.AmqBroker;
+import org.jboss.fuse.tnb.amq.service.AMQBroker;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -20,15 +20,15 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
-@AutoService(AmqBroker.class)
-public class LocalAMQBroker extends AmqBroker implements Deployable {
+@AutoService(AMQBroker.class)
+public class LocalAMQBroker extends AMQBroker implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalAMQBroker.class);
-    private AmqBrokerContainer container;
+    private AMQBrokerContainer container;
 
     @Override
     public void deploy() {
         LOG.info("Starting AMQ container");
-        container = new AmqBrokerContainer(containerEnvironment(), containerPorts());
+        container = new AMQBrokerContainer(containerEnvironment(), containerPorts());
         container.start();
         LOG.info("AMQ broker container started");
     }
@@ -76,8 +76,7 @@ public class LocalAMQBroker extends AmqBroker implements Deployable {
     }
 
     private int[] containerPorts() {
-        int[] ports = {8161, 61616, 1883};
-        return ports;
+        return new int[] {8161, 61616, 1883};
     }
 
     private Map<String, String> containerEnvironment() {

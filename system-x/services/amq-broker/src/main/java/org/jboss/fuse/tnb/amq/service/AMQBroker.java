@@ -1,6 +1,6 @@
 package org.jboss.fuse.tnb.amq.service;
 
-import org.jboss.fuse.tnb.amq.account.AmqBrokerAccount;
+import org.jboss.fuse.tnb.amq.account.AMQBrokerAccount;
 import org.jboss.fuse.tnb.amq.validation.AMQValidation;
 import org.jboss.fuse.tnb.amq.validation.MQTTValidation;
 import org.jboss.fuse.tnb.common.account.Accounts;
@@ -10,17 +10,17 @@ import org.eclipse.paho.client.mqttv3.IMqttClient;
 
 import javax.jms.Connection;
 
-public abstract class AmqBroker implements Service {
+public abstract class AMQBroker implements Service {
     protected Connection connection;
 
-    protected AmqBrokerAccount account;
+    protected AMQBrokerAccount account;
     private AMQValidation validation;
 
     protected IMqttClient mqttClient;
 
-    public AmqBrokerAccount account() {
+    public AMQBrokerAccount account() {
         if (account == null) {
-            account = Accounts.get(AmqBrokerAccount.class);
+            account = Accounts.get(AMQBrokerAccount.class);
         }
         return account;
     }

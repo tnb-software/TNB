@@ -2,7 +2,7 @@ package org.jboss.fuse.tnb.amq.account;
 
 import org.jboss.fuse.tnb.common.account.Account;
 
-public class AmqBrokerAccount implements Account {
+public class AMQBrokerAccount implements Account {
     private String username = "admin";
     private String password = "admin123.";
     private String keystorePassword = "changeme";
