@@ -21,6 +21,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -48,16 +49,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
             .withGoals("package")
-            .withProperties(Map.of(
-                "quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
-                "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getOauthToken(),
-                "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
-                "quarkus.kubernetes-client.trust-certs", "true",
-                "quarkus.kubernetes.deploy", "true",
-                "quarkus.native.container-build", "true",
-                "skipTests", "true",
-                "quarkus.openshift.command", getJavaCommand()
-            ))
+            .withProperties(getProperties())
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
             .withLogMarker(LogStream.marker(name, "deploy"));
         if (QuarkusConfiguration.isQuarkusNative()) {
@@ -74,8 +66,25 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
     }
 
+    private Map<String, String> getProperties() {
+        final Map<String, String> properties = new HashMap<>(Map.of(
+            "quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
+            "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getOauthToken(),
+            "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
+            "quarkus.kubernetes-client.trust-certs", "true",
+            "quarkus.kubernetes.deploy", "true",
+            "quarkus.native.container-build", "true",
+            "skipTests", "true"
+        ));
+        if (!QuarkusConfiguration.isQuarkusNative()) {
+            properties.put("quarkus.openshift.command", getJavaCommand());
+        }
+        return properties;
+    }
+
     /**
      * Return the java command to run into the container
+     *
      * @return String, the command for running java app in the container, all parameters must be comma separated
      */
     private String getJavaCommand() {
