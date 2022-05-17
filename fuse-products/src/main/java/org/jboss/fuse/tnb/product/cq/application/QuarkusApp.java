@@ -60,7 +60,8 @@ public abstract class QuarkusApp extends App {
             ))
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
             .withLogMarker(LogStream.marker(name, "build"));
-        if (QuarkusConfiguration.isQuarkusNative()) {
+        if (QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration.isOpenshift()) {
+            // Native build is performed in the OCP deploy, this build is just for fetching dependencies
             requestBuilder.withProfiles("native");
         }
 
