@@ -7,6 +7,8 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
     private String subDirectory;
     private String branch = "main";
 
+    private boolean cleanBeforeBuild = true;
+
     public AbstractGitIntegrationBuilder(String integrationName) {
         super(integrationName);
     }
@@ -26,6 +28,16 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
         return self();
     }
 
+    /**
+     * Execute goal `clean` before build application
+     * @param cleanBeforeBuild true or false
+     * @return self instance
+     */
+    public SELF cleanBeforeBuild(boolean cleanBeforeBuild) {
+        this.cleanBeforeBuild = cleanBeforeBuild;
+        return self();
+    }
+
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -36,5 +48,9 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
 
     public String getBranch() {
         return branch;
+    }
+
+    public boolean cleanBeforeBuild() {
+        return this.cleanBeforeBuild;
     }
 }

@@ -46,7 +46,7 @@ public class MavenGitRepository extends GitRepository {
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)
-            .withGoals("clean", "package")
+            .withGoals(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "" , "package")
             .withProperties(mavenBuildProperties)
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
             .withLogMarker(LogStream.marker(name, "build"));
