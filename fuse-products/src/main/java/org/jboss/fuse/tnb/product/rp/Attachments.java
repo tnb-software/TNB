@@ -8,11 +8,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public final class Attachments {
 
     private static final Logger LOG = LoggerFactory.getLogger(Attachments.class);
-    private static final List<Path> attachments = new ArrayList<>();
+    private static final List<Path> testClassAttachments = new ArrayList<>();
+    private static final List<Path> testCaseAttachments = new ArrayList<>();
     private static String currentTestCase;
     private static String currentTestClass;
 
@@ -29,14 +32,23 @@ public final class Attachments {
 
     static void endTestCase(boolean failure) {
         if (failure) {
-            createAttachments();
+            createAttachments(Stream.concat(testClassAttachments.stream(), testCaseAttachments.stream()).collect(Collectors.toList()),
+                currentTestClass + "." + currentTestCase);
         }
-        attachments.clear();
+        testCaseAttachments.clear();
     }
 
-    private static void createAttachments() {
+    static void endTestClass() {
+        testClassAttachments.clear();
+    }
+
+    private static void createAttachments(List<Path> attachments, String folder) {
+        if (attachments.isEmpty()) {
+            return;
+        }
+
         try {
-            final Path testCaseDir = Path.of("target", "attachments", currentTestClass + "." + currentTestCase);
+            final Path testCaseDir = Path.of("target", "attachments", folder);
             Files.createDirectories(testCaseDir);
 
             for (Path p : attachments) {
@@ -48,6 +60,11 @@ public final class Attachments {
     }
 
     public static void addAttachment(Path path) {
-        attachments.add(path);
+        LOG.info("Adding attachment: {}", path);
+        if (currentTestCase != null) {
+            testCaseAttachments.add(path);
+        } else {
+            testClassAttachments.add(path);
+        }
     }
 }
