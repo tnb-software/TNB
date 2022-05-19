@@ -13,6 +13,7 @@ import org.slf4j.LoggerFactory;
 import com.force.api.ForceApi;
 import com.force.api.QueryResult;
 
+import java.util.Map;
 import java.util.Optional;
 
 public class SalesforceValidation {
@@ -70,6 +71,15 @@ public class SalesforceValidation {
     public void deleteAccount(String id) {
         client.deleteSObject("account", id);
         LOG.debug("Deleting salesforce account with id : {}", id);
+    }
+
+    public void deleteTopic(String topicName) {
+        LOG.info("deleting topic {}", topicName);
+        QueryResult<Map> queryResult = client.query("SELECT Id FROM PushTopic where Name = '" + topicName + "'");
+        if (queryResult.getTotalSize() > 0) {
+            String topicId = (String) queryResult.getRecords().get(0).get("Id");
+            client.deleteSObject("PushTopic", topicId);
+        }
     }
 
     public Optional<Lead> getLeadByEmail(String emailAddress) {
