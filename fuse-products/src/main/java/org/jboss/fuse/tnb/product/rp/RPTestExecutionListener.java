@@ -13,12 +13,12 @@ import com.google.auto.service.AutoService;
 public class RPTestExecutionListener implements TestExecutionListener {
 
     private static String transformReportingName(String name) {
-        return name.replace("(", "{").replace(")", "}");
+        return name.replace("()", "").replace("(", "{").replace(")", "}");
     }
 
     @Override
     public void executionStarted(TestIdentifier testIdentifier) {
-        if (TestConfiguration.reportPortalEnabled()) {
+        if (!TestConfiguration.reportPortalEnabled()) {
             return;
         }
 
@@ -36,7 +36,7 @@ public class RPTestExecutionListener implements TestExecutionListener {
     @Override
     public void executionFinished(TestIdentifier testIdentifier,
         TestExecutionResult testExecutionResult) {
-        if (TestConfiguration.reportPortalEnabled()) {
+        if (!TestConfiguration.reportPortalEnabled()) {
             return;
         }
 

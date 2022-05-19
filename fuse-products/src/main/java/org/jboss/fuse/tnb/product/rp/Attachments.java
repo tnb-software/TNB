@@ -36,10 +36,12 @@ public final class Attachments {
                 currentTestClass + "." + currentTestCase);
         }
         testCaseAttachments.clear();
+        currentTestCase = null;
     }
 
     static void endTestClass() {
         testClassAttachments.clear();
+        currentTestClass = null;
     }
 
     private static void createAttachments(List<Path> attachments, String folder) {
