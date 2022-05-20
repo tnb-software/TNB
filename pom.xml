@@ -12,6 +12,7 @@
         <module>common</module>
         <module>system-x</module>
         <module>fuse-products</module>
+        <module>bom</module>
     </modules>
 
     <properties>
