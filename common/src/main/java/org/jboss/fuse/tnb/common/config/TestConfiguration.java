@@ -16,6 +16,12 @@ public class TestConfiguration extends Configuration {
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
+    public static final String USE_VAULT = "test.credentials.use.vault";
+    public static final String VAULT_TOKEN = "test.credentials.vault.token";
+    private static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
+    private static final String VAULT_ROLE_ID = "test.credentials.vault.role.id";
+    public static final String VAULT_ADDRESS = "test.credentials.vault.address";
+    public static final String VAULT_PATH_PATTERN = "test.credentials.vault.path.pattern";
     public static final String APP_GROUP_ID = "test.app.group.id";
     public static final String APP_LOCATION = "app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
@@ -40,6 +46,30 @@ public class TestConfiguration extends Configuration {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
             .orElseThrow(
                 () -> new IllegalArgumentException(String.format("Unable to find enum for system property %s = %s", PRODUCT, getProperty(PRODUCT))));
+    }
+
+    public static boolean useVault() {
+        return getBoolean(USE_VAULT, false);
+    }
+
+    public static String vaultToken() {
+        return getProperty(VAULT_TOKEN);
+    }
+
+    public static String vaultRoleId() {
+        return getProperty(VAULT_ROLE_ID);
+    }
+
+    public static String vaultSecretId() {
+        return getProperty(VAULT_SECRET_ID);
+    }
+
+    public static String vaultPathPattern() {
+        return getProperty(VAULT_PATH_PATTERN, "/");
+    }
+
+    public static String vaultAddress() {
+        return getProperty(VAULT_ADDRESS, "https://vault.devshift.net");
     }
 
     public static String credentialsFile() {
@@ -118,4 +148,5 @@ public class TestConfiguration extends Configuration {
     public static boolean streamLogs() {
         return getBoolean(STREAM_LOGS, false);
     }
+
 }
