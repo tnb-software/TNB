@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>system-x-ftp</artifactId>
-    <name>system-x-ftp</name>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: FTP</name>
 
     <properties>
         <ftp.client.version>3.6</ftp.client.version>

@@ -10,6 +10,12 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-google-sheets</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: Google :: Sheets</name>
+
+    <properties>
+        <google-sheets.client.version>v4-rev493-1.23.0</google-sheets.client.version>
+    </properties>
 
     <dependencies>
         <dependency>
