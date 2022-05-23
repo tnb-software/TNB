@@ -18,12 +18,12 @@ public abstract class OpenshiftProduct extends Product {
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
             teardownProduct();
-            deleteTmpNamespace();
+            deleteNamespace();
         }
     }
 
-    public void deleteTmpNamespace() {
-        if (OpenshiftConfiguration.isTemporaryNamespace()) {
+    private void deleteNamespace() {
+        if (OpenshiftConfiguration.isTemporaryNamespace() || OpenshiftConfiguration.openshiftNamespaceDelete()) {
             OpenshiftClient.get().deleteNamespace();
         }
     }
