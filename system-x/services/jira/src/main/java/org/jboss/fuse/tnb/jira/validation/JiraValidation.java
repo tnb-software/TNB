@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.jira.validation;
 
 import org.jboss.fuse.tnb.jira.account.JiraAccount;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -89,5 +90,28 @@ public class JiraValidation {
         return client.getIssueClient()
             .getIssue(issueKey)
             .claim();
+    }
+
+    public void addComment(String issueKey, String comment) {
+        LOG.debug("Adding comment on issue " + issueKey);
+        try {
+            client.getIssueClient().addComment(client.getIssueClient().getIssue(issueKey).claim().getCommentsUri()
+                , Comment.valueOf(comment));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to add comment on issue " + issueKey, e);
+        }
+    }
+
+    public Iterable<Issue> getIssues(String project) {
+        assert StringUtils.isNotEmpty(project);
+        return client.getSearchClient().searchJql(String.format("project = \"%s\"", project))
+            .claim().getIssues();
+    }
+
+    public Iterable<Issue> getIssues(String project, String customJQL) {
+        assert StringUtils.isNotEmpty(project);
+        assert StringUtils.isNotEmpty(customJQL);
+        return client.getSearchClient().searchJql(String.format("project = \"%s\" AND %s", project, customJQL))
+            .claim().getIssues();
     }
 }
