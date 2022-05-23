@@ -18,6 +18,7 @@ import io.fabric8.kubernetes.api.model.Pod;
  */
 public class MavenBuildLogHandler implements Runnable {
     private final String integrationName;
+    private LogStream logStream;
 
     public MavenBuildLogHandler(String integrationName) {
         this.integrationName = integrationName;
@@ -28,7 +29,7 @@ public class MavenBuildLogHandler implements Runnable {
         Predicate<Pod> operatorPod = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/component")
             && p.getMetadata().getLabels().get("camel.apache.org/component").equals("operator");
 
-        LogStream logStream = new OpenshiftLogStream(operatorPod, LogStream.marker(integrationName, "maven-build"));
+        logStream = new OpenshiftLogStream(operatorPod, LogStream.marker(integrationName, "maven-build"));
         CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
         String kitName = null;
         // Wait until the kit name is generated
@@ -50,6 +51,10 @@ public class MavenBuildLogHandler implements Runnable {
         ) {
             WaitUtils.sleep(1000);
         }
+        logStream.stop();
+    }
+
+    public void stop() {
         logStream.stop();
     }
 }
