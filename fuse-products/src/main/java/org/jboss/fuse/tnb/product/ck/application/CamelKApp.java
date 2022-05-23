@@ -41,7 +41,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Future;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -81,7 +80,7 @@ public class CamelKApp extends App {
     private final CamelKClient camelKClient;
 
     private Object integrationSource;
-    private final List<Future<?>> logStreams = new ArrayList<>();
+    private MavenBuildLogHandler buildLogHandler;
 
     private CamelKApp(String name) {
         super(name);
@@ -125,16 +124,18 @@ public class CamelKApp extends App {
         log = new OpenshiftLog(podSelector, getName());
 
         if (TestConfiguration.streamLogs()) {
-            logStreams.add(Executor.get().submit(new MavenBuildLogHandler(getName())));
-            logStreams.add(Executor.get().submit(new IntegrationKitBuildLogHandler(getName())));
+            buildLogHandler = new MavenBuildLogHandler(getName());
+            Executor.get().submit(buildLogHandler);
+            Executor.get().submit(new IntegrationKitBuildLogHandler(getName()));
             logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
         }
     }
 
     @Override
     public void stop() {
-        logStreams.forEach(f -> f.cancel(true));
-        logStreams.clear();
+        if (buildLogHandler != null) {
+            buildLogHandler.stop();
+        }
         if (logStream != null) {
             logStream.stop();
         }
