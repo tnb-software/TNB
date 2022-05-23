@@ -6,39 +6,15 @@ import org.jboss.fuse.tnb.common.config.TestConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.file.Paths;
-import java.util.Map;
-import java.util.Properties;
 import java.util.function.Function;
 
 public final class Accounts {
     private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
 
-    private static Map<String, Map<String, Object>> credentials;
-    private static ObjectMapper mapper;
+    private static CredentialsLoader loader;
 
     private Accounts() {
-    }
-
-    /**
-     * Loads the credentials file into a map.
-     */
-    private static void load() {
-        try (FileInputStream fs = new FileInputStream(Paths.get(TestConfiguration.credentialsFile()).toAbsolutePath().toString())) {
-            LOG.info("Loading credentials file from {}", Paths.get(TestConfiguration.credentialsFile()).toAbsolutePath());
-            credentials = (Map) ((Map) new Yaml().load(fs)).get("services");
-            mapper = new ObjectMapper();
-            mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        } catch (IOException e) {
-            fail("Unable to load credentials file: " + e);
-        }
     }
 
     /**
@@ -57,39 +33,47 @@ public final class Accounts {
             throw new RuntimeException("Unable to create instance of " + accountClass.getName() + " class: ", e);
         }
         if (instance instanceof WithId) {
-            LOG.debug("Loading {} account from credentials file", accountClass.getSimpleName());
-            if (credentials == null) {
-                load();
-            }
+            LOG.debug("Loading {} account", accountClass.getSimpleName());
             String credentialsId = getId.apply((WithId) instance);
-            if (!credentials.containsKey(credentialsId)) {
+            if (loader == null) {
+                try {
+                    createLoader();
+                } catch (Exception e) {
+                    fail("Could not load credentials", e);
+                }
+            }
+            T account = loader.get(credentialsId, accountClass);
+            if (account == null) {
                 throw new IllegalArgumentException("Credentials with id " + credentialsId + " not found in credentials.yaml file");
             }
-            return accountClass.cast(mapper.convertValue(credentials.get(credentialsId).get("credentials"), accountClass));
+            return account;
         } else {
             LOG.debug("Initialization of {}. No credentials loading needed.", accountClass.getSimpleName());
             return instance;
         }
     }
 
-    /**
-     * Gets the credentials of a service as Properties instance.
-     *
-     * @param credentialsId credentials id
-     * @return properties instance
-     * @deprecated use account.toProperties() method
-     */
-    @Deprecated
-    public static Properties getCredentialsOfService(String credentialsId) {
-        if (credentials == null) {
-            load();
+    private static void createLoader() throws Exception {
+        if (TestConfiguration.useVault()) {
+            if (TestConfiguration.vaultToken() != null) {
+                LOG.info("Logging into vault using github token");
+                loader = new VaultCredentialsLoader(
+                    TestConfiguration.vaultAddress(),
+                    TestConfiguration.vaultPathPattern(),
+                    TestConfiguration.vaultToken()
+                );
+            } else {
+                LOG.info("Logging into vault using approle");
+                loader = new VaultCredentialsLoader(
+                    TestConfiguration.vaultAddress(),
+                    TestConfiguration.vaultPathPattern(),
+                    TestConfiguration.vaultRoleId(),
+                    TestConfiguration.vaultSecretId()
+                );
+            }
+        } else {
+            LOG.info("Loading credentials from file");
+            loader = new YamlCredentialsLoader(TestConfiguration.credentialsFile());
         }
-        if (!credentials.containsKey(credentialsId)) {
-            fail("Credentials with id " + credentialsId + " not found in credentials.yaml file");
-        }
-        Properties credentialsIdProps = new Properties();
-        Map<String, Object> credentialsIdMap = (Map<String, Object>) credentials.get(credentialsId).get("credentials");
-        credentialsIdProps.putAll(credentialsIdMap);
-        return credentialsIdProps;
     }
 }
