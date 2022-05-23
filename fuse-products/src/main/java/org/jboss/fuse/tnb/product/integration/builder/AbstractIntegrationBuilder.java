@@ -183,7 +183,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return projectRoot.getSourceRoots().stream().filter(sr -> !sr.getRoot().toString().contains("target"));
     }
 
-    private CompilationUnit getCompilationUnit(Class<?> clazz) {
+    public CompilationUnit getCompilationUnit(Class<?> clazz) {
         return getSourceRoots(clazz).map(sr -> {
                 try {
                     return sr.parse(clazz.getPackageName(), getClassName(clazz) + ".java");
