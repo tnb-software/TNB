@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>fuse-products</artifactId>
-    <name>fuse-products</name>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: Fuse Products</name>
 
     <properties>
         <camel.version>3.11.1</camel.version>

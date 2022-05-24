@@ -10,7 +10,9 @@
     </parent>
 
     <artifactId>system-x-parent</artifactId>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
+    <name>TNB :: System-X :: Parent</name>
 
     <modules>
         <module>common</module>

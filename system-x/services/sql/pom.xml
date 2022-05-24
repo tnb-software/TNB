@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>system-x-sql</artifactId>
-    <name>system-x-sql</name>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: SQL</name>
 
     <properties>
         <postgresql.driver.version>42.2.22</postgresql.driver.version>

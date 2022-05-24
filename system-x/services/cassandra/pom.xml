@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>system-x-cassandra</artifactId>
-    <name>system-x-cassandra</name>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: Cassandra</name>
 
     <properties>
         <cassandra.driver.version>4.9.0</cassandra.driver.version>

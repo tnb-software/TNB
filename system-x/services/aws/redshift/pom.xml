@@ -14,6 +14,8 @@
     </parent>
 
     <artifactId>system-x-aws-redshift</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: AWS :: Redshift</name>
 
     <dependencies>
         <dependency>

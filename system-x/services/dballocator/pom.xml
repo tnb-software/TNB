@@ -10,19 +10,19 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-dballocator</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: DBAllocator</name>
+
+    <properties>
+        <dballocator.client.version>2.6.6</dballocator.client.version>
+    </properties>
 
     <!-- This module requires you to have the dballocator-client-rest installed locally or to have a specific repository configured, so it is not built by default -->
     <dependencies>
         <dependency>
             <groupId>org.jboss.qa.dballoc</groupId>
             <artifactId>dballocator-client-rest</artifactId>
-            <version>2.6.6</version>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>1.7.30</version>
-            <scope>test</scope>
+            <version>${dballocator.client.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -10,7 +10,8 @@
     </parent>
 
     <artifactId>system-x-mongodb</artifactId>
-    <name>system-x-mongodb</name>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: MongoDB</name>
 
     <properties>
         <mongodb.driver.version>4.1.1</mongodb.driver.version>
