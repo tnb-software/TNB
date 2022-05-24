@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 
-base_dir=$(dirname "$(readlink -f "$0")")
-echo "Rebuilding BOM"
+# osX: readlink -f does not work, therefore such construction needs to be used
+base_dir="$(cd "$(dirname "$0")" && pwd -P)"
+echo "Rebuilding BOM in ${base_dir}"
 
 pushd "${base_dir}"/.. >/dev/null || exit 1
 
@@ -9,4 +10,5 @@ projects=$(mvn --projects !bom -Dexec.executable='echo' -Dexec.args='<dependency
 
 pushd "${base_dir}" >/dev/null || exit 1
 cp -f pom.xml.template pom.xml
-sed -i "s#<\/dependencies>#${projects}</dependencies>#" pom.xml
+# osX: sed -i has extension parameter mandatory
+sed -i.bak "s#<\/dependencies>#${projects}</dependencies>#" pom.xml && rm pom.xml.bak
