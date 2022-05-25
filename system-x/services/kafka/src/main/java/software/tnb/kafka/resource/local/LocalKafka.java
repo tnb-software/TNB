@@ -1,19 +1,14 @@
 package software.tnb.kafka.resource.local;
 
 import software.tnb.kafka.service.Kafka;
-import software.tnb.kafka.validation.KafkaValidation;
 
 import software.tnb.common.deployment.Deployable;
 
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.Network;
 
 import com.google.auto.service.AutoService;
-
-import java.util.Properties;
 
 @AutoService(Kafka.class)
 public class LocalKafka extends Kafka implements Deployable {
@@ -35,11 +30,6 @@ public class LocalKafka extends Kafka implements Deployable {
     @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op
-    }
-
-    @Override
-    public KafkaValidation validation() {
-        return validation;
     }
 
     @Override
@@ -72,18 +62,7 @@ public class LocalKafka extends Kafka implements Deployable {
 
     @Override
     public void openResources() {
-        Properties props = defaultClientProperties();
         props.setProperty("bootstrap.servers", bootstrapServers());
-
-        producer = new KafkaProducer<>(props);
-        consumer = new KafkaConsumer<>(props);
-        validation = new KafkaValidation(producer, consumer);
-    }
-
-    @Override
-    public void closeResources() {
-        producer.close();
-        consumer.close();
-        validation = null;
+        super.openResources();
     }
 }

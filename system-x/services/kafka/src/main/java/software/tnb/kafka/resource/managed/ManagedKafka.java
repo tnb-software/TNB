@@ -2,7 +2,6 @@ package software.tnb.kafka.resource.managed;
 
 import software.tnb.kafka.configuration.RhoasConfiguration;
 import software.tnb.kafka.service.Kafka;
-import software.tnb.kafka.validation.KafkaValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -23,12 +22,6 @@ public class ManagedKafka extends Kafka {
     @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op, needs to be created manually beforehand
-    }
-
-    @Override
-    public KafkaValidation validation() {
-        // TODO(somebody): if you know something about managed kafka, finish this if it is needed
-        return null;
     }
 
     @Override
