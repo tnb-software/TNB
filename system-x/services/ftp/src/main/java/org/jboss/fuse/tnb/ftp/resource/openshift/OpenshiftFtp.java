@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.ftp.resource.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.ftp.service.CustomFtpClient;
@@ -37,7 +38,7 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(Ftp.class)
-public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
+public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName, WithInClusterHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftFtp.class);
 
     private final CustomFtpClient client = new OpenShiftFtpClient();
@@ -171,7 +172,7 @@ public class OpenshiftFtp extends Ftp implements OpenshiftDeployable, WithName {
 
     @Override
     public String host() {
-        return OpenshiftClient.get().getClusterHostname(name());
+        return inClusterHostname();
     }
 
     public class OpenShiftFtpClient implements CustomFtpClient {

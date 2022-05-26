@@ -1,15 +1,15 @@
 package org.jboss.fuse.tnb.sql.mssql.resource.openshift;
 
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
-import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.sql.common.openshift.OpenshiftDB;
 import org.jboss.fuse.tnb.sql.mssql.service.MSSQL;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(MSSQL.class)
-public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithName {
+public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithName, WithInClusterHostname {
     private final OpenshiftDB openshiftDb = new OpenshiftDB(this, PORT);
 
     @Override
@@ -44,7 +44,7 @@ public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithNa
 
     @Override
     public String hostname() {
-        return OpenshiftClient.get().getClusterHostname(name());
+        return inClusterHostname();
     }
 
     @Override

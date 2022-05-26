@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.fail;
 import org.jboss.fuse.tnb.common.account.Accounts;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.elasticsearch.account.ElasticsearchAccount;
 import org.jboss.fuse.tnb.elasticsearch.service.Elasticsearch;
@@ -27,7 +29,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Elasticsearch.class)
-public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable {
+public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable, WithInClusterHostname, WithExternalHostname {
     private static final String CHANNEL = "stable";
     private static final String OPERATOR_NAME = "elasticsearch-eck-operator-certified";
     private static final String CATALOGSOURCE_NAME = "certified-operators";
@@ -112,6 +114,11 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     }
 
     @Override
+    public String externalHostname() {
+        return OpenshiftClient.get().routes().withName(routeName).get().getSpec().getHost();
+    }
+
+    @Override
     public ElasticsearchAccount account() {
         if (account == null) {
             account = Accounts.get(ElasticsearchAccount.class);
@@ -123,11 +130,11 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
 
     @Override
     protected String clientHost() {
-        return OpenshiftClient.get().routes().withName(routeName).get().getSpec().getHost();
+        return externalHostname();
     }
 
     @Override
     public String host() {
-        return OpenshiftClient.get().getClusterHostname(serviceName);
+        return inClusterHostname();
     }
 }

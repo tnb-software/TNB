@@ -2,6 +2,8 @@ package org.jboss.fuse.tnb.sftp.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -36,7 +38,7 @@ import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 
 @AutoService(Sftp.class)
-public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName {
+public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSftp.class);
 
     public static final int LOCAL_PORT = 3322;
@@ -184,7 +186,7 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
             LOG.debug("Creating new SFTPClient instance");
             SSHClient sshClient = new SSHClient();
             sshClient.addHostKeyVerifier(new PromiscuousVerifier());
-            sshClient.connect("localhost", LOCAL_PORT);
+            sshClient.connect(externalHostname(), LOCAL_PORT);
             sshClient.authPassword(account().username(), account().password());
             client = sshClient.newSFTPClient();
         } catch (IOException e) {
@@ -194,7 +196,11 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
 
     @Override
     public String host() {
-        return OpenshiftClient.get().getClusterHostname(name());
+        return inClusterHostname();
     }
 
+    @Override
+    public String externalHostname() {
+        return "localhost";
+    }
 }

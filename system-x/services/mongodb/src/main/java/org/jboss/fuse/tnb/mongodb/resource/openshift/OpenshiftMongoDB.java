@@ -2,6 +2,8 @@ package org.jboss.fuse.tnb.mongodb.resource.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -33,7 +35,7 @@ import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(MongoDB.class)
-public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeployable, WithName {
+public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMongoDB.class);
 
     private PortForward portForward;
@@ -116,7 +118,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
         portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
         LOG.debug("Creating new MongoClient instance");
-        client = MongoClients.create(replicaSetUrl().replace("@" + hostname(), "@localhost"));
+        client = MongoClients.create(replicaSetUrl().replace("@" + hostname(), "@" + externalHostname()));
     }
 
     @Override
@@ -151,7 +153,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     public String hostname() {
-        return OpenshiftClient.get().getClusterHostname(name());
+        return inClusterHostname();
     }
 
     @Override
@@ -174,5 +176,10 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
             LOG.debug("Closing port-forward");
             IOUtils.closeQuietly(portForward);
         }
+    }
+
+    @Override
+    public String externalHostname() {
+        return "localhost";
     }
 }
