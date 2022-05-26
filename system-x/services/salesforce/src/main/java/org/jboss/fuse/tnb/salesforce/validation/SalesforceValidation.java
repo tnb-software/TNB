@@ -10,8 +10,15 @@ import org.junit.jupiter.api.Assertions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.force.api.ApiException;
 import com.force.api.ForceApi;
 import com.force.api.QueryResult;
+import com.force.api.ResourceRepresentation;
+import com.force.api.http.Http;
+import com.force.api.http.HttpRequest;
+import com.force.api.http.HttpResponse;
 
 import java.util.Map;
 import java.util.Optional;
@@ -27,10 +34,11 @@ public class SalesforceValidation {
         this.account = account;
     }
 
-    public void createNewLead(String firstName, String lastName, String email, String companyName) {
+    public String createNewLead(String firstName, String lastName, String email, String companyName) {
         final Lead lead = new Lead(firstName, lastName, email, companyName);
         String leadId = client.createSObject("lead", lead);
         LOG.debug("Created lead with id " + leadId);
+        return leadId;
     }
 
     public void updateLead(String email, Lead newLead) {
@@ -88,5 +96,21 @@ public class SalesforceValidation {
                 + emailAddress + "'", Lead.class
             );
         return queryResult.getTotalSize() > 0 ? Optional.of(queryResult.getRecords().get(0)) : Optional.empty();
+    }
+
+    public ResourceRepresentation getBulkJob(String id, Boolean isBulkV2) throws ApiException {
+        if (isBulkV2) {
+            return client.get("/jobs/ingest/" + id);
+        } else {
+            ObjectMapper jsonMapper = new ObjectMapper();
+            jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+            HttpResponse res = Http.send(new HttpRequest()
+                .url(client.getSession().getApiEndpoint() + "/services/async/53.0/job/" + id)
+                .method("GET")
+                .header("X-SFDC-Session", client.getSession().getAccessToken())
+                .header("Accept", "application/json")
+                .header("Content-Type", "application/json"));
+            return new ResourceRepresentation(res, jsonMapper);
+        }
     }
 }

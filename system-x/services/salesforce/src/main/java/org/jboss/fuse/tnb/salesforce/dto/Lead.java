@@ -93,4 +93,13 @@ public class Lead {
             + ", \"company\":\"" + company + "\""
             + "}";
     }
+
+    public String toStringXml() {
+        return "<Lead>"
+            + "<FirstName>" + firstName + "</FirstName>"
+            + "<LastName>" + lastName + "</LastName>"
+            + "<Email>" + email + "</Email>"
+            + "<Company>" + company + "</Company>"
+            + "</Lead>";
+    }
 }
