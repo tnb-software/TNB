@@ -26,6 +26,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 
@@ -115,6 +116,12 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
             .filter(route -> route.getMetadata().getName().startsWith("http-8080"))
             .findFirst().orElseThrow(() -> new IllegalStateException("no route found"))
             .getSpec().getHost());
+    }
+
+    @Override
+    public boolean isFailed() {
+        return OpenshiftClient.get()
+            .isPodFailed(OpenshiftClient.get().getLabeledPods(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), name)).get(0));
     }
 
     private void setEnvVar(String envName, String envValue) throws IOException, InterruptedException {

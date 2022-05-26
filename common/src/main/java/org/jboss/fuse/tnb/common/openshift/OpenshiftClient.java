@@ -27,6 +27,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
@@ -377,5 +378,15 @@ public class OpenshiftClient extends OpenShift {
 
     public String getClusterHostname(String service) {
         return String.format("%s.%s.svc.cluster.local", service, client.getNamespace());
+    }
+
+    public boolean isPodFailed(Pod pod) {
+        try {
+            return pod.getStatus().getContainerStatuses().stream()
+                .anyMatch(p -> "error".equalsIgnoreCase(p.getState().getTerminated().getReason())
+                    || "error".equalsIgnoreCase(p.getLastState().getTerminated().getReason()));
+        } catch (KubernetesClientException ignored) {
+            return false;
+        }
     }
 }

@@ -22,7 +22,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -30,7 +29,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.kubernetes.api.model.ContainerStatus;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.Pod;
 
@@ -122,26 +120,21 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public boolean isFailed() {
+        return deployPodFailed() || integrationPodFailed();
+    }
+
+    private boolean deployPodFailed() {
+        long lastVersion;
         try {
-            List<ContainerStatus> containerStatuses = OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name)
-                .get(0).getStatus().getContainerStatuses();
-            if (containerStatuses == null || containerStatuses.isEmpty()) {
-                return false;
-            }
-            return containerStatuses.stream().anyMatch(p -> "error".equalsIgnoreCase(p.getLastState().getTerminated().getReason()));
-        } catch (Exception ignored) {
+            lastVersion = OpenshiftClient.get().buildConfigs().withName(name).get().getStatus().getLastVersion();
+            return OpenshiftClient.get()
+                .isPodFailed(OpenshiftClient.get().getLabeledPods("openshift.io/deployer-pod-for.name", name + "-" + lastVersion).get(0));
+        } catch (Exception e) {
             return false;
         }
     }
 
-    /**
-     * Parses the needed imagestream:tag from the build config and waits until the imagestream contains that tag.
-     *
-     * @param bcName buildconfig name
-     */
-    private void waitForImageStream(String bcName) {
-        final String[] imageStreamTag = OpenshiftClient.get().buildConfigs().withName(bcName).get().getSpec().getStrategy()
-            .getSourceStrategy().getFrom().getName().split(":");
-        OpenshiftClient.get().waitForImageStream(imageStreamTag[0], imageStreamTag[1]);
+    private boolean integrationPodFailed() {
+        return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
     }
 }

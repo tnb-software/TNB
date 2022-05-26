@@ -26,4 +26,6 @@ public interface OpenshiftDeployer {
     Endpoint getEndpoint();
 
     Predicate<Pod> podSelector();
+
+    boolean isFailed();
 }

@@ -20,7 +20,6 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
-import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSpringBootApp.class);
@@ -77,13 +76,6 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public boolean isFailed() {
-        try {
-            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), finalName));
-            return !pods.isEmpty() && pods.stream().map(PodStatusUtil::getContainerStatus)
-                .allMatch(containerStatuses -> containerStatuses.stream()
-                    .anyMatch(containerStatus -> "error".equalsIgnoreCase(containerStatus.getLastState().getTerminated().getReason())));
-        } catch (Exception ignored) {
-            return false;
-        }
+        return deploymentStrategy.isFailed();
     }
 }
