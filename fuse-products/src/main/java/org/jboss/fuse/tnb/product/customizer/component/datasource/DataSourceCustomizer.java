@@ -25,6 +25,10 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
     protected String password;
     protected String driver;
 
+    public DataSourceCustomizer(DatabaseType type, String url, String username, String password) {
+        this(type.name().toLowerCase(), url, username, password, type.driverClass());
+    }
+
     public DataSourceCustomizer(String type, String url, String username, String password, String driver) {
         this.type = type;
         this.url = url;
@@ -105,5 +109,21 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
             LOG.error(e.getMessage(), e);
         }
         return new String[0];
+    }
+
+    public enum DatabaseType {
+        MARIADB("org.mariadb.jdbc.Driver"),
+        MYSQL("com.mysql.jdbc.Driver"),
+        POSTGRESQL("org.postgresql.Driver"),
+        MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        private final String driverClass;
+
+        DatabaseType(String driverClass) {
+            this.driverClass = driverClass;
+        }
+
+        public String driverClass() {
+            return driverClass;
+        }
     }
 }

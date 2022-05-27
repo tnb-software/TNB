@@ -26,8 +26,7 @@
         <module>jira</module>
         <module>http</module>
         <module>kafka</module>
-        <module>dballocator</module>
-        <module>sql</module>
+        <module>db</module>
         <module>elasticsearch</module>
         <module>salesforce</module>
         <module>servicenow</module>
