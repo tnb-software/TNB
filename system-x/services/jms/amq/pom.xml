@@ -5,13 +5,13 @@
 
     <parent>
         <groupId>org.jboss.fuse.tnb</groupId>
-        <artifactId>system-x-services</artifactId>
+        <artifactId>system-x-jms</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>system-x-amq-broker</artifactId>
+    <artifactId>system-x-amq</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>TNB :: System-X :: Services :: AMQ Broker</name>
+    <name>TNB :: System-X :: Services :: JMS :: AMQ</name>
 
     <properties>
         <artemis.jms.client.version>2.17.0</artemis.jms.client.version>
@@ -21,7 +21,7 @@
     <dependencies>
         <dependency>
             <groupId>org.jboss.fuse.tnb</groupId>
-            <artifactId>system-x-jms</artifactId>
+            <artifactId>system-x-jms-client</artifactId>
             <version>${project.version}</version>
         </dependency>
         <dependency>

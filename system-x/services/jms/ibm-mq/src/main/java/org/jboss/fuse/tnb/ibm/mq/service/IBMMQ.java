@@ -14,6 +14,7 @@ import com.ibm.msg.client.wmq.WMQConstants;
 import javax.jms.Connection;
 import javax.jms.JMSException;
 
+import java.io.File;
 import java.util.Map;
 
 public abstract class IBMMQ implements Service {
@@ -73,6 +74,8 @@ public abstract class IBMMQ implements Service {
 
     public void openResources() {
         try {
+            // IBM MQ creates a log file by default, so redirect it to target
+            System.setProperty("com.ibm.msg.client.commonservices.log.outputName", new File("target/ibmmq.log").getAbsolutePath());
             MQConnectionFactory connectionFactory = new MQConnectionFactory();
             connectionFactory.setHostName("localhost");
             connectionFactory.setPort(port());

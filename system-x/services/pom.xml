@@ -17,7 +17,6 @@
     <modules>
         <module>jms</module>
         <module>aws</module>
-        <module>amq-broker</module>
         <module>azure</module>
         <module>ftp</module>
         <module>google</module>
@@ -35,7 +34,6 @@
         <module>cassandra</module>
         <module>hyperfoil</module>
         <module>cryostat</module>
-        <module>ibm-mq</module>
     </modules>
 
     <dependencies>
