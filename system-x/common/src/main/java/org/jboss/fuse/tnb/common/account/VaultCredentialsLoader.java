@@ -3,11 +3,11 @@ package org.jboss.fuse.tnb.common.account;
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
+import com.bettercloud.vault.json.JsonObject;
 import com.bettercloud.vault.response.AuthResponse;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.Map;
 
 public class VaultCredentialsLoader implements CredentialsLoader {
 
@@ -44,15 +44,15 @@ public class VaultCredentialsLoader implements CredentialsLoader {
     @Override
     public <T extends Account> T get(String credentialsId, Class<T> accountClass) {
         try {
-            return mapper.convertValue(get(String.format(pathPattern, credentialsId)), accountClass);
-        } catch (VaultException e) {
+            return mapper.readValue(get(String.format(pathPattern, credentialsId)).toString(), accountClass);
+        } catch (VaultException | JsonProcessingException e) {
             throw new RuntimeException("Couldnt get credentials from vault: " + credentialsId, e);
         }
     }
 
-    public Map<String, String> get(String path) throws VaultException {
+    public JsonObject get(String path) throws VaultException {
         return vault.logical()
             .read(path)
-            .getData();
+            .getDataObject();
     }
 }
