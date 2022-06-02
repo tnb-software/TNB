@@ -9,6 +9,8 @@ import org.jboss.fuse.tnb.amq.service.openshift.generated.ActiveMQArtemisList;
 import org.jboss.fuse.tnb.amq.service.openshift.generated.ActiveMQArtemisSpec;
 import org.jboss.fuse.tnb.amq.service.openshift.generated.DeploymentPlan;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -42,7 +44,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 
 @AutoService(AmqBroker.class)
-public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable {
+public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(AmqOpenshiftBroker.class);
 
     public static final String BROKER_NAME = "tnb-amq-broker";
@@ -95,6 +97,25 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     }
 
     @Override
+    public String inClusterHostname() {
+        final String podName = OpenshiftClient.get().getLabeledPods("ActiveMQArtemis", BROKER_NAME).get(0).getMetadata().getName();
+        return String.format("%s.%s-hdls-svc.%s.svc.cluster.local", podName, BROKER_NAME, OpenshiftClient.get().getNamespace());
+    }
+
+    @Override
+    public String externalHostname() {
+        final List<Route>
+            routes = OpenshiftClient.get().routes().withLabel("ActiveMQArtemis", BROKER_NAME).list()
+            .getItems();
+
+        if (routes.size() != 1) {
+            throw new RuntimeException("Expected single route to be present but was " + routes.size());
+        }
+
+        return routes.get(0).getSpec().getHost();
+    }
+
+    @Override
     public void undeploy() {
         amqBrokerCli().withName(BROKER_NAME).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "ActiveMQArtemis", BROKER_NAME)
@@ -122,9 +143,7 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
     @Override
     //return in-cluster broker URL
     public String brokerUrl() {
-        final String podName = OpenshiftClient.get().getLabeledPods("ActiveMQArtemis", BROKER_NAME).get(0).getMetadata().getName();
-
-        return String.format("%s.%s-hdls-svc.%s.svc.cluster.local", podName, BROKER_NAME, OpenshiftClient.get().getNamespace());
+        return inClusterHostname();
     }
 
     @Override
@@ -144,10 +163,9 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
             System.setProperty("org.apache.activemq.ssl.trustStorePassword", account().truststorePassword());
 
             // use route for external clients
-            final String brokerUrl = brokerRoute().getSpec().getHost();
-
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String
-                .format("tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true", brokerUrl, 443), account().username(), account().password());
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String.format(
+                "tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true", externalHostname(), 443), account().username(), account().password()
+            );
 
             // Create a Connection
             Connection connection = connectionFactory.createConnection();
@@ -159,18 +177,6 @@ public class AmqOpenshiftBroker extends AmqBroker implements OpenshiftDeployable
         } catch (IOException e) {
             throw new RuntimeException("Can't materialize jms truststore", e);
         }
-    }
-
-    private Route brokerRoute() {
-        final List<Route>
-            routes = OpenshiftClient.get().routes().withLabel("ActiveMQArtemis", BROKER_NAME).list()
-            .getItems();
-
-        if (routes.size() != 1) {
-            throw new RuntimeException("Expected single route to be present but was " + routes.size());
-        }
-
-        return routes.get(0);
     }
 
     private ActiveMQArtemis createBrokerCR() {

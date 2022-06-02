@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.hyperfoil.service.openshift;
 
 import org.jboss.fuse.tnb.common.deployment.ReusableOpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.WaitUtils;
 import org.jboss.fuse.tnb.hyperfoil.service.Hyperfoil;
@@ -20,7 +21,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 
 @AutoService(Hyperfoil.class)
-public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable {
+public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftHyperfoil.class);
 
@@ -107,7 +108,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public String hyperfoilUrl() {
-        return OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost();
+        return externalHostname();
     }
 
     @Override
@@ -131,5 +132,10 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     @Override
     public void cleanup() {
         //all benchmarks should be managed by the tests
+    }
+
+    @Override
+    public String externalHostname() {
+        return OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost();
     }
 }

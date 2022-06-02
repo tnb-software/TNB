@@ -1,6 +1,7 @@
 package org.jboss.fuse.tnb.sql.common.service;
 
 import org.jboss.fuse.tnb.common.account.Accounts;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.service.Service;
 import org.jboss.fuse.tnb.sql.common.account.SQLAccount;
@@ -11,7 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class SQL implements Service, WithName {
+public abstract class SQL implements Service, WithName, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
     private SQLAccount account;
@@ -47,8 +48,13 @@ public abstract class SQL implements Service, WithName {
      * @return local connection url (through port-forward in case of openshift)
      */
     protected String localConnectionUrl() {
-        return jdbcConnectionUrl().replace("://" + hostname(), "://localhost");
+        return jdbcConnectionUrl().replace("://" + hostname(), "://" + externalHostname());
     }
 
     public abstract Map<String, String> containerEnvironment();
+
+    @Override
+    public String externalHostname() {
+        return "localhost";
+    }
 }

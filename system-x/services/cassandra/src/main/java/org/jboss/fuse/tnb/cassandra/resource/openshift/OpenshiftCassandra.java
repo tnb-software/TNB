@@ -3,6 +3,8 @@ package org.jboss.fuse.tnb.cassandra.resource.openshift;
 import org.jboss.fuse.tnb.cassandra.service.Cassandra;
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.common.utils.IOUtils;
@@ -27,7 +29,7 @@ import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
 
 @AutoService(Cassandra.class)
-public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable, WithName {
+public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
 
     private CqlSession session;
     private LocalPortForward portForward;
@@ -135,7 +137,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
         session = CqlSession.builder()
             .withConfigLoader(loader)
-            .addContactPoint(new InetSocketAddress("localhost", port()))
+            .addContactPoint(new InetSocketAddress(externalHostname(), port()))
             .withAuthCredentials(account().username(), account().password())
             .withLocalDatacenter(account().datacenter())
             .build();
@@ -167,5 +169,10 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
     @Override
     public String name() {
         return "cassandra";
+    }
+
+    @Override
+    public String externalHostname() {
+        return "localhost";
     }
 }

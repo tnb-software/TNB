@@ -1,15 +1,15 @@
 package org.jboss.fuse.tnb.sql.postgres.resource.openshift;
 
 import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
+import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.deployment.WithName;
-import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
 import org.jboss.fuse.tnb.sql.common.openshift.OpenshiftDB;
 import org.jboss.fuse.tnb.sql.postgres.service.PostgreSQL;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(PostgreSQL.class)
-public class OpenshiftPostgreSQL extends PostgreSQL implements OpenshiftDeployable, WithName {
+public class OpenshiftPostgreSQL extends PostgreSQL implements OpenshiftDeployable, WithName, WithInClusterHostname {
     private final OpenshiftDB openshiftDb = new OpenshiftDB(this, PORT);
 
     @Override
@@ -44,7 +44,7 @@ public class OpenshiftPostgreSQL extends PostgreSQL implements OpenshiftDeployab
 
     @Override
     public String hostname() {
-        return OpenshiftClient.get().getClusterHostname(name());
+        return inClusterHostname();
     }
 
     @Override
