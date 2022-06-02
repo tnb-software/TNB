@@ -20,11 +20,17 @@ public abstract class Product implements BeforeAllCallback, AfterAllCallback {
         if (integrations.containsKey(integrationBuilder.getIntegrationName())) {
             throw new IllegalArgumentException("Integration with name " + integrationBuilder.getIntegrationName() + " is already running!");
         }
-        App app = createIntegrationApp(integrationBuilder);
-        integrations.put(integrationBuilder.getIntegrationName(), app);
-        app.start();
-        app.waitUntilReady();
-        return app;
+        try {
+            App app = createIntegrationApp(integrationBuilder);
+            integrations.put(integrationBuilder.getIntegrationName(), app);
+            app.start();
+            app.waitUntilReady();
+            return app;
+        } catch (Exception e) {
+            // Print the stackstace as it is swallowed by junit somehow
+            e.printStackTrace();
+            throw e;
+        }
     }
 
     public Map<String, App> createIntegration(AbstractIntegrationBuilder<?> integrationBuilder, AbstractIntegrationBuilder<?>... other) {
