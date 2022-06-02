@@ -13,7 +13,6 @@
         <module>common</module>
         <module>system-x</module>
         <module>fuse-products</module>
-        <module>bom</module>
     </modules>
 
     <properties>
@@ -160,6 +159,12 @@
                     </plugin>
                 </plugins>
             </build>
+        </profile>
+        <profile>
+            <id>bom</id>
+            <modules>
+                <module>bom</module>
+            </modules>
         </profile>
     </profiles>
 </project>
