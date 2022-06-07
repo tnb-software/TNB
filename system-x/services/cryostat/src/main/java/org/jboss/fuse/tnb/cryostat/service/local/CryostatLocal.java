@@ -60,11 +60,6 @@ public class CryostatLocal extends Cryostat implements Deployable {
     }
 
     @Override
-    public String commandUrl() {
-        return connectionUrl();
-    }
-
-    @Override
     public CryostatClient client() {
         return new LocalCryostatClient(connectionUrl());
     }
