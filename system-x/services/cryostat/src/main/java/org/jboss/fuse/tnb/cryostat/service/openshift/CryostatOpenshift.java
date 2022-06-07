@@ -26,7 +26,7 @@ public class CryostatOpenshift extends Cryostat implements ReusableOpenshiftDepl
 
     private static final Logger LOG = LoggerFactory.getLogger(CryostatOpenshift.class);
 
-    private static final String CHANNEL = "stable-2.0";
+    private static final String CHANNEL = "stable";
     private static final String OPERATOR_NAME = "cryostat-operator";
     private static final String SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-cryostat";
@@ -110,13 +110,8 @@ public class CryostatOpenshift extends Cryostat implements ReusableOpenshiftDepl
     }
 
     @Override
-    public String commandUrl() {
-        return String.format("https://%s", OpenshiftClient.get().getRoute(APP_NAME + "-command").getSpec().getHost());
-    }
-
-    @Override
     public CryostatClient client() {
-        return new OpenshiftCryostatClient(connectionUrl(), commandUrl());
+        return new OpenshiftCryostatClient(connectionUrl());
     }
 
     @Override

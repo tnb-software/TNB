@@ -6,7 +6,7 @@ import java.util.Map;
 
 public class CryostatContainer extends GenericContainer<CryostatContainer> {
 
-    public static final String IMAGE = System.getProperty("cryostat.image", "registry.redhat.io/cryostat-20-tech-preview/cryostat-rhel8:latest");
+    public static final String IMAGE = System.getProperty("cryostat.image", "registry.redhat.io/cryostat-tech-preview/cryostat-rhel8:latest");
 
     private static final String TMP_FOLDER = System.getProperty("java.io.tmpdir");
 

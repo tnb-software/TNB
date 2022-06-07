@@ -11,8 +11,6 @@ public abstract class Cryostat implements Service {
 
     public abstract String connectionUrl();
 
-    public abstract String commandUrl();
-
     public abstract CryostatClient client();
 
     public abstract int getPortMapping(int port);

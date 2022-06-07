@@ -2,6 +2,7 @@ package org.jboss.fuse.tnb.cryostat.service.openshift;
 
 import org.jboss.fuse.tnb.common.config.OpenshiftConfiguration;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
+import org.jboss.fuse.tnb.common.utils.StringUtils;
 import org.jboss.fuse.tnb.cryostat.generated.recording.Recording;
 import org.jboss.fuse.tnb.cryostat.generated.targets.Target;
 import org.jboss.fuse.tnb.cryostat.service.BaseCryostatClient;
@@ -38,12 +39,10 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     private final HttpClient apiClient;
     private final ObjectMapper mapper = new ObjectMapper();
     private final String connectionUrl;
-    private final String commandUrl;
 
-    public OpenshiftCryostatClient(String connectionUrl, String commandUrl) {
+    public OpenshiftCryostatClient(String connectionUrl) {
         this.apiClient = OpenshiftClient.get().authorization().getHttpClient();
         this.connectionUrl = connectionUrl;
-        this.commandUrl = commandUrl;
     }
 
     @Override
@@ -160,7 +159,9 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     }
 
     private HttpRequest.Builder getRequestForUrl(String apiContextUrl) throws MalformedURLException {
-        return apiClient.newHttpRequestBuilder().url(new URL(String.format("%s%s", connectionUrl, apiContextUrl)));
+        return apiClient.newHttpRequestBuilder().url(new URL(String.format("%s%s", connectionUrl, apiContextUrl)))
+            .header("Authorization", String.format("Bearer %s"
+                , StringUtils.base64Encode(OpenshiftClient.get().authorization().getConfiguration().getOauthToken())));
     }
 
     private Pod getPod(String appName) {

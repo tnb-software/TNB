@@ -1,5 +1,7 @@
 package org.jboss.fuse.tnb.common.utils;
 
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.UUID;
 
 public final class StringUtils {
@@ -30,5 +32,9 @@ public final class StringUtils {
 
     public static String removeColorCodes(String s) {
         return s.replaceAll("\u001B\\[[;\\d]*m", "");
+    }
+
+    public static String base64Encode(String toEncode) {
+        return new String(Base64.getEncoder().encode(toEncode.getBytes(StandardCharsets.UTF_8)), StandardCharsets.UTF_8);
     }
 }
