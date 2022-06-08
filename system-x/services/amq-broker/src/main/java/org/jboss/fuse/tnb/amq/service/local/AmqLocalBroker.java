@@ -4,6 +4,10 @@ import org.jboss.fuse.tnb.amq.service.AmqBroker;
 import org.jboss.fuse.tnb.common.deployment.Deployable;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+import org.eclipse.paho.client.mqttv3.IMqttClient;
+import org.eclipse.paho.client.mqttv3.MqttClient;
+import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
+import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,9 +18,11 @@ import javax.jms.JMSException;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @AutoService(AmqBroker.class)
 public class AmqLocalBroker extends AmqBroker implements Deployable {
+
     private static final Logger LOG = LoggerFactory.getLogger(AmqLocalBroker.class);
     private AmqBrokerContainer container;
 
@@ -39,14 +45,24 @@ public class AmqLocalBroker extends AmqBroker implements Deployable {
     @Override
     public void openResources() {
         connection = createConnection();
+        mqttClient = createMQTTConnection();
     }
 
     @Override
     public void closeResources() {
         try {
+            if (mqttClient != null) {
+                mqttClient.disconnectForcibly();
+                mqttClient.close();
+            }
+        } catch (MqttException e) {
+            LOG.error("Can't close MQTT connection: " + e.getMessage(), e);
+        }
+
+        try {
             connection.close();
         } catch (JMSException e) {
-            throw new RuntimeException("Can't close JMS connection");
+            throw new RuntimeException("Can't close JMS connection", e);
         }
     }
 
@@ -61,7 +77,7 @@ public class AmqLocalBroker extends AmqBroker implements Deployable {
     }
 
     private int[] containerPorts() {
-        int[] ports = {8161, 61616};
+        int[] ports = {8161, 61616, 1883};
         return ports;
     }
 
@@ -74,6 +90,29 @@ public class AmqLocalBroker extends AmqBroker implements Deployable {
         env.put("AMQ_TRANSPORTS", "openwire,amqp,stomp,mqtt,hornetq");
         env.put("AMQ_REQUIRE_LOGIN", "true");
         return env;
+    }
+
+    private IMqttClient createMQTTConnection() {
+        String publisherId = UUID.randomUUID().toString();
+        try {
+            IMqttClient publisher = new MqttClient(String
+                .format("tcp://%s:%s", brokerUrl(), getPortMapping(1883)), publisherId);
+
+            MqttConnectOptions options = new MqttConnectOptions();
+            options.setAutomaticReconnect(true);
+            options.setCleanSession(true);
+            options.setConnectionTimeout(10);
+            options.setUserName(account.username());
+            options.setPassword(account.password().toCharArray());
+
+            if (!publisher.isConnected()) {
+                publisher.connect(options);
+            }
+
+            return publisher;
+        } catch (MqttException e) {
+            throw new RuntimeException("Can't connect to MQTT broker via paho client", e);
+        }
     }
 
     private Connection createConnection() {
