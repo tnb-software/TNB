@@ -12,14 +12,9 @@ import org.jboss.fuse.tnb.common.deployment.OpenshiftDeployable;
 import org.jboss.fuse.tnb.common.deployment.WithExternalHostname;
 import org.jboss.fuse.tnb.common.deployment.WithInClusterHostname;
 import org.jboss.fuse.tnb.common.openshift.OpenshiftClient;
-import org.jboss.fuse.tnb.common.utils.HTTPUtils;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.commons.io.IOUtils;
-import org.eclipse.paho.client.mqttv3.IMqttClient;
-import org.eclipse.paho.client.mqttv3.MqttClient;
-import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
-import org.eclipse.paho.client.mqttv3.MqttException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +33,6 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -135,7 +129,6 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     @Override
     public void openResources() {
         connection = createConnection();
-        mqttClient = createMQTTConnection();
     }
 
     @Override
@@ -145,21 +138,17 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         } catch (JMSException e) {
             throw new RuntimeException("Can't close JMS connection");
         }
-
-        try {
-            if (mqttClient != null) {
-                mqttClient.disconnectForcibly();
-                mqttClient.close();
-            }
-        } catch (MqttException e) {
-            LOG.error("Can't close MQTT connection: " + e.getMessage(), e);
-        }
     }
 
     @Override
     //return in-cluster broker URL
     public String brokerUrl() {
         return inClusterHostname();
+    }
+
+    @Override
+    protected String mqttUrl() {
+        return String.format("ssl://%s:443", externalHostname());
     }
 
     @Override
@@ -192,31 +181,6 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
             throw new RuntimeException("Can't create jms connection", e);
         } catch (IOException e) {
             throw new RuntimeException("Can't materialize jms truststore", e);
-        }
-    }
-
-    private IMqttClient createMQTTConnection() {
-        String publisherId = UUID.randomUUID().toString();
-        try {
-            IMqttClient publisher = new MqttClient(String.format("ssl://%s:%s", externalHostname(), 443), publisherId);
-
-            MqttConnectOptions options = new MqttConnectOptions();
-            options.setAutomaticReconnect(true);
-            options.setCleanSession(true);
-            options.setConnectionTimeout(10);
-            options.setUserName(account.username());
-            options.setPassword(account.password().toCharArray());
-            options.setSocketFactory(HTTPUtils.trustAllSslClient().sslSocketFactory());
-            options.setSSLHostnameVerifier((hostname, session) -> true);
-            options.setHttpsHostnameVerificationEnabled(false);
-
-            if (!publisher.isConnected()) {
-                publisher.connect(options);
-            }
-
-            return publisher;
-        } catch (MqttException e) {
-            throw new RuntimeException("Can't connect to MQTT broker via paho client", e);
         }
     }
 

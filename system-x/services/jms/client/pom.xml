@@ -14,14 +14,20 @@
 
     <properties>
         <jms.api.version>2.0.1</jms.api.version>
+        <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>javax.jms</groupId>
             <artifactId>javax.jms-api</artifactId>
-            <version>2.0.1</version>
+            <version>${jms.api.version}</version>
             <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>${paho.mqtt.client.version}</version>
         </dependency>
     </dependencies>
 </project>

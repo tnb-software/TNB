@@ -14,7 +14,7 @@ import javax.jms.Session;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class JMSTopicClient extends JMSClient {
+public class JMSTopicClient extends JMSClient implements TopicClient {
     private static final Logger LOG = LoggerFactory.getLogger(JMSTopicClient.class);
 
     private final JMSMessageListener listener = new JMSMessageListener();
@@ -24,6 +24,7 @@ public class JMSTopicClient extends JMSClient {
         super(session, DestinationType.TOPIC, topicName);
     }
 
+    @Override
     public void subscribe() {
         try {
             consumer = session.createConsumer(destination);

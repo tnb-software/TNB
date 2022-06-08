@@ -11,6 +11,7 @@ public class JMSClientManager {
     private final Connection connection;
     private final Map<String, JMSQueueClient> queueClients = new HashMap<>();
     private final Map<String, JMSTopicClient> topicClients = new HashMap<>();
+    private final Map<String, MQTTTopicClient> mqttTopicClients = new HashMap<>();
 
     public JMSClientManager(Connection connection) {
         this.connection = connection;
@@ -22,6 +23,10 @@ public class JMSClientManager {
 
     public JMSTopicClient topic(String topicName) {
         return topicClients.computeIfAbsent(topicName, v -> new JMSTopicClient(newSession(), topicName));
+    }
+
+    public MQTTTopicClient mqtt(String url, String username, String password, String clientId, String topicName) {
+        return mqttTopicClients.computeIfAbsent(topicName, v -> new MQTTTopicClient(url, username, password, clientId, topicName));
     }
 
     private Session newSession() {

@@ -15,7 +15,7 @@ import javax.jms.TextMessage;
 
 import java.util.Map;
 
-public abstract class JMSClient {
+public abstract class JMSClient implements BasicJMSOperations<Message> {
     private static final Logger LOG = LoggerFactory.getLogger(JMSClient.class);
 
     protected final Session session;
