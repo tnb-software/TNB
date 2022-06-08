@@ -16,7 +16,6 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -33,6 +32,7 @@ import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
+import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -41,6 +41,7 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSftp.class);
 
+    private static final String SCC_NAME = "tnb-sftp";
     public static final int LOCAL_PORT = 3322;
 
     private SFTPClient client;
@@ -66,25 +67,31 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
                 .build()
             );
 
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName("anyuid").edit();
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
+        if (scc == null) {
+            // if our scc does not exist, copy it from the anyuid and add SYS_CHROOT
+            SecurityContextConstraints anyuid = OpenshiftClient.get().securityContextConstraints().withName("anyuid").get();
+            scc = OpenshiftClient.get().securityContextConstraints().create(
+                new SecurityContextConstraintsBuilder(anyuid)
+                    .withNewMetadata() // new metadata to override the existing annotations
+                    .withName(SCC_NAME)
+                    .endMetadata()
+                    .addToDefaultAddCapabilities("SYS_CHROOT")
+                    .build());
+        }
+
         final String user = "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
-        if (scc.getUsers().isEmpty() || !scc.getUsers().contains(user)) {
+        if (!scc.getUsers().contains(user)) {
             scc.getUsers().add(user);
+            OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
         }
-        if (scc.getDefaultAddCapabilities() == null) {
-            scc.setDefaultAddCapabilities(new ArrayList<>());
-        }
-        if (!scc.getDefaultAddCapabilities().contains("SYS_CHROOT")) {
-            scc.getDefaultAddCapabilities().add("SYS_CHROOT");
-        }
-        OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
             new DeploymentBuilder()
                 .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", "anyuid")
+                .addToAnnotations("openshift.io/scc", SCC_NAME)
                 .endMetadata()
                 .editOrNewSpec()
                 .editOrNewSelector()
@@ -136,9 +143,9 @@ public class OpenshiftSftp extends Sftp implements OpenshiftDeployable, WithName
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift sftp");
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName("anyuid").edit();
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).edit();
         scc.getUsers().remove("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName);
-        OpenshiftClient.get().securityContextConstraints().withName("anyuid").patch(scc);
+        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
