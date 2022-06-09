@@ -143,4 +143,24 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
         }
 
     }
+
+    @Override
+    public boolean isFailed() {
+        return deployPodFailed() || integrationPodFailed();
+    }
+
+    private boolean deployPodFailed() {
+        long lastVersion;
+        try {
+            lastVersion = OpenshiftClient.get().buildConfigs().withName(name).get().getStatus().getLastVersion();
+            return OpenshiftClient.get()
+                .isPodFailed(OpenshiftClient.get().getLabeledPods("openshift.io/deployer-pod-for.name", name + "-" + lastVersion).get(0));
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private boolean integrationPodFailed() {
+        return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
+    }
 }
