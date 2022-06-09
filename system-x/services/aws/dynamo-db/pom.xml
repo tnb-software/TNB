@@ -4,7 +4,7 @@
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <artifactId>system-x-aws</artifactId>
-        <groupId>org.jboss.fuse.tnb</groupId>
+        <groupId>software.tnb</groupId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
@@ -16,7 +16,7 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.fuse.tnb</groupId>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
