@@ -137,4 +137,9 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     public String host() {
         return inClusterHostname();
     }
+
+    @Override
+    public String inClusterHostname() {
+        return OpenshiftClient.get().getClusterHostname(clusterName() + "-es-http");
+    }
 }
