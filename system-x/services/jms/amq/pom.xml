@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.jboss.fuse.tnb</groupId>
+        <artifactId>system-x-jms</artifactId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+
+    <artifactId>system-x-amq</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: JMS :: AMQ</name>
+
+    <properties>
+        <artemis.jms.client.version>2.17.0</artemis.jms.client.version>
+        <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.jboss.fuse.tnb</groupId>
+            <artifactId>system-x-jms-client</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.activemq</groupId>
+            <artifactId>artemis-jms-client</artifactId>
+            <version>${artemis.jms.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
+            <version>${paho.mqtt.client.version}</version>
+        </dependency>
+    </dependencies>
+</project>

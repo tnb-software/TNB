@@ -15,8 +15,8 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>jms</module>
         <module>aws</module>
-        <module>amq-broker</module>
         <module>azure</module>
         <module>ftp</module>
         <module>google</module>
