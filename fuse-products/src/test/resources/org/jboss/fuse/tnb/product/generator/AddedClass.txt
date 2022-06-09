@@ -1,9 +1,0 @@
-package org.jboss.fuse.tnb.product.generator;
-
-import com.example.Whatever;
-
-public class AddedClass {
-    public String toString() {
-        return "Hello!";
-    }
-}

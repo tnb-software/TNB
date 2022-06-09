@@ -128,8 +128,8 @@
 			<!-- Static imports go first -->
 			<property name="option" value="top"/>
 			<!-- Imports groups -->
-			<property name="groups" value="org.jboss.fuse.tnb,org.junit,org,com,javax,java,"/>
-			<property name="staticGroups" value="org.jboss.fuse.tnb,org.junit,org,com,javax,java,"/>
+			<property name="groups" value="software.tnb,org.junit,org,com,javax,java,"/>
+			<property name="staticGroups" value="software.tnb,org.junit,org,com,javax,java,"/>
 			<!-- Imports groups separated by one blank line -->
 			<property name="separated" value="true"/>
 			<property name="separatedStaticGroups" value="true"/>

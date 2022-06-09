@@ -1,0 +1,9 @@
+package software.tnb.product.generator;
+
+import com.example.Whatever;
+
+public class AddedClass {
+    public String toString() {
+        return "Hello!";
+    }
+}

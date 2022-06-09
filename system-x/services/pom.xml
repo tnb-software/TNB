@@ -4,7 +4,7 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>org.jboss.fuse.tnb</groupId>
+        <groupId>software.tnb</groupId>
         <artifactId>system-x-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
@@ -21,7 +21,6 @@
         <module>ftp</module>
         <module>google</module>
         <module>knative</module>
-        <module>mongodb</module>
         <module>slack</module>
         <module>jira</module>
         <module>http</module>
@@ -31,14 +30,13 @@
         <module>salesforce</module>
         <module>servicenow</module>
         <module>telegram</module>
-        <module>cassandra</module>
         <module>hyperfoil</module>
         <module>cryostat</module>
     </modules>
 
     <dependencies>
         <dependency>
-            <groupId>org.jboss.fuse.tnb</groupId>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>

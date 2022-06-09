@@ -20,11 +20,11 @@
         <Root level="INFO">
             <AppenderRef ref="Logfile"/>
         </Root>
-        <Logger name="org.jboss.fuse.tnb" level="TRACE" additivity="false">
+        <Logger name="software.tnb" level="TRACE" additivity="false">
             <AppenderRef ref="Logfile"/>
             <AppenderRef ref="Console"/>
         </Logger>
-        <Logger name="org.jboss.fuse.tnb.product.log.stream" additivity="false">
+        <Logger name="software.tnb.product.log.stream" additivity="false">
             <AppenderRef ref="LogStream"/>
         </Logger>
         <Logger name="cz.xtf">

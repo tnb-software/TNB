@@ -7,41 +7,41 @@ For each product there are two main areas covered:
 - deployment - deploying and undeploying product (where applicable)
 - integrations - creating, starting, stopping of integrations
 
-The integration code is generated from a "meta" [Integration Builder](src/main/java/org/jboss/fuse/tnb/product/integration/builder/AbstractIntegrationBuilder.java)
-class and 0..x [Customizer](src/main/java/org/jboss/fuse/tnb/product/customizer/Customizer.java)s for given system-x services using
+The integration code is generated from a "meta" [Integration Builder](src/main/java/software/tnb/product/integration/builder/AbstractIntegrationBuilder.java)
+class and 0..x [Customizer](src/main/java/software/tnb/product/customizer/Customizer.java)s for given system-x services using
 the [javaparser](https://javaparser.org/) framework. See [RouteBuilders guide](RouteBuilders.md) for more details.
 
 In order to deploy the integration in Openshift, it is possible to implement a specific strategy listed in 
-[OpenshiftDeployStrategyType](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategyType.java)
-enum and instantiated by [OpenshiftDeployStrategyFactory](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategyFactory.java) 
-searching for [OpenshiftDeployStrategy](src/main/java/org/jboss/fuse/tnb/product/deploystrategy/OpenshiftDeployStrategy.java) classes. 
-The implementation class must be a [OpenshiftDeployer](src/main/java/org/jboss/fuse/tnb/product/interfaces/OpenshiftDeployer.java) 
+[OpenshiftDeployStrategyType](src/main/java/software/tnb/product/deploystrategy/OpenshiftDeployStrategyType.java)
+enum and instantiated by [OpenshiftDeployStrategyFactory](src/main/java/software/tnb/product/deploystrategy/OpenshiftDeployStrategyFactory.java) 
+searching for [OpenshiftDeployStrategy](src/main/java/software/tnb/product/deploystrategy/OpenshiftDeployStrategy.java) classes. 
+The implementation class must be a [OpenshiftDeployer](src/main/java/software/tnb/product/interfaces/OpenshiftDeployer.java) 
 in order to execute all deployment phases. 
 You can run the deployment strategy via property `openshift.deploy.strategy`
 
 There are several integration builder classes to use dependending on the use-case:
-- [AbstractIntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/builder/AbstractIntegrationBuilder.java) serves as a base
+- [AbstractIntegrationBuilder](src/main/java/software/tnb/product/integration/builder/AbstractIntegrationBuilder.java) serves as a base
 for creating integrations on all products (so there are methods related to every product only)
-  - it is possible to instantiate it via [IntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/integration/builder/IntegrationBuilder.java) class
+  - it is possible to instantiate it via [IntegrationBuilder](src/main/java/software/tnb/product/integration/builder/IntegrationBuilder.java) class
 - AbstractGitIntegrationBuilder
 - AbstractMavenGitIntegrationBuilder
-- [CamelKIntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/ck/integration/builder/CamelKIntegrationBuilder.java)
+- [CamelKIntegrationBuilder](src/main/java/software/tnb/product/ck/integration/builder/CamelKIntegrationBuilder.java)
 that extends `AbstractIntegrationBuilder` and adds methods related to camel-k only
-- [SpringBootIntegrationBuilder](src/main/java/org/jboss/fuse/tnb/product/csb/integration/builder/SpringBootIntegrationBuilder.java)
+- [SpringBootIntegrationBuilder](src/main/java/software/tnb/product/csb/integration/builder/SpringBootIntegrationBuilder.java)
   that extends `AbstractIntegrationBuilder` and adds methods related to camel on springboot only
 
 Customizers are used when the integration should run on all products, but the configuration differs between products. In that case, you need to use
 a customizer, where you have access to the IntegrationBuilder and all its methods.
 
 Again, there are multiple customizers you can use:
-- [ProductsCustomizer](src/main/java/org/jboss/fuse/tnb/product/customizer/ProductsCustomizer.java) - when you want to do modifications for two
+- [ProductsCustomizer](src/main/java/software/tnb/product/customizer/ProductsCustomizer.java) - when you want to do modifications for two
 or more products
-- [SpringBootCustomizer](src/main/java/org/jboss/fuse/tnb/product/csb/customizer/SpringbootCustomizer.java),
-[QuarkusCustomizer](src/main/java/org/jboss/fuse/tnb/product/cq/customizer/QuarkusCustomizer.java),
-[CamelKCustomizer](src/main/java/org/jboss/fuse/tnb/product/ck/customizer/CamelKCustomizer.java) to do the change only for specific product
+- [SpringBootCustomizer](src/main/java/software/tnb/product/csb/customizer/SpringbootCustomizer.java),
+[QuarkusCustomizer](src/main/java/software/tnb/product/cq/customizer/QuarkusCustomizer.java),
+[CamelKCustomizer](src/main/java/software/tnb/product/ck/customizer/CamelKCustomizer.java) to do the change only for specific product
 
 Instead of creating `new SpringBoot|Quarkus|CamelK customizers`, you can use
-[Customizers](src/main/java/org/jboss/fuse/tnb/product/customizer/Customizers.java) enum, for example:
+[Customizers](src/main/java/software/tnb/product/customizer/Customizers.java) enum, for example:
 
 ```java
 Customizers.CAMELK.customize(ib -> ...)
