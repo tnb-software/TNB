@@ -11,6 +11,7 @@
 
     <artifactId>system-x-jms</artifactId>
     <packaging>pom</packaging>
+    <name>TNB :: System-X :: Services :: JMS</name>
 
     <modules>
         <module>client</module>
