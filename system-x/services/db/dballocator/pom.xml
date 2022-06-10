@@ -17,7 +17,6 @@
         <dballocator.client.version>2.6.6</dballocator.client.version>
     </properties>
 
-    <!-- This module requires you to have the dballocator-client-rest installed locally or to have a specific repository configured, so it is not built by default -->
     <dependencies>
         <dependency>
             <groupId>org.jboss.qa.dballoc</groupId>
