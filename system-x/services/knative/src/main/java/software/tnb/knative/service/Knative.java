@@ -25,6 +25,8 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Knative.class)
 public class Knative implements Service, ReusableOpenshiftDeployable {
+
+
     public static final String OPENSHIFT_SERVERLESS_NAMESPACE = "openshift.serverless.namespace";
 
     private static final String CHANNEL = "stable";
