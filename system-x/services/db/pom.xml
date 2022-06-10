@@ -20,8 +20,18 @@
         <module>mssql</module>
         <module>mysql</module>
         <module>postgresql</module>
-        <module>dballocator</module>
         <module>cassandra</module>
         <module>mongodb</module>
     </modules>
+
+    <profiles>
+        <profile>
+            <id>dballocator</id>
+            <modules>
+                <!-- DBAllocator module requires you to have the dballocator-client-rest installed locally or to have a specific repository configured,
+                 so it is not built by default -->
+                <module>dballocator</module>
+            </modules>
+        </profile>
+    </profiles>
 </project>
