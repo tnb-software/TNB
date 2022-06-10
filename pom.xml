@@ -8,6 +8,63 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>TNB :: Parent</name>
+    <description>The New Beginning Framework</description>
+    <url>https://github.com/tnb-software/TNB</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+        </license>
+    </licenses>
+
+    <scm>
+        <connection>scm:git:git@github.com:tnb-software/TNB.git</connection>
+        <developerConnection>scm:git:git@github.com:tnb-software/TNB</developerConnection>
+        <url>https://github.com/tnb-software/TNB.git</url>
+    </scm>
+
+    <developers>
+        <developer>
+            <id>asmigala</id>
+            <name>Andrej Smigala</name>
+        </developer>
+        <developer>
+            <id>avano</id>
+            <name>Andrej Vano</name>
+        </developer>
+        <developer>
+            <id>bouskaJ</id>
+            <name>Jan Bouska</name>
+        </developer>
+        <developer>
+            <id>Croway</id>
+            <name>Federico Mariani</name>
+        </developer>
+        <developer>
+            <id>lfabriko</id>
+            <name>Lucie Krejcirova</name>
+        </developer>
+        <developer>
+            <id>mcarlett</id>
+            <name>Marco Carletti</name>
+        </developer>
+        <developer>
+            <id>mmuzikar</id>
+            <name>Martin Muzikar</name>
+        </developer>
+        <developer>
+            <id>tplevko</id>
+            <name>Tomas Plevko</name>
+        </developer>
+    </developers>
+
+    <distributionManagement>
+        <snapshotRepository>
+            <id>ossrh</id>
+            <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <modules>
         <module>common</module>
@@ -39,6 +96,10 @@
         <awaitility.version>4.2.0</awaitility.version>
         <log4j.version>2.17.0</log4j.version>
         <vault.version>5.1.0</vault.version>
+        <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
+        <source.plugin.version>3.2.1</source.plugin.version>
+        <javadoc.plugin.version>3.4.0</javadoc.plugin.version>
+        <gpg.plugin.version>3.0.1</gpg.plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -157,6 +218,68 @@
                         <configuration combine.self="append">
                             <groups>integration</groups>
                         </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <id>deploy</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.sonatype.plugins</groupId>
+                        <artifactId>nexus-staging-maven-plugin</artifactId>
+                        <version>${nexus.staging.plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <serverId>ossrh</serverId>
+                            <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${source.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals>
+                                    <goal>jar-no-fork</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${javadoc.plugin.version}</version>
+                        <configuration>
+                            <doclint>none</doclint>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals>
+                                    <goal>jar</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${gpg.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>sign</goal>
+                                </goals>
+                            </execution>
+                        </executions>
                     </plugin>
                 </plugins>
             </build>
