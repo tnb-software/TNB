@@ -1,7 +1,5 @@
 package software.tnb.product.deploystrategy.impl;
 
-import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
@@ -11,6 +9,7 @@ import software.tnb.product.csb.configuration.SpringBootConfiguration;
 import software.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
@@ -30,9 +29,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import io.fabric8.kubernetes.api.model.Pod;
 
 @AutoService(OpenshiftDeployStrategy.class)
 public class JKubeStrategy extends OpenshiftBaseDeployer {
@@ -162,6 +164,11 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
     }
 
     private boolean integrationPodFailed() {
-        return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
+        final List<Pod> pods = OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name);
+        if (pods.size() == 0) {
+            return false;
+        } else {
+            return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
+        }
     }
 }
