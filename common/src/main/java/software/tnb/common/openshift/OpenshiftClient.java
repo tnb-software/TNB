@@ -385,7 +385,7 @@ public class OpenshiftClient extends OpenShift {
             return pod.getStatus().getContainerStatuses().stream()
                 .anyMatch(p -> "error".equalsIgnoreCase(p.getState().getTerminated().getReason())
                     || "error".equalsIgnoreCase(p.getLastState().getTerminated().getReason()));
-        } catch (KubernetesClientException ignored) {
+        } catch (Exception ignored) {
             return false;
         }
     }
