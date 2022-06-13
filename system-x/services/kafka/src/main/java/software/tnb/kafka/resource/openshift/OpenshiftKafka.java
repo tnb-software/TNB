@@ -9,8 +9,6 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 
 import org.apache.kafka.clients.admin.AdminClient;
-import org.apache.kafka.clients.consumer.KafkaConsumer;
-import org.apache.kafka.clients.producer.KafkaProducer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,7 +23,6 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Properties;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
@@ -92,17 +89,8 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     public void openResources() {
         createBasicUser();
         extractCertificate();
-
-        producer = new KafkaProducer<>(connectionProperties());
-        consumer = new KafkaConsumer<>(connectionProperties());
-        validation = new KafkaValidation(producer, consumer);
-    }
-
-    @Override
-    public void closeResources() {
-        producer.close();
-        consumer.close();
-        validation = null;
+        connectionProperties();
+        super.openResources();
     }
 
     @Override
@@ -223,11 +211,6 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         KAFKA_TOPIC_CRD_CLIENT.createOrReplace(kafkaTopic);
     }
 
-    @Override
-    public KafkaValidation validation() {
-        return validation;
-    }
-
     private void createBasicUser() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
         // .q2/html-single/using_amq_streams_on_openshift/index#type-KafkaClientAuthenticationPlain-reference
         String password = Base64.getEncoder().encodeToString(account().basicPassword().getBytes());
@@ -246,7 +229,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public void cleanup() {
         LOG.debug("Cleaning kafka instance");
-        AdminClient adminClient = AdminClient.create(connectionProperties());
+        AdminClient adminClient = AdminClient.create(props);
         try {
             adminClient.deleteTopics(adminClient.listTopics().names().get());
             adminClient.close();
@@ -278,13 +261,11 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         }
     }
 
-    private Properties connectionProperties() {
-        Properties props = defaultClientProperties();
+    private void connectionProperties() {
         props.setProperty("bootstrap.servers", bootstrapSSLServers());
         props.setProperty("security.protocol", "SSL");
         props.setProperty("ssl.truststore.password", account().trustStorePassword());
         props.setProperty("ssl.truststore.location", new File(account().trustStore()).getAbsolutePath());
         props.setProperty("ssl.truststore.type", "PKCS12");
-        return props;
     }
 }
