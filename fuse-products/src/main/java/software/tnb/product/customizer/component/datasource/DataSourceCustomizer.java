@@ -44,13 +44,6 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
 
     @Override
     public void customizeSpringboot() {
-        getIntegrationBuilder().addToProperties(
-            Map.of("spring.datasource.url", url,
-                "spring.datasource.username", username,
-                "spring.datasource.password", password,
-                "spring.datasource.driver-class-name", driver)
-        );
-
         final String[] dbDependencies = getDbAllocatorDependencies();
         final List<String> dependencies = new LinkedList<>(Arrays.asList(dbDependencies));
         dependencies.add("org.springframework.boot:spring-boot-starter-jdbc");
@@ -61,6 +54,12 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
                 dependencies.add("com.oracle.database.jdbc:ojdbc11");
             } else if (type.contains("mssql")) {
                 dependencies.add("com.microsoft.sqlserver:mssql-jdbc");
+
+                // Spring Boot 2.7 has upgrade the MSSQL driver from v9 to v10.
+                // The updated driver now enables encryption by default which may break existing applications
+                // The recommended advice is to either install a trusted certificate or update your JDBC connection URL to include encrypt=false
+                // https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.7-Release-Notes#microsoft-sql-server-jdbc-drive-10
+                url = url + ";encrypt=false;";
             } else if (type.contains("mysql")) {
                 dependencies.add("mysql:mysql-connector-java");
             }  else if (type.contains("mariadb")) {
@@ -69,6 +68,14 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
                 dependencies.add("com.ibm.db2:jcc");
             }
         }
+
+        getIntegrationBuilder().addToProperties(
+            Map.of("spring.datasource.url", url,
+                "spring.datasource.username", username,
+                "spring.datasource.password", password,
+                "spring.datasource.driver-class-name", driver)
+        );
+
         getIntegrationBuilder().dependencies(dependencies.toArray(new String[0]));
     }
 
