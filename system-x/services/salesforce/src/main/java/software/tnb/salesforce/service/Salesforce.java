@@ -42,10 +42,10 @@ public class Salesforce implements Service {
                         .setForceURL(account().loginUrl()));
                     return true;
                 } catch (Exception ex) {
-                    LOG.error("Unable to connect to salesforce, will retry in 5 minutes");
+                    LOG.error("Unable to connect to salesforce, will retry in 5 minutes", ex);
                     return false;
                 }
-            }, 3, 300000L, "Unable to connect to SalesForce");
+            }, 3, 300000L, "Trying to connect to SalesForce");
         }
         return client;
     }
