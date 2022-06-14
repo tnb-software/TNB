@@ -35,11 +35,11 @@ public class Salesforce implements Service {
             WaitUtils.waitFor(() -> {
                 try {
                     client = new ForceApi(new ApiConfig()
-                        .setClientId(account.clientId())
-                        .setClientSecret(account.clientSecret())
-                        .setUsername(account.userName())
-                        .setPassword(account.password())
-                        .setForceURL(account.loginUrl()));
+                        .setClientId(account().clientId())
+                        .setClientSecret(account().clientSecret())
+                        .setUsername(account().userName())
+                        .setPassword(account().password())
+                        .setForceURL(account().loginUrl()));
                     return true;
                 } catch (Exception ex) {
                     LOG.error("Unable to connect to salesforce, will retry in 5 minutes");
@@ -53,7 +53,7 @@ public class Salesforce implements Service {
     public SalesforceValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new Salesforce validation");
-            validation = new SalesforceValidation(client(), account());
+            validation = new SalesforceValidation(client());
         }
         return validation;
     }

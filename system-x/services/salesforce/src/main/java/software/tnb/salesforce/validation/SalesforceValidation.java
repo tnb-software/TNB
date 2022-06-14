@@ -1,6 +1,5 @@
 package software.tnb.salesforce.validation;
 
-import software.tnb.salesforce.account.SalesforceAccount;
 import software.tnb.salesforce.dto.Account;
 import software.tnb.salesforce.dto.Case;
 import software.tnb.salesforce.dto.Lead;
@@ -26,19 +25,20 @@ import java.util.Optional;
 public class SalesforceValidation {
     private static final Logger LOG = LoggerFactory.getLogger(SalesforceValidation.class);
 
-    private ForceApi client;
-    private SalesforceAccount account;
+    private final ForceApi client;
 
-    public SalesforceValidation(ForceApi client, SalesforceAccount account) {
+    public SalesforceValidation(ForceApi client) {
         this.client = client;
-        this.account = account;
     }
 
-    public String createNewLead(String firstName, String lastName, String email, String companyName) {
-        final Lead lead = new Lead(firstName, lastName, email, companyName);
+    public String createNewLead(Lead lead) {
         String leadId = client.createSObject("lead", lead);
         LOG.debug("Created lead with id " + leadId);
         return leadId;
+    }
+
+    public String createNewLead(String firstName, String lastName, String email, String companyName) {
+        return createNewLead(new Lead(firstName, lastName, email, companyName));
     }
 
     public void updateLead(String email, Lead newLead) {
