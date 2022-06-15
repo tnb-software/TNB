@@ -100,7 +100,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public void undeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("delete", "--app", name, "-f"), "undeploy");
+            runOdoCmd(Arrays.asList("delete", "--app", name, "-f", "--all"), "undeploy");
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
