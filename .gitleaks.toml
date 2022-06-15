@@ -1,0 +1,5 @@
+[allowlist]
+  description = "Allowlist"
+  paths = [
+    '''system-x/services/http/src/main/resources/''',
+  ]
