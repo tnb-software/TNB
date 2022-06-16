@@ -29,10 +29,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import io.fabric8.kubernetes.api.model.Pod;
 
@@ -53,23 +55,33 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public void doDeploy() {
+        Map<String, String> mvnProps = new HashMap<>();
+        if(integrationBuilder instanceof  AbstractMavenGitIntegrationBuilder
+            && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
+            mvnProps = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties();
+        }
         String oc = String.format("%s:%s:%s", SpringBootConfiguration.openshiftMavenPluginGroupId()
             , OPENSHIFT_MAVEN_PLUGIN_AID
             , SpringBootConfiguration.openshiftMavenPluginVersion());
+        final Map<String, String> ompProperties = Map.of(
+            "skipTests", "true"
+            , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
+            , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
+            , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
+            , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
+                : OpenshiftClient.get().getMasterUrl().toString()
+            , "jkube.username", OpenshiftConfiguration.openshiftUsername()
+            , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
+            , "jkube.enricher.jkube-service.port", "8080:8080"
+            , "jkube.enricher.jkube-service.expose", "true"
+        );
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
-            .withProperties(Map.of(
-                "skipTests", "true"
-                , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
-                , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
-                , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
-                , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
-                    : OpenshiftClient.get().getMasterUrl().toString()
-                , "jkube.username", OpenshiftConfiguration.openshiftUsername()
-                , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
-                , "jkube.enricher.jkube-service.port", "8080:8080"
-                , "jkube.enricher.jkube-service.expose", "true"
-            )).withGoals("clean", "package", oc + ":resource", oc + ":build", oc + ":apply")
+            .withProperties(Stream.concat(ompProperties.entrySet().stream()
+                , mvnProps.entrySet().stream())
+                .collect(Collectors
+                .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
+            .withGoals("clean", "package", oc + ":resource" , oc + ":build", oc + ":apply")
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
             .withLogMarker(LogStream.marker(name, "deploy"));
