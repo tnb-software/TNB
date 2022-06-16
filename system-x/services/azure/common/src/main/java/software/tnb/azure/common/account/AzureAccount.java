@@ -1,9 +1,9 @@
-package software.tnb.azure.storage.queue.account;
+package software.tnb.azure.common.account;
 
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-public class StorageQueueAccount implements Account, WithId {
+public class AzureAccount implements Account, WithId {
     private String access_key;
     private String account_name;
 

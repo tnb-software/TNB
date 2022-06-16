@@ -9,10 +9,9 @@
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
-    <artifactId>system-x-azure-storage-queue</artifactId>
+    <artifactId>system-x-azure-event-hubs</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>TNB :: System-X :: Services :: Azure :: Storage Queue</name>
-
+    <name>TNB :: System-X :: Services :: Azure :: Event Hubs</name>
     <dependencies>
         <dependency>
             <groupId>software.tnb</groupId>
@@ -20,10 +19,22 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-azure-storage-blob</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+        <dependency>
             <groupId>com.azure</groupId>
-            <artifactId>azure-storage-queue</artifactId>
-            <version>${azure.clients.version}</version>
+            <artifactId>azure-messaging-eventhubs</artifactId>
+            <version>${azure.event.hubs.version}</version>
+        </dependency>
+        <!--
+         dependency placed here to prevent java.lang.NoClassDefFoundError: com/azure/core/client/traits/TokenCredentialTrait
+         -->
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>${azure.core.version}</version>
         </dependency>
     </dependencies>
-
 </project>
