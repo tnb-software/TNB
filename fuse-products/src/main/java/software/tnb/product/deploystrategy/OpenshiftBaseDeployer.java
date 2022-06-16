@@ -140,7 +140,26 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             entries.putAll(((AbstractMavenGitIntegrationBuilder) integrationBuilder).getJavaProperties());
         }
 
-       return entries.entrySet().stream()
+       return entriesInString(entries);
+    }
+
+    protected String getPropertiesForMaven(AbstractIntegrationBuilder<?> integrationBuilder) {
+        if (integrationBuilder == null) {
+            return "";
+        }
+
+        Map<Object, Object> entries = new HashMap<>();
+
+        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder
+            && ((AbstractMavenGitIntegrationBuilder) integrationBuilder).getMavenProperties() != null) {
+            entries.putAll(((AbstractMavenGitIntegrationBuilder) integrationBuilder).getMavenProperties());
+        }
+
+        return entriesInString(entries);
+    }
+
+    private String entriesInString(Map<Object, Object> entries) {
+        return entries.entrySet().stream()
             .filter(entry -> entry.getValue() != null)
             .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
             .map(entry -> "-D" + entry.getKey() + "=" + entry.getValue())

@@ -81,6 +81,8 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
             setEnvVar("JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder));
 
+            setEnvVar("MAVEN_ARGS_APPEND", getPropertiesForMaven(integrationBuilder));
+
             setEnvVar("SUB_FOLDER", folderName);
 
             runOdoCmd(Arrays.asList("push", "--show-log"), "deploy");
