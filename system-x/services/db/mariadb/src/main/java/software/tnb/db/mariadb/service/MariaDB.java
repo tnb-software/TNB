@@ -10,7 +10,7 @@ public abstract class MariaDB extends SQL {
     protected static final int PORT = 3306;
 
     @Override
-    public String image() {
+    public String defaultImage() {
         return "registry.redhat.io/rhel8/mariadb-103:latest";
     }
 

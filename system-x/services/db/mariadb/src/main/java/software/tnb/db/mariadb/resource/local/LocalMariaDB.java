@@ -1,9 +1,8 @@
 package software.tnb.db.mariadb.resource.local;
 
-import software.tnb.db.mariadb.service.MariaDB;
-
 import software.tnb.common.deployment.Deployable;
 import software.tnb.db.common.local.LocalDB;
+import software.tnb.db.mariadb.service.MariaDB;
 
 import org.testcontainers.containers.wait.strategy.Wait;
 

@@ -25,7 +25,7 @@ public class LocalFTP extends FTP implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting Ftp container");
-        container = new FTPContainer(ftpImage(), port(), containerEnvironment());
+        container = new FTPContainer(image(), port(), containerEnvironment());
         container.start();
         LOG.info("Ftp container started");
     }

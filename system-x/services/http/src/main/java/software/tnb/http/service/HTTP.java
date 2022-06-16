@@ -1,16 +1,16 @@
 package software.tnb.http.service;
 
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-public abstract class HTTP implements Service {
+public abstract class HTTP implements Service, WithDockerImage {
 
     public static final int HTTP_PORT = 8080;
     public static final int HTTPS_PORT = 8443;
-    private static final String HTTP_IMAGE_NAME_PROPERTY = "http.image";
 
     public abstract String httpUrl();
 
@@ -30,7 +30,7 @@ public abstract class HTTP implements Service {
         return signature;
     }
 
-    protected String httpImage() {
-        return System.getProperty(HTTP_IMAGE_NAME_PROPERTY, "quay.io/fuse_qe/http-https-echo:latest");
+    public String defaultImage() {
+        return "quay.io/fuse_qe/http-https-echo:latest";
     }
 }

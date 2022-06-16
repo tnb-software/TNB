@@ -1,8 +1,7 @@
 package software.tnb.db.cassandra.resource.local;
 
-import software.tnb.db.cassandra.service.Cassandra;
-
 import software.tnb.common.deployment.Deployable;
+import software.tnb.db.cassandra.service.Cassandra;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

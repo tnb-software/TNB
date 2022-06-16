@@ -1,8 +1,8 @@
 package software.tnb.jms.amq.service.local;
 
-import software.tnb.jms.amq.service.AMQBroker;
-
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.jms.amq.service.AMQBroker;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
@@ -17,14 +17,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @AutoService(AMQBroker.class)
-public class LocalAMQBroker extends AMQBroker implements Deployable {
+public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalAMQBroker.class);
     private AMQBrokerContainer container;
 
     @Override
     public void deploy() {
         LOG.info("Starting AMQ container");
-        container = new AMQBrokerContainer(containerEnvironment(), containerPorts());
+        container = new AMQBrokerContainer(image(), containerEnvironment(), containerPorts());
         container.start();
         LOG.info("AMQ broker container started");
     }
@@ -95,5 +95,10 @@ public class LocalAMQBroker extends AMQBroker implements Deployable {
         } catch (JMSException e) {
             throw new RuntimeException("Can't create jms connection", e);
         }
+    }
+
+    @Override
+    public String defaultImage() {
+        return "registry.redhat.io/amq7/amq-broker:latest";
     }
 }

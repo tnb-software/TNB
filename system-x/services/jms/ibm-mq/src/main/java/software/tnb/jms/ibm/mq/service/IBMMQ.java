@@ -1,6 +1,7 @@
 package software.tnb.jms.ibm.mq.service;
 
 import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
 import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
@@ -17,13 +18,12 @@ import javax.jms.JMSException;
 import java.io.File;
 import java.util.Map;
 
-public abstract class IBMMQ implements Service {
+public abstract class IBMMQ implements Service, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQ.class);
 
     public static final int DEFAULT_PORT = 1414;
     public static final String MQSC_COMMAND_FILES_LOCATION = "/etc/mqm";
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
-    public static final String IBM_MQ_IMAGE = "ibm.mq.image";
 
     private IBMMQAccount account;
     private IBMMQValidation validation;
@@ -57,8 +57,8 @@ public abstract class IBMMQ implements Service {
 
     public abstract int port();
 
-    public String ibmMqImage() {
-        return System.getProperty(IBM_MQ_IMAGE, "icr.io/ibm-messaging/mq:9.2.5.0-r1");
+    public String defaultImage() {
+        return "icr.io/ibm-messaging/mq:9.2.5.0-r1";
     }
 
     /**

@@ -1,8 +1,8 @@
 package software.tnb.kafka.resource.local;
 
-import software.tnb.kafka.service.Kafka;
-
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.kafka.service.Kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,7 +11,7 @@ import org.testcontainers.containers.Network;
 import com.google.auto.service.AutoService;
 
 @AutoService(Kafka.class)
-public class LocalKafka extends Kafka implements Deployable {
+public class LocalKafka extends Kafka implements Deployable, WithDockerImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalKafka.class);
     private StrimziContainer strimziContainer;
@@ -37,12 +37,12 @@ public class LocalKafka extends Kafka implements Deployable {
         Network network = Network.newNetwork();
 
         LOG.info("Starting Zookeeper container");
-        zookeeperContainer = new ZookeeperContainer(zookeeperLocalImage(), network);
+        zookeeperContainer = new ZookeeperContainer(image(), network);
         zookeeperContainer.start();
         LOG.info("Zookeeper container started");
 
         LOG.info("Starting Kafka container");
-        strimziContainer = new StrimziContainer(kafkaLocalImage(), network);
+        strimziContainer = new StrimziContainer(image(), network);
         strimziContainer.start();
         LOG.info("Kafka container started");
     }
@@ -64,5 +64,9 @@ public class LocalKafka extends Kafka implements Deployable {
     public void openResources() {
         props.setProperty("bootstrap.servers", bootstrapServers());
         super.openResources();
+    }
+
+    public String defaultImage() {
+        return "quay.io/strimzi/kafka:latest-kafka-2.7.0";
     }
 }

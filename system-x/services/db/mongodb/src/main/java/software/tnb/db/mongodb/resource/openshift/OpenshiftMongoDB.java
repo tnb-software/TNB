@@ -1,7 +1,5 @@
 package software.tnb.db.mongodb.resource.openshift;
 
-import software.tnb.db.mongodb.service.MongoDB;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
@@ -9,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.db.mongodb.service.MongoDB;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -67,7 +66,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
                     .editOrNewSpec()
                         .addNewContainer()
                             .withName(name())
-                            .withImage(mongoDbImage())
+                            .withImage(image())
                             .addAllToPorts(ports)
                             .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                                 .collect(Collectors.toList()))

@@ -1,4 +1,4 @@
-package software.tnb.ftp.sftp.openshift;
+package software.tnb.ftp.sftp.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
@@ -105,7 +105,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
                 .editOrNewSpec()
                 .withServiceAccount(serviceAccountName)
                 .addNewContainer()
-                .withName(name()).withImage(sftpImage()).addAllToPorts(ports)
+                .withName(name()).withImage(image()).addAllToPorts(ports)
                 .withImagePullPolicy("IfNotPresent")
                 .withEnv(new EnvVar("SFTP_USERS", containerEnvironment().get("SFTP_USERS"), null))
                 .editOrNewSecurityContext()

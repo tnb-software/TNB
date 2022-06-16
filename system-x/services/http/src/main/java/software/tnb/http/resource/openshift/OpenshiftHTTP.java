@@ -1,10 +1,10 @@
 package software.tnb.http.resource.openshift;
 
-import software.tnb.http.service.HTTP;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.http.service.HTTP;
 
 import com.google.auto.service.AutoService;
 
@@ -85,7 +85,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                         .editOrNewSpec()
                             .addNewContainer()
                                 .withName(name())
-                                .withImage(httpImage())
+                                .withImage(image())
                                 .addAllToPorts(ports)
                                 .withLivenessProbe(probe)
                                 .withReadinessProbe(probe)

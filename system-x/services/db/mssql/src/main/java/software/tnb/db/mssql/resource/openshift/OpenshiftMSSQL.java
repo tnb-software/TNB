@@ -1,11 +1,10 @@
 package software.tnb.db.mssql.resource.openshift;
 
-import software.tnb.db.mssql.service.MSSQL;
-
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.db.common.openshift.OpenshiftDB;
+import software.tnb.db.mssql.service.MSSQL;
 
 import com.google.auto.service.AutoService;
 

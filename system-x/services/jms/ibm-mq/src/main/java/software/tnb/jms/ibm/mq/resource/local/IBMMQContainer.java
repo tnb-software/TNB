@@ -1,7 +1,7 @@
 package software.tnb.jms.ibm.mq.resource.local;
 
-import software.tnb.jms.ibm.mq.service.IBMMQ;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.jms.ibm.mq.service.IBMMQ;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;

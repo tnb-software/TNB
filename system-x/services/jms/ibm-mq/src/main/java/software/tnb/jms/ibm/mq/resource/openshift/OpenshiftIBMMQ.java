@@ -1,6 +1,5 @@
 package software.tnb.jms.ibm.mq.resource.openshift;
 
-import software.tnb.jms.ibm.mq.service.IBMMQ;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
@@ -8,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.jms.ibm.mq.service.IBMMQ;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -123,7 +123,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
                         .editOrNewSpec()
                             .addNewContainer()
                                 .withName(name())
-                                .withImage(ibmMqImage())
+                                .withImage(image())
                                 .addAllToPorts(containerPorts)
                                 .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                                 .collect(Collectors.toList()))

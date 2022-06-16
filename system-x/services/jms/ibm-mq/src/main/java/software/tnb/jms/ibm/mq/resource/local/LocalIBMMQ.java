@@ -1,7 +1,7 @@
 package software.tnb.jms.ibm.mq.resource.local;
 
-import software.tnb.jms.ibm.mq.service.IBMMQ;
 import software.tnb.common.deployment.Deployable;
+import software.tnb.jms.ibm.mq.service.IBMMQ;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting IBM MQ container");
-        container = new IBMMQContainer(ibmMqImage(), containerEnvironment(), mqscConfig());
+        container = new IBMMQContainer(image(), containerEnvironment(), mqscConfig());
         container.start();
         LOG.info("IBM MQ container started");
     }

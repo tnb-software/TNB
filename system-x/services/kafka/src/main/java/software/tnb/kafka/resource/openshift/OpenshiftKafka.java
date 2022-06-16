@@ -1,12 +1,11 @@
 package software.tnb.kafka.resource.openshift;
 
-import software.tnb.kafka.service.Kafka;
-import software.tnb.kafka.validation.KafkaValidation;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.kafka.service.Kafka;
 
 import org.apache.kafka.clients.admin.AdminClient;
 import org.slf4j.Logger;

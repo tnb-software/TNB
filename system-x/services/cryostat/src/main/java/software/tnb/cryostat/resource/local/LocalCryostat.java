@@ -1,11 +1,12 @@
 package software.tnb.cryostat.resource.local;
 
-import software.tnb.cryostat.client.local.LocalCryostatClient;
-import software.tnb.cryostat.service.Cryostat;
-import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.cryostat.client.CryostatClient;
+import software.tnb.cryostat.client.local.LocalCryostatClient;
+import software.tnb.cryostat.service.Cryostat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,14 +17,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 @AutoService(Cryostat.class)
-public class CryostatLocal extends Cryostat implements Deployable {
-    private static final Logger LOG = LoggerFactory.getLogger(CryostatLocal.class);
+public class LocalCryostat extends Cryostat implements Deployable, WithDockerImage {
+    private static final Logger LOG = LoggerFactory.getLogger(LocalCryostat.class);
     private CryostatContainer container;
 
     @Override
     public void deploy() {
         LOG.info("Starting Cryostat");
-        container = new CryostatContainer(containerEnvironment(), containerPorts());
+        container = new CryostatContainer(image(), containerEnvironment());
         container.start();
         LOG.info("Cryostat container started");
     }
@@ -70,11 +71,6 @@ public class CryostatLocal extends Cryostat implements Deployable {
         return port; //use fixed port because of the cryostat container using host net
     }
 
-    private int[] containerPorts() {
-        int[] ports = {8181, 9091};
-        return ports;
-    }
-
     protected Map<String, String> containerEnvironment() {
         final Map<String, String> env = new HashMap<>();
         env.put("CRYOSTAT_DISABLE_JMX_AUTH", "true");
@@ -83,4 +79,7 @@ public class CryostatLocal extends Cryostat implements Deployable {
         return env;
     }
 
+    public String defaultImage() {
+        return "registry.redhat.io/cryostat-tech-preview/cryostat-rhel8:latest";
+    }
 }
