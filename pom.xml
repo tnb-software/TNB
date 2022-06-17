@@ -90,7 +90,7 @@
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.7</jacoco.maven.plugin.version>
-        <jgit.version>5.12.0.202106070339-r</jgit.version>
+        <jgit.version>6.2.0.202206071550-r</jgit.version>
         <junit.version>5.8.2</junit.version>
         <assertj.version>3.22.0</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
