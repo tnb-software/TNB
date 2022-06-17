@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <aws.clients.version>2.17.61</aws.clients.version>
+        <aws.clients.version>2.17.213</aws.clients.version>
     </properties>
 
     <modules>
