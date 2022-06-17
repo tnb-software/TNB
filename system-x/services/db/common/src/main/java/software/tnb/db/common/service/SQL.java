@@ -1,18 +1,19 @@
 package software.tnb.db.common.service;
 
-import software.tnb.db.common.validation.SQLValidation;
 import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.service.Service;
 import software.tnb.db.common.account.SQLAccount;
+import software.tnb.db.common.validation.SQLValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class SQL implements Service, WithName, WithExternalHostname {
+public abstract class SQL implements Service, WithName, WithExternalHostname, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
     private SQLAccount account;
@@ -28,8 +29,6 @@ public abstract class SQL implements Service, WithName, WithExternalHostname {
     }
 
     public abstract String jdbcConnectionUrl();
-
-    public abstract String image();
 
     public abstract String hostname();
 

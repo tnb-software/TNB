@@ -1,8 +1,8 @@
 package software.tnb.db.postgres.resource.local;
 
-import software.tnb.db.postgres.service.PostgreSQL;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.db.common.local.LocalDB;
+import software.tnb.db.postgres.service.PostgreSQL;
 
 import org.testcontainers.containers.wait.strategy.Wait;
 

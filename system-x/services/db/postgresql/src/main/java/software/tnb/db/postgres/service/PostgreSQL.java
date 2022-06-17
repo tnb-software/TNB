@@ -10,7 +10,7 @@ public abstract class PostgreSQL extends SQL {
     protected static final int PORT = 5432;
 
     @Override
-    public String image() {
+    public String defaultImage() {
         return "registry.redhat.io/rhel8/postgresql-13:latest";
     }
 

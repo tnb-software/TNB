@@ -25,7 +25,7 @@ public class LocalSFTP extends SFTP implements Deployable {
 
     public void deploy() {
         LOG.info("Starting sftp container");
-        container = new SftpContainer(sftpImage(), containerEnvironment());
+        container = new SftpContainer(image(), containerEnvironment());
         container.start();
     }
 

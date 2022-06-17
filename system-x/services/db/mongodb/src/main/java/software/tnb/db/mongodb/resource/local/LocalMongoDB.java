@@ -1,8 +1,7 @@
 package software.tnb.db.mongodb.resource.local;
 
-import software.tnb.db.mongodb.service.MongoDB;
-
 import software.tnb.common.deployment.Deployable;
+import software.tnb.db.mongodb.service.MongoDB;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +18,7 @@ public class LocalMongoDB extends MongoDB implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting MongoDB container");
-        container = new MongoContainer(mongoDbImage(), port(), containerEnvironment());
+        container = new MongoContainer(image(), port(), containerEnvironment());
         container.start();
         LOG.info("MongoDB container started");
     }

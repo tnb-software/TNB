@@ -1,10 +1,10 @@
 package software.tnb.db.postgres.resource.openshift;
 
-import software.tnb.db.postgres.service.PostgreSQL;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.db.common.openshift.OpenshiftDB;
+import software.tnb.db.postgres.service.PostgreSQL;
 
 import com.google.auto.service.AutoService;
 

@@ -1,6 +1,7 @@
 package software.tnb.db.mongodb.service;
 
 import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.db.mongodb.account.MongoDBAccount;
 import software.tnb.db.mongodb.validation.MongoDBValidation;
@@ -12,9 +13,8 @@ import com.mongodb.client.MongoClient;
 
 import java.util.Map;
 
-public abstract class MongoDB implements Service {
+public abstract class MongoDB implements Service, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
-    public static final String MONGODB_IMAGE = "mongodb.image";
 
     private MongoDBAccount account;
     private MongoDBValidation validation;
@@ -55,8 +55,8 @@ public abstract class MongoDB implements Service {
         return 27017;
     }
 
-    public String mongoDbImage() {
-        return System.getProperty(MONGODB_IMAGE, "docker.io/bitnami/mongodb:4.4.5");
+    public String defaultImage() {
+        return "docker.io/bitnami/mongodb:4.4.5";
     }
 
     public abstract String hostname();

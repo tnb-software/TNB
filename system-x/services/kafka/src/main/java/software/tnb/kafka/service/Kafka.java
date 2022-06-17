@@ -1,9 +1,9 @@
 package software.tnb.kafka.service;
 
-import software.tnb.kafka.account.KafkaAccount;
-import software.tnb.kafka.validation.KafkaValidation;
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
+import software.tnb.kafka.account.KafkaAccount;
+import software.tnb.kafka.validation.KafkaValidation;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -23,15 +23,6 @@ public abstract class Kafka implements Service {
     protected Map<Class<?>, KafkaValidation> validations;
     protected Properties props = defaultClientProperties();
     private KafkaAccount account;
-
-    public static String kafkaLocalImage() {
-        return "quay.io/strimzi/kafka:latest-kafka-2.7.0";
-    }
-
-    public static String zookeeperLocalImage() {
-        // actually the same image
-        return kafkaLocalImage();
-    }
 
     public abstract String bootstrapServers();
 

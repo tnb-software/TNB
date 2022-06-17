@@ -1,9 +1,8 @@
 package software.tnb.db.mssql.resource.local;
 
-import software.tnb.db.mssql.service.MSSQL;
-
 import software.tnb.common.deployment.Deployable;
 import software.tnb.db.common.local.LocalDB;
+import software.tnb.db.mssql.service.MSSQL;
 
 import org.testcontainers.containers.wait.strategy.Wait;
 

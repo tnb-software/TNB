@@ -1,9 +1,10 @@
 package software.tnb.elasticsearch.resource.local;
 
-import software.tnb.elasticsearch.account.ElasticsearchAccount;
-import software.tnb.elasticsearch.service.Elasticsearch;
 import software.tnb.common.account.Accounts;
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.elasticsearch.account.ElasticsearchAccount;
+import software.tnb.elasticsearch.service.Elasticsearch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,9 +13,8 @@ import org.testcontainers.elasticsearch.ElasticsearchContainer;
 import com.google.auto.service.AutoService;
 
 @AutoService(Elasticsearch.class)
-public class LocalElasticsearch extends Elasticsearch implements Deployable {
+public class LocalElasticsearch extends Elasticsearch implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalElasticsearch.class);
-    private static final String ELASTICSEARCH_IMAGE = "elasticsearch.image";
     private static final String PASSWORD = "password";
 
     private ElasticsearchContainer container;
@@ -56,7 +56,7 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable {
         return container.getHttpHostAddress();
     }
 
-    private String image() {
-        return System.getProperty(ELASTICSEARCH_IMAGE, "docker.elastic.co/elasticsearch/elasticsearch:" + version());
+    public String defaultImage() {
+        return "docker.elastic.co/elasticsearch/elasticsearch:" + version();
     }
 }

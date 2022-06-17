@@ -1,11 +1,10 @@
 package software.tnb.hyperfoil.resource.openshift;
 
-import software.tnb.hyperfoil.service.Hyperfoil;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
-
+import software.tnb.hyperfoil.service.Hyperfoil;
 import software.tnb.hyperfoil.validation.generated.ApiException;
 
 import org.slf4j.Logger;

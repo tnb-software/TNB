@@ -1,8 +1,8 @@
 package software.tnb.ftp.sftp.service;
 
-import software.tnb.ftp.common.FileTransferService;
-
 import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.sftp.account.SFTPAccount;
 import software.tnb.ftp.sftp.validation.SFTPValidation;
 
@@ -13,9 +13,8 @@ import java.util.Map;
 
 import net.schmizz.sshj.sftp.SFTPClient;
 
-public abstract class SFTP implements FileTransferService {
+public abstract class SFTP implements FileTransferService, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SFTP.class);
-    private static final String SFTP_IMAGE_KEY = "sftp.image";
 
     private SFTPAccount account;
     private SFTPValidation validation;
@@ -50,7 +49,7 @@ public abstract class SFTP implements FileTransferService {
         );
     }
 
-    public static String sftpImage() {
-        return System.getProperty(SFTP_IMAGE_KEY, "quay.io/fuse_qe/sftp:alpine");
+    public String defaultImage() {
+        return "quay.io/fuse_qe/sftp:alpine";
     }
 }

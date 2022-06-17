@@ -1,7 +1,7 @@
 package software.tnb.http.resource.local;
 
-import software.tnb.http.service.HTTP;
 import software.tnb.common.deployment.Deployable;
+import software.tnb.http.service.HTTP;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,7 @@ public class LocalHTTP extends HTTP implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting Http container");
-        container = new HTTPContainer(httpImage());
+        container = new HTTPContainer(image());
         container.start();
         LOG.info("Http container started");
     }

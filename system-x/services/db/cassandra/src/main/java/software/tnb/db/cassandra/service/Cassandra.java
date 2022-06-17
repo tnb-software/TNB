@@ -1,23 +1,23 @@
 package software.tnb.db.cassandra.service;
 
+import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.common.service.Service;
 import software.tnb.db.cassandra.account.CassandraAccount;
 import software.tnb.db.cassandra.validation.CassandraValidation;
-
-import software.tnb.common.account.Accounts;
-import software.tnb.common.service.Service;
 
 import com.datastax.oss.driver.api.core.CqlSession;
 
 import java.util.Map;
 
-public abstract class Cassandra implements Service {
+public abstract class Cassandra implements Service, WithDockerImage {
 
     public static final int CASSANDRA_PORT = 9042;
 
     private CassandraValidation validation;
     private CassandraAccount account;
 
-    public String image() {
+    public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box
         return "docker.io/bitnami/cassandra:4.0";
     }

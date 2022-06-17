@@ -1,4 +1,4 @@
-package software.jboss.fuse.tnb.account.util;
+package software.tnb.account.util;
 
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;

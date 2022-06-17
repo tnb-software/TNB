@@ -2,17 +2,16 @@ package software.tnb.jms.amq.service.openshift;
 
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
+import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.deployment.WithExternalHostname;
+import software.tnb.common.deployment.WithInClusterHostname;
+import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.jms.amq.service.AMQBroker;
 import software.tnb.jms.amq.service.openshift.generated.Acceptor;
 import software.tnb.jms.amq.service.openshift.generated.ActiveMQArtemis;
 import software.tnb.jms.amq.service.openshift.generated.ActiveMQArtemisList;
 import software.tnb.jms.amq.service.openshift.generated.ActiveMQArtemisSpec;
 import software.tnb.jms.amq.service.openshift.generated.DeploymentPlan;
-
-import software.tnb.common.deployment.OpenshiftDeployable;
-import software.tnb.common.deployment.WithExternalHostname;
-import software.tnb.common.deployment.WithInClusterHostname;
-import software.tnb.common.openshift.OpenshiftClient;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.apache.commons.io.IOUtils;

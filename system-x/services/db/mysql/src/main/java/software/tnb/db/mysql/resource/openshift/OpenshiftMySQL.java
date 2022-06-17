@@ -1,11 +1,10 @@
 package software.tnb.db.mysql.resource.openshift;
 
-import software.tnb.db.mysql.service.MySQL;
-
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.db.common.openshift.OpenshiftDB;
+import software.tnb.db.mysql.service.MySQL;
 
 import com.google.auto.service.AutoService;
 

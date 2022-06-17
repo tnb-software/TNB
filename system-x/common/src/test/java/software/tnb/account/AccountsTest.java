@@ -1,11 +1,11 @@
-package software.jboss.fuse.tnb.account;
+package software.tnb.account;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import software.jboss.fuse.tnb.account.util.TestAccountNoId;
-import software.jboss.fuse.tnb.account.util.TestAccountWithId;
-import software.jboss.fuse.tnb.account.util.TestAccountWithMissingId;
+import software.tnb.account.util.TestAccountNoId;
+import software.tnb.account.util.TestAccountWithId;
+import software.tnb.account.util.TestAccountWithMissingId;
 import software.tnb.common.account.Accounts;
 import software.tnb.common.config.TestConfiguration;
 

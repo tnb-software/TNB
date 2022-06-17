@@ -1,7 +1,8 @@
 package software.tnb.hyperfoil.resource.local;
 
-import software.tnb.hyperfoil.service.Hyperfoil;
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.hyperfoil.service.Hyperfoil;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,14 +12,14 @@ import com.google.auto.service.AutoService;
 import java.util.HashMap;
 
 @AutoService(Hyperfoil.class)
-public class LocalHyperfoil extends Hyperfoil implements Deployable {
+public class LocalHyperfoil extends Hyperfoil implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalHyperfoil.class);
     private HyperfoilContainer container;
 
     @Override
     public void deploy() {
         LOG.info("Starting Hyperfoil");
-        container = new HyperfoilContainer(new HashMap<>(), containerPorts());
+        container = new HyperfoilContainer(image(), new HashMap<>());
         container.start();
         LOG.info("Hyperfoil container started");
     }
@@ -54,8 +55,8 @@ public class LocalHyperfoil extends Hyperfoil implements Deployable {
         return 8090;
     }
 
-    private int[] containerPorts() {
-        int[] ports = {8090};
-        return ports;
+    @Override
+    public String defaultImage() {
+        return "quay.io/hyperfoil/hyperfoil:latest";
     }
 }

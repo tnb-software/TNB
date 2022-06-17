@@ -1,12 +1,12 @@
 package software.tnb.ftp.ftp.resource.openshift;
 
-import software.tnb.ftp.ftp.service.CustomFTPClient;
-import software.tnb.ftp.ftp.service.FTP;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.ftp.ftp.service.CustomFTPClient;
+import software.tnb.ftp.ftp.service.FTP;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,7 +82,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
                 .endMetadata()
                 .editOrNewSpec()
                 .addNewContainer()
-                .withName(name()).withImage(ftpImage()).addAllToPorts(ports)
+                .withName(name()).withImage(image()).addAllToPorts(ports)
                 .withEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
                 .endContainer()
                 .endSpec()

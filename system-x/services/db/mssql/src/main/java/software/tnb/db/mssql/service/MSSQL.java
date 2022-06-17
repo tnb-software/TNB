@@ -10,7 +10,7 @@ public abstract class MSSQL extends SQL {
     protected static final int PORT = 1433;
 
     @Override
-    public String image() {
+    public String defaultImage() {
         return "mcr.microsoft.com/mssql/rhel/server:2019-latest";
     }
 

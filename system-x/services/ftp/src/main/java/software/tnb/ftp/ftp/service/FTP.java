@@ -1,18 +1,18 @@
 package software.tnb.ftp.ftp.service;
 
+import software.tnb.common.account.Accounts;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.ftp.account.FTPAccount;
 import software.tnb.ftp.ftp.validation.FTPValidation;
-import software.tnb.common.account.Accounts;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class FTP implements FileTransferService {
+public abstract class FTP implements FileTransferService, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(FTP.class);
-    private static final String FTP_IMAGE_KEY = "ftp.image";
 
     private FTPAccount account;
     private FTPValidation validation;
@@ -49,7 +49,7 @@ public abstract class FTP implements FileTransferService {
         return "/tmp/" + account().username();
     }
 
-    public static String ftpImage() {
-        return System.getProperty(FTP_IMAGE_KEY, "quay.io/fuse_qe/apache-ftp:latest");
+    public String defaultImage() {
+        return "quay.io/fuse_qe/apache-ftp:latest";
     }
 }

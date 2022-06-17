@@ -23,9 +23,9 @@ import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 import okhttp3.Request;
 
 @AutoService(Cryostat.class)
-public class CryostatOpenshift extends Cryostat implements ReusableOpenshiftDeployable {
+public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable {
 
-    private static final Logger LOG = LoggerFactory.getLogger(CryostatOpenshift.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCryostat.class);
 
     private static final String CHANNEL = "stable";
     private static final String OPERATOR_NAME = "cryostat-operator";

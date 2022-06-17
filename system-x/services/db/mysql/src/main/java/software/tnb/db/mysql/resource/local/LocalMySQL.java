@@ -1,9 +1,8 @@
 package software.tnb.db.mysql.resource.local;
 
-import software.tnb.db.mysql.service.MySQL;
-
 import software.tnb.common.deployment.Deployable;
 import software.tnb.db.common.local.LocalDB;
+import software.tnb.db.mysql.service.MySQL;
 
 import org.testcontainers.containers.wait.strategy.Wait;
 
