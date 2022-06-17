@@ -1,8 +1,7 @@
 package software.tnb.azure.storage.queue.service;
 
-import software.tnb.azure.storage.queue.account.StorageQueueAccount;
+import software.tnb.azure.common.account.AzureAccount;
 import software.tnb.azure.storage.queue.validation.StorageQueueValidation;
-
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
 
@@ -20,12 +19,12 @@ import com.google.auto.service.AutoService;
 public class StorageQueue implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(StorageQueue.class);
 
-    private StorageQueueAccount account;
+    private AzureAccount account;
     private StorageQueueValidation validation;
 
-    public StorageQueueAccount account() {
+    public AzureAccount account() {
         if (account == null) {
-            account = Accounts.get(StorageQueueAccount.class);
+            account = Accounts.get(AzureAccount.class);
         }
         return account;
     }

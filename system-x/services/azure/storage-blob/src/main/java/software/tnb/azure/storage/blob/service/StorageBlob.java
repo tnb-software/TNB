@@ -1,8 +1,7 @@
 package software.tnb.azure.storage.blob.service;
 
-import software.tnb.azure.storage.blob.account.StorageBlobAccount;
+import software.tnb.azure.common.account.AzureAccount;
 import software.tnb.azure.storage.blob.validation.StorageBlobValidation;
-
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
 
@@ -21,12 +20,12 @@ public class StorageBlob implements Service {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlob.class);
 
-    private StorageBlobAccount account;
+    private AzureAccount account;
     private StorageBlobValidation validation;
 
-    public StorageBlobAccount account() {
+    public AzureAccount account() {
         if (account == null) {
-            account = Accounts.get(StorageBlobAccount.class);
+            account = Accounts.get(AzureAccount.class);
         }
         return account;
     }
