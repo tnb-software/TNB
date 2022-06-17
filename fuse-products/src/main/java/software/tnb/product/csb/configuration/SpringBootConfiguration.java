@@ -54,7 +54,7 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String camelSpringBootArchetypeGroupId() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_GROUP_ID, "org.apache.camel.archetypes");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_GROUP_ID, "software.tnb");
     }
 
     public static String camelSpringBootArchetypeArtifactId() {
@@ -62,7 +62,7 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String camelSpringBootArchetypeVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "1.0.3");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "1.0.4");
     }
 
     public static String openshiftMavenPluginGroupId() {
