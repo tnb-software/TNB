@@ -80,7 +80,7 @@
           that brings model classes aligned to a specific camel-k-release version
          -->
         <kubernetes.client.version>5.12.1</kubernetes.client.version>
-        <javaparser.version>3.20.2</javaparser.version>
+        <javaparser.version>3.24.2</javaparser.version>
         <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
