@@ -8,6 +8,7 @@ env:
 
 jobs:
   build:
+    name: Build
     runs-on: ubuntu-latest
 
     steps:
@@ -19,6 +20,7 @@ jobs:
       - name: Compile
         run: mvn --no-transfer-progress clean package
   test:
+    name: Test
     runs-on: ubuntu-latest
     needs: build
 
