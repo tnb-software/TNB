@@ -15,7 +15,7 @@
 
     <properties>
         <camel.version>3.11.1</camel.version>
-        <json.version>20210307</json.version>
+        <json.version>20220320</json.version>
         <maven.invoker.version>3.2.0</maven.invoker.version>
         <maven.model.version>3.6.3</maven.model.version>
         <jackson.module.version>2.13.1</jackson.module.version>
