@@ -15,7 +15,7 @@
     <name>TNB :: System-X :: Services :: Jira</name>
 
     <properties>
-        <jira.client.version>5.2.2</jira.client.version>
+        <jira.client.version>5.2.4</jira.client.version>
         <fugue.client.version>4.7.2</fugue.client.version>
     </properties>
 
