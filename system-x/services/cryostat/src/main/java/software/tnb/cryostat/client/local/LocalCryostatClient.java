@@ -1,17 +1,12 @@
 package software.tnb.cryostat.client.local;
 
+import software.tnb.cryostat.client.BaseCryostatClient;
 import software.tnb.cryostat.generated.recording.Recording;
 import software.tnb.cryostat.generated.targets.Target;
-import software.tnb.cryostat.client.BaseCryostatClient;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.shaded.okhttp3.MediaType;
-import org.testcontainers.shaded.okhttp3.OkHttpClient;
-import org.testcontainers.shaded.okhttp3.Request;
-import org.testcontainers.shaded.okhttp3.RequestBody;
-import org.testcontainers.shaded.okhttp3.Response;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -28,6 +23,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 public class LocalCryostatClient extends BaseCryostatClient {
 
