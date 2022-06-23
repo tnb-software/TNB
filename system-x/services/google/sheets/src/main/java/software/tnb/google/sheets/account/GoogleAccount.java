@@ -14,7 +14,7 @@ public class GoogleAccount implements Account, WithId {
         return "google";
     }
 
-    public String getApiClientId() {
+    public String clientId() {
         return api_client_id;
     }
 
@@ -22,7 +22,7 @@ public class GoogleAccount implements Account, WithId {
         this.api_client_id = apiClientId;
     }
 
-    public String getApiClientSecret() {
+    public String clientSecret() {
         return api_client_secret;
     }
 
@@ -30,7 +30,7 @@ public class GoogleAccount implements Account, WithId {
         this.api_client_secret = apiClientSecret;
     }
 
-    public String getApiRefreshToken() {
+    public String refreshToken() {
         return api_refresh_token;
     }
 
