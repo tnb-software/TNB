@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Google :: Sheets</name>
 
     <properties>
-        <google-sheets.client.version>v4-rev493-1.23.0</google-sheets.client.version>
+        <google-sheets.client.version>v4-rev20220613-1.32.1</google-sheets.client.version>
     </properties>
 
     <dependencies>
