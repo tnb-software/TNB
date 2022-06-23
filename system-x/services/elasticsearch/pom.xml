@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: ElasticSearch</name>
 
     <properties>
-        <elasticsearch.client.version>7.13.3</elasticsearch.client.version>
+        <elasticsearch.client.version>7.17.4</elasticsearch.client.version>
     </properties>
 
     <dependencies>
