@@ -12,18 +12,15 @@
 
 package software.tnb.hyperfoil.validation.generated.api;
 
-import software.tnb.hyperfoil.validation.generated.ApiCallback;
-import software.tnb.hyperfoil.validation.generated.ApiClient;
-import software.tnb.hyperfoil.validation.generated.ApiException;
-import software.tnb.hyperfoil.validation.generated.ApiResponse;
-import software.tnb.hyperfoil.validation.generated.Configuration;
-import software.tnb.hyperfoil.validation.generated.Pair;
+import com.google.gson.reflect.TypeToken;
+
+import org.apache.commons.io.FilenameUtils;
+
+import software.tnb.hyperfoil.validation.generated.*;
 import software.tnb.hyperfoil.validation.generated.model.Histogram;
 import software.tnb.hyperfoil.validation.generated.model.RequestStatisticsResponse;
 import software.tnb.hyperfoil.validation.generated.model.Run;
 import software.tnb.hyperfoil.validation.generated.model.Version;
-
-import com.google.gson.reflect.TypeToken;
 
 import java.io.File;
 import java.lang.reflect.Type;
@@ -36,6 +33,8 @@ public class DefaultApi {
     private ApiClient localVarApiClient;
     private int localHostIndex;
     private String localCustomBaseUrl;
+
+    private final Map<String, String> wellKnownMimeTypes = Map.of("yaml", "text/vnd.yaml", "yml", "text/vnd.yaml", "json", "application/json");
 
     public DefaultApi() {
         this(Configuration.getDefaultApiClient());
@@ -133,7 +132,10 @@ public class DefaultApi {
         final String[] localVarContentTypes = {
             "application/json", "text/uri-list", "text/vnd.yaml", "application/java-serialized-object", "multipart/form-data"
         };
-        final String localVarContentType = localVarApiClient.selectHeaderContentType(localVarContentTypes);
+
+        String benchmarkFileExt = FilenameUtils.getExtension(body.getName());
+        final String localVarContentType = wellKnownMimeTypes.containsKey(benchmarkFileExt) ? wellKnownMimeTypes.get(benchmarkFileExt) :
+            localVarApiClient.selectHeaderContentType(localVarContentTypes);
         if (localVarContentType != null) {
             localVarHeaderParams.put("Content-Type", localVarContentType);
         }

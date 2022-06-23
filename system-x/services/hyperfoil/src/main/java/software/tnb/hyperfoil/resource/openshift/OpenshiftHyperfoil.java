@@ -5,6 +5,7 @@ import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.hyperfoil.service.Hyperfoil;
+import software.tnb.hyperfoil.service.HyperfoilConfiguration;
 import software.tnb.hyperfoil.validation.generated.ApiException;
 
 import org.slf4j.Logger;
@@ -43,16 +44,17 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public void undeploy() {
-        try {
-            OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
-            WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", HYPERFOIL_CTX.getName(), "app", APP_NAME))
-                .isEmpty(), "waiting for hyperfoil pods are deleted");
-            OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
-        } catch (IOException e) {
-            LOG.error("error on Cryostat deletetion", e);
-            throw new RuntimeException(e);
+        if (!HyperfoilConfiguration.keepRunning()) {
+            try {
+                OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
+                WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", HYPERFOIL_CTX.getName(), "app", APP_NAME))
+                    .isEmpty(), "waiting for hyperfoil pods are deleted");
+                OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+            } catch (IOException e) {
+                LOG.error("error on Cryostat deletetion", e);
+                throw new RuntimeException(e);
+            }
         }
-
     }
 
     @Override

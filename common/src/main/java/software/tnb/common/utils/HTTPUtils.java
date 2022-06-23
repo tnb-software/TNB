@@ -20,6 +20,7 @@ import okhttp3.Headers;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.RequestBody;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 public final class HTTPUtils {
 
@@ -160,5 +161,37 @@ public final class HTTPUtils {
             }
         });
         return builder.build();
+    }
+    
+    public static class OkHttpClientBuilder {
+    
+    	private OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
+    
+		public OkHttpClientBuilder trustAllSslClient() {
+			builder.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0]);
+			builder.hostnameVerifier(new HostnameVerifier() {
+				@Override
+				public boolean verify(String hostname, SSLSession session) {
+					return true;
+				}
+			});
+			return this;
+		}
+		
+		public OkHttpClientBuilder log() {
+			HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
+			logger.setLevel(HttpLoggingInterceptor.Level.BODY);
+			builder.addInterceptor(logger);
+			return this;
+		}
+		
+		public OkHttpClient.Builder getInternalBuilder() {
+			return builder;
+		}
+		
+		public OkHttpClient build() {
+			return builder.build();
+		}
+		
     }
 }
