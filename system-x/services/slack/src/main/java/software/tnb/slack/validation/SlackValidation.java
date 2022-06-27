@@ -48,10 +48,13 @@ public class SlackValidation {
     }
 
     public void sendMessageToChannelName(String text, String channelName) {
-        ConversationsListResponse conversationsList =
-            invoke((c) -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
-        String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().contains(channelName)).findFirst().get().getId();
+        String channelId = getChannelId(channelName);
         sendMessageToChannelId(text, channelId);
+    }
+
+    public List<String> getMessages(MessageRequestConfig messageRequestConfig) {
+        return invoke((c) -> client.methods().conversationsHistory(buildConversationRequest(messageRequestConfig)))
+            .getMessages().stream().map(Message::getText).collect(Collectors.toList());
     }
 
     public List<String> getMessagesFromChannelId(String conversationId) {
@@ -73,6 +76,22 @@ public class SlackValidation {
             .build()));
         String channelId = conversationsList.getChannels().stream().filter(c -> c.getName().equals(channelName)).findFirst().get().getId();
         return getMessagesFromChannelId(channelId);
+    }
+
+    private String getChannelId(String channelName) {
+        ConversationsListResponse conversationsList =
+            invoke((c) -> c.methods().conversationsList(ConversationsListRequest.builder().token(account.token()).build()));
+        return conversationsList.getChannels().stream().filter(c -> c.getName().contains(channelName)).findFirst().get().getId();
+    }
+
+    private ConversationsHistoryRequest buildConversationRequest(MessageRequestConfig config) {
+        ConversationsHistoryRequest.ConversationsHistoryRequestBuilder builder = config.getBuilder();
+        if (config.getChannelName() != null) {
+            builder.channel(getChannelId(config.getChannelName()));
+        }
+        return builder
+            .token(account.token())
+            .build();
     }
 
     @NotNull
