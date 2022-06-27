@@ -21,7 +21,7 @@ public abstract class MSSQL extends SQL {
 
     @Override
     public String jdbcConnectionUrl() {
-        return String.format("jdbc:sqlserver://%s:%d;databaseName=%s", hostname(), port(), account().database());
+        return String.format("jdbc:sqlserver://%s:%d;databaseName=%s;TrustServerCertificate=True", hostname(), port(), account().database());
     }
 
     @Override
