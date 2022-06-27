@@ -21,6 +21,11 @@
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
+            <artifactId>azure-core</artifactId>
+            <version>${azure.core.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
             <artifactId>azure-storage-queue</artifactId>
             <version>${azure.clients.version}</version>
         </dependency>
