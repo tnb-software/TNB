@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Google :: Sheets</name>
 
     <properties>
-        <google-sheets.client.version>v4-rev493-1.23.0</google-sheets.client.version>
+        <google-sheets.client.version>v4-rev20220613-1.32.1</google-sheets.client.version>
     </properties>
 
     <dependencies>
@@ -26,12 +26,17 @@
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
-            <version>${google-api.client.version}</version>
+            <version>${google-oauth-client-jetty.version}</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
             <artifactId>google-api-services-sheets</artifactId>
             <version>${google-sheets.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.auth</groupId>
+            <artifactId>google-auth-library-oauth2-http</artifactId>
+            <version>${google-auth-oauth.version}</version>
         </dependency>
     </dependencies>
 </project>

@@ -1,21 +1,24 @@
 package software.tnb.google.sheets.service;
 
-import software.tnb.google.sheets.validation.SheetsValidation;
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
 import software.tnb.google.sheets.account.GoogleAccount;
+import software.tnb.google.sheets.validation.SheetsValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.googleapis.auth.oauth2.GoogleCredential;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson2.JacksonFactory;
+import com.google.api.client.json.GenericJson;
+import com.google.api.client.json.JsonFactory;
+import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.services.sheets.v4.Sheets;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.UserCredentials;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
@@ -25,7 +28,7 @@ import java.security.GeneralSecurityException;
 public class GoogleSheets implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleSheets.class);
     private static final String APPLICATION_NAME = "TNB test app";
-    private static final JacksonFactory JSON_FACTORY = JacksonFactory.getDefaultInstance();
+    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
 
     private final NetHttpTransport httpTransport;
 
@@ -49,20 +52,22 @@ public class GoogleSheets implements Service {
 
     protected Sheets client() {
         LOG.debug("Creating new Google Sheet client");
-        return new Sheets.Builder(httpTransport, JSON_FACTORY, authorize()).setApplicationName(APPLICATION_NAME).build();
+        return new Sheets.Builder(httpTransport, JSON_FACTORY, createCredentials()).setApplicationName(APPLICATION_NAME).build();
     }
 
-    private Credential authorize() {
-        // authorize
-        Credential credential = new GoogleCredential.Builder()
-            .setJsonFactory(JSON_FACTORY)
-            .setTransport(httpTransport)
-            .setClientSecrets(account().getApiClientId(), account().getApiClientSecret())
-            .build();
+    private HttpCredentialsAdapter createCredentials() {
+        GenericJson json = new GenericJson();
+        json.put("type", "authorized_user");
+        json.put("refresh_token", account().refreshToken());
+        json.put("client_id", account().clientId());
+        json.put("client_secret", account().clientSecret());
+        json.setFactory(JSON_FACTORY);
 
-        credential.setRefreshToken(account().getApiRefreshToken());
-
-        return credential;
+        try {
+            return new HttpCredentialsAdapter(UserCredentials.fromStream(IOUtils.toInputStream(json.toPrettyString(), "UTF-8")));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create credentials", e);
+        }
     }
 
     public SheetsValidation validation() {
