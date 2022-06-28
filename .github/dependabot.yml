@@ -8,3 +8,4 @@ updates:
       - "avano"
     reviewers:
       - "avano"
+    open-pull-requests-limit: 10
