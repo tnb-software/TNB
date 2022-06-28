@@ -16,7 +16,7 @@
 
     <properties>
         <jira.client.version>5.2.4</jira.client.version>
-        <fugue.client.version>4.7.2</fugue.client.version>
+        <fugue.client.version>5.0.0</fugue.client.version>
     </properties>
 
     <dependencies>
