@@ -15,7 +15,7 @@
 
     <properties>
         <gson-version>2.9.0</gson-version>
-        <gson-fire-version>1.8.3</gson-fire-version>
+        <gson-fire-version>1.8.5</gson-fire-version>
     </properties>
 
     <dependencies>
