@@ -169,7 +169,8 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
             // use route for external clients
             ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String.format(
-                "tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true", externalHostname(), 443), account().username(), account().password()
+                "tcp://%s:%s?useTopologyForLoadBalancing=false&sslEnabled=true&verifyHost=false", externalHostname(), 443), account().username(),
+                account().password()
             );
 
             // Create a Connection
