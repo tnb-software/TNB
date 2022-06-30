@@ -11,6 +11,7 @@ import org.apache.commons.compress.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 public class HyperfoilValidation {
     private static final Logger LOG = LoggerFactory.getLogger(HyperfoilValidation.class);
@@ -36,6 +38,16 @@ public class HyperfoilValidation {
         apiClient.setVerifyingSsl(false);
 
         defaultApi = new DefaultApi(apiClient);
+    }
+
+    /**
+     * Load the benchmark hf.yaml on running hyperfoil server, run the benchmark,
+     * wait for result and save the report in the target folder
+     *
+     * @param benchmark - classpath or http/s endpoint
+     */
+    public void startAndWaitForBenchmark(String benchmark) {
+        startAndWaitForBenchmark(benchmark, null);
     }
 
     /**
@@ -104,8 +116,16 @@ public class HyperfoilValidation {
                 }
             }
             ObjectNode node = yamlMapper.readValue(benchmark, ObjectNode.class);
-            // Update http.host with applicationUTEndpoint
-            ((ObjectNode) node.get("http")).put("host", applicationUnderTestEndpoint);
+
+            if (Objects.nonNull(applicationUnderTestEndpoint)) {
+                // Update http.host with applicationUTEndpoint
+                JsonNode httpNode = node.get("http");
+                if (httpNode.isObject()) {
+                    ((ObjectNode) httpNode).put("host", applicationUnderTestEndpoint);
+                } else if (httpNode.isArray()) {
+                    throw new RuntimeException("Array node detected for http.host, impossible to distinguish which host should be replaced");
+                }
+            }
 
             String hyperfoilYaml = yamlMapper.writeValueAsString(node);
             LOG.info("Using the following hyperfoil yaml");
