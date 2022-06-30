@@ -97,7 +97,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static Duration testWaitKillTimeout() {
-        return Duration.of(getInteger(TEST_WAIT_KILL_TIMEOUT, 2), ChronoUnit.HOURS);
+        return Duration.of(getInteger(TEST_WAIT_KILL_TIMEOUT, 120), ChronoUnit.MINUTES);
     }
 
     public static String mavenRepository() {
