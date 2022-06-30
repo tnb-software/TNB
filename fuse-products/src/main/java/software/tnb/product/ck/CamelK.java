@@ -2,6 +2,11 @@ package software.tnb.product.ck;
 
 import static software.tnb.common.utils.IOUtils.writeFile;
 
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.OpenshiftProduct;
 import software.tnb.product.Product;
 import software.tnb.product.application.App;
@@ -14,12 +19,6 @@ import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.interfaces.KameletOps;
 import software.tnb.product.util.executor.Executor;
 import software.tnb.product.util.maven.Maven;
-
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.IOUtils;
-import software.tnb.common.utils.PropertiesUtils;
-import software.tnb.common.utils.WaitUtils;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -107,6 +106,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
             .withNewBuild()
                 .withTimeout(config.mavenBuildTimeout())
             .endBuild();
+
+        if (config.baseImage() != null) {
+            specBuilder.editBuild()
+                .withBaseImage(config.baseImage())
+            .endBuild();
+        }
 
         if (TestConfiguration.mavenSettings() == null) {
             OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(), Map.of("settings.xml", Maven.createSettingsXmlFile()));
