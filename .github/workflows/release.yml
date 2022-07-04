@@ -6,8 +6,10 @@ on:
       - "*"
 
 env:
-  # The gpg-passphrase needs the name of the env variable with key password
+  # The setup-java action needs the name of the env variable with passwords
   GPG_PASSPHRASE: ${{ secrets.GPG_KEY_PASSWORD }}
+  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
 
 jobs:
   deploy-artifacts:
@@ -21,8 +23,8 @@ jobs:
           java-version: '11'
           distribution: 'adopt'
           server-id: ossrh
-          server-username: ${{ secrets.OSSRH_USERNAME }}
-          server-password: ${{ secrets.OSSRH_PASSWORD}}
+          server-username: OSSRH_USERNAME
+          server-password: OSSRH_PASSWORD
           gpg-private-key: ${{ secrets.GPG_KEY }}
           gpg-passphrase: GPG_PASSPHRASE
       - name: Deploy
