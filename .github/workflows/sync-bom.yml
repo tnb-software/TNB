@@ -4,6 +4,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: write
+  pull-requests: write
+
 jobs:
   sync-bom:
     name: Sync BOM
@@ -17,16 +21,17 @@ jobs:
         with:
           java-version: '11'
           distribution: 'adopt'
-      - name: Init Git info
-        run: |
-          git config --global user.email "actions@workflow.github.com"
-          git config --global user.name "GitHub Actions"
-      - name: Sync BOM
+      - name: Build BOM
         run: |
           mvn --no-transfer-progress --activate-profiles update-bom clean install
-
-          if [ -n "$(git status --porcelain)" ]; then
-            git commit --all --message "[BOM] Sync BOM"
-            git push origin main
-          fi
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          add-paths: 'bom/pom.xml'
+          commit-message: '[BOM] Sync BOM'
+          branch: 'action-sync-bom'
+          delete-branch: true
+          title: 'Sync BOM'
+          assignees: 'avano'
 
