@@ -1,0 +1,17 @@
+## What's Changed
+
+{{#commits}}
+{{#ifMatches messageTitle ".*[bB]ump .*"}}{{else}}
+{{>commit}}
+
+{{/ifMatches}}
+{{/commits}}
+
+## Dependency updates
+
+{{#commits}}
+{{#ifMatches messageTitle ".*[bB]ump .*"}}
+{{>commit}}
+
+{{/ifMatches}}
+{{/commits}}
