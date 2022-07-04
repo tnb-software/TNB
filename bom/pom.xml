@@ -31,11 +31,6 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-aws</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-cloudwatch</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -56,12 +51,12 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-aws-kinesis</artifactId>
+                <artifactId>system-x-aws-kinesis-firehose</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-aws-kinesis-firehose</artifactId>
+                <artifactId>system-x-aws-kinesis</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -91,7 +86,7 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-azure</artifactId>
+                <artifactId>system-x-aws</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -116,6 +111,11 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-azure</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-cassandra</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -131,12 +131,12 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-db</artifactId>
+                <artifactId>system-x-db-common</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-db-common</artifactId>
+                <artifactId>system-x-db</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -151,12 +151,12 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-google</artifactId>
+                <artifactId>system-x-google-sheets</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-google-sheets</artifactId>
+                <artifactId>system-x-google</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -181,12 +181,12 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-jms</artifactId>
+                <artifactId>system-x-jms-client</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-jms-client</artifactId>
+                <artifactId>system-x-jms</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
