@@ -1,0 +1,82 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "*"
+
+jobs:
+  deploy-artifacts:
+    runs-on: ubuntu-latest
+    name: Deploy artifacts
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          server-id: ossrh
+          server-username: ${{ secrets.OSSRH_USERNAME }}
+          server-password: ${{ secrets.OSSRH_PASSWORD}}
+          gpg-private-key: ${{ secrets.GPG_KEY }}
+          gpg-passphrase: ${{ secrets.GPG_KEY_PASSWORD }}
+      - name: Deploy
+        run: mvn --no-transfer-progress --activate-profiles deploy clean deploy
+  create-changelog:
+    runs-on: ubuntu-latest
+    name: Create changelog
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Fetch the whole history to have all released tags available
+          fetch-depth: 0
+      # Create a timestamp and save it to env
+      - name: Set timestamp
+        run: 'echo "TIMESTAMP=$(date +%s)" >> $GITHUB_ENV'
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: CHANGELOG.md
+          # The cache always needs a unique key, as otherwise it would return a value from previous action run
+          key: changelog-${{ env.TIMESTAMP }}
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Create changelog
+        id: create-changelog
+        run: |
+          # Sort the tags and grab a previous one (should be previous released version)
+          previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' refs/tags | tail -2 | head -n 1)"
+          # Get the first "real" commit - ignoring "Back to 1.0-SNAPSHOT" commit
+          first_commit="$(git log --pretty=format:%h --reverse "${previous_tag}".."${{ github.ref_name }}" | sed -n 3p)"
+          mvn --non-recursive --no-transfer-progress --activate-profiles changelog generate-sources -DfromCommit=${first_commit}
+
+  create-github-release:
+    runs-on: ubuntu-latest
+    name: Create GitHub release
+    needs: [create-changelog, deploy-artifacts]
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup cache
+        uses: actions/cache@v3
+        with:
+          path: CHANGELOG.md
+          key: changelog-${{ env.TIMESTAMP }}
+      - uses: ncipollo/release-action@v1.10.0
+        with:
+          bodyFile: CHANGELOG.md
+          tag: ${{ github.ref_name }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  send-notification:
+    runs-on: ubuntu-latest
+    name: Send release notification
+    needs: [create-github-release]
+    steps:
+      - run: 'curl -X POST -H "Content-Type: application/json" -d "{\"text\": \"\`\`\`🎉 TNB ${{ github.ref_name }} released 🎉\`\`\`\nCheck out the release page to see what has changed 🕺\n\nhttps://github.com/${{ github.repository }}/releases/tag/${{ github.ref_name }}\"}" "${{ secrets.WEBHOOK_URL }}"'
+
