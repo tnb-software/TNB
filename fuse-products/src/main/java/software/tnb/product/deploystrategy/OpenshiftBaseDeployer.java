@@ -1,11 +1,10 @@
 package software.tnb.product.deploystrategy;
 
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.product.endpoint.Endpoint;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.interfaces.OpenshiftDeployer;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.OpenshiftLog;
@@ -164,5 +163,10 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             .filter(entry -> entry.getKey() instanceof String && entry.getValue() instanceof String)
             .map(entry -> "-D" + entry.getKey() + "=" + entry.getValue())
             .collect(Collectors.joining(" "));
+    }
+
+    protected boolean isIntegrationPodFailed() {
+        final Optional<Pod> integrationPod = OpenshiftClient.get().getPods().stream().filter(this.podSelector()).findFirst();
+        return integrationPod.isPresent() && OpenshiftClient.get().isPodFailed(integrationPod.get());
     }
 }

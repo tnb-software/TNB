@@ -1,7 +1,5 @@
 package software.tnb.product.deploystrategy.impl;
 
-import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
@@ -10,6 +8,7 @@ import software.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
 import software.tnb.product.endpoint.Endpoint;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 
@@ -27,7 +26,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 
 import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 
@@ -123,8 +121,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public boolean isFailed() {
-        return OpenshiftClient.get()
-            .isPodFailed(OpenshiftClient.get().getLabeledPods(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), name)).get(0));
+        return isIntegrationPodFailed();
     }
 
     private void setEnvVar(String envName, String envValue) throws IOException, InterruptedException {

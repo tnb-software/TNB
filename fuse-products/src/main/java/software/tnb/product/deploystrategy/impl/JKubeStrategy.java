@@ -56,7 +56,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
     @Override
     public void doDeploy() {
         Map<String, String> mvnProps = new HashMap<>();
-        if(integrationBuilder instanceof  AbstractMavenGitIntegrationBuilder
+        if (integrationBuilder instanceof  AbstractMavenGitIntegrationBuilder
             && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
             mvnProps = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties();
         }
@@ -178,7 +178,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
     private boolean integrationPodFailed() {
         final List<Pod> pods = OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name);
         if (pods.size() == 0) {
-            return false;
+            return isIntegrationPodFailed();
         } else {
             return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
         }
