@@ -32,6 +32,8 @@
         <module>telegram</module>
         <module>hyperfoil</module>
         <module>cryostat</module>
+        <module>horreum</module>
+        <module>prometheus-metrics</module>
     </modules>
 
     <dependencies>

@@ -25,10 +25,14 @@ import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class HyperfoilValidation {
     private static final Logger LOG = LoggerFactory.getLogger(HyperfoilValidation.class);
-    private static final Long WAIT_BENCHMARK_SLEEP_TIME = 1000L;
+    private static final Long WAIT_BENCHMARK_SLEEP_TIME = 10000L;
     private static final ObjectMapper yamlMapper = new YAMLMapper();
     private final DefaultApi defaultApi;
 
@@ -36,8 +40,23 @@ public class HyperfoilValidation {
         ApiClient apiClient = Configuration.getDefaultApiClient();
         apiClient.setBasePath(basePath);
         apiClient.setVerifyingSsl(false);
-
         defaultApi = new DefaultApi(apiClient);
+    }
+
+    private TestRun doStartAndWaitForBenchmark(Run run) {
+        Run finalRun = waitForRun(run);
+        LOG.info("Benchmark finished");
+
+        LOG.info(getRun(run.getId()).toString());
+
+        LOG.info("Generating report");
+        String report = generateReport(run);
+        Path reportFile = saveReportToFile(run, report);
+        LOG.info("Report generated " + reportFile.toAbsolutePath());
+
+        String started = finalRun.getStarted();
+        String terminated = finalRun.getTerminated();
+        return new TestRun(started, terminated);
     }
 
     /**
@@ -56,8 +75,9 @@ public class HyperfoilValidation {
      *
      * @param benchmark - classpath or http/s endpoint
      * @param applicationUnderTestEndpoint
+     * @return an object holding the startTime and endTime of the test
      */
-    public void startAndWaitForBenchmark(String benchmark, String applicationUnderTestEndpoint) {
+    public TestRun startAndWaitForBenchmark(String benchmark, String applicationUnderTestEndpoint) {
         LOG.info("Add benchmark " + benchmark);
         String benchmarkName = addBenchmark(benchmark, applicationUnderTestEndpoint);
 
@@ -65,15 +85,26 @@ public class HyperfoilValidation {
         Run run = runBenchmark(benchmarkName);
         LOG.info("Run started");
         LOG.info(run.toString());
+        return doStartAndWaitForBenchmark(run);
+    }
 
-        waitForRun(run);
-        LOG.info("Benchmark finished");
-        LOG.info(getRun(run.getId()).toString());
+    /**
+     * Load the benchmark hf.yaml on running hyperfoil server, run the benchmark,
+     * wait for result and save the report in the target folder
+     *
+     * @param benchmark classpath or http/s endpoint of a benchmark yaml or template
+     * @param parameters if not null the parameters will be supplied to the template
+     * @return an object holding the startTime and endTime of the test
+     */
+    public TestRun startAndWaitForBenchmarkTemplate(String benchmark, Map<String, ?> parameters) {
+        LOG.info("Add benchmark " + benchmark);
+        String benchmarkName = addBenchmark(benchmark);
 
-        LOG.info("Generating report");
-        String report = generateReport(run);
-        Path reportFile = saveReportToFile(run, report);
-        LOG.info("Report generated " + reportFile.toAbsolutePath());
+        LOG.info("Run benchmark");
+        Run run = runBenchmark(benchmarkName, parameters);
+        LOG.info("Run started");
+        LOG.info(run.toString());
+        return doStartAndWaitForBenchmark(run);
     }
 
     private Path saveReportToFile(Run run, String report) {
@@ -96,25 +127,66 @@ public class HyperfoilValidation {
         }
     }
 
+    private String retrieveBenchmarkFile(String benchmarkUri) throws IOException {
+        String benchmark;
+        if (benchmarkUri.startsWith("http:") || benchmarkUri.startsWith("https:")) {
+            HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient())
+                .get(benchmarkUri);
+            if (response.getResponseCode() != 200) {
+                throw new RuntimeException("Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
+            }
+            benchmark = response.getBody();
+        } else {
+            if (!benchmarkUri.startsWith("/")) {
+                benchmarkUri = "/" + benchmarkUri;
+            }
+            try (InputStream is = this.getClass().getResourceAsStream(benchmarkUri)) {
+                byte[] benchmarkByteArray = IOUtils.toByteArray(is);
+                benchmark = new String(benchmarkByteArray);
+            }
+        }
+        if (benchmark == null) {
+            throw new IllegalStateException("Benchmark file at " + benchmarkUri + " not found");
+        }
+        return benchmark;
+    }
+
+    /**
+     * the benchmark located at the benchmarkUri value could be a simple yaml benchmark or a template
+     *
+     * @param benchmarkUri
+     * @return
+     */
+    public String addBenchmark(String benchmarkUri) {
+        try {
+            String benchmark = retrieveBenchmarkFile(benchmarkUri);
+            Pattern pattern = Pattern.compile("^name:[ ]*(.*)$", Pattern.MULTILINE);
+            Matcher matcher = pattern.matcher(benchmark);
+            if (!matcher.find()) {
+                throw new IllegalArgumentException("the benchmark file don't contain the field 'name'");
+            }
+            String name = matcher.group(1);
+            LOG.info("Using benchmark with name: " + name);
+            File tempBenchmarkFile = Files.createTempFile(name, ".yaml").toFile();
+            Files.writeString(tempBenchmarkFile.toPath(), benchmark);
+            getDefaultApi().addBenchmark(null, null, tempBenchmarkFile);
+            return name;
+        } catch (ApiException | IOException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * the benchmark located at the benchmarkUri value is expected to be a yaml benchmark with a placeholder for the target application host value
+     *
+     * @param benchmarkUri
+     * @param applicationUnderTestEndpoint
+     * @return
+     */
     public String addBenchmark(String benchmarkUri, String applicationUnderTestEndpoint) {
         try {
-            String benchmark;
-            if (benchmarkUri.startsWith("http:") || benchmarkUri.startsWith("https:")) {
-                HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient())
-                    .get(benchmarkUri);
-                if (response.getResponseCode() != 200) {
-                    throw new RuntimeException("Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
-                }
-                benchmark = response.getBody();
-            } else {
-                if (!benchmarkUri.startsWith("/")) {
-                    benchmarkUri = "/" + benchmarkUri;
-                }
-                try (InputStream is = this.getClass().getResourceAsStream(benchmarkUri)) {
-                    byte[] benchmarkByteArray = IOUtils.toByteArray(is);
-                    benchmark = new String(benchmarkByteArray);
-                }
-            }
+            String benchmark = retrieveBenchmarkFile(benchmarkUri);
             ObjectNode node = yamlMapper.readValue(benchmark, ObjectNode.class);
 
             if (Objects.nonNull(applicationUnderTestEndpoint)) {
@@ -153,7 +225,7 @@ public class HyperfoilValidation {
         }
     }
 
-    public void waitForRun(Run run) {
+    public Run waitForRun(Run run) {
         try {
             while (!run.getCompleted()) {
                 run = getDefaultApi().getRun(run.getId());
@@ -166,6 +238,7 @@ public class HyperfoilValidation {
         } catch (ApiException | InterruptedException e) {
             LOG.error(e.getMessage(), e);
         }
+        return run;
     }
 
     public List<String> listBenchmarks() throws ApiException {
@@ -173,19 +246,24 @@ public class HyperfoilValidation {
     }
 
     public Run runBenchmark(String benchmarkName) {
+        return runBenchmark(benchmarkName, null);
+    }
+
+    public Run runBenchmark(String benchmarkName, Map<String, ?> parameters) {
         try {
-            if (listBenchmarks().size() == 0) {
-                throw new RuntimeException("Benchmark not found, execute addBenchmark(...)");
+            // benchmark defined as template are not being got back by listBenchmark operation
+            if (parameters == null && !listBenchmarks().contains(benchmarkName)) {
+                throw new RuntimeException("Benchmark with name " + benchmarkName + " does not exists");
             }
-
-            String benchmark = listBenchmarks().stream()
-                .filter(n -> n.equals(benchmarkName))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Benchmark with name " + benchmarkName + " does not exists"));
-
             String triggerJob = System.getenv("BUILD_URL") != null ? System.getenv("BUILD_URL") : null;
 
-            return getDefaultApi().startBenchmark(benchmark, "TNB - " + benchmark, triggerJob, null, null);
+            List<String> params = null;
+            if (parameters != null && parameters.size() > 0) {
+                params = parameters.entrySet().stream().map(en -> String.format("%s=%s", en.getKey(), en.getValue().toString()))
+                    .collect(Collectors.toList());
+            }
+
+            return getDefaultApi().startBenchmark(benchmarkName, "TNB - " + benchmarkName, triggerJob, null, params);
         } catch (ApiException e) {
             LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
