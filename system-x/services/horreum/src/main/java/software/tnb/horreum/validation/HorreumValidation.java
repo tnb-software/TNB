@@ -86,7 +86,7 @@ public class HorreumValidation {
             } catch (ApiException e) {
                 throw new RuntimeException(e);
             }
-        }).filter(change -> change.getDataset().getId().equals(runDataId)).collect(Collectors.toList());
+        }).filter(change -> change.getDataset().getRunId().equals(runDataId)).collect(Collectors.toList());
         return changes;
     }
 }
