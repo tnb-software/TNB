@@ -1,9 +1,10 @@
 package software.tnb.aws.redshift.validation;
 
 import software.tnb.aws.redshift.account.RedshiftAWSAccount;
-
 import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
+
+import org.junit.jupiter.api.Assertions;
 
 import java.util.List;
 
@@ -40,7 +41,16 @@ public class RedshiftValidation implements Validation {
                 .dbUser(cluster.masterUsername())
                 .sql(sql).build()).id();
         WaitUtils.waitFor(
-            () -> getStatementStatus(responseId).equalsIgnoreCase("FINISHED"), 20,
+            () -> {
+                switch (getStatementStatus(responseId).toUpperCase()) {
+                    case "FINISHED":
+                        return true;
+                    case "FAILED":
+                        Assertions.fail(String.format("Failure executing sql statement: '%s'", sql));
+                    default:
+                        return false;
+                }
+            }, 20,
             5000, "waiting until the statement " + sql + " is finished");
         return responseId;
     }

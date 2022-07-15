@@ -48,8 +48,8 @@ public final class WaitUtils {
     /**
      * Waits until the check return true.
      *
-     * @param resourceCheck booleansupplier instance
-     * @param retries number of retires
+     * @param resourceCheck success condition
+     * @param retries number of retries
      * @param waitTime wait time between the retries
      * @param logMessage log message that will be printed out before waiting
      * @throws TimeoutException when the check isn't true after the time expires
