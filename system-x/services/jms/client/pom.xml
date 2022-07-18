@@ -16,6 +16,7 @@
     <properties>
         <jms.api.version>2.0.1</jms.api.version>
         <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
+        <paho.mqtt5.client.version>1.2.5</paho.mqtt5.client.version>
     </properties>
 
     <dependencies>
@@ -29,6 +30,11 @@
             <groupId>org.eclipse.paho</groupId>
             <artifactId>org.eclipse.paho.client.mqttv3</artifactId>
             <version>${paho.mqtt.client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.eclipse.paho</groupId>
+            <artifactId>org.eclipse.paho.mqttv5.client</artifactId>
+            <version>${paho.mqtt5.client.version}</version>
         </dependency>
     </dependencies>
 </project>
