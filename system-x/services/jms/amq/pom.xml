@@ -16,7 +16,7 @@
     <properties>
         <artemis.jms.client.version>2.23.1</artemis.jms.client.version>
         <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
-        <paho.mqtt5.client.version>1.2.5.redhat-00001</paho.mqtt5.client.version>
+        <paho.mqtt5.client.version>1.2.5</paho.mqtt5.client.version>
     </properties>
 
     <dependencies>
@@ -45,11 +45,4 @@
             <version>${paho.mqtt5.client.version}</version>
         </dependency>
     </dependencies>
-
-    <repositories>
-        <repository>
-            <id>redhat-ga</id>
-            <url>https://maven.repository.redhat.com/ga/</url>
-        </repository>
-    </repositories>
 </project>
