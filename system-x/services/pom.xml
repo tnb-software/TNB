@@ -34,6 +34,7 @@
         <module>cryostat</module>
         <module>horreum</module>
         <module>prometheus-metrics</module>
+        <module>lra-coordinator</module>
     </modules>
 
     <dependencies>
