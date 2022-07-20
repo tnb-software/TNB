@@ -25,7 +25,7 @@ public class SagaLRACustomizer extends RestCustomizer {
     public void customizeSpringboot() {
         super.customizeSpringboot();
         getIntegrationBuilder().addToProperties(getCommonProperties());
-        getIntegrationBuilder().dependencies("lra", "undertow");
+        getIntegrationBuilder().dependencies("lra", "undertow", "servlet");
     }
 
     private Map<String, String> getCommonProperties() {
