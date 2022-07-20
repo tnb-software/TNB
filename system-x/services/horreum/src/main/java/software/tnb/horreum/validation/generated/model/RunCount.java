@@ -22,7 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * RunCount
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
 public class RunCount {
     public static final String SERIALIZED_NAME_TOTAL = "total";
     public static final String SERIALIZED_NAME_ACTIVE = "active";
