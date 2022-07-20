@@ -78,6 +78,6 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String openshiftBaseImage() {
-        return getProperty(OPENSHIFT_SB_BASE_IMAGE, "registry.access.redhat.com/ubi8/openjdk-17:latest");
+        return getProperty(OPENSHIFT_SB_BASE_IMAGE, "registry.access.redhat.com/ubi8/openjdk-11:latest");
     }
 }
