@@ -13,7 +13,7 @@
     <name>TNB :: BOM</name>
 
     <properties>
-        <exec.plugin.version>3.0.0</exec.plugin.version>
+        <exec.plugin.version>3.1.0</exec.plugin.version>
         <xml.format.plugin.version>3.2.1</xml.format.plugin.version>
     </properties>
 
