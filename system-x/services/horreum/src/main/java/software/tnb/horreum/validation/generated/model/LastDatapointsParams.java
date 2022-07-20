@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * LastDatapointsParams
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
 public class LastDatapointsParams {
     public static final String SERIALIZED_NAME_VARIABLES = "variables";
     public static final String SERIALIZED_NAME_FINGERPRINT = "fingerprint";

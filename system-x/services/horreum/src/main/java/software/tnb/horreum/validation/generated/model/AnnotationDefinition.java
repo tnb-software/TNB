@@ -24,7 +24,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * AnnotationDefinition
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
 public class AnnotationDefinition {
     public static final String SERIALIZED_NAME_TITLE = "title";
     public static final String SERIALIZED_NAME_TEXT = "text";

@@ -22,7 +22,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * KeycloakConfig
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
 public class KeycloakConfig {
     public static final String SERIALIZED_NAME_REALM = "realm";
     public static final String SERIALIZED_NAME_URL = "url";

@@ -23,7 +23,7 @@ import io.swagger.annotations.ApiModelProperty;
 /**
  * DatapointLastTimestamp
  */
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
+@jakarta.annotation.Generated(value = "org.openapitools.codegen.languages.JavaClientCodegen", date = "2022-07-12T10:19:43.430893315+02:00[Europe/Rome]")
 public class DatapointLastTimestamp {
     public static final String SERIALIZED_NAME_VARIABLE = "variable";
     public static final String SERIALIZED_NAME_TIMESTAMP = "timestamp";
