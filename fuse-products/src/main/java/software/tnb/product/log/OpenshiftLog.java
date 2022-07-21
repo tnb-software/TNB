@@ -74,7 +74,9 @@ public class OpenshiftLog extends Log {
                 1000,
                 "Waiting until the pod is terminated to collect logs from failed integration");
             Pod p = OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().get();
-            return StringUtils.removeColorCodes(OpenshiftClient.get().pods().withName(p.getMetadata().getName()).terminated().getLog());
+
+            return StringUtils.removeColorCodes(OpenshiftClient.get().pods().withName(p.getMetadata().getName())
+                .inContainer(OpenshiftClient.get().getIntegrationContainer(p)).terminated().getLog());
         } catch (TimeoutException e) {
             LOG.error("Unable to find terminated pod to collect logs from failed integration");
             return "<Timed out waiting to have a terminated pod>";
