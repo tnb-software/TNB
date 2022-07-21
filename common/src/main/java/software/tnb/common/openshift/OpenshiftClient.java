@@ -27,8 +27,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.Config;
-import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
@@ -340,16 +338,7 @@ public class OpenshiftClient extends OpenShift {
      * @return log of the pod
      */
     public String getLogs(Pod p) {
-        PodResource<Pod> pr = OpenshiftClient.get().pods().withName(p.getMetadata().getName());
-        final List<Container> allContainers = OpenshiftClient.get().getAllContainers(p);
-        Container c;
-        if (allContainers.size() == 1) {
-            c = allContainers.get(0);
-        } else {
-            // this throws exception if there is no "integration" container, we can solve that later once it starts failing
-            c = OpenshiftClient.get().getContainer(p, "integration");
-        }
-        return pr.inContainer(c.getName()).getLog();
+        return OpenshiftClient.get().pods().withName(p.getMetadata().getName()).inContainer(getIntegrationContainer(p)).getLog();
     }
 
     /**
@@ -388,5 +377,27 @@ public class OpenshiftClient extends OpenShift {
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    /**
+     * Gets the integration container name. In case of multiple containers in a pod, the one with the name "integration" is returned.
+     *
+     * @param pod pod
+     * @return container name
+     */
+    public String getIntegrationContainer(Pod pod) {
+        String container;
+        List<Container> containerList = getAllContainers(pod);
+        if (containerList.size() > 1) {
+            Optional<Container> integrationContainer = containerList.stream().filter(c -> "integration".equalsIgnoreCase(c.getName())).findFirst();
+            if (integrationContainer.isEmpty()) {
+                throw new RuntimeException("There were multiple containers in pod and \"integration\" container was not present");
+            } else {
+                container = integrationContainer.get().getName();
+            }
+        } else {
+            container = containerList.get(0).getName();
+        }
+        return container;
     }
 }

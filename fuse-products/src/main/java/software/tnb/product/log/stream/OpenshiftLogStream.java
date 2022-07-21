@@ -14,12 +14,10 @@ import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
-import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 
@@ -75,18 +73,7 @@ public class OpenshiftLogStream implements LogStream {
      * @param pod pod
      */
     private void startWatch(Pod pod) {
-        String container;
-        List<Container> containerList = OpenshiftClient.get().getAllContainers(pod);
-        if (containerList.size() > 1) {
-            Optional<Container> integrationContainer = containerList.stream().filter(c -> "integration".equalsIgnoreCase(c.getName())).findFirst();
-            if (integrationContainer.isEmpty()) {
-                throw new RuntimeException("There were multiple containers in pod and \"integration\" container was not present");
-            } else {
-                container = integrationContainer.get().getName();
-            }
-        } else {
-            container = containerList.get(0).getName();
-        }
+        String container = OpenshiftClient.get().getIntegrationContainer(pod);
 
         watchers.put(
             pod.getMetadata().getName(),
