@@ -35,5 +35,7 @@ public abstract class LRACoordinator implements Service, WithDockerImage {
 
     public abstract String getUrl();
 
+    public abstract String getExternalUrl();
+
     public abstract String getLog();
 }

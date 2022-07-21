@@ -34,6 +34,10 @@ import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
 import io.fabric8.openshift.api.model.ImageStream;
 import io.fabric8.openshift.api.model.ImageStreamBuilder;
+import io.fabric8.openshift.api.model.RouteBuilder;
+import io.fabric8.openshift.api.model.RoutePortBuilder;
+import io.fabric8.openshift.api.model.RouteSpecBuilder;
+import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
 
 @AutoService(LRACoordinator.class)
 public class OpenshiftLRACoordinator extends LRACoordinator implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -44,13 +48,15 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift LRA Coordinator");
-        LOG.debug("Deleting services");
+        LOG.debug("Deleting route");
+        OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        LOG.debug("Deleting service");
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .timeout(120_000).waitFor();
-        LOG.debug("Deleting image streams");
+        LOG.debug("Deleting image stream");
         OpenshiftClient.get().imageStreams().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
     }
 
@@ -62,6 +68,13 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
     @Override
     public String getUrl() {
         return String.format("http://%s:%s", hostname(), port());
+    }
+
+    @Override
+    public String getExternalUrl() {
+        return String.format("http://%s", OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .list().getItems().stream().findFirst().orElseThrow(() -> new RuntimeException("unable to find route for " + name()))
+            .getSpec().getHost());
     }
 
     @Override
@@ -161,6 +174,26 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                         .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
                     .editOrNewSpecLike(serviceSpecBuilder.build())
+                    .endSpec()
+                    .build()
+            );
+
+            LOG.debug("Creating route {}", key);
+            OpenshiftClient.get().routes().createOrReplace(
+                new RouteBuilder()
+                    .editOrNewMetadata()
+                    .withName(key)
+                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endMetadata()
+                    .editOrNewSpecLike(new RouteSpecBuilder()
+                        .withTo(new RouteTargetReferenceBuilder()
+                            .withName(key)
+                            .withKind("Service")
+                            .build())
+                        .withPort(new RoutePortBuilder()
+                            .withTargetPort(new IntOrString(value))
+                            .build())
+                        .build())
                     .endSpec()
                     .build()
             );
