@@ -44,6 +44,11 @@ public class LocalLRACoordinator extends LRACoordinator implements Deployable {
     }
 
     @Override
+    public String getExternalUrl() {
+        return getUrl();
+    }
+
+    @Override
     public String getLog() {
         return container.getLogs();
     }
