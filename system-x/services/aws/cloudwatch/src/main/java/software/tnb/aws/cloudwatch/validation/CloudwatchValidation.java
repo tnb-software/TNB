@@ -12,6 +12,8 @@ import java.util.List;
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
 import software.amazon.awssdk.services.cloudwatch.model.GetMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.GetMetricDataResponse;
+import software.amazon.awssdk.services.cloudwatch.model.ListMetricsRequest;
+import software.amazon.awssdk.services.cloudwatch.model.ListMetricsResponse;
 import software.amazon.awssdk.services.cloudwatch.model.Metric;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDataQuery;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDataResult;
@@ -64,5 +66,18 @@ public class CloudwatchValidation implements Validation {
             data = response.metricDataResults();
         }
         return data;
+    }
+
+    public ListMetricsResponse listMetrics(String namespace, String metricName) {
+        LOG.debug("Fetching Couldwatch metric {} from namespace {}", metricName, namespace);
+
+        ListMetricsRequest request = ListMetricsRequest.builder()
+            .metricName(metricName)
+            .namespace(namespace)
+            .build();
+
+        ListMetricsResponse response = client.listMetrics(request);
+
+        return response;
     }
 }
