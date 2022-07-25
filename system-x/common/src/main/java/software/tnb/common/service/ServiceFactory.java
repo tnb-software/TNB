@@ -1,6 +1,7 @@
 package software.tnb.common.service;
 
 import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.OpenshiftDeployable;
 
 import org.slf4j.Logger;
@@ -38,7 +39,13 @@ public final class ServiceFactory {
 
         // If there are multiple, decide which one should be returned
         final Optional<S> service = StreamSupport.stream(loader.spliterator(), false)
-            .filter(s -> s instanceof OpenshiftDeployable == OpenshiftConfiguration.isOpenshift())
+            .filter(s -> {
+                if (OpenshiftConfiguration.isOpenshift()) {
+                    return s instanceof OpenshiftDeployable || s.getClass().getSimpleName().toLowerCase().contains("openshift");
+                } else {
+                    return s instanceof Deployable || s.getClass().getSimpleName().toLowerCase().contains("local");
+                }
+            })
             .findFirst();
         if (service.isEmpty()) {
             LOG.error("No Service class implementation for class {} / environment {} found!",
