@@ -27,6 +27,7 @@
         <module>kafka</module>
         <module>db</module>
         <module>elasticsearch</module>
+        <module>filesystem</module>
         <module>salesforce</module>
         <module>servicenow</module>
         <module>telegram</module>
