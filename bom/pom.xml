@@ -41,11 +41,6 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-filesystem</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-dynamo-db</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -147,6 +142,11 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-elasticsearch</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-filesystem</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
