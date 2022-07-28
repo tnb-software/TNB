@@ -2,6 +2,8 @@ package software.tnb.horreum.service;
 
 import software.tnb.common.config.Configuration;
 
+import java.util.Optional;
+
 public class HorreumConfiguration extends Configuration {
 
     public static final String URL = "horreum.url";
@@ -9,6 +11,7 @@ public class HorreumConfiguration extends Configuration {
     public static final String SCHEMA = "horreum.schema";
     public static final String TEST_OWNER = "horreum.testowner";
     public static final String HTTP_LOG_ENABLED = "horreum.http.log.enabled";
+    public static final String FINGERPRINT_NAME = "horreum.fingerprint.name";
 
     public static String getUrl() {
         return getProperty(URL);
@@ -28,5 +31,9 @@ public class HorreumConfiguration extends Configuration {
 
     public static boolean isHttpLogEnabled() {
         return getBoolean(HTTP_LOG_ENABLED, false);
+    }
+
+    public static Optional<String> getFingerprintName() {
+        return Optional.ofNullable(getProperty(FINGERPRINT_NAME));
     }
 }

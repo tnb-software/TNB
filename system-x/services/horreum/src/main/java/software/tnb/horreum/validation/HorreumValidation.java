@@ -76,13 +76,13 @@ public class HorreumValidation {
         return (String) resp.get("access_token");
     }
 
-    public List<Change> detectChanges(String testName, String accessToken, Integer runDataId) throws Exception {
+    public List<Change> detectChanges(String testName, String accessToken, Integer runDataId, String fingerprint) throws Exception {
         defaultApi.getApiClient().addDefaultHeader("Authorization", "Bearer " + accessToken);
         Test test = defaultApi.testServiceGetByNameOrId(testName);
         List<Variable> variables = defaultApi.alertingServiceVariables(test.getId());
         List<Change> changes = variables.stream().flatMap(var -> {
             try {
-                return defaultApi.alertingServiceChanges(var.getId(), null).stream();
+                return defaultApi.alertingServiceChanges(var.getId(), fingerprint).stream();
             } catch (ApiException e) {
                 throw new RuntimeException(e);
             }

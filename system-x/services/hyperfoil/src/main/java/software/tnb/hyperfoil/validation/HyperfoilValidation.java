@@ -5,6 +5,7 @@ import software.tnb.hyperfoil.validation.generated.ApiClient;
 import software.tnb.hyperfoil.validation.generated.ApiException;
 import software.tnb.hyperfoil.validation.generated.Configuration;
 import software.tnb.hyperfoil.validation.generated.api.DefaultApi;
+import software.tnb.hyperfoil.validation.generated.model.RequestStatisticsResponse;
 import software.tnb.hyperfoil.validation.generated.model.Run;
 
 import org.apache.commons.compress.utils.IOUtils;
@@ -24,8 +25,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -43,7 +44,7 @@ public class HyperfoilValidation {
         defaultApi = new DefaultApi(apiClient);
     }
 
-    private TestRun doStartAndWaitForBenchmark(Run run) {
+    private TestResult doStartAndWaitForBenchmark(Run run) {
         Run finalRun = waitForRun(run);
         LOG.info("Benchmark finished");
 
@@ -53,10 +54,16 @@ public class HyperfoilValidation {
         String report = generateReport(run);
         Path reportFile = saveReportToFile(run, report);
         LOG.info("Report generated " + reportFile.toAbsolutePath());
-
-        String started = finalRun.getStarted();
-        String terminated = finalRun.getTerminated();
-        return new TestRun(started, terminated);
+        if (finalRun == null) {
+            throw new IllegalStateException("Unexpected error, probably the hyperfoil test, failed");
+        }
+        try {
+            RequestStatisticsResponse totalStats = getDefaultApi().getTotalStats(finalRun.getId());
+            return new TestResult(finalRun, totalStats);
+        } catch (Exception e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
+        }
     }
 
     /**
@@ -77,7 +84,7 @@ public class HyperfoilValidation {
      * @param applicationUnderTestEndpoint
      * @return an object holding the startTime and endTime of the test
      */
-    public TestRun startAndWaitForBenchmark(String benchmark, String applicationUnderTestEndpoint) {
+    public TestResult startAndWaitForBenchmark(String benchmark, String applicationUnderTestEndpoint) {
         LOG.info("Add benchmark " + benchmark);
         String benchmarkName = addBenchmark(benchmark, applicationUnderTestEndpoint);
 
@@ -96,7 +103,7 @@ public class HyperfoilValidation {
      * @param parameters if not null the parameters will be supplied to the template
      * @return an object holding the startTime and endTime of the test
      */
-    public TestRun startAndWaitForBenchmarkTemplate(String benchmark, Map<String, ?> parameters) {
+    public TestResult startAndWaitForBenchmarkTemplate(String benchmark, Map<String, ?> parameters) {
         LOG.info("Add benchmark " + benchmark);
         String benchmarkName = addBenchmark(benchmark);
 
