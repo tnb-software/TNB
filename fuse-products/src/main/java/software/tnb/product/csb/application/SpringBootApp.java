@@ -1,16 +1,15 @@
 package software.tnb.product.csb.application;
 
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.IOUtils;
+import software.tnb.product.application.App;
 import software.tnb.product.csb.configuration.SpringBootConfiguration;
 import software.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
+import software.tnb.product.git.MavenGitRepository;
 import software.tnb.product.integration.builder.AbstractGitIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
-
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.utils.IOUtils;
-import software.tnb.product.application.App;
-import software.tnb.product.git.MavenGitRepository;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
@@ -28,6 +27,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -44,20 +44,24 @@ public abstract class SpringBootApp extends App {
         } else {
             LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
+            Map<String, String> properties = new HashMap<>(11);
+            properties.putAll(Map.of(
+                "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
+                "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
+                "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
+                "groupId", TestConfiguration.appGroupId(),
+                "artifactId", name,
+                "version", "1.0.0-SNAPSHOT",
+                "package", TestConfiguration.appGroupId(),
+                "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
+                "spring-boot-version", SpringBootConfiguration.springBootVersion(),
+                "camel-version", SpringBootConfiguration.camelSpringBootVersion()));
+            properties.put("archetypeCatalog", "internal");
+
             Maven.invoke(new BuildRequest.Builder()
                 .withBaseDirectory(TestConfiguration.appLocation())
                 .withGoals("archetype:generate")
-                .withProperties(Map.of(
-                    "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
-                    "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
-                    "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
-                    "groupId", TestConfiguration.appGroupId(),
-                    "artifactId", name,
-                    "version", "1.0.0-SNAPSHOT",
-                    "package", TestConfiguration.appGroupId(),
-                    "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-                    "spring-boot-version", SpringBootConfiguration.springBootVersion(),
-                    "camel-version", SpringBootConfiguration.camelSpringBootVersion()))
+                .withProperties(properties)
                 .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
                 .withLogMarker(LogStream.marker(name, "generate"))
                 .build());
