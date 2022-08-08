@@ -4,8 +4,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.assertj.core.api.Assertions;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
@@ -21,10 +19,12 @@ import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -47,11 +47,8 @@ public class SpringBootAppTest extends LocalAppTestParent {
         assertThat(app.getName()).isEqualTo(name());
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 
-        SoftAssertions sa = new SoftAssertions();
-        InvocationRequest request = TEST_INVOKER.getRequests().get(0);
-        sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(TestConfiguration.appLocation().toAbsolutePath().toString());
-        sa.assertThat(request.getGoals()).containsOnly("archetype:generate");
-        sa.assertThat(request.getProperties()).isEqualTo(Map.of(
+        Map<String, String> properties = new HashMap<>(11);
+        properties.putAll(Map.of(
             "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
             "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
             "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
@@ -61,8 +58,14 @@ public class SpringBootAppTest extends LocalAppTestParent {
             "package", TestConfiguration.appGroupId(),
             "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
             "spring-boot-version", SpringBootConfiguration.springBootVersion(),
-            "camel-version", SpringBootConfiguration.camelSpringBootVersion()
-        ));
+            "camel-version", SpringBootConfiguration.camelSpringBootVersion()));
+        properties.put("archetypeCatalog", "internal");
+
+        SoftAssertions sa = new SoftAssertions();
+        InvocationRequest request = TEST_INVOKER.getRequests().get(0);
+        sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(TestConfiguration.appLocation().toAbsolutePath().toString());
+        sa.assertThat(request.getGoals()).containsOnly("archetype:generate");
+        sa.assertThat(request.getProperties()).isEqualTo(properties);
         sa.assertThat(request.getOutputHandler(null)).isInstanceOf(MavenFileOutputHandler.class);
 
         request = TEST_INVOKER.getRequests().get(1);
