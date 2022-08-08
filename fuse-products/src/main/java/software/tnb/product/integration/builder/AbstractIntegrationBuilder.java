@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -322,16 +323,31 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     /**
      * Loads the class from given path into a CompilationUnit.
+     * <p>
+     * If the path is a directory, all java files in the directory are added recursively.
+     *
      * @param file path to the file
      * @return this
      */
     public SELF addClass(Path file) {
+        if (file.toFile().isDirectory()) {
+            try (Stream<Path> files = Files.walk(file)) {
+                files.filter(f -> f.toString().toLowerCase().endsWith(".java")).forEach(this::addFile);
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to walk files in " + file.toAbsolutePath(), e);
+            }
+        } else {
+            addFile(file);
+        }
+        return self();
+    }
+
+    private void addFile(Path file) {
         try {
             classesToAdd.add(new JavaParser().parse(file).getResult().get());
         } catch (IOException e) {
             throw new RuntimeException("Unable to parse file " + file, e);
         }
-        return self();
     }
 
     public SELF fileName(String fileName) {
