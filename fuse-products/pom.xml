@@ -18,7 +18,7 @@
         <json.version>20220320</json.version>
         <maven.invoker.version>3.2.0</maven.invoker.version>
         <maven.model.version>3.8.6</maven.model.version>
-        <junit-launcher.version>1.8.2</junit-launcher.version>
+        <junit-launcher.version>1.9.0</junit-launcher.version>
     </properties>
 
     <dependencies>
