@@ -31,15 +31,23 @@ public abstract class MailServer implements Service, WithDockerImage {
     }
 
     public int smtpPort() {
-        return 1025;
+        return 25;
     }
 
     public int httpPort() {
-        return 8025;
+        return 8000;
+    }
+
+    public int imapPort() {
+        return 143;
+    }
+
+    public int popPort() {
+        return 110;
     }
 
     public String defaultImage() {
-        return "quay.io/fuse_qe/mailhog:v1.0.1";
+        return "quay.io/fuse_qe/james-tnb:memory-3.7.0";
     }
 
     public abstract String hostname();

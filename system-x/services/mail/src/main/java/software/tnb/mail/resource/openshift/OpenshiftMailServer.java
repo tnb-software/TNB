@@ -37,14 +37,14 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public void create() {
-        LOG.info("Deploying OpenShift MailHog");
+        LOG.info("Deploying OpenShift JamesServer");
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
-            .withName("mailhog")
+            .withName("james-smtp")
             .withContainerPort(smtpPort())
             .withProtocol("TCP").build());
         ports.add(new ContainerPortBuilder()
-            .withName("mailhog-http")
+            .withName("james-http")
             .withContainerPort(httpPort())
             .withProtocol("TCP").build());
         // @formatter:off
@@ -113,7 +113,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     @Override
     public void openResources() {
         LOG.debug("Creating port-forward to {} for port {}", name(), smtpPort());
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(smtpPort(), smtpPort());
+        portForward = OpenshiftClient.get().services().withName("james-smtp").portForward(smtpPort(), smtpPort());
     }
 
     @Override
@@ -132,7 +132,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public String name() {
-        return "mailhog";
+        return "james";
     }
 
     @Override
@@ -154,6 +154,6 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public String externalHostname() {
-        return OpenshiftClient.get().getRoute("mailhog-http").getSpec().getHost();
+        return OpenshiftClient.get().getRoute("james-http").getSpec().getHost();
     }
 }

@@ -11,20 +11,20 @@ import com.google.auto.service.AutoService;
 @AutoService(MailServer.class)
 public class LocalMailServer extends MailServer implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalMailServer.class);
-    private MailHogContainer container;
+    private JamesServerContainer container;
 
     @Override
     public void deploy() {
-        LOG.info("Starting MailHog container");
-        container = new MailHogContainer(image(), smtpPort(), httpPort());
+        LOG.info("Starting James container");
+        container = new JamesServerContainer(image(), smtpPort(), httpPort(), imapPort(), popPort());
         container.start();
-        LOG.info("MailHog container started");
+        LOG.info("James container started");
     }
 
     @Override
     public void undeploy() {
         if (container != null) {
-            LOG.info("Stopping MailHog container");
+            LOG.info("Stopping James container");
             container.stop();
         }
     }
@@ -50,6 +50,21 @@ public class LocalMailServer extends MailServer implements Deployable {
         }
 
         return container.getHttpPort();
+    }
+
+    public int imapPort() {
+        if (container == null) {
+            return super.imapPort();
+        }
+        return container.getImapPort();
+    }
+
+    public int popPort() {
+        if (container == null) {
+            return super.popPort();
+        }
+
+        return container.getPopPort();
     }
 
     @Override
