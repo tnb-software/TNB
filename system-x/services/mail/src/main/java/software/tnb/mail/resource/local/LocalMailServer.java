@@ -16,7 +16,7 @@ public class LocalMailServer extends MailServer implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting James container");
-        container = new JamesServerContainer(image(), smtpPort(), httpPort(), imapPort(), popPort());
+        container = new JamesServerContainer(image(), SMTP_PORT, HTTP_PORT, IMAP_PORT, POP3_PORT);
         container.start();
         LOG.info("James container started");
     }
@@ -37,38 +37,28 @@ public class LocalMailServer extends MailServer implements Deployable {
     public void closeResources() {
     }
 
-    public int smtpPort() {
-        if (container == null) {
-            return super.smtpPort();
-        }
-        return container.getSmtpPort();
-    }
-
-    public int httpPort() {
-        if (container == null) {
-            return super.httpPort();
-        }
-
-        return container.getHttpPort();
-    }
-
-    public int imapPort() {
-        if (container == null) {
-            return super.imapPort();
-        }
-        return container.getImapPort();
-    }
-
-    public int popPort() {
-        if (container == null) {
-            return super.popPort();
-        }
-
-        return container.getPopPort();
+    @Override
+    public String smtpHostname() {
+        return "localhost:" + container.getSmtpPort();
     }
 
     @Override
-    public String hostname() {
-        return container.getHost();
+    public String imapHostname() {
+        return "localhost:" + container.getImapPort();
+    }
+
+    @Override
+    public String pop3Hostname() {
+        return "localhost:" + container.getPop3Port();
+    }
+
+    @Override
+    public String httpHostname() {
+        return "localhost:" + container.getHttpPort();
+    }
+
+    @Override
+    public String smtpValidationHostname() {
+        return smtpHostname();
     }
 }

@@ -7,15 +7,15 @@ public class JamesServerContainer extends GenericContainer<JamesServerContainer>
     private final int smtpPort;
     private final int httpPort;
     private final int imapPort;
-    private final int popPort;
+    private final int pop3Port;
 
-    public JamesServerContainer(String image, int smtpPort, int httpPort, int imapPort, int popPort) {
+    public JamesServerContainer(String image, int smtpPort, int httpPort, int imapPort, int pop3Port) {
         super(image);
         this.smtpPort = smtpPort;
         this.httpPort = httpPort;
         this.imapPort = imapPort;
-        this.popPort = popPort;
-        withExposedPorts(smtpPort, httpPort, imapPort, popPort);
+        this.pop3Port = pop3Port;
+        withExposedPorts(smtpPort, httpPort, imapPort, pop3Port);
         waitingFor(Wait.forLogMessage(".*AddUser command executed sucessfully in.*", 1));
     }
 
@@ -31,7 +31,7 @@ public class JamesServerContainer extends GenericContainer<JamesServerContainer>
         return getMappedPort(imapPort);
     }
 
-    public int getPopPort() {
-        return getMappedPort(popPort);
+    public int getPop3Port() {
+        return getMappedPort(pop3Port);
     }
 }
