@@ -1,17 +1,17 @@
 package software.tnb.product.cq.application;
 
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.product.application.Phase;
+import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
+import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
-
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.product.cq.OpenshiftCamelQuarkus;
-import software.tnb.product.endpoint.Endpoint;
-import software.tnb.product.log.OpenshiftLog;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,8 +49,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
             .withGoals("package")
             .withProperties(getProperties())
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
-            .withLogMarker(LogStream.marker(name, "deploy"));
+            .withLogFile(getLogPath(Phase.DEPLOY))
+            .withLogMarker(LogStream.marker(name, Phase.DEPLOY));
         if (QuarkusConfiguration.isQuarkusNative()) {
             builder.withProfiles("native");
         }
@@ -62,7 +61,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
         Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));
-        log = new OpenshiftLog(podSelector, getName());
+        log = new OpenshiftLog(podSelector, getLogPath());
         logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
     }
 
@@ -90,10 +89,10 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     private String getJavaCommand() {
         final String defaultCmd = "java %s -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager "
             + "-jar /deployments/quarkus-run.jar";
-        return Arrays.stream(String.format(defaultCmd, Optional.ofNullable(this.integrationBuilder.getProperties())
+        return String.join(",", String.format(defaultCmd, Optional.ofNullable(this.integrationBuilder.getProperties())
                 .orElse(new Properties()).entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue())
                 .collect(Collectors.joining(" ")))
-            .split(" ")).collect(Collectors.joining(","));
+            .split(" "));
     }
 
     @Override

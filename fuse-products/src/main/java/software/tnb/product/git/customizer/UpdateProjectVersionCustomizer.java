@@ -14,8 +14,8 @@ import java.util.stream.Stream;
 
 public class UpdateProjectVersionCustomizer implements Consumer<Path> {
     private static final Logger LOG = LoggerFactory.getLogger(UpdateProjectVersionCustomizer.class);
-    private String projectVersion;
-    private String name;
+    private final String projectVersion;
+    private final String name;
 
     public UpdateProjectVersionCustomizer(String projectVersion, String name) {
         this.projectVersion = projectVersion;

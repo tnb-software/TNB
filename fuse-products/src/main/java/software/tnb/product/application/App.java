@@ -1,11 +1,10 @@
 package software.tnb.product.application;
 
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.stream.LogStream;
-
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.utils.WaitUtils;
 
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
@@ -13,6 +12,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.util.Date;
 import java.util.regex.Pattern;
 
 public abstract class App {
@@ -20,6 +21,7 @@ public abstract class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     protected final String name;
+    protected final String logFilePrefix;
     protected Log log;
     protected LogStream logStream;
     protected Endpoint endpoint;
@@ -28,6 +30,7 @@ public abstract class App {
     public App(String name) {
         this.name = name;
         ensureDirNotPresent();
+        logFilePrefix = name + "-" + new Date().getTime() + "-";
     }
 
     private void ensureDirNotPresent() {
@@ -62,6 +65,14 @@ public abstract class App {
         return name;
     }
 
+    public Path getLogPath(Phase phase) {
+        return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase() + ".log");
+    }
+
+    public Path getLogPath() {
+        return getLogPath(Phase.RUN);
+    }
+
     public void waitUntilReady() {
         WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
         started = true;
@@ -69,9 +80,5 @@ public abstract class App {
 
     private boolean isCamelStarted() {
         return getLog().containsRegex(LOG_STARTED_REGEX);
-    }
-
-    public boolean isStarted() {
-        return started;
     }
 }

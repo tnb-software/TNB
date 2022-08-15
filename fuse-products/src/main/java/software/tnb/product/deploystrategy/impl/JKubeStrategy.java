@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.product.ProductType;
+import software.tnb.product.application.Phase;
 import software.tnb.product.csb.application.OpenshiftSpringBootApp;
 import software.tnb.product.csb.configuration.SpringBootConfiguration;
 import software.tnb.product.deploystrategy.OpenshiftBaseDeployer;
@@ -78,13 +79,13 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
             .withProperties(Stream.concat(ompProperties.entrySet().stream()
-                , mvnProps.entrySet().stream())
+                    , mvnProps.entrySet().stream())
                 .collect(Collectors
-                .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
-            .withGoals("clean", "package", oc + ":resource" , oc + ":build", oc + ":apply")
+                    .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
+            .withGoals("clean", "package", oc + ":resource", oc + ":build", oc + ":apply")
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-deploy.log"))
-            .withLogMarker(LogStream.marker(name, "deploy"));
+            .withLogMarker(LogStream.marker(name, Phase.DEPLOY));
         Maven.invoke(requestBuilder.build());
     }
 
