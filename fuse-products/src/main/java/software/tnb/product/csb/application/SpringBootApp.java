@@ -3,6 +3,7 @@ package software.tnb.product.csb.application;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.application.App;
+import software.tnb.product.application.Phase;
 import software.tnb.product.csb.configuration.SpringBootConfiguration;
 import software.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
 import software.tnb.product.git.MavenGitRepository;
@@ -40,7 +41,7 @@ public abstract class SpringBootApp extends App {
 
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
             && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
-            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder, getName());
+            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder, getName(), getLogPath(Phase.BUILD));
         } else {
             LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
@@ -62,8 +63,8 @@ public abstract class SpringBootApp extends App {
                 .withBaseDirectory(TestConfiguration.appLocation())
                 .withGoals("archetype:generate")
                 .withProperties(properties)
-                .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
-                .withLogMarker(LogStream.marker(name, "generate"))
+                .withLogFile(getLogPath(Phase.GENERATE))
+                .withLogMarker(LogStream.marker(name, Phase.GENERATE))
                 .build());
 
             IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
@@ -78,8 +79,8 @@ public abstract class SpringBootApp extends App {
                 .withProperties(Map.of(
                     "skipTests", "true"
                 ))
-                .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
-                .withLogMarker(LogStream.marker(name, "build"));
+                .withLogFile(getLogPath(Phase.BUILD))
+                .withLogMarker(LogStream.marker(name, Phase.BUILD));
 
             LOG.info("Building {} application project", name);
             Maven.invoke(requestBuilder.build());

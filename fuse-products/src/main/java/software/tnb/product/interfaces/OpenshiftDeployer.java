@@ -21,7 +21,7 @@ public interface OpenshiftDeployer {
 
     void undeploy();
 
-    Log getLog();
+    Log getLog(Path logFile);
 
     Endpoint getEndpoint();
 

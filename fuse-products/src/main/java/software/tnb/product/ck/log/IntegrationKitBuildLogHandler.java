@@ -1,13 +1,11 @@
 package software.tnb.product.ck.log;
 
-import software.tnb.product.log.stream.LogStream;
-import software.tnb.product.log.stream.OpenshiftLogStream;
-
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.WaitUtils;
-
+import software.tnb.product.application.Phase;
+import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.log.stream.OpenshiftLogStream;
 import software.tnb.product.rp.Attachments;
 
 import org.slf4j.Logger;
@@ -29,9 +27,11 @@ import io.fabric8.kubernetes.api.model.Pod;
 public class IntegrationKitBuildLogHandler implements Runnable {
     private static final Logger LOG = LoggerFactory.getLogger(IntegrationKitBuildLogHandler.class);
     private final String integrationName;
+    private final Path logPath;
 
-    public IntegrationKitBuildLogHandler(String integrationName) {
+    public IntegrationKitBuildLogHandler(String integrationName, Path logPath) {
         this.integrationName = integrationName;
+        this.logPath = logPath;
     }
 
     @Override
@@ -70,7 +70,7 @@ public class IntegrationKitBuildLogHandler implements Runnable {
             }
         }
 
-        LogStream logStream = new OpenshiftLogStream(kitPodSelector, LogStream.marker(integrationName, "kit-build"));
+        LogStream logStream = new OpenshiftLogStream(kitPodSelector, LogStream.marker(integrationName, Phase.BUILD));
         // Stop streaming the logs when the build pod ends
         while (ResourceParsers.isPodRunning(getKitBuildPod(kitPodSelector).get())) {
             WaitUtils.sleep(1000);
@@ -79,7 +79,6 @@ public class IntegrationKitBuildLogHandler implements Runnable {
 
         // Save the logs of the build pod
         LOG.info("Collecting logs of integration kit {}", kitName);
-        final Path logPath = TestConfiguration.appLocation().resolve(integrationName + "-kit-build.log");
         IOUtils.writeFile(logPath, OpenshiftClient.get().getLogs(getKitBuildPod(kitPodSelector).get()));
         Attachments.addAttachment(logPath);
     }

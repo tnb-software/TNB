@@ -1,12 +1,11 @@
 package software.tnb.product.git;
 
+import software.tnb.product.application.Phase;
 import software.tnb.product.git.customizer.UpdateProjectVersionCustomizer;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
-
-import software.tnb.common.config.TestConfiguration;
 
 import org.apache.maven.model.Model;
 import org.slf4j.Logger;
@@ -23,7 +22,7 @@ public class MavenGitRepository extends GitRepository {
     protected Path projectLocation;
     protected Optional<String> finalName;
 
-    public MavenGitRepository(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name) {
+    public MavenGitRepository(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name, Path logFile) {
         super(gitIntegrationBuilder);
 
         projectLocation = gitIntegrationBuilder.getSubDirectory().map(project -> getPath().resolve(project)).orElse(getPath());
@@ -47,10 +46,10 @@ public class MavenGitRepository extends GitRepository {
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)
-            .withGoals(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "" , "package")
+            .withGoals(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "", "package")
             .withProperties(mavenBuildProperties)
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
-            .withLogMarker(LogStream.marker(name, "build"));
+            .withLogFile(logFile)
+            .withLogMarker(LogStream.marker(name, Phase.BUILD));
 
         LOG.info("Building {} application project", name);
         Maven.invoke(requestBuilder.build());

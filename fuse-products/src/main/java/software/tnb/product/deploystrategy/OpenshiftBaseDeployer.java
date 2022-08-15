@@ -59,8 +59,8 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
     }
 
     @Override
-    public Log getLog() {
-        return new OpenshiftLog(podSelector(), name);
+    public Log getLog(Path logFile) {
+        return new OpenshiftLog(podSelector(), logFile);
     }
 
     @Override
@@ -136,7 +136,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
         Map<Object, Object> entries = new HashMap<>(integrationBuilder.getProperties());
 
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
-            entries.putAll(((AbstractMavenGitIntegrationBuilder) integrationBuilder).getJavaProperties());
+            entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties());
         }
 
        return entriesInString(entries);
@@ -150,8 +150,8 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
         Map<Object, Object> entries = new HashMap<>();
 
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder
-            && ((AbstractMavenGitIntegrationBuilder) integrationBuilder).getMavenProperties() != null) {
-            entries.putAll(((AbstractMavenGitIntegrationBuilder) integrationBuilder).getMavenProperties());
+            && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
+            entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties());
         }
 
         return entriesInString(entries);

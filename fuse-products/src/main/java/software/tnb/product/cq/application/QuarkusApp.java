@@ -1,15 +1,15 @@
 package software.tnb.product.cq.application;
 
+import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.product.application.App;
+import software.tnb.product.application.Phase;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
-
-import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.product.application.App;
 
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
@@ -43,8 +43,8 @@ public abstract class QuarkusApp extends App {
                 "platformVersion", QuarkusConfiguration.quarkusVersion(),
                 "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
             ))
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-generate.log"))
-            .withLogMarker(LogStream.marker(name, "generate"))
+            .withLogFile(getLogPath(Phase.GENERATE))
+            .withLogMarker(LogStream.marker(name, Phase.GENERATE))
             .build()
         );
 
@@ -59,8 +59,8 @@ public abstract class QuarkusApp extends App {
                 "skipTests", "true",
                 "quarkus.native.container-build", "true"
             ))
-            .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
-            .withLogMarker(LogStream.marker(name, "build"));
+            .withLogFile(getLogPath(Phase.BUILD))
+            .withLogMarker(LogStream.marker(name, Phase.BUILD));
         if (QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration.isOpenshift()) {
             // Native build is performed in the OCP deploy, this build is just for fetching dependencies
             requestBuilder.withProfiles("native");

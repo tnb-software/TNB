@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.product.ProductType;
+import software.tnb.product.application.Phase;
 import software.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategy;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategyType;
@@ -69,7 +70,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public void doDeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context" , ".", "--devfile", getDevfile()), "create");
+            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context", ".", "--devfile", getDevfile()), Phase.GENERATE);
 
             if (TestConfiguration.isMavenMirror()) {
                 setEnvVar("MAVEN_MIRROR_URL", StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@mirrorOf"));
@@ -83,7 +84,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
             setEnvVar("SUB_FOLDER", folderName);
 
-            runOdoCmd(Arrays.asList("push", "--show-log"), "deploy");
+            runOdoCmd(Arrays.asList("push", "--show-log"), Phase.DEPLOY);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -100,7 +101,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     public void undeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("delete", "--app", name, "-f", "--all"), "undeploy");
+            runOdoCmd(Arrays.asList("delete", "--app", name, "-f", "--all"), Phase.UNDEPLOY);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -150,7 +151,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         this.runOdoCmd(args, null);
     }
 
-    private void runOdoCmd(final List<String> args, String phase) throws IOException, InterruptedException {
+    private void runOdoCmd(final List<String> args, Phase phase) throws IOException, InterruptedException {
         final String odoBinaryPath = TestConfiguration.odoPath();
         final File logFile = TestConfiguration.appLocation().resolve(name + "-" + phase + ".log").toFile();
         final List<String> cmd = new ArrayList<>(args.size() + 1);

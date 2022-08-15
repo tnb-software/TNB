@@ -1,6 +1,5 @@
 package software.tnb.product.log;
 
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
@@ -22,11 +21,11 @@ import io.fabric8.kubernetes.client.utils.PodStatusUtil;
 public class OpenshiftLog extends Log {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLog.class);
     private final Predicate<Pod> podPredicate;
-    private final String name;
+    private final Path logPath;
 
-    public OpenshiftLog(Predicate<Pod> podPredicate, String name) {
+    public OpenshiftLog(Predicate<Pod> podPredicate, Path logPath) {
         this.podPredicate = podPredicate;
-        this.name = name;
+        this.logPath = logPath;
     }
 
     @Override
@@ -89,8 +88,7 @@ public class OpenshiftLog extends Log {
     }
 
     public void save(boolean started) {
-        LOG.info("Collecting logs of integration {}", name);
-        final Path logPath = TestConfiguration.appLocation().resolve(name + ".log");
+        LOG.info("Saving integration logs to {}", logPath);
         IOUtils.writeFile(
             logPath,
             toString(started)

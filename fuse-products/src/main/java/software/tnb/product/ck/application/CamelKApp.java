@@ -1,5 +1,11 @@
 package software.tnb.product.ck.application;
 
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.WaitUtils;
+import software.tnb.product.application.App;
+import software.tnb.product.application.Phase;
 import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import software.tnb.product.ck.integration.resource.CamelKResource;
@@ -9,19 +15,13 @@ import software.tnb.product.ck.log.MavenBuildLogHandler;
 import software.tnb.product.ck.utils.CamelKSettings;
 import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.ck.utils.OwnerReferenceSetter;
+import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
+import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 import software.tnb.product.util.executor.Executor;
-
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.PropertiesUtils;
-import software.tnb.common.utils.WaitUtils;
-import software.tnb.product.application.App;
-import software.tnb.product.endpoint.Endpoint;
-import software.tnb.product.log.OpenshiftLog;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -122,12 +122,12 @@ public class CamelKApp extends App {
 
         Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"));
-        log = new OpenshiftLog(podSelector, getName());
+        log = new OpenshiftLog(podSelector, getLogPath());
 
         if (TestConfiguration.streamLogs()) {
             buildLogHandler = new MavenBuildLogHandler(getName());
             Executor.get().submit(buildLogHandler);
-            Executor.get().submit(new IntegrationKitBuildLogHandler(getName()));
+            Executor.get().submit(new IntegrationKitBuildLogHandler(getName(), getLogPath(Phase.BUILD)));
             logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
         }
     }

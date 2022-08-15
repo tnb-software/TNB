@@ -1,12 +1,11 @@
 package software.tnb.product.csb.application;
 
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategyFactory;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.interfaces.OpenshiftDeployer;
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
@@ -50,7 +49,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         LOG.info("Deploy app using {}", deploymentStrategy.getClass().getSimpleName());
         deploymentStrategy.deploy();
         endpoint = deploymentStrategy.getEndpoint();
-        log = deploymentStrategy.getLog();
+        log = deploymentStrategy.getLog(getLogPath());
         logStream = new OpenshiftLogStream(deploymentStrategy.podSelector(), LogStream.marker(finalName));
     }
 

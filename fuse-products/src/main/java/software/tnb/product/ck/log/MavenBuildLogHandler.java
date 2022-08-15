@@ -1,10 +1,10 @@
 package software.tnb.product.ck.log;
 
-import software.tnb.product.log.stream.LogStream;
-import software.tnb.product.log.stream.OpenshiftLogStream;
-
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.product.application.Phase;
+import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.log.stream.OpenshiftLogStream;
 
 import java.util.function.Predicate;
 
@@ -30,7 +30,7 @@ public class MavenBuildLogHandler implements Runnable {
         Predicate<Pod> operatorPod = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/component")
             && p.getMetadata().getLabels().get("camel.apache.org/component").equals("operator");
 
-        logStream = new OpenshiftLogStream(operatorPod, LogStream.marker(integrationName, "maven-build"));
+        logStream = new OpenshiftLogStream(operatorPod, LogStream.marker(integrationName, Phase.GENERATE));
         CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
         String kitName = null;
         // Wait until the kit name is generated

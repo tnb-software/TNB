@@ -1,11 +1,11 @@
 package software.tnb.product.ck.customizer;
 
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.product.application.Phase;
+import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
-
-import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 
 import org.apache.maven.model.Dependency;
 
@@ -110,7 +110,7 @@ public class LocalDependencyCustomizer extends CamelKCustomizer {
                 "quarkus.version", QuarkusConfiguration.quarkusVersion(),
                 "camel.quarkus.version", QuarkusConfiguration.camelQuarkusVersion()
             ))
-            .withLogMarker(LogStream.marker(folder.toFile().getName(), "build"))
+            .withLogMarker(LogStream.marker(folder.toFile().getName(), Phase.BUILD))
             .build());
     }
 }

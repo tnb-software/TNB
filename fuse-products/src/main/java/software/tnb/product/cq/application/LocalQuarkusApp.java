@@ -1,15 +1,13 @@
 package software.tnb.product.cq.application;
 
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-import software.tnb.product.log.stream.FileLogStream;
-import software.tnb.product.log.stream.LogStream;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.WaitUtils;
-
+import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.endpoint.Endpoint;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.FileLog;
+import software.tnb.product.log.stream.FileLogStream;
+import software.tnb.product.log.stream.LogStream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,7 +22,6 @@ import java.util.stream.Collectors;
 
 public class LocalQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalQuarkusApp.class);
-    private final Path logFile;
     private Process appProcess;
     private final AbstractIntegrationBuilder<?> integrationBuilder;
 
@@ -32,12 +29,12 @@ public class LocalQuarkusApp extends QuarkusApp {
         super(integrationBuilder);
 
         this.integrationBuilder = integrationBuilder;
-        logFile = TestConfiguration.appLocation().resolve(name + ".log");
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
 
     @Override
     public void start() {
+        Path logFile = getLogPath();
         ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
         LOG.info("Starting integration {}", name);

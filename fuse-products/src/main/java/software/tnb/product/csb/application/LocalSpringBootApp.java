@@ -1,11 +1,10 @@
 package software.tnb.product.csb.application;
 
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
@@ -23,7 +22,6 @@ import java.util.stream.Collectors;
 
 public class LocalSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSpringBootApp.class);
-    private final Path logFile;
     private final List<String> command;
     private final String fileName;
     private Process appProcess;
@@ -57,12 +55,12 @@ public class LocalSpringBootApp extends SpringBootApp {
 
         command.add(fileName);
 
-        logFile = TestConfiguration.appLocation().resolve(name + ".log");
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
 
     @Override
     public void start() {
+        Path logFile = getLogPath();
         ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
         LOG.info("Starting integration {}", name);
