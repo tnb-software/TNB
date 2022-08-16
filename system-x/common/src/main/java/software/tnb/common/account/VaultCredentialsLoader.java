@@ -1,5 +1,7 @@
 package software.tnb.common.account;
 
+import org.junit.jupiter.api.function.ThrowingSupplier;
+
 import com.bettercloud.vault.Vault;
 import com.bettercloud.vault.VaultConfig;
 import com.bettercloud.vault.VaultException;
@@ -15,6 +17,7 @@ public class VaultCredentialsLoader implements CredentialsLoader {
     private final ObjectMapper mapper;
     private final String pathPattern;
     private final VaultConfig config;
+    private ThrowingSupplier<AuthResponse> authSupplier;
 
     private VaultCredentialsLoader(String address, String pathPattern) throws VaultException {
         config = new VaultConfig()
@@ -31,20 +34,33 @@ public class VaultCredentialsLoader implements CredentialsLoader {
 
     public VaultCredentialsLoader(String address, String pathPattern, String ghToken) throws VaultException {
         this(address, pathPattern);
-        AuthResponse authResponse = vault.auth().loginByGithub(ghToken);
-        config.token(authResponse.getAuthClientToken()).build();
+        authSupplier = () -> vault.auth().loginByGithub(ghToken);
+        refreshAuthToken();
     }
 
     public VaultCredentialsLoader(String address, String pathPattern, String roleId, String secretId) throws VaultException {
         this(address, pathPattern);
-        AuthResponse authResponse = vault.auth().loginByAppRole(roleId, secretId);
-        config.token(authResponse.getAuthClientToken()).build();
+        authSupplier = () -> vault.auth().loginByAppRole(roleId, secretId);
+        refreshAuthToken();
+    }
+
+    private void refreshAuthToken() {
+        try {
+            config.token(authSupplier.get().getAuthClientToken()).build();
+        } catch (Throwable e) {
+            throw new RuntimeException("Vault reauth failed", e);
+        }
     }
 
     @Override
     public <T extends Account> T get(String credentialsId, Class<T> accountClass) {
         try {
-            return mapper.readValue(get(String.format(pathPattern, credentialsId)).toString(), accountClass);
+            JsonObject account = get(String.format(pathPattern, credentialsId));
+            if (account == null) {
+                refreshAuthToken();
+                account = get(String.format(pathPattern, credentialsId));
+            }
+            return mapper.readValue(account.toString(), accountClass);
         } catch (VaultException | JsonProcessingException e) {
             throw new RuntimeException("Couldnt get credentials from vault: " + credentialsId, e);
         }
