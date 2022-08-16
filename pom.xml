@@ -304,7 +304,7 @@
                                 <configuration>
                                     <templateBaseDir>templates</templateBaseDir>
                                     <templateFile>templates/changelog.mustache</templateFile>
-                                    <ignoreCommitsIfMessageMatches>Merge (pull request|branch).*</ignoreCommitsIfMessageMatches>
+                                    <ignoreCommitsIfMessageMatches>(Merge (pull request|branch).*)|(\[BOM\] Sync .*)</ignoreCommitsIfMessageMatches>
                                 </configuration>
                             </execution>
                         </executions>
