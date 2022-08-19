@@ -44,19 +44,27 @@ public class HyperfoilValidation {
         defaultApi = new DefaultApi(apiClient);
     }
 
+    private String msgLogForRun(Run run) {
+        List<String> errors = run.getErrors();
+        if (errors != null && errors.size() > 0) {
+            return run.toString().replaceFirst("errors: \\[.+\\]", String.format("errors: %n%s%s", " ".repeat(8),
+                String.join(System.lineSeparator() + " ".repeat(8), errors)));
+        } else {
+            return run.toString();
+        }
+    }
+
     private TestResult doStartAndWaitForBenchmark(Run run) {
         Run finalRun = waitForRun(run);
-        LOG.info("Benchmark finished");
-
-        LOG.info(getRun(run.getId()).toString());
-
-        LOG.info("Generating report");
-        String report = generateReport(run);
-        Path reportFile = saveReportToFile(run, report);
-        LOG.info("Report generated " + reportFile.toAbsolutePath());
         if (finalRun == null) {
-            throw new IllegalStateException("Unexpected error, probably the hyperfoil test, failed");
+            throw new IllegalStateException("Unexpected error, probably the hyperfoil test failed");
         }
+        LOG.info("Benchmark finished");
+        LOG.info(msgLogForRun(finalRun));
+        LOG.info("Generating report");
+        String report = generateReport(finalRun);
+        Path reportFile = saveReportToFile(finalRun, report);
+        LOG.info("Report generated " + reportFile.toAbsolutePath());
         try {
             RequestStatisticsResponse totalStats = getDefaultApi().getTotalStats(finalRun.getId());
             return new TestResult(finalRun, totalStats);
@@ -99,7 +107,8 @@ public class HyperfoilValidation {
      * Load the benchmark hf.yaml on running hyperfoil server, run the benchmark,
      * wait for result and save the report in the target folder
      *
-     * @param benchmark classpath or http/s endpoint of a benchmark yaml or template
+     * @param benchmark classpath or http/s endpoint of a benchmark yaml or
+     * template
      * @param parameters if not null the parameters will be supplied to the template
      * @return an object holding the startTime and endTime of the test
      */
@@ -137,10 +146,10 @@ public class HyperfoilValidation {
     private String retrieveBenchmarkFile(String benchmarkUri) throws IOException {
         String benchmark;
         if (benchmarkUri.startsWith("http:") || benchmarkUri.startsWith("https:")) {
-            HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient())
-                .get(benchmarkUri);
+            HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient()).get(benchmarkUri);
             if (response.getResponseCode() != 200) {
-                throw new RuntimeException("Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
+                throw new RuntimeException(
+                    "Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
             }
             benchmark = response.getBody();
         } else {
@@ -159,7 +168,8 @@ public class HyperfoilValidation {
     }
 
     /**
-     * the benchmark located at the benchmarkUri value could be a simple yaml benchmark or a template
+     * the benchmark located at the benchmarkUri value could be a simple yaml
+     * benchmark or a template
      *
      * @param benchmarkUri
      * @return
@@ -185,7 +195,8 @@ public class HyperfoilValidation {
     }
 
     /**
-     * the benchmark located at the benchmarkUri value is expected to be a yaml benchmark with a placeholder for the target application host value
+     * the benchmark located at the benchmarkUri value is expected to be a yaml
+     * benchmark with a placeholder for the target application host value
      *
      * @param benchmarkUri
      * @param applicationUnderTestEndpoint
@@ -202,7 +213,8 @@ public class HyperfoilValidation {
                 if (httpNode.isObject()) {
                     ((ObjectNode) httpNode).put("host", applicationUnderTestEndpoint);
                 } else if (httpNode.isArray()) {
-                    throw new RuntimeException("Array node detected for http.host, impossible to distinguish which host should be replaced");
+                    throw new RuntimeException(
+                        "Array node detected for http.host, impossible to distinguish which host should be replaced");
                 }
             }
 
@@ -236,10 +248,7 @@ public class HyperfoilValidation {
         try {
             while (!run.getCompleted()) {
                 run = getDefaultApi().getRun(run.getId());
-                if (LOG.isTraceEnabled()) {
-                    LOG.trace(run.toString());
-                }
-
+                LOG.trace(msgLogForRun(run));
                 Thread.sleep(WAIT_BENCHMARK_SLEEP_TIME);
             }
         } catch (ApiException | InterruptedException e) {
@@ -258,7 +267,8 @@ public class HyperfoilValidation {
 
     public Run runBenchmark(String benchmarkName, Map<String, ?> parameters) {
         try {
-            // benchmark defined as template are not being got back by listBenchmark operation
+            // benchmark defined as template are not being got back by listBenchmark
+            // operation
             if (parameters == null && !listBenchmarks().contains(benchmarkName)) {
                 throw new RuntimeException("Benchmark with name " + benchmarkName + " does not exists");
             }
@@ -266,7 +276,8 @@ public class HyperfoilValidation {
 
             List<String> params = null;
             if (parameters != null && parameters.size() > 0) {
-                params = parameters.entrySet().stream().map(en -> String.format("%s=%s", en.getKey(), en.getValue().toString()))
+                params = parameters.entrySet().stream()
+                    .map(en -> String.format("%s=%s", en.getKey(), en.getValue().toString()))
                     .collect(Collectors.toList());
             }
 
