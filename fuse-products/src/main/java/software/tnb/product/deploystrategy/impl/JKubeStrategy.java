@@ -73,7 +73,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
                 : OpenshiftClient.get().getMasterUrl().toString()
             , "jkube.username", OpenshiftConfiguration.openshiftUsername()
             , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
-            , "jkube.enricher.jkube-service.port", "8080:8080"
+            , "jkube.enricher.jkube-service.port", String.format("%s:%s", integrationBuilder.getPort(), integrationBuilder.getPort())
             , "jkube.enricher.jkube-service.expose", "true"
         );
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()

@@ -56,8 +56,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         }
         Maven.invoke(builder.build());
 
-        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes()
-            .withName(name).get().getSpec().getHost());
+        endpoint = new Endpoint(() -> OpenshiftClient.get().routes().withName(name).get() != null ? "http://" + OpenshiftClient.get().routes()
+            .withName(name).get().getSpec().getHost() : null);
 
         Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));

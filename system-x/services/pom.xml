@@ -37,6 +37,7 @@
         <module>horreum</module>
         <module>prometheus-metrics</module>
         <module>lra-coordinator</module>
+        <module>mllp</module>
     </modules>
 
     <dependencies>
