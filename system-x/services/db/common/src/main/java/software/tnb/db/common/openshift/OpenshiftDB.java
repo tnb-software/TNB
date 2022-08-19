@@ -11,6 +11,7 @@ import software.tnb.db.common.service.SQL;
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
@@ -49,6 +50,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
                             .addNewContainer()
                                 .withName(name())
                                 .withImage(sqlService.image())
+                                .withSecurityContext(new SecurityContextBuilder().withAllowPrivilegeEscalation(true).build())
                                 .addNewPort()
                                     .withContainerPort(port)
                                     .withName(name())
