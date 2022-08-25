@@ -36,7 +36,9 @@ import java.util.Map;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -66,23 +68,13 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public void create() {
-        if (isReady()) {
-            LOG.debug("Amq broker operator already installed");
-        } else {
-            if (OpenshiftClient.get().getLabeledPods("name", "amq-broker-operator").isEmpty()) {
-                LOG.debug("Creating Amq broker operator");
-                // Create subscription for amq broker operator
-                OpenshiftClient.get()
-                    .createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE,
-                        OpenshiftClient.get().getNamespace(),
-                        false);
-                OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
-            } else {
-                LOG.debug("Amq broker operator pod is already present");
-            }
-            // Create amq-broker custom resource
-            amqBrokerCli().createOrReplace(createBrokerCR());
-        }
+        LOG.debug("Creating AMQ broker");
+        // Create subscription for amq broker operator
+        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE,
+            OpenshiftClient.get().getNamespace(), false);
+        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        // Create amq-broker custom resource
+        amqBrokerCli().createOrReplace(createBrokerCR());
     }
 
     @Override
@@ -92,8 +84,8 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().operatorHub().subscriptions().withName(SUBSCRIPTION_NAME).get() != null
-            && !amqBrokerCli().list().getItems().isEmpty();
+        List<Pod> pods = OpenshiftClient.get().pods().withLabel("name", "amq-broker-operator").list().getItems();
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0)) && amqBrokerCli().list().getItems().size() > 0;
     }
 
     @Override

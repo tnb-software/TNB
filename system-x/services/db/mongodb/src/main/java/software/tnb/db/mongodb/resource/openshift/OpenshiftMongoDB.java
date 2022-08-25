@@ -132,8 +132,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0
-            && isReady();
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
     }
 
     @Override
