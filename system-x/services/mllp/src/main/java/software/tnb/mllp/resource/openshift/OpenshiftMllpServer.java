@@ -114,7 +114,7 @@ public class OpenshiftMllpServer extends MllpServer implements OpenshiftDeployab
     @Override
     public boolean isDeployed() {
         final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion() && isReady();
+        return deployment != null && !deployment.isMarkedForDeletion();
     }
 
     @Override

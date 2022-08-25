@@ -149,10 +149,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
     @Override
     public boolean isDeployed() {
         Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return
-            deployment != null
-            && !deployment.isMarkedForDeletion()
-            && isReady();
+        return deployment != null && !deployment.isMarkedForDeletion();
     }
 
     @Override

@@ -16,7 +16,9 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
@@ -48,10 +50,10 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
             try {
                 OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
                 WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", HYPERFOIL_CTX.getName(), "app", APP_NAME))
-                    .isEmpty(), "waiting for hyperfoil pods are deleted");
+                    .isEmpty(), "Waiting until hyperfoil pods are deleted");
                 OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
             } catch (IOException e) {
-                LOG.error("error on Cryostat deletetion", e);
+                LOG.error("Error on Hyperfoil deletetion", e);
                 throw new RuntimeException(e);
             }
         }
@@ -65,7 +67,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
             } catch (ApiException e) {
                 return false;
             }
-        }, "wait for responding api endpoint");
+        }, "Waiting for responding api endpoint");
     }
 
     @Override
@@ -74,21 +76,16 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public void create() {
-        if (isReady()) {
-            LOG.debug("Hyperfoil operator already installed");
-        } else {
-            LOG.debug("Creating Hyperfoil instance");
-            // Create subscription
-            OpenshiftClient.get()
-                .createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
-            OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        LOG.debug("Creating Hyperfoil instance");
+        // Create subscription
+        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
+        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
-            try {
-                OpenshiftClient.get().customResource(HYPERFOIL_CTX).create(getHyperfoilDefinition());
-            } catch (IOException e) {
-                LOG.error("error on Hyperfoil creation", e);
-                throw new RuntimeException(e);
-            }
+        try {
+            OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition());
+        } catch (IOException e) {
+            LOG.error("Error on Hyperfoil creation", e);
+            throw new RuntimeException(e);
         }
     }
 
@@ -100,7 +97,10 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public boolean isDeployed() {
-        return isReady();
+        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems().stream()
+            .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
+            && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
     }
 
     @Override

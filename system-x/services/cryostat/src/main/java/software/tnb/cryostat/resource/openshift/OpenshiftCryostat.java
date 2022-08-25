@@ -1,12 +1,12 @@
 package software.tnb.cryostat.resource.openshift;
 
-import software.tnb.cryostat.client.openshift.OpenshiftCryostatClient;
-import software.tnb.cryostat.service.Cryostat;
-import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.cryostat.client.CryostatClient;
+import software.tnb.cryostat.client.openshift.OpenshiftCryostatClient;
+import software.tnb.cryostat.service.Cryostat;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,7 +16,9 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
+import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
@@ -48,10 +50,10 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
         try {
             OpenshiftClient.get().customResource(CRYOSTAT_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
             WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat", "app", APP_NAME))
-                .isEmpty(), "waiting for cryostat pods are deleted");
+                .isEmpty(), "Waiting until Cryostat pods are deleted");
             OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
         } catch (IOException e) {
-            LOG.error("error on Cryostat deletetion", e);
+            LOG.error("Error on Cryostat deletetion", e);
             throw new RuntimeException(e);
         }
     }
@@ -74,35 +76,39 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public void create() {
-        if (isReady()) {
-            LOG.debug("Cryostat operator already installed");
-        } else {
-            LOG.debug("Creating Cryostat instance");
-            // Create subscription
-            OpenshiftClient.get()
-                .createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
-            OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        LOG.debug("Creating Cryostat instance");
+        // Create subscription
+        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
+        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
-            WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
-                .stream().allMatch(OpenShiftReadiness::isPodReady), "waiting for cryostat control plane pod is ready");
-
-            try {
-                OpenshiftClient.get().customResource(CRYOSTAT_CTX).create(getCryostatDefinition());
-            } catch (IOException e) {
-                LOG.error("error on Cryostat creation", e);
-                throw new RuntimeException(e);
-            }
+        try {
+            OpenshiftClient.get().customResource(CRYOSTAT_CTX).createOrReplace(getCryostatDefinition());
+        } catch (IOException e) {
+            LOG.error("Error on Cryostat creation", e);
+            throw new RuntimeException(e);
         }
     }
 
     @Override
     public boolean isReady() {
-        return isCryostatRunning();
+        final List<Pod> labeledPods = OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat", "app", APP_NAME));
+        try {
+            return labeledPods.size() > 0
+                && labeledPods.stream().allMatch(OpenShiftReadiness::isPodReady)
+                && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
+                , OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost())).build()).execute().isSuccessful();
+        } catch (IOException e) {
+            return false;
+        }
     }
 
     @Override
     public boolean isDeployed() {
-        return isCryostatRunning();
+        // Cryostat / Hyperfoil operators do not have any unique label, so the pod name is used as well
+        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems().stream()
+            .filter(p -> p.getMetadata().getName().contains("cryostat")).collect(Collectors.toList());
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
+            && ((List) OpenshiftClient.get().customResource(CRYOSTAT_CTX).list().get("items")).size() == 1;
     }
 
     @Override
@@ -120,27 +126,13 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
         return 8181;
     }
 
-    private boolean isCryostatRunning() {
-        final List<Pod> labeledPods = OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat"
-            , "app", APP_NAME));
-        try {
-            return labeledPods
-                .stream().count() > 0 && labeledPods
-                .stream().allMatch(OpenShiftReadiness::isPodReady)
-                && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
-                    , OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost())).build()).execute().isSuccessful();
-        } catch (IOException e) {
-           return false;
-        }
-    }
-
     private Map<String, Object> getCryostatDefinition() {
         Map<String, Object> metadata = Map.of("name", APP_NAME
             , "namespace", OpenshiftClient.get().getNamespace());
         Map<String, Object> spec = Map.of("enableCertManager", false
             , "minimal", true);
         return Map.of("kind", CRYOSTAT_CTX.getName()
-            , "apiVersion" , String.format("%s/%s", CRYOSTAT_CTX.getGroup(), CRYOSTAT_CTX.getVersion())
+            , "apiVersion", String.format("%s/%s", CRYOSTAT_CTX.getGroup(), CRYOSTAT_CTX.getVersion())
             , "metadata", metadata
             , "spec", spec);
     }
