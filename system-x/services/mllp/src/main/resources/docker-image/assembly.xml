@@ -1,0 +1,33 @@
+<assembly xmlns="http://maven.apache.org/ASSEMBLY/2.1.1"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/ASSEMBLY/2.1.1 http://maven.apache.org/xsd/assembly-2.1.1.xsd">
+    <id>mllp-test-server</id>
+    <formats>
+        <format>jar</format>
+    </formats>
+    <baseDirectory>/</baseDirectory>
+    <dependencySets>
+        <dependencySet>
+            <outputDirectory>/</outputDirectory>
+            <useProjectArtifact>false</useProjectArtifact>
+            <unpack>true</unpack>
+            <scope>runtime</scope>
+            <includes>
+                <include>software.tnb:system-x-mllp</include>
+                <include>org.junit.jupiter:junit-jupiter-api</include>
+                <include>org.junit.jupiter:junit-jupiter</include>
+                <include>org.apache.camel:camel-mllp</include>
+                <include>org.slf4j:slf4j-simple</include>
+                <include>org.slf4j:slf4j-api</include>
+                <include>org.slf4j:slf4j-api</include>
+                <include>org.apache.commons:commons-lang3</include>
+            </includes>
+        </dependencySet>
+    </dependencySets>
+    <fileSets>
+        <fileSet>
+            <outputDirectory>/</outputDirectory>
+            <directory>${project.build.outputDirectory}</directory>
+        </fileSet>
+    </fileSets>
+</assembly>
