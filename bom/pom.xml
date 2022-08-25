@@ -226,6 +226,11 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-mllp</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-mongodb</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -277,11 +282,6 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-telegram</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
-                <artifactId>system-x-mllp</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
