@@ -15,12 +15,15 @@ import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
+import io.fabric8.openshift.api.model.SecurityContextConstraints;
+import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 
 public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     private LocalPortForward portForward;
     private final SQL sqlService;
     private final int port;
+    private static final String SCC_NAME = "tnb-openshift-db";
 
     public OpenshiftDB(SQL sqlService, int port) {
         this.sqlService = sqlService;
@@ -29,6 +32,19 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public void create() {
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
+        if (scc == null) {
+            SecurityContextConstraints restricted = OpenshiftClient.get().securityContextConstraints().withName("restricted").get();
+            scc = OpenshiftClient.get().securityContextConstraints().create(
+                new SecurityContextConstraintsBuilder(restricted)
+                    .withNewMetadata() // new metadata to override the existing annotations
+                    .withName(SCC_NAME)
+                    .endMetadata()
+                    .build());
+        }
+        final String group = "system:serviceaccounts:" + OpenshiftConfiguration.openshiftNamespace();
+        scc.getGroups().add(group);
+        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
         //@formatter:off
         OpenshiftClient.get().apps().deployments().createOrReplace(
 
@@ -96,6 +112,9 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public void undeploy() {
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
+        scc.getGroups().remove("system:serviceaccounts:" + OpenshiftConfiguration.openshiftNamespace());
+        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
