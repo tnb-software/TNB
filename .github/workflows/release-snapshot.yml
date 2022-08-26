@@ -1,0 +1,43 @@
+name: Release snapshot
+
+on:
+  push:
+    branches:
+      - "main"
+
+env:
+  # The setup-java action needs the name of the env variable with passwords
+  GPG_PASSPHRASE: ${{ secrets.GPG_KEY_PASSWORD }}
+  OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
+  OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+
+jobs:
+  deploy-artifacts:
+    runs-on: ubuntu-latest
+    name: Deploy artifacts
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          # Fetch the whole history to have all released tags available
+          fetch-depth: 0
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+          server-id: ossrh
+          server-username: OSSRH_USERNAME
+          server-password: OSSRH_PASSWORD
+          gpg-private-key: ${{ secrets.GPG_KEY }}
+          gpg-passphrase: GPG_PASSPHRASE
+      - name: Create snapshot version
+        run: |
+          # Get the latest released tag and increase its version (as we always stay on 1.0-SNAPSHOT in main branch for tnb-tests usage, but it would be better to have also the snapshot version incrementing)
+          previous_tag="$(git describe --tags $(git rev-list --tags --max-count=1) | cut -c2-)"
+          echo ${previous_tag}
+          curl -o semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver
+          chmod +x semver
+          snapshot_version=$(./semver bump patch ${previous_tag})-SNAPSHOT
+          mvn --no-transfer-progress versions:set -DnewVersion=${snapshot_version} -DoldVersion=* -DgroupId=* -DartifactId=* -DgenerateBackupPoms=false
+      - name: Deploy
+        run: mvn --no-transfer-progress --activate-profiles deploy clean deploy
