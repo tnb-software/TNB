@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       release-version:
-        description: 'Version to create/release'
+        description: 'Version to create/release (for example 1.0.0)'
         required: true
 
 env:
