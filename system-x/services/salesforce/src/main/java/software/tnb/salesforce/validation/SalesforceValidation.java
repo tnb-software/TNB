@@ -19,6 +19,7 @@ import com.force.api.http.Http;
 import com.force.api.http.HttpRequest;
 import com.force.api.http.HttpResponse;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -79,6 +80,11 @@ public class SalesforceValidation {
     public void deleteAccount(String id) {
         client.deleteSObject("account", id);
         LOG.debug("Deleting salesforce account with id : {}", id);
+    }
+
+    public List<Map> getTopics() {
+        QueryResult<Map> queryResult = client.query("SELECT Id,Name FROM PushTopic");
+        return queryResult.getRecords();
     }
 
     public void deleteTopic(String topicName) {
