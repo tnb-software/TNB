@@ -9,6 +9,8 @@ import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class TestConfiguration extends Configuration {
     public static final String CAMEL_VERSION = "camel.version";
@@ -36,6 +38,7 @@ public class TestConfiguration extends Configuration {
     public static final String REPORT_PORTAL = "test.report.portal.enabled";
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
+    public static final String JIRA_ALLOWED_RESOLUTIONS = "jira.allowed.resolutions";
 
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
@@ -149,4 +152,9 @@ public class TestConfiguration extends Configuration {
         return getBoolean(STREAM_LOGS, false);
     }
 
+    public static Set<String> jiraAllowedResolutions() {
+        return Arrays.stream(
+            getProperty(JIRA_ALLOWED_RESOLUTIONS, "Resolved, Closed, Done, Validation Backlog, In Validation").split(",")
+        ).map(String::trim).map(String::toLowerCase).collect(Collectors.toSet());
+    }
 }

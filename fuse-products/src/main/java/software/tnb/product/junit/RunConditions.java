@@ -1,13 +1,12 @@
 package software.tnb.product.junit;
 
+import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.junit.jira.Jira;
 import software.tnb.product.junit.jira.Jiras;
 import software.tnb.product.junit.product.RunOn;
-
-import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.utils.HTTPUtils;
 
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;
@@ -26,12 +25,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 
 public class RunConditions implements ExecutionCondition {
     private static final Logger LOG = LoggerFactory.getLogger(RunConditions.class);
     private static final String JIRA_URL_PREFIX = "https://issues.redhat.com/rest/api/latest/issue/";
-    private static final Set<String> RUN_RESOLUTIONS = Set.of("Resolved", "Closed", "Done", "Validation Backlog", "In Validation");
 
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
@@ -104,13 +101,13 @@ public class RunConditions implements ExecutionCondition {
             return ConditionEvaluationResult.enabled("Running");
         }
         for (String jiraKey : jira.keys()) {
-            LOG.trace("Checking JIRA {}", jiraKey);
+            LOG.trace("Checking JIRA {}, allowed resolutions: {}", jiraKey, TestConfiguration.jiraAllowedResolutions());
             final HTTPUtils.Response response = HTTPUtils.getInstance().get(JIRA_URL_PREFIX + jiraKey);
             if (response.getResponseCode() == 200) {
                 final String status = new JSONObject(response.getBody()).getJSONObject("fields").getJSONObject("status").get("name")
-                    .toString();
-                if (!RUN_RESOLUTIONS.contains(status)) {
-                    LOG.debug("Skipping {}, JIRA {} is in {} state", context.getDisplayName(), jiraKey, status);
+                    .toString().toLowerCase();
+                if (!TestConfiguration.jiraAllowedResolutions().contains(status)) {
+                    LOG.debug("Skipping {}, JIRA {} is in \"{}\" state", context.getDisplayName(), jiraKey, status);
                     return ConditionEvaluationResult.disabled(String.format("JIRA %s is in %s state", jiraKey, status));
                 }
             } else {
