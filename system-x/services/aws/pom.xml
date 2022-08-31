@@ -19,7 +19,7 @@
     </properties>
 
     <modules>
-        <module>aws-common</module>
+        <module>common</module>
         <module>cloudwatch</module>
         <module>dynamo-db</module>
         <module>iam</module>
