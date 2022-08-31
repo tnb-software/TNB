@@ -2,7 +2,7 @@ package software.tnb.google.storage.service;
 
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
-import software.tnb.google.storage.account.GoogleStorageAccount;
+import software.tnb.google.cloud.common.account.GoogleCloudAccount;
 import software.tnb.google.storage.validation.GoogleStorageValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -18,13 +18,13 @@ import io.fabric8.kubernetes.client.utils.Base64;
 
 @AutoService(GoogleStorage.class)
 public class GoogleStorage implements Service {
-    private GoogleStorageAccount account;
+    private GoogleCloudAccount account;
     private Storage client;
     private GoogleStorageValidation validation;
 
-    public GoogleStorageAccount account() {
+    public GoogleCloudAccount account() {
         if (account == null) {
-            account = Accounts.get(GoogleStorageAccount.class);
+            account = Accounts.get(GoogleCloudAccount.class);
         }
         return account;
     }
@@ -32,7 +32,7 @@ public class GoogleStorage implements Service {
     protected Storage client() {
         if (client == null) {
             try {
-                String decodedJson = new String(Base64.decode(account().serviceAccount()));
+                String decodedJson = new String(Base64.decode(account().serviceAccountKey()));
                 client = StorageOptions.newBuilder().setCredentials(
                     ServiceAccountCredentials.fromStream(IOUtils.toInputStream(decodedJson, "UTF-8"))).build().getService();
             } catch (Exception e) {
