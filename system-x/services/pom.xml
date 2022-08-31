@@ -26,6 +26,7 @@
         <module>jira</module>
         <module>http</module>
         <module>kafka</module>
+        <module>infinispan</module>
         <module>db</module>
         <module>elasticsearch</module>
         <module>filesystem</module>
