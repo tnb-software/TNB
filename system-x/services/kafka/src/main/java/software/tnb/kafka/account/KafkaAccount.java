@@ -13,7 +13,7 @@ public class KafkaAccount implements Account, WithId {
 
     @Override
     public String credentialsId() {
-        return "kafka-rhoas-sa-tnb";
+        return "kafka-rhoas-ck";
     }
 
     public String getClientID() {
