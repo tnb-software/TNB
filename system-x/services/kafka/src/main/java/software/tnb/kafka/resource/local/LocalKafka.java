@@ -67,6 +67,6 @@ public class LocalKafka extends Kafka implements Deployable, WithDockerImage {
     }
 
     public String defaultImage() {
-        return "quay.io/strimzi/kafka:latest-kafka-2.7.0";
+        return "registry.redhat.io/amq7/amq-streams-kafka-31-rhel8:2.1.0";
     }
 }
