@@ -1,5 +1,7 @@
 package software.tnb.google.storage.validation;
 
+import software.tnb.common.utils.WaitUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -7,7 +9,11 @@ import com.google.cloud.storage.BlobId;
 import com.google.cloud.storage.BlobInfo;
 import com.google.cloud.storage.BucketInfo;
 import com.google.cloud.storage.Storage;
+import com.google.cloud.storage.StorageException;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -37,10 +43,27 @@ public class GoogleStorageValidation {
         client.create(BlobInfo.newBuilder(bucketName, fileName).build(), content.getBytes());
     }
 
+    public void uploadFile(String bucketName, Path file) {
+        try {
+            LOG.info("Uploading file \"{}\" to \"{}\" bucket", file.toAbsolutePath(), bucketName);
+            client.create(BlobInfo.newBuilder(bucketName, file.getFileName().toString()).build(), Files.readAllBytes(file));
+            WaitUtils.waitFor(() -> listFiles(bucketName).contains(file.getFileName().toString()), "Waiting until the file "
+                + file.getFileName() + " is present in bucket " + bucketName);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read file bytes", e);
+        }
+    }
+
     public void deleteBucket(String bucketName) {
         LOG.info("Deleting bucket \"{}\"", bucketName);
-        listFiles(bucketName).forEach(f -> deleteFile(bucketName, f));
-        client.delete(bucketName);
+        try {
+            listFiles(bucketName).forEach(f -> deleteFile(bucketName, f));
+            client.delete(bucketName);
+        } catch (StorageException e) {
+            if (!e.getMessage().contains("bucket does not exist")) {
+                throw e;
+            }
+        }
     }
 
     public List<String> listFiles(String bucketName) {

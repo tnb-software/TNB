@@ -17,6 +17,8 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <geronimo.config.version>1.2.3</geronimo.config.version>
+        <json.version>20220320</json.version>
     </properties>
 
     <dependencies>
@@ -33,7 +35,7 @@
         <dependency>
             <groupId>org.apache.geronimo.config</groupId>
             <artifactId>geronimo-config-impl</artifactId>
-            <version>1.2.3</version>
+            <version>${geronimo.config.version}</version>
         </dependency>
         <dependency>
             <groupId>cz.xtf</groupId>
@@ -43,6 +45,11 @@
             <groupId>com.google.auto.service</groupId>
             <artifactId>auto-service-annotations</artifactId>
             <version>${auto-service.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>${json.version}</version>
         </dependency>
     </dependencies>
 </project>
