@@ -5,24 +5,24 @@
     <parent>
         <artifactId>system-x-aws</artifactId>
         <groupId>software.tnb</groupId>
-        <version>0.0.4</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-aws-sns</artifactId>
-    <version>0.0.4</version>
+    <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: AWS :: SNS</name>
 
     <dependencies>
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-common</artifactId>
-            <version>0.0.4</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-sqs</artifactId>
-            <version>0.0.4</version>
+            <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
