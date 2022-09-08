@@ -9,19 +9,19 @@
     <parent>
         <artifactId>system-x-aws</artifactId>
         <groupId>software.tnb</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.4</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
     <artifactId>system-x-aws-redshift</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.4</version>
     <name>TNB :: System-X :: Services :: AWS :: Redshift</name>
 
     <dependencies>
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>0.0.4</version>
         </dependency>
         <dependency>
             <groupId>software.amazon.awssdk</groupId>
