@@ -1,7 +1,7 @@
 <configuration>
     <images>
         <image>
-            <name>jkube-resources</name>
+            <name>${project.build.finalName}</name>
             <build>
                 <from>${jkube.generator.from}</from>
                 <assembly>
