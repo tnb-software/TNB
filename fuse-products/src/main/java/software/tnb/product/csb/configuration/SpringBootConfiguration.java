@@ -1,8 +1,8 @@
 package software.tnb.product.csb.configuration;
 
-import software.tnb.common.config.Configuration;
+import software.tnb.product.camel.CamelConfiguration;
 
-public class SpringBootConfiguration extends Configuration {
+public class SpringBootConfiguration extends CamelConfiguration {
     public static final String CAMEL_SPRINGBOOT_VERSION = "camel.springboot.version";
     public static final String SPRINGBOOT_VERSION = "springboot.version";
 

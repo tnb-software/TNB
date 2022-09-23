@@ -1,8 +1,8 @@
 package software.tnb.product.cq.configuration;
 
-import software.tnb.common.config.Configuration;
+import software.tnb.product.camel.CamelConfiguration;
 
-public class QuarkusConfiguration extends Configuration {
+public class QuarkusConfiguration extends CamelConfiguration {
     public static final String CAMEL_QUARKUS_VERSION = "camel.quarkus.version";
     public static final String QUARKUS_VERSION = "quarkus.version";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";

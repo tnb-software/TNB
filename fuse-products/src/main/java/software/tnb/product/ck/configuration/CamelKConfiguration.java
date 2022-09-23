@@ -1,12 +1,12 @@
 package software.tnb.product.ck.configuration;
 
-import software.tnb.common.config.Configuration;
+import software.tnb.product.camel.CamelConfiguration;
 
 import java.time.temporal.ChronoUnit;
 
 import io.fabric8.kubernetes.api.model.Duration;
 
-public abstract class CamelKConfiguration extends Configuration {
+public abstract class CamelKConfiguration extends CamelConfiguration {
     public static final String FORCE_UPSTREAM = "force.upstream";
 
     public static final String SUBSCRIPTION_CHANNEL = "camelk.subscription.channel";
