@@ -53,7 +53,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     public static final String BROKER_NAME = "tnb-amq-broker";
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
 
-    private static final String DEFAULT_CHANNEL = "7.x";
+    private static final String DEFAULT_CHANNEL = "7.10.x";
     private static final String OPERATOR_NAME = "amq-broker-rhel8";
     private static final String DEFAULT_SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-amq-broker";
