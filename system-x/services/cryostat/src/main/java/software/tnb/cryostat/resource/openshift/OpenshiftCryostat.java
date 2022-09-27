@@ -1,6 +1,7 @@
 package software.tnb.cryostat.resource.openshift;
 
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.WithOperator;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
@@ -25,13 +26,13 @@ import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 import okhttp3.Request;
 
 @AutoService(Cryostat.class)
-public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable {
+public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable, WithOperator {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCryostat.class);
 
-    private static final String CHANNEL = "stable";
+    private static final String DEFAULT_CHANNEL = "stable";
     private static final String OPERATOR_NAME = "cryostat-operator";
-    private static final String SOURCE = "redhat-operators";
+    private static final String DEFAULT_SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-cryostat";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
 
@@ -78,7 +79,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     public void create() {
         LOG.debug("Creating Cryostat instance");
         // Create subscription
-        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
+        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
         OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
         try {
@@ -140,5 +141,15 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     @Override
     public void cleanup() {
         //all recording should be removed from the tests
+    }
+
+    @Override
+    public String defaultOperatorCatalog() {
+        return DEFAULT_SOURCE;
+    }
+
+    @Override
+    public String defaultOperatorChannel() {
+        return DEFAULT_CHANNEL;
     }
 }
