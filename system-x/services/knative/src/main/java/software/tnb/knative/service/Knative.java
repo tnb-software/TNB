@@ -2,11 +2,12 @@ package software.tnb.knative.service;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import software.tnb.knative.validation.KnativeValidation;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.WithOperator;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.service.Service;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.knative.validation.KnativeValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,12 +25,12 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Knative.class)
-public class Knative implements Service, ReusableOpenshiftDeployable {
+public class Knative implements Service, ReusableOpenshiftDeployable, WithOperator {
     public static final String OPENSHIFT_SERVERLESS_NAMESPACE = "openshift.serverless.namespace";
 
-    private static final String CHANNEL = "stable";
+    private static final String DEFAULT_CHANNEL = "stable";
     private static final String OPERATOR_NAME = "serverless-operator";
-    private static final String SOURCE = "redhat-operators";
+    private static final String DEFAULT_SOURCE = "redhat-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-knative";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
     private static final String TARGET_NAMESPACE = System.getProperty(OPENSHIFT_SERVERLESS_NAMESPACE, "openshift-serverless");
@@ -111,8 +112,8 @@ public class Knative implements Service, ReusableOpenshiftDeployable {
 
         OpenshiftClient.get().createNamespace(TARGET_NAMESPACE);
         // Create subscription for serverless operator
-        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE, TARGET_NAMESPACE,
-            true);
+        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE
+            , TARGET_NAMESPACE,  true);
 
         // The serverless operator also creates eventing and serving namespaces if they are not present
         WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(EVENTING_NAMESPACE).get() != null,
@@ -180,5 +181,15 @@ public class Knative implements Service, ReusableOpenshiftDeployable {
         if (validation != null) {
             validation.deleteCreatedResources();
         }
+    }
+
+    @Override
+    public String defaultOperatorCatalog() {
+        return DEFAULT_SOURCE;
+    }
+
+    @Override
+    public String defaultOperatorChannel() {
+        return DEFAULT_CHANNEL;
     }
 }

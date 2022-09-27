@@ -2,6 +2,7 @@ package software.tnb.hyperfoil.resource.openshift;
 
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
+import software.tnb.common.deployment.WithOperator;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.hyperfoil.service.Hyperfoil;
@@ -24,13 +25,13 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 
 @AutoService(Hyperfoil.class)
-public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname {
+public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperator {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftHyperfoil.class);
 
-    private static final String CHANNEL = "alpha";
+    private static final String DEFAULT_CHANNEL = "alpha";
     private static final String OPERATOR_NAME = "hyperfoil-bundle";
-    private static final String SOURCE = "community-operators";
+    private static final String DEFAULT_SOURCE = "community-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-hyperfoil";
     private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
 
@@ -78,7 +79,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     public void create() {
         LOG.debug("Creating Hyperfoil instance");
         // Create subscription
-        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, SOURCE, SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
+        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
         OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
 
         try {
@@ -139,5 +140,15 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     @Override
     public String externalHostname() {
         return OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost();
+    }
+
+    @Override
+    public String defaultOperatorCatalog() {
+        return DEFAULT_SOURCE;
+    }
+
+    @Override
+    public String defaultOperatorChannel() {
+        return DEFAULT_CHANNEL;
     }
 }
