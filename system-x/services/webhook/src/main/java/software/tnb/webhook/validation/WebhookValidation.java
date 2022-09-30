@@ -34,6 +34,10 @@ public class WebhookValidation {
     }
 
     public void clearEndpoint() {
+        clearEndpoint(token);
+    }
+
+    public void clearEndpoint(String token) {
         final String url = String.format("%s/token/%s/request", WEBHOOK_ENDPOINT, token);
         LOG.debug("Cleaning endpoint {}", url);
         client.delete(url);
@@ -46,7 +50,20 @@ public class WebhookValidation {
     }
 
     public List<JSONObject> getRequests() {
-        final String url = String.format("%s/token/%s/requests", WEBHOOK_ENDPOINT, token);
+        return getRequests(token);
+    }
+
+    public List<JSONObject> getRequests(String token) {
+        return getRequests(token, null);
+    }
+
+    public List<JSONObject> getRequests(RequestQueryParameters queryParameters) {
+        return getRequests(token, queryParameters);
+    }
+
+    public List<JSONObject> getRequests(String token, RequestQueryParameters queryParameters) {
+        String parameters = queryParameters == null ? "" : queryParameters.toString();
+        final String url = String.format("%s/token/%s/requests%s", WEBHOOK_ENDPOINT, token, parameters);
         return new JSONObject(client.get(url).getBody()).getJSONArray("data")
             .toList().stream().map(o -> new JSONObject((Map) o)).collect(Collectors.toList());
     }
