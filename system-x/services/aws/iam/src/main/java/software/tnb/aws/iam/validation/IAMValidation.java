@@ -9,7 +9,7 @@ import java.util.Optional;
 
 import software.amazon.awssdk.services.iam.IamClient;
 import software.amazon.awssdk.services.iam.model.AttachedPolicy;
-import software.amazon.awssdk.services.iam.model.Role;
+import software.amazon.awssdk.services.iam.model.NoSuchEntityException;
 
 public class IAMValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(IAMValidation.class);
@@ -53,12 +53,11 @@ public class IAMValidation implements Validation {
     }
 
     public Optional<String> getRoleArn(String name) {
-        for (Role role : client.listRoles().roles()) {
-            if (name.equals(role.roleName())) {
-                return Optional.of(role.arn());
-            }
+        try {
+            return Optional.of(client.getRole(b -> b.roleName(name)).role().arn());
+        } catch (NoSuchEntityException e) {
+            return Optional.empty();
         }
-        return Optional.empty();
     }
 
     public void deleteRole(String name) {
