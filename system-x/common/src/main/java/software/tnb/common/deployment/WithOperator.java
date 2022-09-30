@@ -36,7 +36,7 @@ public interface WithOperator {
         final Class<?> superclass = thisClass.getSuperclass();
         if (Object.class.equals(superclass)) {
             throw new IllegalStateException("Current class " + thisClass.getSimpleName() + " does not extend any other class"
-                + " and default method from " + thisClass.getSimpleName() + " was called, either override this method or "
+                + " and default method from WithOperator was called, either override this method or "
                 + "check what's wrong as this shouldn't happen");
         }
         return Optional.ofNullable(System.getProperty(superclass.getSimpleName().toLowerCase() + property)).orElseGet(defaultMethod);
