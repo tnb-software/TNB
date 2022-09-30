@@ -2,6 +2,7 @@ package software.tnb.common.utils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
+import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor;
 import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -12,7 +13,10 @@ import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.Stack;
 
 public final class JUnitUtils {
     private static final Logger LOG = LoggerFactory.getLogger(JUnitUtils.class);
@@ -35,18 +39,33 @@ public final class JUnitUtils {
             // Get the current descriptor to get the currently executed test class
             TestDescriptor currentTestDescriptor = (TestDescriptor) ReflectionUtils.tryToReadFieldValue(f, extensionContext).get();
             // Save the list of test classes that are executed in current run
-            List<? extends TestDescriptor> testClasses = new ArrayList<>(rootTestDescriptor.getChildren());
-            boolean found = false;
+            List<? extends TestDescriptor> testClassesPlan = new ArrayList<>(rootTestDescriptor.getChildren());
+            Set<ClassBasedTestDescriptor> testClasses = new HashSet<>();
             // For all of the remaining classes to be executed
-            for (int i = testClasses.indexOf(currentTestDescriptor) + 1; i < testClasses.size(); i++) {
+            for (int i = testClassesPlan.indexOf(currentTestDescriptor) + 1; i < testClassesPlan.size(); i++) {
                 // Get all fields annotated with @RegisterExtension and check if any of those is an instance of given class
-                if (AnnotationSupport.findAnnotatedFieldValues(((ClassTestDescriptor) testClasses.get(i)).getTestClass(), RegisterExtension.class)
-                    .stream().anyMatch(extensionClass::isInstance)) {
-                    LOG.trace("Instance of {} found in {}", extensionClass.getSimpleName(),
-                        ((ClassTestDescriptor) testClasses.get(i)).getTestClass().getSimpleName());
-                    found = true;
+                final ClassTestDescriptor classTestDescriptor = (ClassTestDescriptor) testClassesPlan.get(i);
+
+                Stack<TestDescriptor> descriptorsToProcess = new Stack<>();
+                descriptorsToProcess.add(classTestDescriptor);
+
+                //Check for any level of nestedness and search for all class based test descriptors
+                while (!descriptorsToProcess.empty()) {
+                    final TestDescriptor desc = descriptorsToProcess.pop();
+                    if (desc.isContainer()) {
+                        descriptorsToProcess.addAll(desc.getChildren());
+                    }
+                    if (desc instanceof ClassBasedTestDescriptor) {
+                        testClasses.add((ClassBasedTestDescriptor) desc);
+                    }
                 }
             }
+            //Check all classes - nested and containers
+            boolean found = testClasses.stream()
+                .anyMatch(it -> AnnotationSupport.findAnnotatedFieldValues(it.getTestClass(), RegisterExtension.class)
+                    .stream()
+                    .anyMatch(extensionClass::isInstance)
+                );
             if (!found) {
                 LOG.debug("JUnit: No more usages of {} found", extensionClass.getSimpleName());
             } else {
