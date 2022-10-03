@@ -12,4 +12,15 @@
     <name>TNB :: System-X :: Services :: Webhook</name>
     <artifactId>system-x-webhook</artifactId>
 
+    <properties>
+        <gson-version>2.9.0</gson-version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson-version}</version>
+        </dependency>
+    </dependencies>
 </project>

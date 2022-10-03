@@ -1,14 +1,20 @@
 package software.tnb.webhook.validation;
 
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.webhook.validation.model.WebhookSiteRequest;
+import software.tnb.webhook.validation.model.WebhookSiteRequests;
 
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonDeserializer;
+
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -49,22 +55,38 @@ public class WebhookValidation {
         client.delete(url);
     }
 
-    public List<JSONObject> getRequests() {
+    public List<WebhookSiteRequest> getRequests() {
         return getRequests(token);
     }
 
-    public List<JSONObject> getRequests(String token) {
+    public List<WebhookSiteRequest> getRequests(String token) {
         return getRequests(token, null);
     }
 
-    public List<JSONObject> getRequests(RequestQueryParameters queryParameters) {
+    public List<WebhookSiteRequest> getRequests(RequestQueryParameters queryParameters) {
         return getRequests(token, queryParameters);
     }
 
-    public List<JSONObject> getRequests(String token, RequestQueryParameters queryParameters) {
+    public List<WebhookSiteRequest> getRequests(String token, RequestQueryParameters queryParameters) {
         String parameters = queryParameters == null ? "" : queryParameters.toString();
         final String url = String.format("%s/token/%s/requests%s", WEBHOOK_ENDPOINT, token, parameters);
-        return new JSONObject(client.get(url).getBody()).getJSONArray("data")
-            .toList().stream().map(o -> new JSONObject((Map) o)).collect(Collectors.toList());
+        String body = client.get(url).getBody();
+
+        Gson gson = new GsonBuilder().registerTypeAdapter(
+                LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, jsonDeserializationContext) -> {
+                    return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+                }).create();
+
+        return gson.fromJson(body, WebhookSiteRequests.class).getData();
+    }
+
+    public void deleteRequest(String requestId) {
+        deleteRequest(token, requestId);
+    }
+
+    public void deleteRequest(String token, String requestId) {
+        final String url = String.format("%s/token/%s/request/%s", WEBHOOK_ENDPOINT, token, requestId);
+        LOG.debug("Deleting request {}", url);
+        client.delete(url);
     }
 }

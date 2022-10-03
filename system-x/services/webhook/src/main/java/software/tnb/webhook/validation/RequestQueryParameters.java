@@ -1,6 +1,6 @@
 package software.tnb.webhook.validation;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
@@ -28,12 +28,12 @@ public class RequestQueryParameters {
         return this;
     }
 
-    public RequestQueryParameters setDateFrom(Instant dateFrom) {
+    public RequestQueryParameters setDateFrom(LocalDateTime dateFrom) {
         appendParameter("date_from", DATE_FORMATTER.format(dateFrom));
         return this;
     }
 
-    public RequestQueryParameters setDateTo(Instant dateFrom) {
+    public RequestQueryParameters setDateTo(LocalDateTime dateFrom) {
         appendParameter("date_to", DATE_FORMATTER.format(dateFrom));
         return this;
     }
