@@ -17,7 +17,7 @@
     <properties>
         <azure.clients.version>12.14.1</azure.clients.version>
         <azure.event.hubs.version>5.13.0</azure.event.hubs.version>
-        <azure.core.version>1.32.0</azure.core.version>
+        <azure.core.version>1.33.0</azure.core.version>
         <!-- Align the version, as blob comes with 12.18.0 and queue with 12.14.0 while both clients are the same version -->
         <azure.storage.common.version>12.18.0</azure.storage.common.version>
     </properties>
