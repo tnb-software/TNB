@@ -1,10 +1,9 @@
-package software.tnb.google.sheets.account;
+package software.tnb.google.api.common.account;
 
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-public class GoogleAccount implements Account, WithId {
-
+public class GoogleAPIAccount implements Account, WithId {
     private String api_client_id;
     private String api_client_secret;
     private String api_refresh_token;

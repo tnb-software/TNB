@@ -1,6 +1,6 @@
 package software.tnb.google.sheets.validation;
 
-import software.tnb.google.sheets.account.GoogleAccount;
+import software.tnb.google.api.common.account.GoogleAPIAccount;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,9 +15,9 @@ public class SheetsValidation {
     private static final Logger LOG = LoggerFactory.getLogger(SheetsValidation.class);
 
     private final Sheets client;
-    private final GoogleAccount account;
+    private final GoogleAPIAccount account;
 
-    public SheetsValidation(Sheets client, GoogleAccount account) {
+    public SheetsValidation(Sheets client, GoogleAPIAccount account) {
         this.client = client;
         this.account = account;
     }

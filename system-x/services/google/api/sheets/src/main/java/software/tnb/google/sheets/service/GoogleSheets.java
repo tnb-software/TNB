@@ -2,7 +2,7 @@ package software.tnb.google.sheets.service;
 
 import software.tnb.common.account.Accounts;
 import software.tnb.common.service.Service;
-import software.tnb.google.sheets.account.GoogleAccount;
+import software.tnb.google.api.common.account.GoogleAPIAccount;
 import software.tnb.google.sheets.validation.SheetsValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,7 +32,7 @@ public class GoogleSheets implements Service {
 
     private final NetHttpTransport httpTransport;
 
-    private GoogleAccount account;
+    private GoogleAPIAccount account;
     private SheetsValidation validation;
 
     public GoogleSheets() {
@@ -43,9 +43,9 @@ public class GoogleSheets implements Service {
         }
     }
 
-    public GoogleAccount account() {
+    public GoogleAPIAccount account() {
         if (account == null) {
-            account = Accounts.get(GoogleAccount.class);
+            account = Accounts.get(GoogleAPIAccount.class);
         }
         return account;
     }

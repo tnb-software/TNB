@@ -3,7 +3,7 @@
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
-        <artifactId>system-x-google</artifactId>
+        <artifactId>system-x-google-api</artifactId>
         <groupId>software.tnb</groupId>
         <version>1.0-SNAPSHOT</version>
     </parent>
@@ -11,7 +11,7 @@
 
     <artifactId>system-x-google-sheets</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>TNB :: System-X :: Services :: Google :: Sheets</name>
+    <name>TNB :: System-X :: Services :: Google :: API :: Sheets</name>
 
     <properties>
         <google-oauth-client-jetty.version>1.34.1</google-oauth-client-jetty.version>
@@ -19,6 +19,11 @@
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-google-api-common</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>
             <artifactId>google-oauth-client-jetty</artifactId>
