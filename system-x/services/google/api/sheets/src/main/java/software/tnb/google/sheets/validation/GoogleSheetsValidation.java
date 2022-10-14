@@ -1,6 +1,6 @@
 package software.tnb.google.sheets.validation;
 
-import software.tnb.google.api.common.account.GoogleAPIAccount;
+import software.tnb.common.service.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,15 +11,13 @@ import com.google.api.services.sheets.v4.model.SpreadsheetProperties;
 
 import java.io.IOException;
 
-public class SheetsValidation {
-    private static final Logger LOG = LoggerFactory.getLogger(SheetsValidation.class);
+public class GoogleSheetsValidation implements Validation {
+    private static final Logger LOG = LoggerFactory.getLogger(GoogleSheetsValidation.class);
 
     private final Sheets client;
-    private final GoogleAPIAccount account;
 
-    public SheetsValidation(Sheets client, GoogleAPIAccount account) {
+    public GoogleSheetsValidation(Sheets client) {
         this.client = client;
-        this.account = account;
     }
 
     public Spreadsheet createNewSpreadsheet(String title) {

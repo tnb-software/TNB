@@ -14,7 +14,13 @@
     <name>TNB :: System-X :: Services :: Google :: API</name>
     <packaging>pom</packaging>
 
+    <properties>
+
+    </properties>
+
     <modules>
+        <module>common</module>
+        <module>mail</module>
         <module>sheets</module>
     </modules>
 </project>
