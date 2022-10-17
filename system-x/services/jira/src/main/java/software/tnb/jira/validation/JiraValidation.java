@@ -12,6 +12,7 @@ import com.atlassian.jira.rest.client.api.domain.BasicIssue;
 import com.atlassian.jira.rest.client.api.domain.Comment;
 import com.atlassian.jira.rest.client.api.domain.Issue;
 import com.atlassian.jira.rest.client.api.domain.input.IssueInputBuilder;
+import com.atlassian.jira.rest.client.api.domain.input.TransitionInput;
 
 import java.util.List;
 import java.util.Optional;
@@ -113,5 +114,15 @@ public class JiraValidation {
         assert StringUtils.isNotEmpty(customJQL);
         return client.getSearchClient().searchJql(String.format("project = \"%s\" AND %s", project, customJQL))
             .claim().getIssues();
+    }
+
+    public void setTransition(String issueKey, int transitionId) {
+        LOG.debug("Transit issue " + issueKey + " - transition id: " + transitionId);
+        try {
+            client.getIssueClient().transition(client.getIssueClient().getIssue(issueKey).claim().getTransitionsUri(),
+                new TransitionInput(transitionId));
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to transit issue " + issueKey, e);
+        }
     }
 }
