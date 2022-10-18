@@ -141,6 +141,12 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
             //patch to avoid too characters on OCP resource names
             final Model model = Maven.loadPom(pomFile);
             model.setArtifactId(model.getArtifactId().replaceAll("camel-example-spring-boot-", "csb-"));
+
+            //set final name if present
+             ((AbstractMavenGitIntegrationBuilder) integrationBuilder).getFinalName().ifPresent(finalName -> {
+                 model.getBuild().setFinalName((String) finalName);
+             });
+
             Maven.writePom(pomFile, model);
         }
 
