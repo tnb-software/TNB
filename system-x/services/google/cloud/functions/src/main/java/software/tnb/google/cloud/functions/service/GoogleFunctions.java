@@ -1,6 +1,6 @@
 package software.tnb.google.cloud.functions.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.ServiceFactory;
 import software.tnb.google.cloud.common.account.GoogleCloudAccount;
@@ -31,7 +31,7 @@ public class GoogleFunctions implements Service {
 
     public GoogleCloudAccount account() {
         if (account == null) {
-            account = Accounts.get(GoogleCloudAccount.class);
+            account = AccountFactory.create(GoogleCloudAccount.class);
         }
         return account;
     }

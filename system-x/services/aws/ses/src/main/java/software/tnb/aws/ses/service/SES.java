@@ -3,7 +3,7 @@ package software.tnb.aws.ses.service;
 import software.tnb.aws.common.service.AWSService;
 import software.tnb.aws.ses.account.SESAccount;
 import software.tnb.aws.ses.validation.SESValidation;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -17,7 +17,7 @@ public class SES extends AWSService<SESAccount, SesClient, SESValidation> {
     public SESAccount account() {
         if (account == null) {
             LOG.debug("Creating new SES account");
-            account = Accounts.get(SESAccount.class);
+            account = AccountFactory.create(SESAccount.class);
         }
         return account;
     }

@@ -1,6 +1,6 @@
 package software.tnb.google.api.common.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.Validation;
 import software.tnb.google.api.common.account.GoogleAPIAccount;
@@ -40,7 +40,7 @@ public abstract class GoogleAPIService<V extends Validation> implements Service 
 
     public GoogleAPIAccount account() {
         if (account == null) {
-            account = Accounts.get(GoogleAPIAccount.class);
+            account = AccountFactory.create(GoogleAPIAccount.class);
         }
         return account;
     }

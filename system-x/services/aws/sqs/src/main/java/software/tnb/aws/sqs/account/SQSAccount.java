@@ -6,11 +6,6 @@ public class SQSAccount extends AWSAccount {
     private String queueUrlPrefix;
     private String queueArnPrefix;
 
-    @Override
-    public String credentialsId() {
-        return "aws";
-    }
-
     public void setQueueUrlPrefix(String queueUrlPrefix) {
         this.queueUrlPrefix = queueUrlPrefix;
     }

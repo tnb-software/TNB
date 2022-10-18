@@ -1,6 +1,6 @@
 package software.tnb.elasticsearch.resource.local;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.elasticsearch.account.ElasticsearchAccount;
@@ -40,7 +40,7 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable, Wit
     @Override
     public ElasticsearchAccount account() {
         if (account == null) {
-            account = Accounts.get(ElasticsearchAccount.class);
+            account = AccountFactory.create(ElasticsearchAccount.class);
             account.setPassword(PASSWORD);
         }
         return account;

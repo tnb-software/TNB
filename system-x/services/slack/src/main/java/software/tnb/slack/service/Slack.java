@@ -1,9 +1,9 @@
 package software.tnb.slack.service;
 
-import software.tnb.slack.validation.SlackValidation;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.slack.account.SlackAccount;
+import software.tnb.slack.validation.SlackValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -23,7 +23,7 @@ public class Slack implements Service {
     public SlackAccount account() {
         if (account == null) {
             LOG.debug("Creating new Slack account");
-            account = Accounts.get(SlackAccount.class);
+            account = AccountFactory.create(SlackAccount.class);
         }
         return account;
     }

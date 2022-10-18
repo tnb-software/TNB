@@ -10,6 +10,11 @@ import java.util.Map;
 public class SESAccount extends AWSAccount {
     private Map<String, String> identities;
 
+    @Override
+    public String credentialsId() {
+        return "aws-ses";
+    }
+
     public String identity(String key) {
         return identities.get(key);
     }

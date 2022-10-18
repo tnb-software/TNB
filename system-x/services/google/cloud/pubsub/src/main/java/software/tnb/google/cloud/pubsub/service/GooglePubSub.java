@@ -1,6 +1,6 @@
 package software.tnb.google.cloud.pubsub.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.google.cloud.common.account.GoogleCloudAccount;
 import software.tnb.google.cloud.pubsub.validation.PubSubValidation;
@@ -37,7 +37,7 @@ public class GooglePubSub implements Service {
 
     public GoogleCloudAccount account() {
         if (account == null) {
-            account = Accounts.get(GoogleCloudAccount.class);
+            account = AccountFactory.create(GoogleCloudAccount.class);
         }
         return account;
     }

@@ -2,19 +2,25 @@ package software.tnb.common.account;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import software.tnb.common.account.loader.CredentialsLoader;
+import software.tnb.common.account.loader.VaultCredentialsLoader;
+import software.tnb.common.account.loader.YamlCredentialsLoader;
 import software.tnb.common.config.TestConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.function.Function;
 
-public final class Accounts {
-    private static final Logger LOG = LoggerFactory.getLogger(Accounts.class);
+public final class AccountFactory {
+    private static final Logger LOG = LoggerFactory.getLogger(AccountFactory.class);
 
     private static CredentialsLoader loader;
 
-    private Accounts() {
+    private AccountFactory() {
     }
 
     /**
@@ -24,17 +30,10 @@ public final class Accounts {
      * @param <T> return type
      * @return new instance of given class
      */
-    public static <T extends Account> T get(Class<T> accountClass) {
-        Function<WithId, String> getId = WithId::getId;
-        T instance;
-        try {
-            instance = accountClass.getDeclaredConstructor().newInstance();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to create instance of " + accountClass.getName() + " class: ", e);
-        }
+    public static <T extends Account> T create(Class<T> accountClass) {
+        T instance = createInstance(accountClass);
         if (instance instanceof WithId) {
             LOG.debug("Loading {} account", accountClass.getSimpleName());
-            String credentialsId = getId.apply((WithId) instance);
             if (loader == null) {
                 try {
                     createLoader();
@@ -42,11 +41,7 @@ public final class Accounts {
                     fail("Could not load credentials", e);
                 }
             }
-            T account = loader.get(credentialsId, accountClass);
-            if (account == null) {
-                throw new IllegalArgumentException("Credentials with id " + credentialsId + " not found in credentials.yaml file");
-            }
-            return account;
+            return loader.get(getCredentialsIds(instance), accountClass);
         } else {
             LOG.debug("Initialization of {}. No credentials loading needed.", accountClass.getSimpleName());
             return instance;
@@ -74,6 +69,30 @@ public final class Accounts {
         } else {
             LOG.info("Loading credentials from file");
             loader = new YamlCredentialsLoader(TestConfiguration.credentialsFile());
+        }
+    }
+
+    private static <T extends Account> List<String> getCredentialsIds(T instance) {
+        Function<WithId, String> withId = WithId::getId;
+
+        List<String> ids = new ArrayList<>();
+
+        Class<?> current = instance.getClass();
+        while (current != null) {
+            if (WithId.class.isAssignableFrom(current)) {
+                ids.add(withId.apply((WithId) createInstance(current)));
+            }
+            current = current.getSuperclass();
+        }
+        Collections.reverse(ids);
+        return ids;
+    }
+
+    private static <T> T createInstance(Class<T> clazz) {
+        try {
+            return clazz.getDeclaredConstructor().newInstance();
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to create instance of " + clazz.getName() + " class: ", e);
         }
     }
 }

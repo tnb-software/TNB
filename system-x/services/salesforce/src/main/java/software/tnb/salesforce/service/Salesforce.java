@@ -1,6 +1,6 @@
 package software.tnb.salesforce.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.salesforce.account.SalesforceAccount;
@@ -25,7 +25,7 @@ public class Salesforce implements Service {
 
     public SalesforceAccount account() {
         if (account == null) {
-            account = Accounts.get(SalesforceAccount.class);
+            account = AccountFactory.create(SalesforceAccount.class);
         }
         return account;
     }

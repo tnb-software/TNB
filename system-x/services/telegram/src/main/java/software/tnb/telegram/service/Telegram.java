@@ -1,6 +1,6 @@
 package software.tnb.telegram.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.telegram.account.TelegramAccount;
 import software.tnb.telegram.resource.TelegramContainer;
@@ -35,7 +35,7 @@ public class Telegram implements Service {
     public TelegramAccount account() {
         if (account == null) {
             LOG.debug("Creating new Telegram account");
-            account = Accounts.get(TelegramAccount.class);
+            account = AccountFactory.create(TelegramAccount.class);
         }
         return account;
     }

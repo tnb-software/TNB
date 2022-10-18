@@ -1,9 +1,9 @@
 package software.tnb.jira.service;
 
+import software.tnb.common.account.AccountFactory;
+import software.tnb.common.service.Service;
 import software.tnb.jira.account.JiraAccount;
 import software.tnb.jira.validation.JiraValidation;
-import software.tnb.common.account.Accounts;
-import software.tnb.common.service.Service;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -27,7 +27,7 @@ public class Jira implements Service {
     public JiraAccount account() {
         if (account == null) {
             LOG.debug("Creating new Jira account");
-            account = Accounts.get(JiraAccount.class);
+            account = AccountFactory.create(JiraAccount.class);
         }
         return account;
     }

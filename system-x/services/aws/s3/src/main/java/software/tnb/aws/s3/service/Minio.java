@@ -3,7 +3,7 @@ package software.tnb.aws.s3.service;
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.service.AWSService;
 import software.tnb.aws.s3.validation.S3Validation;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 
 import java.net.URI;
@@ -24,7 +24,7 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
     public AWSAccount account() {
         if (account == null) {
             LOG.debug("Creating new Minio account");
-            account = Accounts.get(AWSAccount.class);
+            account = AccountFactory.create(AWSAccount.class);
             account.setAccount_id("minio");
             account.setAccess_key("minio");
             account.setSecret_key("minio123");

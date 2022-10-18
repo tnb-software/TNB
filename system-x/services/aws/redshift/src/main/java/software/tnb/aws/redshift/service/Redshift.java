@@ -2,10 +2,10 @@ package software.tnb.aws.redshift.service;
 
 import software.tnb.aws.common.client.AWSClient;
 import software.tnb.aws.common.service.AWSService;
-import software.tnb.common.account.Accounts;
-import software.tnb.common.utils.WaitUtils;
-import software.tnb.aws.redshift.account.RedshiftAWSAccount;
+import software.tnb.aws.redshift.account.RedshiftAccount;
 import software.tnb.aws.redshift.validation.RedshiftValidation;
+import software.tnb.common.account.AccountFactory;
+import software.tnb.common.utils.WaitUtils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -22,7 +22,7 @@ import software.amazon.awssdk.services.redshift.model.RedshiftException;
 import software.amazon.awssdk.services.redshiftdata.RedshiftDataClient;
 
 @AutoService(Redshift.class)
-public class Redshift extends AWSService<RedshiftAWSAccount, RedshiftDataClient, RedshiftValidation> {
+public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, RedshiftValidation> {
     private RedshiftClient redshiftClient;
 
     @Override
@@ -44,23 +44,23 @@ public class Redshift extends AWSService<RedshiftAWSAccount, RedshiftDataClient,
     }
 
     @Override
-    public RedshiftAWSAccount account() {
+    public RedshiftAccount account() {
         if (account == null) {
-            account = Accounts.get(RedshiftAWSAccount.class);
+            account = AccountFactory.create(RedshiftAccount.class);
         }
         return account;
     }
 
     public Cluster getCluster() {
         return redshiftClient.describeClusters().clusters().stream()
-            .filter(cluster -> cluster.clusterIdentifier().equals(account.redshiftClusterIdentifier())).findFirst().get();
+            .filter(cluster -> cluster.clusterIdentifier().equals(account.clusterIdentifier())).findFirst().get();
     }
 
     private void resumeCluster() {
         //resume cluster
         if (!getCluster().clusterAvailabilityStatus().equalsIgnoreCase("available")) {
             redshiftClient
-                .resumeCluster(builder -> builder.clusterIdentifier(account.redshiftClusterIdentifier()).build());
+                .resumeCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
             //wait for available
             WaitUtils.waitFor(() -> getCluster().clusterAvailabilityStatus().equalsIgnoreCase("available"), 30, 30000,
                 "Waiting for Cluster " + getCluster().clusterIdentifier() + " to be available");
@@ -71,7 +71,7 @@ public class Redshift extends AWSService<RedshiftAWSAccount, RedshiftDataClient,
         if (!getCluster().clusterAvailabilityStatus().equalsIgnoreCase("paused")) {
             checkSnapshots();
             try {
-                redshiftClient.pauseCluster(builder -> builder.clusterIdentifier(account.redshiftClusterIdentifier()).build());
+                redshiftClient.pauseCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
                 //wait for paused
                 WaitUtils
                     .waitFor(() -> getCluster().clusterAvailabilityStatus().equalsIgnoreCase("paused"), 30, 30000,
@@ -84,7 +84,7 @@ public class Redshift extends AWSService<RedshiftAWSAccount, RedshiftDataClient,
 
     private void checkSnapshots() {
         DescribeClusterSnapshotsResponse respRecent = redshiftClient.describeClusterSnapshots(builder -> builder
-            .clusterIdentifier(account.redshiftClusterIdentifier())
+            .clusterIdentifier(account.clusterIdentifier())
             .startTime(Instant.now().minus(5, ChronoUnit.HOURS)) //any - manual/automated
         );
 
@@ -93,7 +93,7 @@ public class Redshift extends AWSService<RedshiftAWSAccount, RedshiftDataClient,
             //needs to be created new snapshot
             String id = "snapshot-tnb-" + new Date().getTime();
             redshiftClient.createClusterSnapshot(builder -> builder
-                .clusterIdentifier(account.redshiftClusterIdentifier())
+                .clusterIdentifier(account.clusterIdentifier())
                 .snapshotIdentifier(id)
                 .manualSnapshotRetentionPeriod(1)); //1 day
             //wait for snapshot to be available
