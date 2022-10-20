@@ -1,4 +1,18 @@
 # TNB - The New Beginning framework
+```
+   _     _      _     _      _     _     
+  (c).-.(c)    (c).-.(c)    (c).-.(c)    
+   / ._. \      / ._. \      / ._. \     
+ __\( Y )/__  __\( Y )/__  __\( Y )/__   
+(_.-/'-'\-._)(_.-/'-'\-._)(_.-/'-'\-._)  
+   || T ||      || N ||      || B ||     
+ _.' `-' '._  _.' `-' '._  _.' `-' '._   
+(.-./`-'\.-.)(.-./`-'\.-.)(.-./`-'\.-.)  
+ `-'     `-'  `-'     `-'  `-'     `-'   
+```
+The New Beginning (TNB) is the Fuse QE Team developed framework used for Camel-related products testing as well as for testing external services on local OCP. The main benefit of the TNB is agnostic and generic configuration of TNB-based tests which make a story of adding new products and new services into the testing scope efficient, smooth and quick to perform.
+
+---
 
 For more information see the readme files in the modules.
 
