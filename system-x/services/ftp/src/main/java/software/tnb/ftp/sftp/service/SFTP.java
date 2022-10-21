@@ -1,6 +1,6 @@
 package software.tnb.ftp.sftp.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.sftp.account.SFTPAccount;
@@ -29,7 +29,7 @@ public abstract class SFTP implements FileTransferService, WithDockerImage {
     @Override
     public SFTPAccount account() {
         if (account == null) {
-            account = Accounts.get(SFTPAccount.class);
+            account = AccountFactory.create(SFTPAccount.class);
         }
         return account;
     }

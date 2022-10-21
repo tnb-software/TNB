@@ -6,11 +6,6 @@ public class SNSAccount extends AWSAccount {
     private String topicUrlPrefix;
     private String topicArnPrefix;
 
-    @Override
-    public String credentialsId() {
-        return "aws";
-    }
-
     public String topicUrlPrefix() {
         return topicUrlPrefix;
     }

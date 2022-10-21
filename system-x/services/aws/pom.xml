@@ -27,8 +27,9 @@
         <module>kinesis-firehose</module>
         <module>lambda</module>
         <module>redshift</module>
-        <module>s3</module>
-        <module>sqs</module>
+        <module>ses</module>
         <module>sns</module>
+        <module>sqs</module>
+        <module>s3</module>
     </modules>
 </project>

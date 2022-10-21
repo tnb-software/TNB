@@ -2,8 +2,7 @@ package software.tnb.aws.common.service;
 
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.client.AWSClient;
-
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.Validation;
 
@@ -23,7 +22,7 @@ public abstract class AWSService<A extends AWSAccount, C extends SdkClient, V ex
 
     public A account() {
         if (account == null) {
-            account = (A) Accounts.get(AWSAccount.class);
+            account = (A) AccountFactory.create(AWSAccount.class);
         }
         return account;
     }

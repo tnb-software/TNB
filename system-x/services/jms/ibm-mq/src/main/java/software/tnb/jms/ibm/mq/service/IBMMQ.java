@@ -1,6 +1,6 @@
 package software.tnb.jms.ibm.mq.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
@@ -32,7 +32,7 @@ public abstract class IBMMQ implements Service, WithDockerImage {
 
     public IBMMQAccount account() {
         if (account == null) {
-            account = Accounts.get(IBMMQAccount.class);
+            account = AccountFactory.create(IBMMQAccount.class);
         }
         return account;
     }

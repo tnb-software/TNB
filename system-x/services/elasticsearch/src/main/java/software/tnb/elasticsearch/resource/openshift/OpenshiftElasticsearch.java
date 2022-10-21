@@ -2,7 +2,7 @@ package software.tnb.elasticsearch.resource.openshift;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
@@ -123,7 +123,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public ElasticsearchAccount account() {
         if (account == null) {
-            account = Accounts.get(ElasticsearchAccount.class);
+            account = AccountFactory.create(ElasticsearchAccount.class);
             account.setPassword(new String(
                 Base64.getDecoder().decode(OpenshiftClient.get().getSecret(clusterName() + "-es-elastic-user").getData().get("elastic"))));
         }

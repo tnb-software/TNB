@@ -1,6 +1,6 @@
 package software.tnb.kafka.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.kafka.account.KafkaAccount;
 import software.tnb.kafka.validation.KafkaValidation;
@@ -32,7 +32,7 @@ public abstract class Kafka implements Service {
 
     public KafkaAccount account() {
         if (account == null) {
-            account = Accounts.get(KafkaAccount.class);
+            account = AccountFactory.create(KafkaAccount.class);
         }
         return account;
     }

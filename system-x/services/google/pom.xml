@@ -36,11 +36,8 @@
     </dependencyManagement>
 
     <modules>
-        <module>common</module>
-        <module>sheets</module>
-        <module>storage</module>
-        <module>pubsub</module>
-        <module>functions</module>
+        <module>api</module>
+        <module>cloud</module>
     </modules>
 
 </project>

@@ -3,7 +3,7 @@ package software.tnb.azure.event.hubs.service;
 import software.tnb.azure.event.hubs.account.EventHubsAccount;
 import software.tnb.azure.event.hubs.validation.EventHubsValidation;
 import software.tnb.azure.storage.blob.service.StorageBlob;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.ServiceFactory;
 
@@ -39,7 +39,7 @@ public class EventHubs implements Service {
 
     public EventHubsAccount account() {
         if (account == null) {
-            account = Accounts.get(EventHubsAccount.class);
+            account = AccountFactory.create(EventHubsAccount.class);
         }
         return account;
     }

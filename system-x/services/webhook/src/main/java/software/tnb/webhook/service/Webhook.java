@@ -1,6 +1,6 @@
 package software.tnb.webhook.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.webhook.account.WebhookAccount;
 import software.tnb.webhook.validation.WebhookValidation;
@@ -22,7 +22,7 @@ public class Webhook implements Service {
     public WebhookAccount account() {
         if (account == null) {
             LOG.debug("Creating new Webhook account");
-            account = Accounts.get(WebhookAccount.class);
+            account = AccountFactory.create(WebhookAccount.class);
         }
         return account;
     }

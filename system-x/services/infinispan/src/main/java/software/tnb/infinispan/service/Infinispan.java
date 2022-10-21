@@ -1,6 +1,6 @@
 package software.tnb.infinispan.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.infinispan.resource.account.InfinispanAccount;
@@ -16,7 +16,7 @@ public abstract class Infinispan implements Service, WithDockerImage {
 
     public InfinispanAccount account() {
         if (account == null) {
-            account = Accounts.get(InfinispanAccount.class);
+            account = AccountFactory.create(InfinispanAccount.class);
         }
         return account;
     }
