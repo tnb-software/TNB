@@ -14,6 +14,7 @@
     <packaging>pom</packaging>
 
     <modules>
+        <module>bigquery</module>
         <module>common</module>
         <module>functions</module>
         <module>pubsub</module>
