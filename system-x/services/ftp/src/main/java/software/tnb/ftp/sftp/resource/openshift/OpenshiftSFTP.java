@@ -67,24 +67,9 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
                 .build()
             );
 
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
-        if (scc == null) {
-            // if our scc does not exist, copy it from the anyuid and add SYS_CHROOT
-            SecurityContextConstraints anyuid = OpenshiftClient.get().securityContextConstraints().withName("anyuid").get();
-            scc = OpenshiftClient.get().securityContextConstraints().create(
-                new SecurityContextConstraintsBuilder(anyuid)
-                    .withNewMetadata() // new metadata to override the existing annotations
-                    .withName(SCC_NAME)
-                    .endMetadata()
-                    .addToDefaultAddCapabilities("SYS_CHROOT")
-                    .build());
-        }
-
-        final String user = "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
-        if (!scc.getUsers().contains(user)) {
-            scc.getUsers().add(user);
-            OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
-        }
+        OpenshiftClient.get().addUsersToSecurityContext(
+            OpenshiftClient.get().createSecurityContext(SCC_NAME, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
             new DeploymentBuilder()
