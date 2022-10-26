@@ -33,10 +33,9 @@ jobs:
       - name: Create snapshot version
         run: |
           # Get the latest released tag and increase its version (as we always stay on 1.0-SNAPSHOT in main branch for tnb-tests usage, but it would be better to have also the snapshot version incrementing)
-          previous_tag="$(git describe --tags $(git rev-list --tags --max-count=1) | cut -c2-)"
-          echo ${previous_tag}
-          curl -o semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver
-          chmod +x semver
+          # Only select tags matching 'v*'
+          previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' "refs/tags/v*" | awk -F"/" 'END{print substr($3,2)}')"
+          curl -o semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver && chmod +x semver
           snapshot_version=$(./semver bump patch ${previous_tag})-SNAPSHOT
           mvn --no-transfer-progress versions:set -DnewVersion=${snapshot_version} -DoldVersion=* -DgroupId=* -DartifactId=* -DgenerateBackupPoms=false
       - name: Deploy
