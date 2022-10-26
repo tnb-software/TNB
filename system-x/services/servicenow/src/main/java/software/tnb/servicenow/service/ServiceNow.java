@@ -1,6 +1,6 @@
 package software.tnb.servicenow.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.servicenow.account.ServiceNowAccount;
 import software.tnb.servicenow.validation.ServiceNowValidation;
@@ -22,7 +22,7 @@ public class ServiceNow implements Service {
 
     public ServiceNowAccount account() {
         if (account == null) {
-            account = Accounts.get(ServiceNowAccount.class);
+            account = AccountFactory.create(ServiceNowAccount.class);
         }
         return account;
     }

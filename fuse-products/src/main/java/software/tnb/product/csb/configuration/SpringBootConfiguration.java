@@ -1,8 +1,11 @@
 package software.tnb.product.csb.configuration;
 
-import software.tnb.common.config.Configuration;
+import software.tnb.common.utils.VersionUtils;
+import software.tnb.product.camel.CamelConfiguration;
 
-public class SpringBootConfiguration extends Configuration {
+import org.apache.commons.lang3.StringUtils;
+
+public class SpringBootConfiguration extends CamelConfiguration {
     public static final String CAMEL_SPRINGBOOT_VERSION = "camel.springboot.version";
     public static final String SPRINGBOOT_VERSION = "springboot.version";
 
@@ -70,7 +73,8 @@ public class SpringBootConfiguration extends Configuration {
     }
 
     public static String openshiftMavenPluginVersion() {
-        return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, "1.7.0");
+        return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, () -> StringUtils.removeStart(VersionUtils.getInstance()
+            .getLatestGitHubReleaseTag("eclipse/jkube", "1.9.1"), "v"));
     }
 
     public static String mavenCompilerPluginVersion() {

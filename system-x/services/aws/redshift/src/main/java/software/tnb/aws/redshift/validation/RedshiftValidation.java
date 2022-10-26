@@ -1,6 +1,6 @@
 package software.tnb.aws.redshift.validation;
 
-import software.tnb.aws.redshift.account.RedshiftAWSAccount;
+import software.tnb.aws.redshift.account.RedshiftAccount;
 import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
 
@@ -20,23 +20,23 @@ public class RedshiftValidation implements Validation {
 
     private final RedshiftClient redshiftClient;
     private final RedshiftDataClient redshiftDataClient;
-    private final RedshiftAWSAccount redshiftAWSAccount;
+    private final RedshiftAccount redshiftAccount;
 
     //TODO(anyone): trial cluster expires 02/07/2022, currently uses default setup - cluster identifier ("redshift-cluster-1"), user ("awsuser")
     // and database ("dev")
 
-    public RedshiftValidation(RedshiftClient redshiftClient, RedshiftDataClient redshiftDataClient, RedshiftAWSAccount redshiftAWSAccount) {
+    public RedshiftValidation(RedshiftClient redshiftClient, RedshiftDataClient redshiftDataClient, RedshiftAccount redshiftAccount) {
         this.redshiftClient = redshiftClient;
         this.redshiftDataClient = redshiftDataClient;
-        this.redshiftAWSAccount = redshiftAWSAccount;
+        this.redshiftAccount = redshiftAccount;
     }
 
     public String execSql(String sql) {
         Cluster cluster = redshiftClient.describeClusters().clusters().stream()
-            .filter(c -> c.clusterIdentifier().equals(redshiftAWSAccount.redshiftClusterIdentifier())).findFirst().get();
+            .filter(c -> c.clusterIdentifier().equals(redshiftAccount.clusterIdentifier())).findFirst().get();
         String responseId = redshiftDataClient.executeStatement(
             ExecuteStatementRequest.builder()
-                .clusterIdentifier(redshiftAWSAccount.redshiftClusterIdentifier())
+                .clusterIdentifier(redshiftAccount.clusterIdentifier())
                 .database(cluster.dbName())
                 .dbUser(cluster.masterUsername())
                 .sql(sql).build()).id();

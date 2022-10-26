@@ -1,6 +1,6 @@
 package software.tnb.db.mongodb.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.db.mongodb.account.MongoDBAccount;
@@ -22,7 +22,7 @@ public abstract class MongoDB implements Service, WithDockerImage {
 
     public MongoDBAccount account() {
         if (account == null) {
-            account = Accounts.get(MongoDBAccount.class);
+            account = AccountFactory.create(MongoDBAccount.class);
         }
         return account;
     }

@@ -23,6 +23,7 @@ public final class SpringBootIntegrationBuilder extends AbstractMavenGitIntegrat
 
     public SpringBootIntegrationBuilder(String integrationName) {
         super(integrationName);
+        withFinalName(integrationName);
     }
 
     protected SpringBootIntegrationBuilder self() {

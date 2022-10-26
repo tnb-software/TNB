@@ -76,6 +76,11 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-aws-ses</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-sns</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -161,7 +166,37 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-api-common</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-api</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-bigquery</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-cloud-common</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-cloud</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-functions</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-google-mail</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
@@ -307,6 +342,11 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-telegram</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-webhook</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>

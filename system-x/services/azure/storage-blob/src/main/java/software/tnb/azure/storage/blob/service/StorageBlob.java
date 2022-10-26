@@ -2,7 +2,7 @@ package software.tnb.azure.storage.blob.service;
 
 import software.tnb.azure.common.account.AzureAccount;
 import software.tnb.azure.storage.blob.validation.StorageBlobValidation;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -25,7 +25,7 @@ public class StorageBlob implements Service {
 
     public AzureAccount account() {
         if (account == null) {
-            account = Accounts.get(AzureAccount.class);
+            account = AccountFactory.create(AzureAccount.class);
         }
         return account;
     }

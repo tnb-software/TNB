@@ -1,10 +1,9 @@
 package software.tnb.jms.amq.service;
 
+import software.tnb.common.account.AccountFactory;
+import software.tnb.common.service.Service;
 import software.tnb.jms.amq.account.AMQBrokerAccount;
 import software.tnb.jms.amq.validation.AMQValidation;
-
-import software.tnb.common.account.Accounts;
-import software.tnb.common.service.Service;
 
 import javax.jms.Connection;
 
@@ -16,7 +15,7 @@ public abstract class AMQBroker implements Service {
 
     public AMQBrokerAccount account() {
         if (account == null) {
-            account = Accounts.get(AMQBrokerAccount.class);
+            account = AccountFactory.create(AMQBrokerAccount.class);
         }
         return account;
     }

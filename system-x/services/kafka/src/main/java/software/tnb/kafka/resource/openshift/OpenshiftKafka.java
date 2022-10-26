@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
+import software.tnb.common.deployment.WithOperator;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.kafka.service.Kafka;
 
@@ -38,11 +39,15 @@ import io.strimzi.api.kafka.model.listener.arraylistener.KafkaListenerType;
 import io.strimzi.api.kafka.model.status.Condition;
 
 @AutoService(Kafka.class)
-public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName {
+public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperator {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKafka.class);
 
     private static final String CRD_GROUP = "kafka.strimzi.io";
     private static final String CRD_VERSION = "v1beta2";
+
+    private static final String DEFAULT_SOURCE = "redhat-operators";
+
+    private static final String DEFAULT_CHANNEL = "stable";
 
     private static final CustomResourceDefinitionContext KAFKA_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withName("Kafka")
@@ -127,7 +132,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     }
 
     private void deployOperator() {
-        OpenshiftClient.get().createSubscription("stable", "amq-streams", "redhat-operators", "amq-streams", "openshift-marketplace",
+        OpenshiftClient.get().createSubscription(operatorChannel(), "amq-streams", operatorCatalog(), "amq-streams", "openshift-marketplace",
             OpenshiftConfiguration.openshiftNamespace(),
             false);
         OpenshiftClient.get().waitForInstallPlanToComplete("amq-streams");
@@ -265,5 +270,15 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         props.setProperty("ssl.truststore.password", account().trustStorePassword());
         props.setProperty("ssl.truststore.location", new File(account().trustStore()).getAbsolutePath());
         props.setProperty("ssl.truststore.type", "PKCS12");
+    }
+
+    @Override
+    public String defaultOperatorCatalog() {
+        return DEFAULT_SOURCE;
+    }
+
+    @Override
+    public String defaultOperatorChannel() {
+        return DEFAULT_CHANNEL;
     }
 }

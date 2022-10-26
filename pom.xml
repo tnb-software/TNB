@@ -90,17 +90,17 @@
         <maven.surefire.plugin.version>2.22.2</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.8</jacoco.maven.plugin.version>
-        <jgit.version>6.2.0.202206071550-r</jgit.version>
+        <jgit.version>6.3.0.202209071007-r</jgit.version>
         <junit.version>5.9.0</junit.version>
         <assertj.version>3.23.1</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <log4j.version>2.18.0</log4j.version>
+        <log4j.version>2.19.0</log4j.version>
         <vault.version>5.1.0</vault.version>
         <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
         <source.plugin.version>3.2.1</source.plugin.version>
         <javadoc.plugin.version>3.4.0</javadoc.plugin.version>
         <gpg.plugin.version>3.0.1</gpg.plugin.version>
-        <git.changelog.maven.plugin>1.92</git.changelog.maven.plugin>
+        <git.changelog.maven.plugin>1.95.2</git.changelog.maven.plugin>
     </properties>
 
     <dependencyManagement>

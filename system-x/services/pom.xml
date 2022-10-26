@@ -40,6 +40,7 @@
         <module>prometheus-metrics</module>
         <module>lra-coordinator</module>
         <module>mllp</module>
+        <module>webhook</module>
     </modules>
 
     <dependencies>

@@ -33,7 +33,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         Path baseDirectory;
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
             AbstractMavenGitIntegrationBuilder<?> mavenGitIntegrationBuilder = (AbstractMavenGitIntegrationBuilder<?>) integrationBuilder;
-            baseDirectory = mavenGitApp.getProjectLocation();
+            baseDirectory = mavenGitApp != null ? mavenGitApp.getProjectLocation() : TestConfiguration.appLocation().resolve(name);
             finalName = mavenGitIntegrationBuilder.getFinalName().orElse(getName());
         } else {
             baseDirectory = TestConfiguration.appLocation().resolve(name);

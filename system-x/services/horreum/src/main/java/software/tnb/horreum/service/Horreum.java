@@ -1,6 +1,6 @@
 package software.tnb.horreum.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.horreum.account.HorreumAccount;
 import software.tnb.horreum.validation.HorreumValidation;
@@ -20,7 +20,7 @@ public class Horreum implements Service {
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        validation = new HorreumValidation(Accounts.get(HorreumAccount.class));
+        validation = new HorreumValidation(AccountFactory.create(HorreumAccount.class));
     }
 
     @Override

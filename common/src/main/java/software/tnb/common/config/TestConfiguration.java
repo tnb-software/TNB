@@ -13,8 +13,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TestConfiguration extends Configuration {
-    public static final String CAMEL_VERSION = "camel.version";
-    public static final String CAMEL_ARCHETYPE_VERSION = "camel.archetype.version";
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";

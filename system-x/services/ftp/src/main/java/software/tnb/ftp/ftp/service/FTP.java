@@ -1,6 +1,6 @@
 package software.tnb.ftp.ftp.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.ftp.account.FTPAccount;
@@ -22,7 +22,7 @@ public abstract class FTP implements FileTransferService, WithDockerImage {
     @Override
     public FTPAccount account() {
         if (account == null) {
-            account = Accounts.get(FTPAccount.class);
+            account = AccountFactory.create(FTPAccount.class);
         }
         return account;
     }

@@ -2,14 +2,15 @@ package software.tnb.elasticsearch.resource.openshift;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import software.tnb.elasticsearch.account.ElasticsearchAccount;
-import software.tnb.elasticsearch.service.Elasticsearch;
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
+import software.tnb.common.deployment.WithOperator;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.elasticsearch.account.ElasticsearchAccount;
+import software.tnb.elasticsearch.service.Elasticsearch;
 
 import org.apache.commons.io.IOUtils;
 
@@ -29,10 +30,11 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Elasticsearch.class)
-public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable, WithInClusterHostname, WithExternalHostname {
-    private static final String CHANNEL = "stable";
+public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable, WithInClusterHostname, WithExternalHostname
+    , WithOperator {
+    private static final String DEFAULT_CHANNEL = "stable";
     private static final String OPERATOR_NAME = "elasticsearch-eck-operator-certified";
-    private static final String CATALOGSOURCE_NAME = "certified-operators";
+    private static final String DEFAULT_CATALOGSOURCE_NAME = "certified-operators";
     private static final String SUBSCRIPTION_NAME = "tnb-elasticsearch";
 
     private static final CustomResourceDefinitionContext ELASTICSEARCH_CTX = new CustomResourceDefinitionContext.Builder()
@@ -48,7 +50,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
 
     @Override
     public void create() {
-        OpenshiftClient.get().createSubscription(CHANNEL, OPERATOR_NAME, CATALOGSOURCE_NAME, SUBSCRIPTION_NAME);
+        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME);
 
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(1, "control-plane", "elastic-operator")
             .timeout(300_000).waitFor();
@@ -121,7 +123,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public ElasticsearchAccount account() {
         if (account == null) {
-            account = Accounts.get(ElasticsearchAccount.class);
+            account = AccountFactory.create(ElasticsearchAccount.class);
             account.setPassword(new String(
                 Base64.getDecoder().decode(OpenshiftClient.get().getSecret(clusterName() + "-es-elastic-user").getData().get("elastic"))));
         }
@@ -141,5 +143,15 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public String inClusterHostname() {
         return OpenshiftClient.get().getClusterHostname(clusterName() + "-es-http");
+    }
+
+    @Override
+    public String defaultOperatorCatalog() {
+        return DEFAULT_CATALOGSOURCE_NAME;
+    }
+
+    @Override
+    public String defaultOperatorChannel() {
+        return DEFAULT_CHANNEL;
     }
 }

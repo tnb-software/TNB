@@ -1,12 +1,12 @@
 package software.tnb.aws.sns.service;
 
 import software.tnb.aws.common.service.AWSService;
-import software.tnb.common.account.Accounts;
-import software.tnb.common.service.ServiceFactory;
 import software.tnb.aws.sns.account.SNSAccount;
 import software.tnb.aws.sns.validation.SNSValidation;
 import software.tnb.aws.sqs.service.SQS;
 import software.tnb.aws.sqs.validation.SQSValidation;
+import software.tnb.common.account.AccountFactory;
+import software.tnb.common.service.ServiceFactory;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -22,7 +22,7 @@ public class SNS extends AWSService<SNSAccount, SnsClient, SNSValidation> {
     public SNSAccount account() {
         if (account == null) {
             LOG.debug("Creating new SNS account");
-            account = Accounts.get(SNSAccount.class);
+            account = AccountFactory.create(SNSAccount.class);
             // There two are derived other values
             account.setTopicUrlPrefix(String.format("https://sns.%s.amazonaws.com/%s/", account.region(), account.accountId()));
             account.setTopicArnPrefix(String.format("arn:aws:sns:%s:%s:", account.region(), account.accountId()));

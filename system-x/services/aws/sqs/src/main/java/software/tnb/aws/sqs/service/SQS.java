@@ -1,9 +1,9 @@
 package software.tnb.aws.sqs.service;
 
-import software.tnb.aws.sqs.validation.SQSValidation;
 import software.tnb.aws.common.service.AWSService;
-import software.tnb.common.account.Accounts;
 import software.tnb.aws.sqs.account.SQSAccount;
+import software.tnb.aws.sqs.validation.SQSValidation;
+import software.tnb.common.account.AccountFactory;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -22,7 +22,7 @@ public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
     public SQSAccount account() {
         if (account == null) {
             LOG.debug("Creating new SQS account");
-            account = Accounts.get(SQSAccount.class);
+            account = AccountFactory.create(SQSAccount.class);
             // There two are derived other values
             account.setQueueUrlPrefix(String.format("https://sqs.%s.amazonaws.com/%s/", account.region(), account.accountId()));
             account.setQueueArnPrefix(String.format("arn:aws:sqs:%s:%s:", account.region(), account.accountId()));

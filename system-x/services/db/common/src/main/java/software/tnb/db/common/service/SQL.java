@@ -1,6 +1,6 @@
 package software.tnb.db.common.service;
 
-import software.tnb.common.account.Accounts;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
@@ -23,7 +23,7 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
 
     public SQLAccount account() {
         if (account == null) {
-            account = Accounts.get(accountClass());
+            account = AccountFactory.create(accountClass());
         }
         return account;
     }
