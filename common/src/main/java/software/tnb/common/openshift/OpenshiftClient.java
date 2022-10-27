@@ -27,6 +27,8 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.openshift.api.model.SecurityContextConstraints;
+import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
@@ -399,5 +401,42 @@ public class OpenshiftClient extends OpenShift {
             container = containerList.get(0).getName();
         }
         return container;
+    }
+
+    public SecurityContextConstraints createSecurityContext(String sccName, String copyFromScc, String... defaultCapabilities) {
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(sccName).get();
+        if (scc == null) {
+            SecurityContextConstraints existingScc = OpenshiftClient.get().securityContextConstraints().withName(copyFromScc).get();
+            scc = OpenshiftClient.get().securityContextConstraints().create(
+                new SecurityContextConstraintsBuilder(existingScc)
+                    .withNewMetadata() // new metadata to override the existing annotations
+                    .withName(sccName)
+                    .endMetadata()
+                    .addToDefaultAddCapabilities(defaultCapabilities)
+                    .build());
+        }
+        return scc;
+    }
+
+    public void addUsersToSecurityContext(SecurityContextConstraints scc, String... users) {
+        for (String user : users) {
+            if (!scc.getUsers().contains(user)) {
+                scc.getUsers().add(user);
+            }
+        }
+        OpenshiftClient.get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+    }
+
+    public void addGroupsToSecurityContext(SecurityContextConstraints scc, String... groups) {
+        for (String group : groups) {
+            if (!scc.getGroups().contains(group)) {
+                scc.getGroups().add(group);
+            }
+        }
+        OpenshiftClient.get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+    }
+
+    public String getServiceAccountRef(String serviceAccountName) {
+        return "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
     }
 }

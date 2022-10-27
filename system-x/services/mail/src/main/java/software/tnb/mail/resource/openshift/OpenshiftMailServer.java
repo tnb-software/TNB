@@ -35,7 +35,6 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
-import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 
 @AutoService(MailServer.class)
 public class OpenshiftMailServer extends MailServer implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -61,24 +60,9 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
                 .build()
             );
 
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
-        if (scc == null) {
-            // if our scc does not exist, copy it from the anyuid and add SYS_CHROOT
-            SecurityContextConstraints anyuid = OpenshiftClient.get().securityContextConstraints().withName("anyuid").get();
-            scc = OpenshiftClient.get().securityContextConstraints().create(
-                new SecurityContextConstraintsBuilder(anyuid)
-                    .withNewMetadata() // new metadata to override the existing annotations
-                    .withName(SCC_NAME)
-                    .endMetadata()
-                    .addToDefaultAddCapabilities("SYS_CHROOT")
-                    .build());
-        }
-
-        final String user = "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
-        if (!scc.getUsers().contains(user)) {
-            scc.getUsers().add(user);
-            OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
-        }
+        OpenshiftClient.get().addUsersToSecurityContext(
+            OpenshiftClient.get().createSecurityContext(SCC_NAME, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         List<ContainerPort> ports = new LinkedList<>();
         services.forEach((name, port) -> {

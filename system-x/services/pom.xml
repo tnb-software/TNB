@@ -41,6 +41,7 @@
         <module>lra-coordinator</module>
         <module>mllp</module>
         <module>webhook</module>
+        <module>splunk</module>
     </modules>
 
     <dependencies>
