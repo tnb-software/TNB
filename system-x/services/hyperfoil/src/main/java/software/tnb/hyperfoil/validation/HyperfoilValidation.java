@@ -24,6 +24,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -45,10 +47,31 @@ public class HyperfoilValidation {
     }
 
     private String msgLogForRun(Run run) {
-        List<String> errors = run.getErrors();
-        if (errors != null && errors.size() > 0) {
-            return run.toString().replaceFirst("errors: \\[.+\\]", String.format("errors: %n%s%s", " ".repeat(8),
-                String.join(System.lineSeparator() + " ".repeat(8), errors)));
+        return msgLogForRun(run, null);
+    }
+
+    private String msgLogForRun(Run run, Integer oldErrorsSize) {
+        List<String> currentErrors = run.getErrors();
+        if (currentErrors != null && currentErrors.size() > 0) {
+            if (oldErrorsSize != null) {
+                currentErrors = currentErrors.subList(oldErrorsSize, currentErrors.size());
+            }
+            Map<String, List<String>> em = new HashMap<>();
+
+            currentErrors.stream().map(e -> e.split(":", 2)).forEach(es -> {
+                em.putIfAbsent(es[0], new LinkedList<String>());
+                em.get(es[0]).add(es[1]);
+            });
+            StringBuilder errMsgBuilder = new StringBuilder();
+            em.forEach((nodeName, errs) -> {
+                errMsgBuilder.append(" ".repeat(8)).append(nodeName).append(":")
+                        .append(System.lineSeparator()).append(" ".repeat(12))
+                        .append(String.join(System.lineSeparator() + " ".repeat(12), errs))
+                        .append(System.lineSeparator());
+
+            });
+            return run.toString().replaceFirst("errors: \\[.+\\]", String.format("errors: %n%s",
+                    errMsgBuilder.toString()));
         } else {
             return run.toString();
         }
@@ -88,7 +111,7 @@ public class HyperfoilValidation {
      * Load the benchmark hf.yaml on running hyperfoil server, run the benchmark,
      * wait for result and save the report in the target folder
      *
-     * @param benchmark - classpath or http/s endpoint
+     * @param benchmark                    - classpath or http/s endpoint
      * @param applicationUnderTestEndpoint
      * @return an object holding the startTime and endTime of the test
      */
@@ -107,8 +130,8 @@ public class HyperfoilValidation {
      * Load the benchmark hf.yaml on running hyperfoil server, run the benchmark,
      * wait for result and save the report in the target folder
      *
-     * @param benchmark classpath or http/s endpoint of a benchmark yaml or
-     * template
+     * @param benchmark  classpath or http/s endpoint of a benchmark yaml or
+     *                   template
      * @param parameters if not null the parameters will be supplied to the template
      * @return an object holding the startTime and endTime of the test
      */
@@ -149,7 +172,7 @@ public class HyperfoilValidation {
             HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient()).get(benchmarkUri);
             if (response.getResponseCode() != 200) {
                 throw new RuntimeException(
-                    "Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
+                        "Call to " + benchmarkUri + " failed " + response.getResponseCode() + " " + response.getBody());
             }
             benchmark = response.getBody();
         } else {
@@ -214,7 +237,7 @@ public class HyperfoilValidation {
                     ((ObjectNode) httpNode).put("host", applicationUnderTestEndpoint);
                 } else if (httpNode.isArray()) {
                     throw new RuntimeException(
-                        "Array node detected for http.host, impossible to distinguish which host should be replaced");
+                            "Array node detected for http.host, impossible to distinguish which host should be replaced");
                 }
             }
 
@@ -245,10 +268,12 @@ public class HyperfoilValidation {
     }
 
     public Run waitForRun(Run run) {
+        Integer errorsSize = run.getErrors().size();
         try {
             while (!run.getCompleted()) {
                 run = getDefaultApi().getRun(run.getId());
-                LOG.trace(msgLogForRun(run));
+                LOG.trace(msgLogForRun(run, errorsSize));
+                errorsSize = run.getErrors().size();
                 Thread.sleep(WAIT_BENCHMARK_SLEEP_TIME);
             }
         } catch (ApiException | InterruptedException e) {
@@ -277,8 +302,8 @@ public class HyperfoilValidation {
             List<String> params = null;
             if (parameters != null && parameters.size() > 0) {
                 params = parameters.entrySet().stream()
-                    .map(en -> String.format("%s=%s", en.getKey(), en.getValue().toString()))
-                    .collect(Collectors.toList());
+                        .map(en -> String.format("%s=%s", en.getKey(), en.getValue().toString()))
+                        .collect(Collectors.toList());
             }
 
             return getDefaultApi().startBenchmark(benchmarkName, "TNB - " + benchmarkName, triggerJob, null, params);
