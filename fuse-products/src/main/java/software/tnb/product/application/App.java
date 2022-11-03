@@ -5,8 +5,11 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Date;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public abstract class App {
@@ -80,5 +84,16 @@ public abstract class App {
 
     private boolean isCamelStarted() {
         return getLog().containsRegex(LOG_STARTED_REGEX);
+    }
+
+    protected void customizePlugins(List<Plugin> mavenPlugins) {
+        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        Model model = Maven.loadPom(pom);
+
+        if (model.getBuild() != null && model.getBuild().getPlugins() != null) {
+            mavenPlugins.forEach(model.getBuild().getPlugins()::add);
+        }
+
+        Maven.writePom(pom, model);
     }
 }

@@ -73,6 +73,8 @@ public abstract class SpringBootApp extends App {
 
             customizeDependencies(integrationBuilder.getDependencies());
 
+            customizePlugins(integrationBuilder.getPlugins());
+
             BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
                 .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
                 .withGoals("clean", "package")
