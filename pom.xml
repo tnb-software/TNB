@@ -102,7 +102,7 @@
         <gpg.plugin.version>3.0.1</gpg.plugin.version>
         <git.changelog.maven.plugin>1.95.2</git.changelog.maven.plugin>
         <okhttp-version>4.10.0</okhttp-version>
-        <okhttp-mock-version>4.10.0-RC1</okhttp-mock-version>
+        <okhttp-mock-version>5.0.0-alpha.10</okhttp-mock-version>
         <gson-version>2.10</gson-version>
     </properties>
 
