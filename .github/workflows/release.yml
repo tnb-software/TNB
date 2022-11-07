@@ -55,7 +55,7 @@ jobs:
         id: create-changelog
         run: |
           # Sort the tags and grab a previous one (should be previous released version)
-          previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' refs/tags | tail -2 | head -n 1)"
+          previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' "refs/tags/v*" | awk -F"/" 'END{print substr($3,2)}')"
           # Get the first "real" commit - ignoring "Back to 1.0-SNAPSHOT" commit
           first_commit="$(git log --pretty=format:%h --reverse "${previous_tag}".."${{ github.ref_name }}" | sed -n 3p)"
           mvn --non-recursive --no-transfer-progress --activate-profiles changelog generate-sources -DfromCommit=${first_commit}
