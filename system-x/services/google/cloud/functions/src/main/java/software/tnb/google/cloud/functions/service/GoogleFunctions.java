@@ -3,7 +3,7 @@ package software.tnb.google.cloud.functions.service;
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.ServiceFactory;
-import software.tnb.google.cloud.common.account.GoogleCloudAccount;
+import software.tnb.google.cloud.functions.account.GoogleFunctionsAccount;
 import software.tnb.google.cloud.functions.validation.GoogleFunctionsValidation;
 import software.tnb.google.storage.service.GoogleStorage;
 
@@ -23,15 +23,12 @@ import io.fabric8.kubernetes.client.utils.Base64;
 public class GoogleFunctions implements Service {
     private final GoogleStorage storage = ServiceFactory.create(GoogleStorage.class);
 
-    private GoogleCloudAccount account;
+    private GoogleFunctionsAccount account;
     private GoogleFunctionsValidation validation;
 
-    public GoogleFunctions() {
-    }
-
-    public GoogleCloudAccount account() {
+    public GoogleFunctionsAccount account() {
         if (account == null) {
-            account = AccountFactory.create(GoogleCloudAccount.class);
+            account = AccountFactory.create(GoogleFunctionsAccount.class);
         }
         return account;
     }

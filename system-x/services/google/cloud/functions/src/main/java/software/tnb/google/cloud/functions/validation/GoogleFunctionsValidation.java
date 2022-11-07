@@ -1,7 +1,8 @@
 package software.tnb.google.cloud.functions.validation;
 
+import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
-import software.tnb.google.cloud.common.account.GoogleCloudAccount;
+import software.tnb.google.cloud.functions.account.GoogleFunctionsAccount;
 import software.tnb.google.storage.service.GoogleStorage;
 
 import org.apache.commons.lang3.StringUtils;
@@ -28,14 +29,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class GoogleFunctionsValidation {
+public class GoogleFunctionsValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleFunctionsValidation.class);
 
-    private final GoogleCloudAccount account;
+    private final GoogleFunctionsAccount account;
     private final CloudFunctionsServiceClient client;
     private final GoogleStorage storage;
-
-    private final String defaultRegion = "us-central1";
     private final String bucketPrefix = "function-";
 
     // Save the function names, as the client needs CloudFunctionName (consists of project/location/name)
@@ -43,7 +42,7 @@ public class GoogleFunctionsValidation {
     // The CloudFunctionName is the key as it is always unique
     private final Map<String, String> functionNames;
 
-    public GoogleFunctionsValidation(GoogleCloudAccount account, CloudFunctionsServiceClient client, GoogleStorage storage) {
+    public GoogleFunctionsValidation(GoogleFunctionsAccount account, CloudFunctionsServiceClient client, GoogleStorage storage) {
         this.account = account;
         this.client = client;
         this.storage = storage;
@@ -91,7 +90,7 @@ public class GoogleFunctionsValidation {
     }
 
     public void createFunction(String name, String runtime, String entryPoint, Path zipSource) {
-        createFunction(name, defaultRegion, runtime, entryPoint, zipSource);
+        createFunction(name, account.region(), runtime, entryPoint, zipSource);
     }
 
     public CloudFunction getFunction(String name) {
@@ -99,7 +98,7 @@ public class GoogleFunctionsValidation {
     }
 
     public List<CloudFunction> listFunctions() {
-        return listFunctions(defaultRegion);
+        return listFunctions(account.region());
     }
 
     public List<CloudFunction> listFunctions(String region) {
@@ -109,8 +108,8 @@ public class GoogleFunctionsValidation {
         return functions;
     }
 
-    public String getUrl(String name) {
-        return getFunction(getFunctionName(name)).getHttpsTrigger().getUrl();
+    public String getUrl(String functionName) {
+        return getFunction(getFunctionName(functionName)).getHttpsTrigger().getUrl();
     }
 
     public void deleteFunction(String functionName) {
