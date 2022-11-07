@@ -1,5 +1,6 @@
 package software.tnb.webhook.validation;
 
+import software.tnb.common.service.Validation;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.webhook.validation.model.WebhookSiteRequest;
 import software.tnb.webhook.validation.model.WebhookSiteRequests;
@@ -19,7 +20,7 @@ import java.util.List;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
-public class WebhookValidation {
+public class WebhookValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(WebhookValidation.class);
     private static final String WEBHOOK_ENDPOINT = "https://webhook.site";
 
@@ -31,9 +32,12 @@ public class WebhookValidation {
     }
 
     public String createEndpoint() {
-        LOG.debug("Creating new webhook endpoint");
-        token = new JSONObject(client.post(WEBHOOK_ENDPOINT + "/token", RequestBody.create(MediaType.parse("application/json"), "{}")).getBody())
-            .getString("uuid");
+        if (token == null) {
+            LOG.debug("Creating new webhook endpoint");
+            final String body = client.post(WEBHOOK_ENDPOINT + "/token",
+                RequestBody.create("{}", MediaType.parse("application/json"))).getBody();
+            token = new JSONObject(body).getString("uuid");
+        }
         final String endpoint = String.format("%s/%s", WEBHOOK_ENDPOINT, token);
         LOG.debug("Webhook endpoint: {}", endpoint);
         return endpoint;
@@ -53,6 +57,7 @@ public class WebhookValidation {
         final String url = String.format("%s/token/%s", WEBHOOK_ENDPOINT, token);
         LOG.debug("Deleting webhook endpoint {}", url);
         client.delete(url);
+        token = null;
     }
 
     public List<WebhookSiteRequest> getRequests() {
@@ -73,9 +78,9 @@ public class WebhookValidation {
         String body = client.get(url).getBody();
 
         Gson gson = new GsonBuilder().registerTypeAdapter(
-                LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, jsonDeserializationContext) -> {
-                    return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-                }).create();
+            LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, jsonDeserializationContext) -> {
+                return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            }).create();
 
         return gson.fromJson(body, WebhookSiteRequests.class).getData();
     }
