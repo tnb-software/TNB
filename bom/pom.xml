@@ -4,11 +4,11 @@
     <parent>
         <artifactId>tnb-parent</artifactId>
         <groupId>software.tnb</groupId>
-        <version>0.0.6</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
     <artifactId>bom</artifactId>
-    <version>0.0.6</version>
+    <version>1.0-SNAPSHOT</version>
     <packaging>pom</packaging>
     <name>TNB :: BOM</name>
 
@@ -22,347 +22,347 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>fuse-products</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-amq</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-cloudwatch</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-dynamo-db</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-iam</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-kinesis-firehose</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-kinesis</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-lambda</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-redshift</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-s3</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-ses</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-sns</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws-sqs</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-aws</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-azure-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-azure-event-hubs</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-azure-storage-blob</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-azure-storage-queue</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-azure</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-cassandra</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-cryostat</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-db-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-db</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-elasticsearch</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-fhir</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-filesystem</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-ftp</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-api-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-api</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-bigquery</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-cloud-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-cloud</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-functions</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-mail</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-pubsub</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-sheets</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google-storage</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-google</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-horreum</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-http</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-hyperfoil</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-ibm-mq</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-infinispan</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-jira</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-jms-client</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-jms</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-kafka</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-knative</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-lra-coordinator</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mail</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mariadb</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mllp</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mongodb</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mssql</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-mysql</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-parent</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-postgresql</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-prometheus-metrics</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-salesforce</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-servicenow</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-services</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-slack</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-splunk</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-telegram</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-webhook</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>tnb-common</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>tnb-parent</artifactId>
-                <version>0.0.6</version>
+                <version>1.0-SNAPSHOT</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
