@@ -3,10 +3,16 @@ package software.tnb.product.integration;
 public class Resource {
     private String name;
     private String content;
+    private final boolean isContentPath;
 
     public Resource(String name, String content) {
+        this(name, content, false);
+    }
+
+    public Resource(String name, String content, boolean isContentPath) {
         this.name = name;
         this.content = content;
+        this.isContentPath = isContentPath;
     }
 
     public String getName() {
@@ -23,5 +29,9 @@ public class Resource {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public boolean getIsContentPath() {
+        return isContentPath;
     }
 }
