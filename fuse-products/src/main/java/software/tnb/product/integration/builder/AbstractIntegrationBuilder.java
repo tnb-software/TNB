@@ -10,6 +10,7 @@ import org.apache.camel.builder.RouteBuilder;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.ClassUtils;
 import org.apache.maven.model.Dependency;
+import org.apache.maven.model.Plugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -57,6 +58,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
     private final List<Dependency> dependencies = new ArrayList<>();
+    private final List<Plugin> plugins = new ArrayList<>();
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
@@ -282,6 +284,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return self();
     }
 
+    public SELF addPlugin(Plugin p, Plugin... others) {
+        plugins.add(p);
+        if (others != null) {
+            plugins.addAll(Arrays.asList(others));
+        }
+        return self();
+    }
+
     public SELF name(String name) {
         this.integrationName = name;
         return self();
@@ -371,10 +381,15 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return dependencies;
     }
 
+    public List<Plugin> getPlugins() {
+        return plugins;
+    }
+
     /**
      * Gets the route builder compilation unit.
-     *
+     * <p>
      * The RB may be null in case the integration is loaded from string (Camel-K), or from XML file (CSB)
+     *
      * @return optional
      */
     public Optional<CompilationUnit> getRouteBuilder() {

@@ -51,6 +51,7 @@ public abstract class QuarkusApp extends App {
         IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
 
         customizeProject(integrationBuilder.getDependencies());
+        customizePlugins(integrationBuilder.getPlugins());
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))

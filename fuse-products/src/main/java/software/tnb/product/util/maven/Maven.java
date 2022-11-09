@@ -1,18 +1,18 @@
 package software.tnb.product.util.maven;
 
-import software.tnb.product.log.stream.FileLogStream;
-import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
-
+import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Exclusion;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.Plugin;
+import org.apache.maven.model.PluginExecution;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
 import org.apache.maven.model.io.xpp3.MavenXpp3Writer;
 import org.apache.maven.settings.Mirror;
@@ -324,5 +324,55 @@ public class Maven {
         }
         LOG.info(log);
         return dependency;
+    }
+
+    /**
+     * Set plugin identifier from given string. It is assumed that it is a GA[V] string.
+     *
+     * @param identifier alias artifactId:groupId:version plugin string
+     */
+    public static Plugin createPlugin(String identifier) {
+        Plugin plugin = new Plugin();
+        if (identifier.contains(":")) {
+            String[] parts = identifier.split(":");
+            plugin.setGroupId(parts[0]);
+            plugin.setArtifactId(parts[1]);
+            if (parts.length > 2) {
+                plugin.setVersion(parts[2]);
+            }
+        }
+
+        return plugin;
+    }
+
+    /**
+     * Set plugin identifier from given string. It is assumed that it is a GA[V] string.
+     * Also set plugin execution part
+     *
+     * @param identifier alias artifactId:groupId:version string
+     * @param executions plugin executions part
+     */
+    public static Plugin createPlugin(String identifier, List<PluginExecution> executions) {
+        Plugin plugin = createPlugin(identifier);
+        plugin.setExecutions(executions);
+
+        return plugin;
+    }
+
+    /**
+     * Set plugin identifier from given string. It is assumed that it is a GA[V] string.
+     * Also set plugin execution part
+     *
+     * @param identifier alias artifactId:groupId:version string
+     * @param executions plugin executions part
+     * @param configuration sets plugin configuration with Xpp3Dom class
+     * @param extensions whether to load Maven extensions (such as packaging and type handlers) from this plugin
+     */
+    public static Plugin createPlugin(String identifier, List<PluginExecution> executions, Object configuration, boolean extensions) {
+        Plugin plugin = createPlugin(identifier, executions);
+        plugin.setConfiguration(configuration);
+        plugin.setExtensions(extensions);
+
+        return plugin;
     }
 }
