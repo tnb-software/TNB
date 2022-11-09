@@ -39,6 +39,7 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
                 .endpointOverride(URI.create(clientHostname()))
                 .region(Region.of(account().region()))
                 .credentialsProvider(() -> AwsBasicCredentials.create(account().accountId(), account().secretKey()))
+                .forcePathStyle(true)
                 .build();
         }
         return client;
