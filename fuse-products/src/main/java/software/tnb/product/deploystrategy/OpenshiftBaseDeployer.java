@@ -9,10 +9,13 @@ import software.tnb.product.interfaces.OpenshiftDeployer;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.OpenshiftLog;
 
+import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -117,7 +120,12 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
                     Files.createDirectories(resFolder);
                     resources.forEach(resource -> {
                         try {
-                            Files.copy(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
+                            if (resource.getIsContentPath()) {
+                                Files.copy(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
+                            } else {
+                                FileUtils.writeStringToFile(new File(resFolder.resolve(resource.getName()).toUri()), resource.getContent(),
+                                    StandardCharsets.UTF_8);
+                            }
                         } catch (IOException e) {
                             LOG.error("unable to copy resource " + resource.getContent() + " to " + destinationFolder, e);
                         }
@@ -139,7 +147,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties());
         }
 
-       return entriesInString(entries);
+        return entriesInString(entries);
     }
 
     protected String getPropertiesForMaven(AbstractIntegrationBuilder<?> integrationBuilder) {
