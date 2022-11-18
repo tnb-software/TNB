@@ -11,7 +11,7 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -118,12 +118,12 @@ public class OpenshiftTelegram extends Telegram implements OpenshiftDeployable, 
 
     @Override
     public String execInContainer(String... commands) {
-        ByteArrayOutputStream baosOutput = new ByteArrayOutputStream();
-
-        OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName())
-            .writingOutput(baosOutput).exec(commands);
-
-        return baosOutput.toString();
+        try {
+            return new String(OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName())
+                .redirectingOutput().exec(commands).getOutput().readAllBytes());
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to read command output: " + e);
+        }
     }
 
     @Override
