@@ -1,0 +1,54 @@
+name: Dependencies diff
+on: pull_request_target
+
+env:
+  GITHUB_TOKEN: ${{ secrets.PAT }}
+
+jobs:
+  diff:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: '11'
+          distribution: 'adopt'
+      - name: Build project
+        run: mvn --quiet clean install
+      - name: Create directories
+        run: |
+          mkdir -p ${RUNNER_TEMP}/head
+          mkdir -p ${RUNNER_TEMP}/base
+      - name: Create dependency trees from ${{ github.base_ref }}
+        run: |
+          while read -r entry; do
+              IFS=';' read -r artifact path <<< ${entry}
+              mvn --quiet --non-recursive dependency:resolve -Dsort=true --file ${path} -DoutputFile=${RUNNER_TEMP}/base/${artifact}
+          done <<< "$(mvn -Dexec.executable='echo' -Dexec.args='${project.artifactId};${project.basedir}/pom.xml' exec:exec --quiet)"
+      # pull_request_target runs on "base" by default, so it's needed to checkout the PR to get the changes
+      - name: Checkout PR
+        uses: actions/checkout@v3
+        with:
+          ref: "refs/pull/${{ github.event.number }}/merge"
+      - name: Build project
+        run: mvn -q clean install
+      - name: Create dependency trees from PR
+        run: |
+          while read -r entry; do
+              IFS=';' read -r artifact path <<< ${entry}
+              mvn --quiet --non-recursive dependency:resolve -Dsort=true --file ${path} -DoutputFile=${RUNNER_TEMP}/head/${artifact}
+          done <<< "$(mvn -Dexec.executable='echo' -Dexec.args='${project.artifactId};${project.basedir}/pom.xml' exec:exec --quiet)"
+      # Move the directories from $RUNNER_TEMP to the current dir, as the diff-action seems to be unable to read from there
+      - name: Move directories
+        run: |
+          mv ${RUNNER_TEMP}/head head
+          mv ${RUNNER_TEMP}/base base
+      - uses: int128/diff-action@v1
+        with:
+          base: base
+          head: head
+          comment-header: Dependency changes
+          token: ${{ env.GITHUB_TOKEN }}
+
