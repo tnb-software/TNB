@@ -1,9 +1,6 @@
 name: Dependencies diff
 on: pull_request_target
 
-env:
-  GITHUB_TOKEN: ${{ secrets.PAT }}
-
 jobs:
   diff:
     runs-on: ubuntu-latest
@@ -45,10 +42,15 @@ jobs:
         run: |
           mv ${RUNNER_TEMP}/head head
           mv ${RUNNER_TEMP}/base base
+      - uses: tibdex/github-app-token@v1
+        id: generate-token
+        with:
+          app_id: ${{ secrets.TNB_APP_APP_ID }}
+          private_key: ${{ secrets.TNB_APP_PRIVATE_KEY }}
       - uses: int128/diff-action@v1
         with:
           base: base
           head: head
           comment-header: Dependency changes
-          token: ${{ env.GITHUB_TOKEN }}
+          token: ${{ steps.generate-token.outputs.token }}
 
