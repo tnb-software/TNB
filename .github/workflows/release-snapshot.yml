@@ -39,4 +39,7 @@ jobs:
           snapshot_version=$(./semver bump patch ${previous_tag})-SNAPSHOT
           mvn --no-transfer-progress versions:set -DnewVersion=${snapshot_version} -DoldVersion=* -DgroupId=* -DartifactId=* -DgenerateBackupPoms=false
       - name: Deploy
-        run: mvn --no-transfer-progress --activate-profiles deploy clean deploy
+        run: |
+          if [ "${GITHUB_REPOSITORY_OWNER}" = "tnb-software" ]; then
+            mvn --no-transfer-progress --activate-profiles deploy clean deploy
+          fi
