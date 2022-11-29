@@ -1,19 +1,18 @@
 package software.tnb.product.integration.generator;
 
-import software.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
 import software.tnb.product.ck.customizer.DependenciesToModelineCustomizer;
 import software.tnb.product.ck.customizer.TraitCustomizer;
+import software.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import software.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.Customizers;
 import software.tnb.product.integration.Resource;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.util.InlineCustomizer;
 import software.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
@@ -28,6 +27,7 @@ import com.github.javaparser.ast.body.TypeDeclaration;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,6 +41,14 @@ public final class IntegrationGenerator {
     private IntegrationGenerator() {
     }
 
+    private static void doWriteResource(Path resourcesPath, Resource resource) {
+        if (resource.getIsContentPath()) {
+            IOUtils.copyFile(Paths.get(resource.getContent()), resourcesPath.resolve(resource.getName()));
+        } else {
+            IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent());
+        }
+    }
+
     /**
      * Dumps the integration class into a file.
      *
@@ -52,7 +60,7 @@ public final class IntegrationGenerator {
 
         // Add additional resources to the application
         final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach(resource -> IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent()));
+        integrationBuilder.getResources().forEach(resource -> doWriteResource(resourcesPath, resource));
 
         if (!integrationBuilder.getResources().isEmpty()) {
             integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->

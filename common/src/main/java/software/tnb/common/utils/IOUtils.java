@@ -17,6 +17,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Properties;
@@ -32,14 +33,19 @@ public final class IOUtils {
 
     public static void writeFile(Path file, String content) {
         try {
-            Path dir = file.getParent();
-            if (!Files.exists(dir)) {
-                LOG.debug("Creating directory " + dir);
-                Files.createDirectory(dir);
-            }
+            Files.createDirectories(file.getParent());
             Files.write(file, content.getBytes());
         } catch (IOException e) {
             throw new RuntimeException("Unable to write to " + file, e);
+        }
+    }
+
+    public static void copyFile(Path source, Path target) {
+        try {
+            Files.createDirectories(target.getParent());
+            Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to copy to " + source, e);
         }
     }
 

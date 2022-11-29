@@ -28,8 +28,11 @@ public class RestCustomizer extends ProductsCustomizer implements IntegrationSpe
     public void customizeSpringboot() {
         if (!OpenshiftConfiguration.isOpenshift()) {
             getIntegrationBuilder().dependencies(Maven.createDependency("org.springframework.boot:spring-boot-starter-web",
-                    "org.springframework.boot:spring-boot-starter-tomcat"),
-                Maven.createDependency("org.springframework.boot:spring-boot-starter-undertow"));
+                    "org.springframework.boot:spring-boot-starter-tomcat")
+                )
+                .dependencies(
+                    Maven.createDependency("org.springframework.boot:spring-boot-starter-undertow")
+                );
         }
     }
 
