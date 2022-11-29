@@ -2,6 +2,7 @@ package software.tnb.product.deploystrategy;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.IOUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
@@ -121,7 +122,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
                     resources.forEach(resource -> {
                         try {
                             if (resource.getIsContentPath()) {
-                                Files.copy(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
+                                IOUtils.copyFile(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
                             } else {
                                 FileUtils.writeStringToFile(new File(resFolder.resolve(resource.getName()).toUri()), resource.getContent(),
                                     StandardCharsets.UTF_8);
