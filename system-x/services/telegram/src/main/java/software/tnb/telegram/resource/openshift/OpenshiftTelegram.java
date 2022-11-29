@@ -26,7 +26,7 @@ import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
 import io.fabric8.openshift.api.model.ImageStream;
 import io.fabric8.openshift.api.model.ImageStreamBuilder;
 
-@AutoService(OpenshiftTelegram.class)
+@AutoService(Telegram.class)
 public class OpenshiftTelegram extends Telegram implements OpenshiftDeployable, WithName {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftTelegram.class);

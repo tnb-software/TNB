@@ -10,7 +10,7 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 
-@AutoService(LocalTelegram.class)
+@AutoService(Telegram.class)
 public class LocalTelegram extends Telegram implements Deployable {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalTelegram.class);
