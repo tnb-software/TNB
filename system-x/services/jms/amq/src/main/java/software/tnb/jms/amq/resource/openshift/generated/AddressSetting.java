@@ -1,4 +1,4 @@
-package software.tnb.jms.amq.service.openshift.generated;
+package software.tnb.jms.amq.resource.openshift.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;

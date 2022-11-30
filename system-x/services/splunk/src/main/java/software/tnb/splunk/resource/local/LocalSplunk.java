@@ -1,4 +1,4 @@
-package software.tnb.splunk.service.local;
+package software.tnb.splunk.resource.local;
 
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;

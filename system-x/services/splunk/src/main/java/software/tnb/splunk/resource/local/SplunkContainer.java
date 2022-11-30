@@ -1,4 +1,4 @@
-package software.tnb.splunk.service.local;
+package software.tnb.splunk.resource.local;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;

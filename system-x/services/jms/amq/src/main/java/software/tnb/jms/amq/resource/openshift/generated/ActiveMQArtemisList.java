@@ -1,4 +1,4 @@
-package software.tnb.jms.amq.service.openshift.generated;
+package software.tnb.jms.amq.resource.openshift.generated;
 
 import io.fabric8.kubernetes.client.CustomResourceList;
 

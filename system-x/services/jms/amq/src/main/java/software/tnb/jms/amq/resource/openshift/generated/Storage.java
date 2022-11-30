@@ -1,4 +1,4 @@
-package software.tnb.jms.amq.service.openshift.generated;
+package software.tnb.jms.amq.resource.openshift.generated;
 
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
@@ -16,51 +16,36 @@ import java.util.Map;
 
 import io.fabric8.kubernetes.api.model.KubernetesResource;
 
+/**
+ * the storage capacity
+ */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
-    "cpu",
-    "memory"
+    "size"
 })
 @Generated("jsonschema2pojo")
 @JsonDeserialize(
     using = JsonDeserializer.None.class
 )
-public class Requests implements KubernetesResource {
+public class Storage implements KubernetesResource {
 
-    @JsonProperty("cpu")
-    private String cpu;
-    @JsonProperty("memory")
-    private String memory;
+    @JsonProperty("size")
+    private String size;
     @JsonIgnore
     private Map<String, Object> additionalProperties = new HashMap<String, Object>();
 
-    @JsonProperty("cpu")
-    public String getCpu() {
-        return cpu;
+    @JsonProperty("size")
+    public String getSize() {
+        return size;
     }
 
-    @JsonProperty("cpu")
-    public void setCpu(String cpu) {
-        this.cpu = cpu;
+    @JsonProperty("size")
+    public void setSize(String size) {
+        this.size = size;
     }
 
-    public Requests withCpu(String cpu) {
-        this.cpu = cpu;
-        return this;
-    }
-
-    @JsonProperty("memory")
-    public String getMemory() {
-        return memory;
-    }
-
-    @JsonProperty("memory")
-    public void setMemory(String memory) {
-        this.memory = memory;
-    }
-
-    public Requests withMemory(String memory) {
-        this.memory = memory;
+    public Storage withSize(String size) {
+        this.size = size;
         return this;
     }
 
@@ -74,7 +59,7 @@ public class Requests implements KubernetesResource {
         this.additionalProperties.put(name, value);
     }
 
-    public Requests withAdditionalProperty(String name, Object value) {
+    public Storage withAdditionalProperty(String name, Object value) {
         this.additionalProperties.put(name, value);
         return this;
     }
@@ -82,14 +67,10 @@ public class Requests implements KubernetesResource {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append(Requests.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("cpu");
+        sb.append(Storage.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
+        sb.append("size");
         sb.append('=');
-        sb.append(((this.cpu == null) ? "<null>" : this.cpu));
-        sb.append(',');
-        sb.append("memory");
-        sb.append('=');
-        sb.append(((this.memory == null) ? "<null>" : this.memory));
+        sb.append(((this.size == null) ? "<null>" : this.size));
         sb.append(',');
         sb.append("additionalProperties");
         sb.append('=');
@@ -106,8 +87,7 @@ public class Requests implements KubernetesResource {
     @Override
     public int hashCode() {
         int result = 1;
-        result = ((result * 31) + ((this.cpu == null) ? 0 : this.cpu.hashCode()));
-        result = ((result * 31) + ((this.memory == null) ? 0 : this.memory.hashCode()));
+        result = ((result * 31) + ((this.size == null) ? 0 : this.size.hashCode()));
         result = ((result * 31) + ((this.additionalProperties == null) ? 0 : this.additionalProperties.hashCode()));
         return result;
     }
@@ -117,12 +97,12 @@ public class Requests implements KubernetesResource {
         if (other == this) {
             return true;
         }
-        if ((other instanceof Requests) == false) {
+        if ((other instanceof Storage) == false) {
             return false;
         }
-        Requests rhs = ((Requests) other);
-        return ((((this.cpu == rhs.cpu) || ((this.cpu != null) && this.cpu.equals(rhs.cpu))) && ((this.memory == rhs.memory) || ((this.memory != null)
-            && this.memory.equals(rhs.memory)))) && ((this.additionalProperties == rhs.additionalProperties) || ((this.additionalProperties != null)
-            && this.additionalProperties.equals(rhs.additionalProperties))));
+        Storage rhs = ((Storage) other);
+        return (((this.size == rhs.size) || ((this.size != null) && this.size.equals(rhs.size))) && (
+            (this.additionalProperties == rhs.additionalProperties) || ((this.additionalProperties != null) && this.additionalProperties
+                .equals(rhs.additionalProperties))));
     }
 }
