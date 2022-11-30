@@ -1,4 +1,4 @@
-package software.tnb.jms.amq.service.local;
+package software.tnb.jms.amq.resource.local;
 
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.WithDockerImage;

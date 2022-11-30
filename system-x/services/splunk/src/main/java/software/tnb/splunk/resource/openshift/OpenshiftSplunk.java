@@ -1,4 +1,4 @@
-package software.tnb.splunk.service.openshift;
+package software.tnb.splunk.resource.openshift;
 
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.config.OpenshiftConfiguration;

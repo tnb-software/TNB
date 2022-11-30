@@ -1,4 +1,4 @@
-package software.tnb.horreum.service;
+package software.tnb.horreum.configuration;
 
 import software.tnb.common.config.Configuration;
 

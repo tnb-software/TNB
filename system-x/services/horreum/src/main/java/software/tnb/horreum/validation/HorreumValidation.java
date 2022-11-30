@@ -3,7 +3,7 @@ package software.tnb.horreum.validation;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.HTTPUtils.Response;
 import software.tnb.horreum.account.HorreumAccount;
-import software.tnb.horreum.service.HorreumConfiguration;
+import software.tnb.horreum.configuration.HorreumConfiguration;
 import software.tnb.horreum.validation.generated.ApiClient;
 import software.tnb.horreum.validation.generated.ApiException;
 import software.tnb.horreum.validation.generated.JSON;
