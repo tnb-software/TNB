@@ -4,6 +4,9 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.OpenshiftDeployable;
 
+import org.junit.platform.commons.function.Try;
+import org.junit.platform.commons.util.ReflectionUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -25,28 +28,34 @@ public final class ServiceFactory {
      * @param <S> type
      */
     public static <S extends Service> S create(Class<S> clazz) {
-        final ServiceLoader<S> loader = ServiceLoader.load(clazz);
 
-        if (loader.stream().findAny().isEmpty()) {
-            LOG.error("No Service class implementation for class {} found!", clazz.getSimpleName());
-            throw new IllegalArgumentException();
+        Optional<S> service;
+        if (ReflectionUtils.isAbstract(clazz) || clazz.isInterface()) {
+            final ServiceLoader<S> loader = ServiceLoader.load(clazz);
+            if (loader.stream().findAny().isEmpty()) {
+                LOG.error("No Service class implementation for class {} found!", clazz.getSimpleName());
+                throw new IllegalArgumentException();
+            }
+
+            // If there is just one implementation, return that one
+            if (loader.stream().count() == 1) {
+                return loader.findFirst().get();
+            }
+
+            // If there are multiple, decide which one should be returned
+            service = StreamSupport.stream(loader.spliterator(), false)
+                .filter(s -> {
+                    if (OpenshiftConfiguration.isOpenshift()) {
+                        return s instanceof OpenshiftDeployable || s.getClass().getSimpleName().toLowerCase().contains("openshift");
+                    } else {
+                        return s instanceof Deployable || s.getClass().getSimpleName().toLowerCase().contains("local");
+                    }
+                })
+                .findFirst();
+        } else {
+            service = Try.call(() -> ReflectionUtils.newInstance(clazz)).toOptional();
         }
 
-        // If there is just one implementation, return that one
-        if (loader.stream().count() == 1) {
-            return loader.findFirst().get();
-        }
-
-        // If there are multiple, decide which one should be returned
-        final Optional<S> service = StreamSupport.stream(loader.spliterator(), false)
-            .filter(s -> {
-                if (OpenshiftConfiguration.isOpenshift()) {
-                    return s instanceof OpenshiftDeployable || s.getClass().getSimpleName().toLowerCase().contains("openshift");
-                } else {
-                    return s instanceof Deployable || s.getClass().getSimpleName().toLowerCase().contains("local");
-                }
-            })
-            .findFirst();
         if (service.isEmpty()) {
             LOG.error("No Service class implementation for class {} / environment {} found!",
                 clazz.getSimpleName(), OpenshiftConfiguration.isOpenshift() ? "openshift" : "local");
