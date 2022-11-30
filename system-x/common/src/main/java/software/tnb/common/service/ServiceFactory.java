@@ -28,8 +28,6 @@ public final class ServiceFactory {
      * @param <S> type
      */
     public static <S extends Service> S create(Class<S> clazz) {
-
-        Optional<S> service;
         if (ReflectionUtils.isAbstract(clazz) || clazz.isInterface()) {
             final ServiceLoader<S> loader = ServiceLoader.load(clazz);
             if (loader.stream().findAny().isEmpty()) {
@@ -43,7 +41,7 @@ public final class ServiceFactory {
             }
 
             // If there are multiple, decide which one should be returned
-            service = StreamSupport.stream(loader.spliterator(), false)
+            final Optional<S> service = StreamSupport.stream(loader.spliterator(), false)
                 .filter(s -> {
                     if (OpenshiftConfiguration.isOpenshift()) {
                         return s instanceof OpenshiftDeployable || s.getClass().getSimpleName().toLowerCase().contains("openshift");
@@ -52,16 +50,17 @@ public final class ServiceFactory {
                     }
                 })
                 .findFirst();
-        } else {
-            service = Try.call(() -> ReflectionUtils.newInstance(clazz)).toOptional();
-        }
 
-        if (service.isEmpty()) {
-            LOG.error("No Service class implementation for class {} / environment {} found!",
-                clazz.getSimpleName(), OpenshiftConfiguration.isOpenshift() ? "openshift" : "local");
-            throw new IllegalArgumentException();
+            if (service.isEmpty()) {
+                LOG.error("No Service class implementation for class {} / environment {} found!",
+                    clazz.getSimpleName(), OpenshiftConfiguration.isOpenshift() ? "openshift" : "local");
+                throw new IllegalArgumentException();
+            } else {
+                return service.get();
+            }
         } else {
-            return service.get();
+            return Try.call(() -> ReflectionUtils.newInstance(clazz))
+                .getOrThrow((e) -> new IllegalArgumentException("Failed to instantiate class " + clazz.getSimpleName(), e));
         }
     }
 }
