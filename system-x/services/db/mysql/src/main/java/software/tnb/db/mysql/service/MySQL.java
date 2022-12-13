@@ -2,12 +2,15 @@ package software.tnb.db.mysql.service;
 
 import software.tnb.db.common.account.SQLAccount;
 import software.tnb.db.common.service.SQL;
+import software.tnb.db.common.validation.SQLValidation;
 import software.tnb.db.mysql.account.MySQLAccount;
+import software.tnb.db.mysql.account.MySQLRootAccount;
 
 import java.util.Map;
 
 public abstract class MySQL extends SQL {
     protected static final int PORT = 3306;
+    private SQLValidation rootValidation;
 
     @Override
     public String defaultImage() {
@@ -29,7 +32,15 @@ public abstract class MySQL extends SQL {
         return Map.of(
             "MYSQL_DATABASE", account().database(),
             "MYSQL_USER", account().username(),
-            "MYSQL_PASSWORD", account().password()
+            "MYSQL_PASSWORD", account().password(),
+            "MYSQL_ROOT_PASSWORD", "my-secret-pw"
         );
+    }
+
+    public SQLValidation rootValidation() {
+        if (rootValidation == null) {
+            rootValidation = new SQLValidation(localConnectionUrl(), new MySQLRootAccount());
+        }
+        return rootValidation;
     }
 }
