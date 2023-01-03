@@ -121,7 +121,7 @@ public class PubSubValidation {
             subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(credsProvider).build();
             // Start the subscriber.
             subscriber.startAsync().awaitRunning();
-            LOG.info("Listening for messages on %s:\n", subscriptionName.toString());
+            LOG.info("Listening for messages on {}", subscriptionName.toString());
             subscriber.awaitTerminated(seconds, TimeUnit.SECONDS);
         } catch (TimeoutException timeoutException) {
             subscriber.stopAsync();
