@@ -15,6 +15,9 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -32,12 +35,12 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     private static final String APP_NAME = "hyperfoil-" + OpenshiftClient.get().getNamespace();
 
     private static final CustomResourceDefinitionContext HYPERFOIL_CTX = new CustomResourceDefinitionContext.Builder()
-        .withName("Hyperfoil")
-        .withGroup("hyperfoil.io")
-        .withVersion("v1alpha2")
-        .withPlural("hyperfoils")
-        .withScope("Namespaced")
-        .build();
+            .withName("Hyperfoil")
+            .withGroup("hyperfoil.io")
+            .withVersion("v1alpha2")
+            .withPlural("hyperfoils")
+            .withScope("Namespaced")
+            .build();
 
     @Override
     public void undeploy() {
@@ -76,7 +79,12 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         createSubscription();
 
         try {
-            OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition());
+            if (HyperfoilConfiguration.agentLogConf().isPresent()) {
+                createAgentLogConfigMap(HyperfoilConfiguration.agentLogConf().get());
+                OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition(true));
+            } else {
+                OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition(false));
+            }
         } catch (IOException e) {
             LOG.error("Error on Hyperfoil creation", e);
             throw new RuntimeException(e);
@@ -91,10 +99,11 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public boolean isDeployed() {
-        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems().stream()
-            .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
+        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems()
+                .stream()
+                .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-            && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
+                && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
     }
 
     @Override
@@ -112,22 +121,34 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         return port;
     }
 
-    private Map<String, Object> getHyperfoilDefinition() {
-        Map<String, Object> metadata = Map.of("name", APP_NAME
-            , "namespace", OpenshiftClient.get().getNamespace());
-        Map<String, Object> spec = Map.of("agentDeployTimeout", 120000
-            , "version", "latest"
-            , "route", Map.of("host", OpenshiftClient.get().generateHostname("hyperfoil")) //"hyperfoil.apps.mycloud.example.com"
+    private Map<String, Object> getHyperfoilDefinition(boolean includesAgentLog) {
+        Map<String, Object> metadata = Map.of("name", APP_NAME, "namespace", OpenshiftClient.get().getNamespace());
+        Map<String, Object> spec = Map.of("agentDeployTimeout", 120000, "version", "latest", "route",
+                Map.of("host", OpenshiftClient.get().generateHostname("hyperfoil")) // "hyperfoil.apps.mycloud.example.com"
         );
-        return Map.of("kind", HYPERFOIL_CTX.getName()
-            , "apiVersion", String.format("%s/%s", HYPERFOIL_CTX.getGroup(), HYPERFOIL_CTX.getVersion())
-            , "metadata", metadata
-            , "spec", spec);
+        if (includesAgentLog) {
+            spec = new HashMap<>(spec);
+            spec.put("log", HyperfoilConfiguration.agentLogMapConfig() + "/" + HyperfoilConfiguration.agentLogFileName());
+        }
+
+        return Map.of("kind", HYPERFOIL_CTX.getName(), "apiVersion",
+                String.format("%s/%s", HYPERFOIL_CTX.getGroup(), HYPERFOIL_CTX.getVersion()), "metadata", metadata,
+                "spec", spec);
+    }
+
+    private void createAgentLogConfigMap(String agentLogConfPath) {
+        try {
+            OpenshiftClient.get().createConfigMap(HyperfoilConfiguration.agentLogMapConfig(),
+                    Map.of(HyperfoilConfiguration.agentLogFileName(), Files.readString(Path.of(agentLogConfPath))));
+        } catch (IOException e) {
+            LOG.error("Error on Hyperfoil creation", e);
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void cleanup() {
-        //all benchmarks should be managed by the tests
+        // all benchmarks should be managed by the tests
     }
 
     @Override

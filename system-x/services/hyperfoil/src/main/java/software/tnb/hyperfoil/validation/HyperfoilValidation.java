@@ -1,10 +1,11 @@
 package software.tnb.hyperfoil.validation;
 
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.hyperfoil.service.HyperfoilConfiguration;
 import software.tnb.hyperfoil.validation.generated.ApiClient;
 import software.tnb.hyperfoil.validation.generated.ApiException;
-import software.tnb.hyperfoil.validation.generated.Configuration;
 import software.tnb.hyperfoil.validation.generated.api.DefaultApi;
+import software.tnb.hyperfoil.validation.generated.model.Agent;
 import software.tnb.hyperfoil.validation.generated.model.RequestStatisticsResponse;
 import software.tnb.hyperfoil.validation.generated.model.Run;
 
@@ -29,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,7 +42,13 @@ public class HyperfoilValidation {
     private final DefaultApi defaultApi;
 
     public HyperfoilValidation(String basePath) {
-        ApiClient apiClient = Configuration.getDefaultApiClient();
+        HTTPUtils.OkHttpClientBuilder okHttpClientBuilder = new HTTPUtils.OkHttpClientBuilder();
+        // setting huge timeout because agent log file could be big leading to a long download
+        okHttpClientBuilder.trustAllSslClient().getInternalBuilder().connectTimeout(5, TimeUnit.MINUTES);
+        if (HyperfoilConfiguration.isHttpLogEnabled()) {
+            okHttpClientBuilder.log();
+        }
+        ApiClient apiClient = new ApiClient(okHttpClientBuilder.build());
         apiClient.setBasePath(basePath);
         apiClient.setVerifyingSsl(false);
         defaultApi = new DefaultApi(apiClient);
@@ -84,10 +92,34 @@ public class HyperfoilValidation {
         }
         LOG.info("Benchmark finished");
         LOG.info(msgLogForRun(finalRun));
+        LOG.info("Saving controller log");
+        try {
+            final Path destination = Paths.get("target", "hf-controller-" + LocalDateTime.now() + ".log");
+            String controllerLog = defaultApi.getControllerLog(null, null);
+            software.tnb.common.utils.IOUtils.writeFile(destination, controllerLog);
+            LOG.info("Log of controller saved in {}", destination.toAbsolutePath());
+        } catch (ApiException e) {
+            LOG.warn("Error saving log of controller -> {}:{}", e.getClass().getName(), e.getMessage());
+        }
+        LOG.info("Saving agents logs");
+        finalRun.getAgents().stream().map(Agent::getName).forEach(agentName -> {
+            try {
+                final Path destination = Paths.get("target", agentName + "-" + LocalDateTime.now() + ".log");
+                String agentLog = defaultApi.getAgentLog(agentName, null, null);
+                software.tnb.common.utils.IOUtils.writeFile(destination, agentLog);
+                LOG.info("Log of agent {} saved in {}", agentName, destination.toAbsolutePath());
+            } catch (ApiException e) {
+                LOG.warn("Error saving log of agent: {} | {}:{}", agentName, e.getClass().getName(), e.getMessage());
+            }
+        });
         LOG.info("Generating report");
-        String report = generateReport(finalRun);
-        Path reportFile = saveReportToFile(finalRun, report);
-        LOG.info("Report generated " + reportFile.toAbsolutePath());
+        try {
+            String report = getDefaultApi().createReport(finalRun.getId(), null);
+            Path reportFile = saveReportToFile(finalRun, report);
+            LOG.info("Report generated " + reportFile.toAbsolutePath());
+        } catch (ApiException e) {
+            LOG.warn("Error generating report", e);
+        }
         try {
             RequestStatisticsResponse totalStats = getDefaultApi().getTotalStats(finalRun.getId());
             return new TestResult(finalRun, totalStats);
@@ -152,15 +184,6 @@ public class HyperfoilValidation {
             software.tnb.common.utils.IOUtils.writeFile(destination, report);
             return destination;
         } catch (Exception e) {
-            LOG.error(e.getMessage(), e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    public String generateReport(Run run) {
-        try {
-            return getDefaultApi().createReport(run.getId(), null);
-        } catch (ApiException e) {
             LOG.error(e.getMessage(), e);
             throw new RuntimeException(e);
         }
