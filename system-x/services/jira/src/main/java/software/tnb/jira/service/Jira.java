@@ -4,24 +4,22 @@ import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.jira.account.JiraAccount;
 import software.tnb.jira.validation.JiraValidation;
+import software.tnb.jira.validation.generated.ApiClient;
+import software.tnb.jira.validation.generated.Configuration;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.atlassian.jira.rest.client.api.JiraRestClient;
-import com.atlassian.jira.rest.client.internal.async.AsynchronousJiraRestClientFactory;
 import com.google.auto.service.AutoService;
-
-import java.net.URI;
 
 @AutoService(Jira.class)
 public class Jira implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Jira.class);
 
     private JiraAccount account;
-    private JiraRestClient client;
+    private ApiClient client;
     private JiraValidation validation;
 
     public JiraAccount account() {
@@ -32,11 +30,16 @@ public class Jira implements Service {
         return account;
     }
 
-    protected JiraRestClient client() {
-        LOG.debug("Creating new JiraRest client");
+    protected ApiClient client() {
 
-        client = new AsynchronousJiraRestClientFactory()
-            .createWithBasicHttpAuthentication(URI.create(account().getJiraUrl()), account().getUsername(), account().getPassword());
+        if (client == null) {
+            LOG.debug("Creating new JiraRest client");
+
+            client = Configuration.getDefaultApiClient();
+            client.setBasePath(account().getJiraUrl());
+            client.setUsername(account().getUsername());
+            client.setPassword(account().getPassword());
+        }
         return client;
     }
 
@@ -46,9 +49,6 @@ public class Jira implements Service {
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
-        if (client != null) {
-            client.close();
-        }
     }
 
     @Override
