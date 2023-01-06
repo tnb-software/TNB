@@ -2,13 +2,13 @@ package software.tnb.product.customizer.component;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.assertj.core.api.Assertions;
-
 import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.datasource.DataSourceCustomizer;
 
 import org.junit.jupiter.api.Tag;
+
+import org.assertj.core.api.Assertions;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,7 +31,7 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
         customizer.doCustomize();
         Assertions.assertThat(ib.getProperties()).isEqualTo(Map.of(
             "quarkus.datasource.db-kind", type,
-            "quarkus.datasource.jdbc.url", url,
+            "quarkus.datasource.jdbc.url", url + ";encrypt=false;",
             "quarkus.datasource.username", username,
             "quarkus.datasource.password", password
         ));
@@ -49,7 +49,8 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
 
         assertThat(builder.getTraits()).hasSize(1);
         assertThat(builder.getTraits()).containsKey("builder");
-        Map<String, Object> cfg = new ObjectMapper().convertValue(builder.getTraits().get("builder").getConfiguration(), new TypeReference<>() { });
+        Map<String, Object> cfg = new ObjectMapper().convertValue(builder.getTraits().get("builder").getConfiguration(), new TypeReference<>() {
+        });
         assertThat(cfg).hasSize(1);
         assertThat(cfg).containsEntry("properties", List.of("quarkus.datasource.db-kind=" + type));
     }
