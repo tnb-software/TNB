@@ -5,7 +5,7 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
-import software.tnb.common.deployment.WithOperator;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.jms.amq.resource.openshift.generated.Acceptor;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemis;
@@ -47,17 +47,11 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 
 @AutoService(AMQBroker.class)
-public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname, WithOperator {
+public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQBroker.class);
 
     public static final String BROKER_NAME = "tnb-amq-broker";
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
-
-    private static final String DEFAULT_CHANNEL = "7.10.x";
-    private static final String OPERATOR_NAME = "amq-broker-rhel8";
-    private static final String DEFAULT_SOURCE = "redhat-operators";
-    private static final String SUBSCRIPTION_NAME = "tnb-amq-broker";
-    private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
 
     private static final CustomResourceDefinitionContext ARTEMIS_CTX = new CustomResourceDefinitionContext.Builder()
         .withName("ActiveMQArtemis")
@@ -71,9 +65,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     public void create() {
         LOG.debug("Creating AMQ broker");
         // Create subscription for amq broker operator
-        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE,
-            OpenshiftClient.get().getNamespace(), false);
-        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        createSubscription();
         // Create amq-broker custom resource
         amqBrokerCli().createOrReplace(createBrokerCR());
     }
@@ -114,9 +106,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "ActiveMQArtemis", BROKER_NAME)
             .timeout(120_000).waitFor();
         OpenshiftClient.get().deleteSecret(SSL_SECRET_NAME);
-        OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "name", "amq-broker-operator")
-            .timeout(120_000).waitFor();
+        deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("name", "amq-broker-operator").isEmpty());
     }
 
     @Override
@@ -268,12 +258,12 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     }
 
     @Override
-    public String defaultOperatorCatalog() {
-        return DEFAULT_SOURCE;
+    public String operatorChannel() {
+        return "7.10.x";
     }
 
     @Override
-    public String defaultOperatorChannel() {
-        return DEFAULT_CHANNEL;
+    public String operatorName() {
+        return "amq-broker-rhel8";
     }
 }

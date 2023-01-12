@@ -2,7 +2,7 @@ package software.tnb.hyperfoil.resource.openshift;
 
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
-import software.tnb.common.deployment.WithOperator;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.hyperfoil.service.Hyperfoil;
@@ -25,15 +25,9 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 
 @AutoService(Hyperfoil.class)
-public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperator {
+public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperatorHub {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftHyperfoil.class);
-
-    private static final String DEFAULT_CHANNEL = "alpha";
-    private static final String OPERATOR_NAME = "hyperfoil-bundle";
-    private static final String DEFAULT_SOURCE = "community-operators";
-    private static final String SUBSCRIPTION_NAME = "tnb-hyperfoil";
-    private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
 
     private static final String APP_NAME = "hyperfoil-" + OpenshiftClient.get().getNamespace();
 
@@ -52,7 +46,8 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
                 OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
                 WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", HYPERFOIL_CTX.getName(), "app", APP_NAME))
                     .isEmpty(), "Waiting until hyperfoil pods are deleted");
-                OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+                deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
+                    .stream().noneMatch(p -> p.getMetadata().getName().contains("hyperfoil")));
             } catch (IOException e) {
                 LOG.error("Error on Hyperfoil deletetion", e);
                 throw new RuntimeException(e);
@@ -78,9 +73,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     @Override
     public void create() {
         LOG.debug("Creating Hyperfoil instance");
-        // Create subscription
-        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
-        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        createSubscription();
 
         try {
             OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition());
@@ -143,12 +136,17 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     }
 
     @Override
-    public String defaultOperatorCatalog() {
-        return DEFAULT_SOURCE;
+    public String operatorCatalog() {
+        return "community-operators";
     }
 
     @Override
-    public String defaultOperatorChannel() {
-        return DEFAULT_CHANNEL;
+    public String operatorChannel() {
+        return "alpha";
+    }
+
+    @Override
+    public String operatorName() {
+        return "hyperfoil-bundle";
     }
 }

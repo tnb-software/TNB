@@ -1,7 +1,7 @@
 package software.tnb.cryostat.resource.openshift;
 
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
-import software.tnb.common.deployment.WithOperator;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
@@ -26,16 +26,9 @@ import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 import okhttp3.Request;
 
 @AutoService(Cryostat.class)
-public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable, WithOperator {
+public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable, WithOperatorHub {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCryostat.class);
-
-    private static final String DEFAULT_CHANNEL = "stable";
-    private static final String OPERATOR_NAME = "cryostat-operator";
-    private static final String DEFAULT_SOURCE = "redhat-operators";
-    private static final String SUBSCRIPTION_NAME = "tnb-cryostat";
-    private static final String SUBSCRIPTION_NAMESPACE = "openshift-marketplace";
-
     private static final String APP_NAME = "cryostat-" + OpenshiftClient.get().getNamespace();
 
     private static final CustomResourceDefinitionContext CRYOSTAT_CTX = new CustomResourceDefinitionContext.Builder()
@@ -52,7 +45,8 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
             OpenshiftClient.get().customResource(CRYOSTAT_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
             WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat", "app", APP_NAME))
                 .isEmpty(), "Waiting until Cryostat pods are deleted");
-            OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
+            deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
+                .stream().noneMatch(p -> p.getMetadata().getName().contains("cryostat")));
         } catch (IOException e) {
             LOG.error("Error on Cryostat deletetion", e);
             throw new RuntimeException(e);
@@ -79,8 +73,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     public void create() {
         LOG.debug("Creating Cryostat instance");
         // Create subscription
-        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME, SUBSCRIPTION_NAMESPACE);
-        OpenshiftClient.get().waitForInstallPlanToComplete(SUBSCRIPTION_NAME);
+        createSubscription();
 
         try {
             OpenshiftClient.get().customResource(CRYOSTAT_CTX).createOrReplace(getCryostatDefinition());
@@ -144,12 +137,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     }
 
     @Override
-    public String defaultOperatorCatalog() {
-        return DEFAULT_SOURCE;
-    }
-
-    @Override
-    public String defaultOperatorChannel() {
-        return DEFAULT_CHANNEL;
+    public String operatorName() {
+        return "cryostat-operator";
     }
 }
