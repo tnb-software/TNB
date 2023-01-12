@@ -1,10 +1,9 @@
 package software.tnb.kafka.resource.openshift;
 
-import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
-import software.tnb.common.deployment.WithOperator;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.kafka.service.Kafka;
 
@@ -39,15 +38,11 @@ import io.strimzi.api.kafka.model.listener.arraylistener.KafkaListenerType;
 import io.strimzi.api.kafka.model.status.Condition;
 
 @AutoService(Kafka.class)
-public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperator {
+public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKafka.class);
 
     private static final String CRD_GROUP = "kafka.strimzi.io";
     private static final String CRD_VERSION = "v1beta2";
-
-    private static final String DEFAULT_SOURCE = "redhat-operators";
-
-    private static final String DEFAULT_CHANNEL = "stable";
 
     private static final CustomResourceDefinitionContext KAFKA_CONTEXT = new CustomResourceDefinitionContext.Builder()
         .withName("Kafka")
@@ -83,9 +78,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
             OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
                 .timeout(120_000).waitFor();
-            OpenshiftClient.get().deleteSubscription("amq-streams");
-            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/kind", "cluster-operator")
-                .timeout(120_000).waitFor();
+            deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
         }
     }
 
@@ -99,7 +92,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     @Override
     public void create() {
-        deployOperator();
+        createSubscription();
         deployKafkaCR();
     }
 
@@ -129,13 +122,6 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public String name() {
         return "my-kafka-cluster";
-    }
-
-    private void deployOperator() {
-        OpenshiftClient.get().createSubscription(operatorChannel(), "amq-streams", operatorCatalog(), "amq-streams", "openshift-marketplace",
-            OpenshiftConfiguration.openshiftNamespace(),
-            false);
-        OpenshiftClient.get().waitForInstallPlanToComplete("amq-streams");
     }
 
     private void deployKafkaCR() {
@@ -273,12 +259,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     }
 
     @Override
-    public String defaultOperatorCatalog() {
-        return DEFAULT_SOURCE;
-    }
-
-    @Override
-    public String defaultOperatorChannel() {
-        return DEFAULT_CHANNEL;
+    public String operatorName() {
+        return "amq-streams";
     }
 }

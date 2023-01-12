@@ -7,7 +7,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
-import software.tnb.common.deployment.WithOperator;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.elasticsearch.account.ElasticsearchAccount;
 import software.tnb.elasticsearch.service.Elasticsearch;
@@ -31,11 +31,7 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Elasticsearch.class)
 public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable, WithInClusterHostname, WithExternalHostname
-    , WithOperator {
-    private static final String DEFAULT_CHANNEL = "stable";
-    private static final String OPERATOR_NAME = "elasticsearch-eck-operator-certified";
-    private static final String DEFAULT_CATALOGSOURCE_NAME = "certified-operators";
-    private static final String SUBSCRIPTION_NAME = "tnb-elasticsearch";
+    , WithOperatorHub {
 
     private static final CustomResourceDefinitionContext ELASTICSEARCH_CTX = new CustomResourceDefinitionContext.Builder()
         .withGroup("elasticsearch.k8s.elastic.co")
@@ -50,10 +46,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
 
     @Override
     public void create() {
-        OpenshiftClient.get().createSubscription(operatorChannel(), OPERATOR_NAME, operatorCatalog(), SUBSCRIPTION_NAME);
-
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsReady(1, "control-plane", "elastic-operator")
-            .timeout(300_000).waitFor();
+        createSubscription();
 
         try (InputStream is = this.getClass().getResourceAsStream("/cr.yaml")) {
             String content = IOUtils.toString(is, StandardCharsets.UTF_8)
@@ -85,13 +78,11 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public void undeploy() {
         OpenshiftClient.get().routes().withName(routeName).delete();
-        OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).delete(OpenshiftConfiguration.openshiftNamespace());
+        OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftConfiguration.openshiftNamespace()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
             .areExactlyNPodsRunning(0, "elasticsearch.k8s.elastic.co/cluster-name", clusterName())
             .timeout(120_000).waitFor();
-        OpenshiftClient.get().deleteSubscription(SUBSCRIPTION_NAME);
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "control-plane", "elastic-operator")
-            .timeout(120_000).waitFor();
+        deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "elastic-operator").isEmpty());
     }
 
     @Override
@@ -146,12 +137,12 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     }
 
     @Override
-    public String defaultOperatorCatalog() {
-        return DEFAULT_CATALOGSOURCE_NAME;
+    public String operatorCatalog() {
+        return "certified-operators";
     }
 
     @Override
-    public String defaultOperatorChannel() {
-        return DEFAULT_CHANNEL;
+    public String operatorName() {
+        return "elasticsearch-eck-operator-certified";
     }
 }
