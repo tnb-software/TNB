@@ -7,11 +7,11 @@
     <parent>
         <artifactId>system-x-services</artifactId>
         <groupId>software.tnb</groupId>
-        <version>0.0.8</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>system-x-salesforce</artifactId>
-    <version>0.0.8</version>
+    <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: Salesforce</name>
 
     <properties>
