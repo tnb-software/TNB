@@ -84,7 +84,7 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
         getIntegrationBuilder().addToProperties(
             Map.of(
                 "quarkus.datasource.db-kind", type,
-                "quarkus.datasource.jdbc.url", url,
+                "quarkus.datasource.jdbc.url", url + ";encrypt=false;", //turn off SSL similarly to springboot (method above)
                 "quarkus.datasource.username", username,
                 "quarkus.datasource.password", password
                 )
