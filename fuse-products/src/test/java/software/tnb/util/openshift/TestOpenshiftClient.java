@@ -1,6 +1,7 @@
 package software.tnb.util.openshift;
 
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.openshift.OpenshiftClientWrapper;
 
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
@@ -12,11 +13,11 @@ public final class TestOpenshiftClient extends OpenshiftClient {
     }
 
     public static void setServer(OpenShiftMockServer server) {
-        client = new TestOpenshiftClient(new OpenShiftConfigBuilder()
+        clientWrapper = new OpenshiftClientWrapper(() -> new TestOpenshiftClient(new OpenShiftConfigBuilder()
             .withMasterUrl(server.url("/"))
             .withNamespace("test")
             .withTrustCerts(true)
             .build()
-        );
+        ));
     }
 }

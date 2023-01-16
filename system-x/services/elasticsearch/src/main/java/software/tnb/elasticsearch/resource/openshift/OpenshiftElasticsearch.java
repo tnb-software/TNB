@@ -3,7 +3,6 @@ package software.tnb.elasticsearch.resource.openshift;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import software.tnb.common.account.AccountFactory;
-import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
@@ -51,7 +50,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
         try (InputStream is = this.getClass().getResourceAsStream("/cr.yaml")) {
             String content = IOUtils.toString(is, StandardCharsets.UTF_8)
                 .replace("$VERSION$", version()).replace("$NAME$", clusterName());
-            OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).createOrReplace(OpenshiftConfiguration.openshiftNamespace(), content);
+            OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(content);
         } catch (IOException e) {
             fail("Unable to read elasticsearch CR: ", e);
         }
@@ -78,7 +77,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public void undeploy() {
         OpenshiftClient.get().routes().withName(routeName).delete();
-        OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftConfiguration.openshiftNamespace()).delete();
+        OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftClient.get().getNamespace()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
             .areExactlyNPodsRunning(0, "elasticsearch.k8s.elastic.co/cluster-name", clusterName())
             .timeout(120_000).waitFor();

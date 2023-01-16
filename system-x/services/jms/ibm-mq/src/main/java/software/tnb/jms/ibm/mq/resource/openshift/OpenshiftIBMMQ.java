@@ -7,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.jms.ibm.mq.service.IBMMQ;
 
 import org.slf4j.Logger;
@@ -50,6 +51,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
     private static final String CONFIG_MAP_NAME = "tnb-ibm-mq-config";
     private static final String CONFIG_MAP_VOLUME_NAME = "config";
     private PortForward portForward;
+    private int localPort;
     private long uid;
 
     @Override
@@ -67,8 +69,9 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public void openResources() {
+        localPort = NetworkUtils.getFreePort();
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         super.openResources();
     }
 
@@ -79,6 +82,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
             LOG.debug("Closing port-forward");
             IOUtils.closeQuietly(portForward);
         }
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override

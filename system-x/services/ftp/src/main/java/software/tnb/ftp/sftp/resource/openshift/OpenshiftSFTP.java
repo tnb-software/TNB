@@ -1,12 +1,14 @@
 package software.tnb.ftp.sftp.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.ftp.sftp.service.SFTP;
 
@@ -31,8 +33,6 @@ import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
-import io.fabric8.openshift.api.model.SecurityContextConstraints;
-import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -41,12 +41,18 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSFTP.class);
 
-    private static final String SCC_NAME = "tnb-sftp";
-    public static final int LOCAL_PORT = 3322;
+    private String sccName = "tnb-sftp";
 
     private SFTPClient client;
     private PortForward portForward;
+    private int localPort;
     private String serviceAccountName;
+
+    public OpenshiftSFTP() {
+        if (TestConfiguration.parallel()) {
+            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
+        }
+    }
 
     @Override
     public void create() {
@@ -68,7 +74,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             );
 
         OpenshiftClient.get().addUsersToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(SCC_NAME, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
@@ -76,7 +82,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
                 .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", SCC_NAME)
+                .addToAnnotations("openshift.io/scc", sccName)
                 .endMetadata()
                 .editOrNewSpec()
                 .editOrNewSelector()
@@ -127,10 +133,8 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public void undeploy() {
-        LOG.info("Undeploying OpenShift sftp");
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).edit();
-        scc.getUsers().remove("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName);
-        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
+        LOG.info("Undeploying OpenShift SFTP");
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -139,7 +143,8 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public void openResources() {
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), LOCAL_PORT);
+        localPort = NetworkUtils.getFreePort();
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         WaitUtils.sleep(1000);
         makeClient();
     }
@@ -148,6 +153,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     public void closeResources() {
         IOUtils.closeQuietly(client);
         IOUtils.closeQuietly(portForward);
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override
@@ -178,7 +184,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             LOG.debug("Creating new SFTPClient instance");
             SSHClient sshClient = new SSHClient();
             sshClient.addHostKeyVerifier(new PromiscuousVerifier());
-            sshClient.connect(externalHostname(), LOCAL_PORT);
+            sshClient.connect(externalHostname(), localPort);
             sshClient.authPassword(account().username(), account().password());
             client = sshClient.newSFTPClient();
         } catch (IOException e) {

@@ -68,7 +68,7 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
             "skipTests", "true"
             , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
             , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
-            , "jkube.namespace", OpenshiftConfiguration.openshiftNamespace()
+            , "jkube.namespace", OpenshiftClient.get().getNamespace()
             , "jkube.masterUrl", OpenshiftConfiguration.openshiftUrl() != null ? OpenshiftConfiguration.openshiftUrl()
                 : OpenshiftClient.get().getMasterUrl().toString()
             , "jkube.username", OpenshiftConfiguration.openshiftUsername()

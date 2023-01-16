@@ -37,6 +37,7 @@ public class TestConfiguration extends Configuration {
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
     public static final String JIRA_ALLOWED_RESOLUTIONS = "jira.allowed.resolutions";
+    public static final String PARALLEL = "test.parallel";
 
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
@@ -154,5 +155,9 @@ public class TestConfiguration extends Configuration {
         return Arrays.stream(
             getProperty(JIRA_ALLOWED_RESOLUTIONS, "Resolved, Closed, Done, Validation Backlog, In Validation").split(",")
         ).map(String::trim).map(String::toLowerCase).collect(Collectors.toSet());
+    }
+
+    public static boolean parallel() {
+        return getBoolean(PARALLEL, false);
     }
 }

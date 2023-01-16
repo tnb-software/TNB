@@ -1,11 +1,12 @@
 package software.tnb.common.config;
 
+import software.tnb.common.utils.StringUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.UUID;
 
 public class OpenshiftConfiguration extends Configuration {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftConfiguration.class);
@@ -23,8 +24,6 @@ public class OpenshiftConfiguration extends Configuration {
     private static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
 
     private static final String NAMESPACE_PREFIX = "tnb-test-";
-
-    private static boolean isTemporaryNamespace = false;
 
     public static boolean isOpenshift() {
         return getBoolean(USE_OPENSHIFT, false);
@@ -46,19 +45,26 @@ public class OpenshiftConfiguration extends Configuration {
         return getProperty(OPENSHIFT_HTTPS_PROXY, (String) null);
     }
 
+    /**
+     * Returns the openshift namespace.
+     *
+     * @return namespace
+     * @deprecated should be used only in initializing the openshift client. If you want to get the current namespace, use OpenshiftClient.get()
+     * .getNamespace()
+     */
+    @Deprecated
     public static String openshiftNamespace() {
         String namespace = getProperty(OPENSHIFT_NAMESPACE);
         if (namespace == null) {
-            namespace = NAMESPACE_PREFIX + UUID.randomUUID().toString().replaceAll("-", "").substring(0, 8);
-            isTemporaryNamespace = true;
-            LOG.info("Using namespace {}", namespace);
-            setProperty(OPENSHIFT_NAMESPACE, namespace);
+            namespace = NAMESPACE_PREFIX + StringUtils.getRandomAlphanumStringOfLength(8);
+        } else if (TestConfiguration.parallel()) {
+            namespace += "-" + StringUtils.getRandomAlphanumStringOfLength(8);
         }
         return namespace;
     }
 
     public static boolean openshiftNamespaceDelete() {
-        return getBoolean(OPENSHIFT_NAMESPACE_DELETE, false);
+        return getBoolean(OPENSHIFT_NAMESPACE_DELETE, false) || TestConfiguration.parallel() || getProperty(OPENSHIFT_NAMESPACE) == null;
     }
 
     public static Path openshiftKubeconfig() {
@@ -67,10 +73,6 @@ public class OpenshiftConfiguration extends Configuration {
 
     public static String openshiftDeploymentLabel() {
         return getProperty(OPENSHIFT_DEPLOYMENT_LABEL, "app");
-    }
-
-    public static boolean isTemporaryNamespace() {
-        return isTemporaryNamespace;
     }
 
     public static String getDeployStrategy() {

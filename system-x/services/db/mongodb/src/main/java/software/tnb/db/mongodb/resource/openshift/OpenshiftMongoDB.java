@@ -7,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.db.mongodb.service.MongoDB;
 
 import org.slf4j.Logger;
@@ -39,6 +40,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMongoDB.class);
 
     private PortForward portForward;
+    private int localPort;
 
     @Override
     public void create() {
@@ -115,8 +117,9 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     public void openResources() {
+        localPort = NetworkUtils.getFreePort();
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         LOG.debug("Creating new MongoClient instance");
         client = MongoClients.create(replicaSetUrl().replace("@" + hostname(), "@" + externalHostname()));
     }
@@ -147,7 +150,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     public String replicaSetUrl() {
-        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), hostname(), port(), account().database());
+        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), hostname(), localPort, account().database());
     }
 
     @Override
@@ -175,6 +178,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
             LOG.debug("Closing port-forward");
             IOUtils.closeQuietly(portForward);
         }
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override

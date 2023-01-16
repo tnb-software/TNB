@@ -22,9 +22,9 @@ public interface ReusableOpenshiftDeployable extends OpenshiftDeployable {
     default void afterAll(ExtensionContext extensionContext) throws Exception {
         if (JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
             cleanup();
+            closeResources();
         } else {
-            undeploy();
+            OpenshiftDeployable.super.afterAll(extensionContext);
         }
-        closeResources();
     }
 }

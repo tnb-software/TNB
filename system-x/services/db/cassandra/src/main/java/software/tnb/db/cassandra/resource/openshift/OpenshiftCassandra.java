@@ -7,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.db.cassandra.service.Cassandra;
 
 import com.datastax.oss.driver.api.core.CqlSession;
@@ -33,10 +34,10 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
     private CqlSession session;
     private LocalPortForward portForward;
+    private int localPort;
 
     @Override
     public void create() {
-
         //@formatter:off
         OpenshiftClient.get().apps().deployments().createOrReplace(
 
@@ -127,7 +128,8 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
     @Override
     public void openResources() {
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), port());
+        localPort = NetworkUtils.getFreePort();
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
 
         // default timeout pretty much always failed when creating table, increase to 30s
         DriverConfigLoader loader =
@@ -137,7 +139,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
         session = CqlSession.builder()
             .withConfigLoader(loader)
-            .addContactPoint(new InetSocketAddress(externalHostname(), port()))
+            .addContactPoint(new InetSocketAddress(externalHostname(), localPort))
             .withAuthCredentials(account().username(), account().password())
             .withLocalDatacenter(account().datacenter())
             .build();
@@ -150,6 +152,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
             session = null;
         }
         IOUtils.closeQuietly(portForward);
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override

@@ -53,6 +53,11 @@ public class OpenshiftMariaDB extends MariaDB implements OpenshiftDeployable, Wi
     }
 
     @Override
+    public int localPort() {
+        return openshiftDb.localPort();
+    }
+
+    @Override
     public String name() {
         return "mariadb-tnb";
     }
