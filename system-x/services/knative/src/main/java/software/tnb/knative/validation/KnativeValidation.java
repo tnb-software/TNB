@@ -21,7 +21,7 @@ import io.fabric8.kubernetes.api.model.HasMetadata;
 public class KnativeValidation {
     private static final Logger LOG = LoggerFactory.getLogger(KnativeValidation.class);
     // This string is from the error message when you try to create a resource with invalid name
-    private static final String NAME_VALIDATION_REGEX = "[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*";
+    private static final String NAME_VALIDATION_REGEX = "[a-z]([-a-z0-9]*[a-z0-9])?";
 
     private final KnativeClient client;
 
@@ -81,8 +81,8 @@ public class KnativeValidation {
 
     private void validateName(String name) {
         if (!name.matches(NAME_VALIDATION_REGEX)) {
-            throw new IllegalArgumentException("Name must consist of lower case alphanumeric characters, '-' or '.',"
-                + " and must start and end with an alphanumeric character (was: " + name + ")");
+            throw new IllegalArgumentException("Name must consist of lower case alphanumeric characters, '-'"
+                + " and must start and end with an alphabetic character (was: " + name + ")");
         }
     }
 }
