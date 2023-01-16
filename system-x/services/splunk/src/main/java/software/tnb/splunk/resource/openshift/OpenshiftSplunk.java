@@ -1,7 +1,7 @@
 package software.tnb.splunk.resource.openshift;
 
 import software.tnb.common.account.AccountFactory;
-import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
@@ -45,12 +45,18 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
     private CustomResourceDefinitionContext crdContext;
     private Route apiRoute;
 
-    private static final String SCC_NAME = "tnb-splunk";
+    private String sccName = "tnb-splunk";
+
+    public OpenshiftSplunk() {
+        if (TestConfiguration.parallel()) {
+            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
+        }
+    }
 
     @Override
     public void create() {
         OpenshiftClient.get().addUsersToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(SCC_NAME, "nonroot"),
+            OpenshiftClient.get().createSecurityContext(sccName, "nonroot"),
             OpenshiftClient.get().getServiceAccountRef("splunk-operator-controller-manager"),
             OpenshiftClient.get().getServiceAccountRef("default"));
 
@@ -61,7 +67,7 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
             }
             String resources =
                 Resources.toString(Objects.requireNonNull(this.getClass().getResource("/splunk-operator-namespace.yaml")), StandardCharsets.UTF_8)
-                    .replace("DESIRED_NAMESPACE", OpenshiftConfiguration.openshiftNamespace());
+                    .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace());
             InputStream is = IOUtils.toInputStream(resources, "UTF-8");
 
             LOG.info("Creating Splunk openshift resources from splunk-operator-namespace.yaml");
@@ -77,8 +83,8 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
                 "name", "s1")
         );
         try {
-            OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftConfiguration.openshiftNamespace()).delete();
-            OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftConfiguration.openshiftNamespace())
+            OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace()).delete();
+            OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace())
                 .create(splunkInstance);
         } catch (IOException e) {
             throw new RuntimeException("Unable to create Splunk CR: ", e);
@@ -88,14 +94,14 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
     @Override
     public void undeploy() {
         LOG.info("Undeploying Splunk resources");
-        OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftConfiguration.openshiftNamespace()).delete();
+        OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace()).delete();
         WaitUtils.waitFor(() -> !this.isAppDeployed(), "Waiting until Splunk CR is uninstalled.");
         OpenshiftClient.get().resourceList(createdResources.stream()
             .filter(res -> !(res instanceof CustomResourceDefinition
                 || res instanceof io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinitionVersion
                 || res instanceof ClusterRole))
             .collect(Collectors.toList())).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-        OpenshiftClient.get().clusterRoleBindings().withName("system:openshift:scc:nonroot").delete();
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
 
         //if CR creates PVC's, they need to be deleted. (usage of the finalizer in CR can in some situations (e.g. failure during operator
         // creation) cause the deletion of CR get stuck)

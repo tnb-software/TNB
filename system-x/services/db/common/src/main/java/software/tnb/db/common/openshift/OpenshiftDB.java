@@ -1,11 +1,13 @@
 package software.tnb.db.common.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.MapUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.db.common.service.SQL;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
@@ -20,20 +22,25 @@ import io.fabric8.openshift.api.model.SecurityContextConstraints;
 public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     private LocalPortForward portForward;
+    private int localPort;
     private final SQL sqlService;
     private final int port;
-    private static final String SCC_NAME = "tnb-openshift-db";
+    private String sccName = "tnb-openshift-db";
 
     public OpenshiftDB(SQL sqlService, int port) {
         this.sqlService = sqlService;
         this.port = port;
+
+        if (TestConfiguration.parallel()) {
+            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
+        }
     }
 
     @Override
     public void create() {
         OpenshiftClient.get().addGroupsToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(SCC_NAME, "restricted"),
-            "system:serviceaccounts:" + OpenshiftConfiguration.openshiftNamespace());
+            OpenshiftClient.get().createSecurityContext(sccName, "restricted"),
+            "system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
 
         //@formatter:off
         OpenshiftClient.get().apps().deployments().createOrReplace(
@@ -102,9 +109,9 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public void undeploy() {
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).get();
-        scc.getGroups().remove("system:serviceaccounts:" + OpenshiftConfiguration.openshiftNamespace());
-        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
+        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(sccName).get();
+        scc.getGroups().remove("system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).patch(scc);
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
@@ -113,12 +120,14 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public void openResources() {
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port, port);
+        localPort = NetworkUtils.getFreePort();
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(port, localPort);
     }
 
     @Override
     public void closeResources() {
         IOUtils.closeQuietly(portForward);
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override
@@ -135,5 +144,9 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     @Override
     public String name() {
         return sqlService.name();
+    }
+
+    public int localPort() {
+        return localPort;
     }
 }

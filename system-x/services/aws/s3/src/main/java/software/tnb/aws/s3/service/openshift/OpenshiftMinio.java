@@ -9,6 +9,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.NetworkUtils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -34,6 +35,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
 
     private PortForward portForward;
+    private int localPort;
 
     @Override
     public void create() {
@@ -107,13 +109,15 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     public void openResources() {
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(CONTAINER_API_PORT, CONTAINER_API_PORT);
+        localPort = NetworkUtils.getFreePort();
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(CONTAINER_API_PORT, localPort);
         validation = new S3Validation(client(S3Client.class));
     }
 
     @Override
     public void closeResources() {
         IOUtils.closeQuietly(portForward);
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override
@@ -154,6 +158,6 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     protected String clientHostname() {
-        return String.format("http://%s:%d", externalHostname(), CONTAINER_API_PORT);
+        return String.format("http://%s:%d", externalHostname(), localPort);
     }
 }

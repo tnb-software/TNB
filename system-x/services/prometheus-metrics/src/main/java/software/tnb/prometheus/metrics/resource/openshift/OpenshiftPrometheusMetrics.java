@@ -1,6 +1,5 @@
 package software.tnb.prometheus.metrics.resource.openshift;
 
-import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.prometheus.metrics.service.PrometheusMetrics;
@@ -28,7 +27,7 @@ public class OpenshiftPrometheusMetrics extends PrometheusMetrics implements Ope
         String url = "https://" + route.getSpec().getHost();
         String token = OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
         LOG.info("Prometheus url: {}", url);
-        validation = new PrometheusMetricsValidation(url, token, OpenshiftConfiguration.openshiftNamespace());
+        validation = new PrometheusMetricsValidation(url, token, OpenshiftClient.get().getNamespace());
     }
 
     @Override

@@ -38,41 +38,54 @@ import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
 public class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
-    protected static OpenshiftClient client;
+    protected static OpenshiftClientWrapper clientWrapper;
 
     protected OpenshiftClient(OpenShiftConfig openShiftConfig) {
         super(openShiftConfig);
     }
 
-    private static OpenshiftClient createClient() {
+    private static OpenshiftClient createInstance() {
+        OpenShiftConfigBuilder configBuilder;
+
         if (OpenshiftConfiguration.openshiftUrl() == null) {
-            OpenShiftConfig config = new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
-            LOG.info("Using cluster {}", config.getMasterUrl());
-            config.setNamespace(OpenshiftConfiguration.openshiftNamespace());
-            config.setHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy());
-            config.setBuildTimeout(10 * 60 * 1000);
-            config.setRequestTimeout(120_000);
-            config.setConnectionTimeout(120_000);
-            config.setTrustCerts(true);
-            return new OpenshiftClient(config);
+            configBuilder = new OpenShiftConfigBuilder(
+                new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig()))));
         } else {
-            return new OpenshiftClient(
-                new OpenShiftConfigBuilder()
-                    .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
-                    .withTrustCerts(true)
-                    .withNamespace(OpenshiftConfiguration.openshiftNamespace())
-                    .withUsername(OpenshiftConfiguration.openshiftUsername())
-                    .withPassword(OpenshiftConfiguration.openshiftPassword())
-                    .withHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy())
-                    .build());
+            configBuilder = new OpenShiftConfigBuilder()
+                .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
+                .withUsername(OpenshiftConfiguration.openshiftUsername())
+                .withPassword(OpenshiftConfiguration.openshiftPassword());
         }
+
+        String namespace = OpenshiftConfiguration.openshiftNamespace();
+
+        configBuilder
+            .withNamespace(namespace)
+            .withHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy())
+            .withBuildTimeout(60_000)
+            .withRequestTimeout(120_000)
+            .withConnectionTimeout(120_000)
+            .withTrustCerts(true);
+
+        if (TestConfiguration.parallel()) {
+            Thread.currentThread().setName(namespace);
+        }
+
+        LOG.info("Using cluster {}", configBuilder.getMasterUrl());
+        return new OpenshiftClient(configBuilder.build());
     }
 
-    public static OpenshiftClient get() {
-        if (client == null) {
-            client = createClient();
+    private static OpenshiftClient init() {
+        final OpenshiftClient c = OpenshiftClient.createInstance();
+        c.createNamespace(c.getNamespace());
+        return c;
+    }
+
+    public static synchronized OpenshiftClient get() {
+        if (clientWrapper == null) {
+            clientWrapper = new OpenshiftClientWrapper(OpenshiftClient::init);
         }
-        return client;
+        return clientWrapper.getClient();
     }
 
     /**
@@ -84,7 +97,7 @@ public class OpenshiftClient extends OpenShift {
      * @param subscriptionName name of the subscription
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName) {
-        createSubscription(channel, operatorName, source, subscriptionName, "openshift-marketplace", OpenshiftConfiguration.openshiftNamespace(),
+        createSubscription(channel, operatorName, source, subscriptionName, "openshift-marketplace", get().getNamespace(),
             false);
     }
 
@@ -98,7 +111,7 @@ public class OpenshiftClient extends OpenShift {
      * @param subscriptionNamespace namespace of the catalogsource
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName, String subscriptionNamespace) {
-        createSubscription(channel, operatorName, source, subscriptionName, subscriptionNamespace, OpenshiftConfiguration.openshiftNamespace(),
+        createSubscription(channel, operatorName, source, subscriptionName, subscriptionNamespace, get().getNamespace(),
             false);
     }
 
@@ -148,7 +161,7 @@ public class OpenshiftClient extends OpenShift {
                     .withTargetNamespaces(targetNamespace)
                     .endSpec();
             }
-            client.operatorHub().operatorGroups().inNamespace(targetNamespace).createOrReplace(operatorGroupBuilder.build());
+            get().operatorHub().operatorGroups().inNamespace(targetNamespace).createOrReplace(operatorGroupBuilder.build());
         }
 
         Subscription s = new SubscriptionBuilder()
@@ -163,7 +176,7 @@ public class OpenshiftClient extends OpenShift {
             .withStartingCSV(startingWithCSV)
             .endSpec()
             .build();
-        client.operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
+        get().operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
     }
 
     /**
@@ -172,7 +185,7 @@ public class OpenshiftClient extends OpenShift {
      * @param subscriptionName subscription name
      */
     public void waitForInstallPlanToComplete(String subscriptionName) {
-        waitForInstallPlanToComplete(subscriptionName, OpenshiftConfiguration.openshiftNamespace());
+        waitForInstallPlanToComplete(subscriptionName, get().getNamespace());
     }
 
     /**
@@ -202,7 +215,7 @@ public class OpenshiftClient extends OpenShift {
      * @param name subscription name
      */
     public void deleteSubscription(String name) {
-        deleteSubscription(name, OpenshiftConfiguration.openshiftNamespace());
+        deleteSubscription(name, get().getNamespace());
     }
 
     /**
@@ -234,7 +247,7 @@ public class OpenshiftClient extends OpenShift {
      * @param tag imagestream tag
      */
     public void waitForImageStream(String name, String tag) {
-        WaitUtils.waitFor(() -> OpenshiftClient.get().imageStreams().withName(name).get().getSpec().getTags().stream()
+        WaitUtils.waitFor(() -> get().imageStreams().withName(name).get().getSpec().getTags().stream()
             .anyMatch(t -> tag.equals(t.getName())), 24, 5000L, String.format("Waiting until the imagestream %s contains %s tag", name, tag));
     }
 
@@ -246,21 +259,14 @@ public class OpenshiftClient extends OpenShift {
      */
     public void doS2iBuild(String name, Path filePath) {
         LOG.info("Instantiating a new build for buildconfig {} from file {}", name, filePath.toAbsolutePath());
-        OpenshiftClient.get().buildConfigs().withName(name).instantiateBinary().fromFile(filePath.toFile());
+        get().buildConfigs().withName(name).instantiateBinary().fromFile(filePath.toFile());
 
-        BooleanSupplier success = () -> "complete".equalsIgnoreCase(OpenshiftClient.get()
-            .getBuild(name + "-" + OpenshiftClient.get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
-        BooleanSupplier fail = () -> "failed".equalsIgnoreCase(OpenshiftClient.get()
-            .getBuild(name + "-" + OpenshiftClient.get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
+        BooleanSupplier success = () -> "complete".equalsIgnoreCase(get()
+            .getBuild(name + "-" + get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
+        BooleanSupplier fail = () -> "failed".equalsIgnoreCase(get()
+            .getBuild(name + "-" + get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
 
         WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
-    }
-
-    /**
-     * Create namespace (name obtained from system property openshift.namespace).
-     */
-    public void createNamespace() {
-        createNamespace(OpenshiftConfiguration.openshiftNamespace());
     }
 
     /**
@@ -274,6 +280,11 @@ public class OpenshiftClient extends OpenShift {
             return;
         }
 
+        final Namespace namespace = this.namespaces().withName(name).get();
+        if (namespace != null && namespace.getMetadata().getDeletionTimestamp() != null) {
+            throw new RuntimeException("Namespace " + name + " already exists and is in Terminating state");
+        }
+
         // @formatter:off
         Map<String, String> labels = TestConfiguration.user() == null ? Map.of() : Map.of("tnb/createdBy", TestConfiguration.user());
         Namespace ns = new NamespaceBuilder()
@@ -282,9 +293,9 @@ public class OpenshiftClient extends OpenShift {
                 .withLabels(labels)
             .endMetadata().build();
         // @formatter:on
-        if (client.namespaces().withName(name).get() == null) {
-            client.namespaces().create(ns);
-            LOG.info("Created namespace " + name);
+        if (this.namespaces().withName(name).get() == null) {
+            this.namespaces().create(ns);
+            WaitUtils.waitFor(() -> this.namespaces().withName(name).get() != null, "Waiting until the namespace " + name + " is created");
         } else {
             LOG.info("Skipped creating namespace " + name + ", already exists");
         }
@@ -294,7 +305,13 @@ public class OpenshiftClient extends OpenShift {
      * Delete namespace (name obtained from system property openshift.namespace).
      */
     public void deleteNamespace() {
-        deleteNamespace(OpenshiftConfiguration.openshiftNamespace());
+        // In case of multiple extensions in one test class, the first one deletes the namespace and the other just skip this as the client will
+        // be null
+        if (get() != null) {
+            deleteNamespace(get().getNamespace());
+            // If the current namespace is deleted also close the client
+            clientWrapper.closeClient();
+        }
     }
 
     /**
@@ -307,10 +324,11 @@ public class OpenshiftClient extends OpenShift {
             LOG.info("Skipped deleting namespace, name null or empty");
             return;
         }
-        if (client.namespaces().withName(name).get() == null) {
+        if (get().namespaces().withName(name).get() == null) {
             LOG.info("Skipped deleting namespace " + name + ", not found");
         } else {
-            client.namespaces().withName(name).delete();
+            get().namespaces().withName(name).cascading(true).delete();
+            WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(name).get() == null, "Waiting until the namespace is removed");
             LOG.info("Deleted namespace " + name);
         }
     }
@@ -323,7 +341,7 @@ public class OpenshiftClient extends OpenShift {
      * @return created configmap instance
      */
     public ConfigMap createConfigMap(String name, Map<String, String> data) {
-        return client.configMaps().withName(name).createOrReplace(
+        return get().configMaps().withName(name).createOrReplace(
             new ConfigMapBuilder()
                 .withNewMetadata()
                 .withName(name)
@@ -340,7 +358,7 @@ public class OpenshiftClient extends OpenShift {
      * @return log of the pod
      */
     public String getLogs(Pod p) {
-        return OpenshiftClient.get().pods().withName(p.getMetadata().getName()).inContainer(getIntegrationContainer(p)).getLog();
+        return get().pods().withName(p.getMetadata().getName()).inContainer(getIntegrationContainer(p)).getLog();
     }
 
     /**
@@ -360,15 +378,15 @@ public class OpenshiftClient extends OpenShift {
             .withName(name)
             .addToLabels(labels)
             .endMetadata().build();
-        return client.secrets().createOrReplace(secret);
+        return get().secrets().createOrReplace(secret);
     }
 
     public void deleteSecret(String name) {
-        client.secrets().withName(name).delete();
+        get().secrets().withName(name).delete();
     }
 
     public String getClusterHostname(String service) {
-        return String.format("%s.%s.svc.cluster.local", service, client.getNamespace());
+        return String.format("%s.%s.svc.cluster.local", service, get().getNamespace());
     }
 
     public boolean isPodFailed(Pod pod) {
@@ -404,10 +422,10 @@ public class OpenshiftClient extends OpenShift {
     }
 
     public SecurityContextConstraints createSecurityContext(String sccName, String copyFromScc, String... defaultCapabilities) {
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(sccName).get();
+        SecurityContextConstraints scc = get().securityContextConstraints().withName(sccName).get();
         if (scc == null) {
-            SecurityContextConstraints existingScc = OpenshiftClient.get().securityContextConstraints().withName(copyFromScc).get();
-            scc = OpenshiftClient.get().securityContextConstraints().create(
+            SecurityContextConstraints existingScc = get().securityContextConstraints().withName(copyFromScc).get();
+            scc = get().securityContextConstraints().create(
                 new SecurityContextConstraintsBuilder(existingScc)
                     .withNewMetadata() // new metadata to override the existing annotations
                     .withName(sccName)
@@ -424,7 +442,7 @@ public class OpenshiftClient extends OpenShift {
                 scc.getUsers().add(user);
             }
         }
-        OpenshiftClient.get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+        get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
     }
 
     public void addGroupsToSecurityContext(SecurityContextConstraints scc, String... groups) {
@@ -433,10 +451,10 @@ public class OpenshiftClient extends OpenShift {
                 scc.getGroups().add(group);
             }
         }
-        OpenshiftClient.get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+        get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
     }
 
     public String getServiceAccountRef(String serviceAccountName) {
-        return "system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName;
+        return "system:serviceaccount:" + get().getNamespace() + ":" + serviceAccountName;
     }
 }

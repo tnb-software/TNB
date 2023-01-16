@@ -34,6 +34,10 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
 
     public abstract int port();
 
+    public int localPort() {
+        return port();
+    }
+
     public SQLValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new SQL validation");
@@ -47,7 +51,9 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
      * @return local connection url (through port-forward in case of openshift)
      */
     protected String localConnectionUrl() {
-        return jdbcConnectionUrl().replace("://" + hostname(), "://" + externalHostname());
+        return jdbcConnectionUrl()
+            .replace("://" + hostname(), "://" + externalHostname())
+            .replace(":" + port(), ":" + localPort());
     }
 
     public abstract Map<String, String> containerEnvironment();

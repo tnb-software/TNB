@@ -143,7 +143,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     public void undeploy() {
         LOG.info("Undeploying OpenShift Mail");
         SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).edit();
-        scc.getUsers().remove("system:serviceaccount:" + OpenshiftConfiguration.openshiftNamespace() + ":" + serviceAccountName);
+        scc.getUsers().remove("system:serviceaccount:" + OpenshiftClient.get().getNamespace() + ":" + serviceAccountName);
         OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
 
         services.forEach((name, port) -> {
@@ -161,7 +161,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     public void openResources() {
         LOG.debug("Creating port-forward to {} for port {}", name(), SMTP_PORT);
         smtpLocalPort = NetworkUtils.getFreePort();
-        smtpPortForward = OpenshiftClient.get().services().withName(name() + "-" + "smtp").portForward(SMTP_PORT, smtpLocalPort);
+        smtpPortForward = OpenshiftClient.get().services().withName(name() + "-smtp").portForward(SMTP_PORT, smtpLocalPort);
     }
 
     @Override
@@ -193,6 +193,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
             LOG.debug("Closing port-forward");
             IOUtils.closeQuietly(smtpPortForward);
         }
+        NetworkUtils.releasePort(smtpLocalPort);
     }
 
     @Override

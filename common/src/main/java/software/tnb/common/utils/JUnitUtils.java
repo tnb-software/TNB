@@ -1,5 +1,7 @@
 package software.tnb.common.utils;
 
+import software.tnb.common.config.TestConfiguration;
+
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.api.extension.RegisterExtension;
 import org.junit.jupiter.engine.descriptor.ClassBasedTestDescriptor;
@@ -32,6 +34,10 @@ public final class JUnitUtils {
      * @return true if the extension is used in any of following tests, false otherwise
      */
     public static boolean isExtensionStillNeeded(ExtensionContext extensionContext, Class<?> extensionClass) {
+        if (TestConfiguration.parallel()) {
+            // In parallel, we can't guarantee that the extension will run in the same thread (== same namespace)
+            return false;
+        }
         try {
             Field f = Class.forName("org.junit.jupiter.engine.descriptor.AbstractExtensionContext").getDeclaredField("testDescriptor");
             // Get the root descriptor that has all the scheduled test classes

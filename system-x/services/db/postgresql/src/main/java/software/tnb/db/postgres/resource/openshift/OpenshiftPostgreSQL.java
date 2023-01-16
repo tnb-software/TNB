@@ -53,6 +53,11 @@ public class OpenshiftPostgreSQL extends PostgreSQL implements OpenshiftDeployab
     }
 
     @Override
+    public int localPort() {
+        return openshiftDb.localPort();
+    }
+
+    @Override
     public String name() {
         return "postgres-tnb";
     }

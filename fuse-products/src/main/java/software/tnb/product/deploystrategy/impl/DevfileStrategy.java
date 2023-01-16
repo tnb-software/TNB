@@ -144,7 +144,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
             args.add(String.format("--token=%s", config.getConfiguration().getOauthToken()));
         }
         runOdoCmd(args);
-        runOdoCmd(Arrays.asList("project", "set", OpenshiftConfiguration.openshiftNamespace()));
+        runOdoCmd(Arrays.asList("project", "set", OpenshiftClient.get().getNamespace()));
     }
 
     private void runOdoCmd(final List<String> args) throws IOException, InterruptedException {
