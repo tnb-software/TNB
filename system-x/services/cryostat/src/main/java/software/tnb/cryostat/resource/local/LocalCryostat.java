@@ -15,11 +15,13 @@ import com.google.auto.service.AutoService;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 @AutoService(Cryostat.class)
 public class LocalCryostat extends Cryostat implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalCryostat.class);
     private CryostatContainer container;
+    private static final String JMX_DB_PASSWORD = UUID.randomUUID().toString();
 
     @Override
     public void deploy() {
@@ -76,6 +78,7 @@ public class LocalCryostat extends Cryostat implements Deployable, WithDockerIma
         env.put("CRYOSTAT_DISABLE_JMX_AUTH", "true");
         env.put("CRYOSTAT_ALLOW_UNTRUSTED_SSL", "true");
         env.put("CRYOSTAT_DISABLE_SSL", "true");
+        env.put("CRYOSTAT_JMX_CREDENTIALS_DB_PASSWORD", JMX_DB_PASSWORD);
         return env;
     }
 
