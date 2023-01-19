@@ -50,8 +50,12 @@ import io.fabric8.camelk.v1.IntegrationPlatformSpecBuilder;
 import io.fabric8.camelk.v1alpha1.Kamelet;
 import io.fabric8.camelk.v1alpha1.KameletBinding;
 import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
+import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.dsl.base.PatchContext;
+import io.fabric8.kubernetes.client.dsl.base.PatchType;
 import io.fabric8.kubernetes.client.utils.Serialization;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfigBuilder;
 
 @AutoService(Product.class)
 public class CamelK extends OpenshiftProduct implements KameletOps {
@@ -89,8 +93,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
                     CamelKConfiguration.SUBSCRIPTION_SOURCE, config.subscriptionSource(), config.subscriptionSourceNamespace());
                 throw new RuntimeException("Operator Hub catalog source " + config.subscriptionSource() + " not found!");
             }
+
             OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
-                config.subscriptionName(), config.subscriptionSourceNamespace());
+                config.subscriptionName(), config.subscriptionSourceNamespace(), OpenshiftClient.get().getNamespace(), false, null,
+                new SubscriptionConfigBuilder().withNewResources().withLimits(Map.of("memory",
+                    // TODO(jbouska): Temporary workaround for native builds (it needs investigation why the memory consumption is so high)
+                    Quantity.parse("7Gi"))).endResources().build());
             OpenshiftClient.get().waitForInstallPlanToComplete(config.subscriptionName());
         }
 
@@ -135,6 +143,11 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
 
         camelKClient.v1().integrationPlatforms().delete();
         camelKClient.v1().integrationPlatforms().create(ip);
+
+        // TODO(@jbouska,@avano): Remove this workaround after migration of camel-k-client to =< v 6.0.0
+        camelKClient.v1().integrationPlatforms().withName(ip.getMetadata().getName())
+            .patch(PatchContext.of(PatchType.JSON_MERGE), "{\"spec\":{\"build\":{\"maven\":{\"cliOptions\":[\"-Dquarkus.native"
+                + ".native-image-xmx=6g\"]}}}}");
 
         if (TestConfiguration.streamLogs()) {
             setupLogger();
