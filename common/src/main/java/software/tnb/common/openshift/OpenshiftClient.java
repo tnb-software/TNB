@@ -33,6 +33,7 @@ import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfig;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
@@ -145,6 +146,25 @@ public class OpenshiftClient extends OpenShift {
      */
     public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
         String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide, String startingWithCSV) {
+        createSubscription(channel, operatorName, source, subscriptionName, subscriptionSourceNamespace, targetNamespace, clusterWide,
+            startingWithCSV, null);
+    }
+
+    /**
+     * Creates the operatorgroup and subscription.
+     *
+     * @param channel operatorhub channel
+     * @param operatorName operator name
+     * @param source operator catalog source
+     * @param subscriptionName name of the subscription
+     * @param subscriptionSourceNamespace namespace of the catalogsource
+     * @param targetNamespace where the subscription should be created
+     * @param clusterWide if the installation is clusterwide or not
+     * @param startingWithCSV the starting CSV version
+     * @param config subscription config specification
+     */
+    public void createSubscription(String channel, String operatorName, String source, String subscriptionName,
+        String subscriptionSourceNamespace, String targetNamespace, boolean clusterWide, String startingWithCSV, SubscriptionConfig config) {
         LOG.info("Creating subcription with name \"{}\", for operator \"{}\", channel \"{}\", catalog source \"{}\" from \"{}\" namespace",
             subscriptionName, operatorName, channel, source, subscriptionSourceNamespace);
         // There can be only one operatorgroup in the namespace, otherwise the new operatorhub deployments complain about multiple operatorgroups
@@ -174,6 +194,7 @@ public class OpenshiftClient extends OpenShift {
             .withSource(source)
             .withSourceNamespace(subscriptionSourceNamespace)
             .withStartingCSV(startingWithCSV)
+            .withConfig(config)
             .endSpec()
             .build();
         get().operatorHub().subscriptions().inNamespace(targetNamespace).createOrReplace(s);
