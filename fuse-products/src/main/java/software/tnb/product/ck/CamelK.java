@@ -1,7 +1,5 @@
 package software.tnb.product.ck;
 
-import static software.tnb.common.utils.IOUtils.writeFile;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
@@ -17,8 +15,13 @@ import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.ck.utils.OwnerReferenceSetter;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.interfaces.KameletOps;
+import software.tnb.product.rp.Attachments;
 import software.tnb.product.util.executor.Executor;
 import software.tnb.product.util.maven.Maven;
+
+import org.junit.jupiter.api.extension.AfterEachCallback;
+import org.junit.jupiter.api.extension.BeforeEachCallback;
+import org.junit.jupiter.api.extension.ExtensionContext;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
@@ -31,6 +34,11 @@ import org.slf4j.LoggerFactory;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.google.auto.service.AutoService;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -50,16 +58,22 @@ import io.fabric8.camelk.v1.IntegrationPlatformSpecBuilder;
 import io.fabric8.camelk.v1alpha1.Kamelet;
 import io.fabric8.camelk.v1alpha1.KameletBinding;
 import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.base.PatchContext;
 import io.fabric8.kubernetes.client.dsl.base.PatchType;
 import io.fabric8.kubernetes.client.utils.Serialization;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfigBuilder;
 
 @AutoService(Product.class)
-public class CamelK extends OpenshiftProduct implements KameletOps {
+public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCallback, AfterEachCallback {
     private static final Logger LOG = LoggerFactory.getLogger(CamelK.class);
+
+    private Path operatorLogOutput;
+    private LogWatch operatorLogWatch;
+    private OutputStream logStream = null;
 
     private final List<String> kamelets = new ArrayList<>();
 
@@ -144,7 +158,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         camelKClient.v1().integrationPlatforms().delete();
         camelKClient.v1().integrationPlatforms().create(ip);
 
-        // TODO(@jbouska,@avano): Remove this workaround after migration of camel-k-client to =< v 6.0.0
+        // TODO(anyone): Remove this workaround after migration of camel-k-client to =< v 6.0.0
         camelKClient.v1().integrationPlatforms().withName(ip.getMetadata().getName())
             .patch(PatchContext.of(PatchType.JSON_MERGE), "{\"spec\":{\"build\":{\"maven\":{\"cliOptions\":[\"-Dquarkus.native"
                 + ".native-image-xmx=6g\"]}}}}");
@@ -203,7 +217,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
     @Override
     public void teardownProduct() {
         if (!TestConfiguration.skipTearDown()) {
-            saveOperatorLog();
             OpenshiftClient.get().deleteSubscription(CamelKConfiguration.getConfiguration().subscriptionName());
             removeKamelets();
         }
@@ -365,9 +378,31 @@ public class CamelK extends OpenshiftProduct implements KameletOps {
         integrations.clear();
     }
 
-    private void saveOperatorLog() {
-        LOG.info("Collecting logs of camel-k-operator");
-        writeFile(TestConfiguration.appLocation().resolve("camel-k-operator.log"),
-            OpenshiftClient.get().getLogs(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0)));
+    @Override
+    public void beforeEach(ExtensionContext extensionContext) throws Exception {
+        Pod operator = OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0);
+        operatorLogOutput = TestConfiguration.appLocation()
+            .resolve(String.format("camel-k-operator-%s.log", extensionContext.getParent().get().getDisplayName()));
+
+        try {
+            logStream = new FileOutputStream(operatorLogOutput.toFile());
+            operatorLogWatch =
+                OpenshiftClient.get().pods().inNamespace(operator.getMetadata().getNamespace()).withName(operator.getMetadata().getName())
+                    .tailingLines(0)
+                    .watchLog(logStream);
+        } catch (FileNotFoundException e) {
+            LOG.warn(e.getMessage());
+        }
+    }
+
+    @Override
+    public void afterEach(ExtensionContext extensionContext) throws Exception {
+        operatorLogWatch.close();
+        try {
+            logStream.close();
+        } catch (IOException e) {
+            LOG.warn(e.getMessage());
+        }
+        Attachments.addAttachment(operatorLogOutput);
     }
 }
