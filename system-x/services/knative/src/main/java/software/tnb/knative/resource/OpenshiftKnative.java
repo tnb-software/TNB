@@ -131,4 +131,10 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
     public String operatorName() {
         return "serverless-operator";
     }
+
+    @Override
+    public boolean clusterWide() {
+        return true;
+    }
+
 }
