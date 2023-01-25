@@ -7,13 +7,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
-import software.amazon.awssdk.services.dynamodb.model.GetItemRequest;
 import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement;
 import software.amazon.awssdk.services.dynamodb.model.KeyType;
 import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
@@ -88,19 +88,18 @@ public class DynamoDBValidation implements Validation {
     }
 
     public Map<String, String> getItem(String tableName, String key, String keyVal) {
-        Map<String, AttributeValue> keyToGet = Collections.singletonMap(key, AttributeValue.builder()
-            .s(keyVal).build());
+        Map<String, AttributeValue> keyToGet = Collections.singletonMap(key, AttributeValue.builder().s(keyVal).build());
+        return itemToStringMap(client.getItem(b -> b.tableName(tableName).key(keyToGet)).item());
+    }
 
-        GetItemRequest request = GetItemRequest.builder()
-            .key(keyToGet)
-            .tableName(tableName)
-            .build();
+    public List<Map<String, String>> listItems(String tableName) {
+        return client.scan(b -> b.tableName(tableName)).items().stream().map(this::itemToStringMap).collect(Collectors.toList());
+    }
 
-        Map<String, String> returnedItem = client.getItem(request).item().entrySet().stream().collect(Collectors.toMap(
+    private Map<String, String> itemToStringMap(Map<String, AttributeValue> item) {
+        return item.entrySet().stream().collect(Collectors.toMap(
             Map.Entry::getKey,
             entry -> entry.getValue().s()
         ));
-
-        return returnedItem;
     }
 }
