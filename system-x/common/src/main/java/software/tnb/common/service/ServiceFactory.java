@@ -12,6 +12,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
+import java.util.function.Consumer;
 import java.util.stream.StreamSupport;
 
 public final class ServiceFactory {
@@ -61,6 +62,23 @@ public final class ServiceFactory {
         } else {
             return Try.call(() -> ReflectionUtils.newInstance(clazz))
                 .getOrThrow((e) -> new IllegalArgumentException("Failed to instantiate class " + clazz.getSimpleName(), e));
+        }
+    }
+
+    public static <S extends Service> void withService(Class<S> clazz, Consumer<S> code) {
+        S service = create(clazz);
+        try {
+            service.beforeAll(null);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        code.accept(service);
+
+        try {
+            service.afterAll(null);
+        } catch (Exception e) {
+            LOG.warn("Exception thrown while undeploying service", e);
         }
     }
 }
