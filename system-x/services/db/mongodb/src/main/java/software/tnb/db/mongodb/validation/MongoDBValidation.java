@@ -66,4 +66,8 @@ public class MongoDBValidation {
 
         client.getDatabase(account.database()).createCollection(collectionName, options);
     }
+
+    public void deleteCollection(String collectionName) {
+        client.getDatabase(account.database()).getCollection(collectionName).drop();
+    }
 }
