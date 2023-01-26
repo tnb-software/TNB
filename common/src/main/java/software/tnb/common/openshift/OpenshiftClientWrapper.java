@@ -25,7 +25,9 @@ public class OpenshiftClientWrapper {
 
     public void closeClient() {
         getClient().close();
-        threadLocalClient.set(null);
+        if (threadLocalClient != null) {
+            threadLocalClient.set(null);
+        }
         openshiftClient = null;
     }
 }
