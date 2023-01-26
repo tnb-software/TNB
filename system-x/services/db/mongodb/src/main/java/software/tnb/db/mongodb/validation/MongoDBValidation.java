@@ -70,4 +70,8 @@ public class MongoDBValidation {
     public void deleteCollection(String collectionName) {
         client.getDatabase(account.database()).getCollection(collectionName).drop();
     }
+
+    public void copyAllDocuments(String sourceCollection, String destCollection) {
+        client.getDatabase(account.database()).getCollection(destCollection).insertMany(getDocuments(sourceCollection));
+    }
 }
