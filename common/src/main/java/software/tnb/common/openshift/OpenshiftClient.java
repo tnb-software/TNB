@@ -68,11 +68,8 @@ public class OpenshiftClient extends OpenShift {
             .withConnectionTimeout(120_000)
             .withTrustCerts(true);
 
-        if (TestConfiguration.parallel()) {
-            Thread.currentThread().setName(namespace);
-        }
-
         LOG.info("Using cluster {}", configBuilder.getMasterUrl());
+
         return new OpenshiftClient(configBuilder.build());
     }
 
@@ -82,9 +79,20 @@ public class OpenshiftClient extends OpenShift {
         return c;
     }
 
+    /**
+     * Gets the openshift client.
+     * <p>
+     * Synchronized to ensure that in parallel runs the wrapper is initialized only once.
+     *
+     * @return openshift client instance
+     */
     public static synchronized OpenshiftClient get() {
         if (clientWrapper == null) {
+            // First test running will create the wrapper and others are reused
             clientWrapper = new OpenshiftClientWrapper(OpenshiftClient::init);
+        } else if (clientWrapper.getClient() == null) {
+            // This happens when a thread is reused - there was a test running in this thread and it closed and deleted the client, so re-init it
+            clientWrapper.init();
         }
         return clientWrapper.getClient();
     }
@@ -323,12 +331,14 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
-     * Delete namespace (name obtained from system property openshift.namespace).
+     * Deletes the current namespace (associated with the openshift client in this thread).
+     * <p>
+     * Method is static to avoid using OpenshiftClient.get() that would force creating a new instance if the client is null.
+     * <p>
+     * There is a valid case where the client would be null - when multiple extensions are used in one test class
      */
-    public void deleteNamespace() {
-        // In case of multiple extensions in one test class, the first one deletes the namespace and the other just skip this as the client will
-        // be null
-        if (get() != null) {
+    public static void deleteNamespace() {
+        if (clientWrapper != null && clientWrapper.getClient() != null) {
             deleteNamespace(get().getNamespace());
             // If the current namespace is deleted also close the client
             clientWrapper.closeClient();
@@ -340,7 +350,7 @@ public class OpenshiftClient extends OpenShift {
      *
      * @param name of namespace to be deleted
      */
-    public void deleteNamespace(String name) {
+    public static void deleteNamespace(String name) {
         if ((name == null) || (name.isEmpty())) {
             LOG.info("Skipped deleting namespace, name null or empty");
             return;
@@ -349,7 +359,7 @@ public class OpenshiftClient extends OpenShift {
             LOG.info("Skipped deleting namespace " + name + ", not found");
         } else {
             get().namespaces().withName(name).cascading(true).delete();
-            WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(name).get() == null, "Waiting until the namespace is removed");
+            WaitUtils.waitFor(() -> get().namespaces().withName(name).get() == null, "Waiting until the namespace is removed");
             LOG.info("Deleted namespace " + name);
         }
     }
