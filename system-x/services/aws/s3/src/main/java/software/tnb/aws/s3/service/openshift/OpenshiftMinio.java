@@ -137,8 +137,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         super.afterAll(extensionContext);
-        closeResources();
-        undeploy();
+        OpenshiftDeployable.super.afterAll(extensionContext);
     }
 
     @Override

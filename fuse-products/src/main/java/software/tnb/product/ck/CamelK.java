@@ -216,10 +216,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
     @Override
     public void teardownProduct() {
-        if (!TestConfiguration.skipTearDown()) {
-            OpenshiftClient.get().deleteSubscription(CamelKConfiguration.getConfiguration().subscriptionName());
-            removeKamelets();
-        }
+        OpenshiftClient.get().deleteSubscription(CamelKConfiguration.getConfiguration().subscriptionName());
+        removeKamelets();
     }
 
     @Override

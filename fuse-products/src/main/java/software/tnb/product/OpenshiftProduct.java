@@ -1,6 +1,6 @@
 package software.tnb.product;
 
-import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.JUnitUtils;
 import software.tnb.common.utils.WaitUtils;
@@ -15,15 +15,9 @@ public abstract class OpenshiftProduct extends Product {
     }
 
     public void afterAll(ExtensionContext extensionContext) throws Exception {
-        if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
+        if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass()) && !TestConfiguration.skipTearDown()) {
             teardownProduct();
-            deleteNamespace();
-        }
-    }
-
-    private void deleteNamespace() {
-        if (OpenshiftConfiguration.openshiftNamespaceDelete()) {
-            OpenshiftClient.get().deleteNamespace();
+            OpenshiftClient.deleteNamespace();
         }
     }
 

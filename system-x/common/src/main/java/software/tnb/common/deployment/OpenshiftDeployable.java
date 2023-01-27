@@ -32,7 +32,7 @@ public interface OpenshiftDeployable extends Deployable {
         Deployable.super.afterAll(extensionContext);
         if (TestConfiguration.parallel()) {
             // In parallel execution, each test class has its own namespace
-            OpenshiftClient.get().deleteNamespace();
+            OpenshiftClient.deleteNamespace();
         }
     }
 }
