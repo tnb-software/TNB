@@ -19,7 +19,7 @@ public abstract class Cassandra implements Service, WithDockerImage {
 
     public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box
-        return "docker.io/bitnami/cassandra:4.0";
+        return "quay.io/fuse_qe/cassandra:4.0.7";
     }
 
     public CassandraValidation validation() {

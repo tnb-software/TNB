@@ -2,7 +2,6 @@ package software.tnb.splunk.resource.local;
 
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
-import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
 
@@ -14,7 +13,7 @@ import com.google.auto.service.AutoService;
 import java.util.Map;
 
 @AutoService(Splunk.class)
-public class LocalSplunk extends Splunk implements Deployable, WithDockerImage {
+public class LocalSplunk extends Splunk implements Deployable {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalSplunk.class);
 
@@ -47,11 +46,6 @@ public class LocalSplunk extends Splunk implements Deployable, WithDockerImage {
     @Override
     public void closeResources() {
         // nothing to do
-    }
-
-    @Override
-    public String defaultImage() {
-        return "quay.io/fuse_qe/splunk:9.0";
     }
 
     @Override
