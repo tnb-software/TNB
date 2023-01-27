@@ -1,7 +1,6 @@
 package software.tnb.splunk.resource.openshift;
 
 import software.tnb.common.account.AccountFactory;
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
@@ -45,16 +44,13 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
     private CustomResourceDefinitionContext crdContext;
     private Route apiRoute;
 
-    private String sccName = "tnb-splunk";
-
-    public OpenshiftSplunk() {
-        if (TestConfiguration.parallel()) {
-            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
-        }
-    }
+    private String sccName;
 
     @Override
     public void create() {
+        LOG.info("Deploying OpenShift Splunk");
+        sccName = "tnb-splunk-" + OpenshiftClient.get().getNamespace();
+
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "nonroot"),
             OpenshiftClient.get().getServiceAccountRef("splunk-operator-controller-manager"),

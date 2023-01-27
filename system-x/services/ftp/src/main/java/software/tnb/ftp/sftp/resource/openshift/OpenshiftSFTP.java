@@ -1,7 +1,6 @@
 package software.tnb.ftp.sftp.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
@@ -41,29 +40,23 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSFTP.class);
 
-    private String sccName = "tnb-sftp";
+    private String sccName;
 
     private SFTPClient client;
     private PortForward portForward;
     private int localPort;
-    private String serviceAccountName;
-
-    public OpenshiftSFTP() {
-        if (TestConfiguration.parallel()) {
-            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
-        }
-    }
+    private final String serviceAccountName = name() + "-sa";
 
     @Override
     public void create() {
+        LOG.info("Deploying OpenShift SFTP");
 
+        sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
             .withName("sftp")
             .withContainerPort(port())
             .withProtocol("TCP").build());
-
-        serviceAccountName = name() + "-sa";
 
         OpenshiftClient.get().serviceAccounts()
             .createOrReplace(new ServiceAccountBuilder()
@@ -135,6 +128,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     public void undeploy() {
         LOG.info("Undeploying OpenShift SFTP");
         OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
