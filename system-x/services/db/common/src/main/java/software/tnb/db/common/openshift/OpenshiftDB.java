@@ -1,7 +1,6 @@
 package software.tnb.db.common.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
@@ -17,7 +16,6 @@ import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
-import io.fabric8.openshift.api.model.SecurityContextConstraints;
 
 public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
@@ -25,15 +23,12 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     private int localPort;
     private final SQL sqlService;
     private final int port;
-    private String sccName = "tnb-openshift-db";
+    private final String sccName;
 
     public OpenshiftDB(SQL sqlService, int port) {
         this.sqlService = sqlService;
         this.port = port;
-
-        if (TestConfiguration.parallel()) {
-            sccName = sccName + "-" + OpenshiftClient.get().getNamespace();
-        }
+        sccName = "tnb-openshift-db-" + OpenshiftClient.get().getNamespace();
     }
 
     @Override
@@ -104,14 +99,11 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
             .build()
         );
         //@formatter:on
-
     }
 
     @Override
     public void undeploy() {
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(sccName).get();
-        scc.getGroups().remove("system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
-        OpenshiftClient.get().securityContextConstraints().withName(sccName).patch(scc);
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)

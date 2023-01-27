@@ -34,12 +34,11 @@ import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
-import io.fabric8.openshift.api.model.SecurityContextConstraints;
 
 @AutoService(MailServer.class)
 public class OpenshiftMailServer extends MailServer implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMailServer.class);
-    private static final String SCC_NAME = "tnb-james";
+    private String sccName;
     private String serviceAccountName;
     private PortForward smtpPortForward;
     private int smtpLocalPort;
@@ -49,6 +48,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     @Override
     public void create() {
         LOG.info("Deploying OpenShift JamesServer");
+        sccName = "tnb-james-" + OpenshiftClient.get().getNamespace();
 
         serviceAccountName = name() + "-sa";
 
@@ -61,7 +61,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
             );
 
         OpenshiftClient.get().addUsersToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(SCC_NAME, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         List<ContainerPort> ports = new LinkedList<>();
@@ -96,7 +96,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", SCC_NAME)
+                .addToAnnotations("openshift.io/scc", sccName)
             .endMetadata()
             .editOrNewSpec()
                 .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -142,9 +142,8 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     @Override
     public void undeploy() {
         LOG.info("Undeploying OpenShift Mail");
-        SecurityContextConstraints scc = OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).edit();
-        scc.getUsers().remove("system:serviceaccount:" + OpenshiftClient.get().getNamespace() + ":" + serviceAccountName);
-        OpenshiftClient.get().securityContextConstraints().withName(SCC_NAME).patch(scc);
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
 
         services.forEach((name, port) -> {
             LOG.debug("Deleting service {}", name());
