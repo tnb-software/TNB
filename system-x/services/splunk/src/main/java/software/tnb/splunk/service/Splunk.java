@@ -1,5 +1,6 @@
 package software.tnb.splunk.service;
 
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.service.Service;
 import software.tnb.splunk.account.SplunkAccount;
@@ -7,7 +8,7 @@ import software.tnb.splunk.validation.SplunkValidation;
 
 import com.splunk.ServiceArgs;
 
-public abstract class Splunk implements Service, WithExternalHostname {
+public abstract class Splunk implements Service, WithExternalHostname, WithDockerImage {
 
     protected SplunkAccount account;
     private com.splunk.Service client;
@@ -41,5 +42,10 @@ public abstract class Splunk implements Service, WithExternalHostname {
             validation = new SplunkValidation(client());
         }
         return validation;
+    }
+
+    @Override
+    public String defaultImage() {
+        return "quay.io/fuse_qe/splunk:9.0";
     }
 }

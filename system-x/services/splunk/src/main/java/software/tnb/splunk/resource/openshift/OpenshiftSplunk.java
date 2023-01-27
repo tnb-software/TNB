@@ -63,7 +63,8 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
             }
             String resources =
                 Resources.toString(Objects.requireNonNull(this.getClass().getResource("/splunk-operator-namespace.yaml")), StandardCharsets.UTF_8)
-                    .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace());
+                    .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace())
+                    .replace("SPLUNK_IMAGE", image());
             InputStream is = IOUtils.toInputStream(resources, "UTF-8");
 
             LOG.info("Creating Splunk openshift resources from splunk-operator-namespace.yaml");

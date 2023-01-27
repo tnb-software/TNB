@@ -433,7 +433,7 @@ subjects:
 apiVersion: v1
 data:
   OPERATOR_NAME: '"splunk-operator"'
-  RELATED_IMAGE_SPLUNK_ENTERPRISE: splunk/splunk:9.0.0
+  RELATED_IMAGE_SPLUNK_ENTERPRISE: SPLUNK_IMAGE
   WATCH_NAMESPACE: ""
 kind: ConfigMap
 metadata:
@@ -573,14 +573,17 @@ spec:
             fieldRef:
               fieldPath: metadata.namespace
         - name: RELATED_IMAGE_SPLUNK_ENTERPRISE
-          value: splunk/splunk:9.0.0
+          valueFrom:
+            configMapKeyRef:
+              name: splunk-operator-config
+              key: RELATED_IMAGE_SPLUNK_ENTERPRISE
         - name: OPERATOR_NAME
           value: splunk-operator
         - name: POD_NAME
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: splunk/splunk-operator:2.0.0
+        image: quay.io/fuse_qe/splunk-operator:2.0.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:

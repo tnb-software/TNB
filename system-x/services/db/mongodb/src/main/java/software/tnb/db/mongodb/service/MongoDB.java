@@ -56,7 +56,7 @@ public abstract class MongoDB implements Service, WithDockerImage {
     }
 
     public String defaultImage() {
-        return "docker.io/bitnami/mongodb:4.4.5";
+        return "quay.io/fuse_qe/mongodb:4.4.5";
     }
 
     public abstract String hostname();
