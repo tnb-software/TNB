@@ -31,7 +31,7 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
         customizer.doCustomize();
         Assertions.assertThat(ib.getProperties()).isEqualTo(Map.of(
             "quarkus.datasource.db-kind", type,
-            "quarkus.datasource.jdbc.url", url + ";encrypt=false;",
+            "quarkus.datasource.jdbc.url", url,
             "quarkus.datasource.username", username,
             "quarkus.datasource.password", password
         ));
