@@ -5,7 +5,7 @@ import software.tnb.common.account.Account;
 public class InfinispanAccount implements Account {
 
     private String username = "admin";
-    private String password = "password";
+    private String password = "passwordpasswordpasswordpassword";
 
     public void setUsername(String username) {
         this.username = username;

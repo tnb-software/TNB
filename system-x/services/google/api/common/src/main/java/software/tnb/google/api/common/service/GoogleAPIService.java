@@ -3,6 +3,8 @@ package software.tnb.google.api.common.service;
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.service.Validation;
+import software.tnb.common.utils.FIPSUtils;
+import software.tnb.common.utils.HTTPUtils;
 import software.tnb.google.api.common.account.GoogleAPIAccount;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -32,7 +34,12 @@ public abstract class GoogleAPIService<V extends Validation> implements Service 
 
     protected GoogleAPIService() {
         try {
-            httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            if (FIPSUtils.isFipsEnabled()) {
+                httpTransport = new NetHttpTransport.Builder()
+                    .setSslSocketFactory(HTTPUtils.getSslContext().getSocketFactory()).build();
+            } else {
+                httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Can't create http transport", e);
         }
