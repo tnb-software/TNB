@@ -81,10 +81,13 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
 
     @Override
     public void customizeQuarkus() {
+        if (type.contains("mssql")) {
+            url = url + ";encrypt=false;"; //turn off SSL similarly to springboot (method above)
+        }
         getIntegrationBuilder().addToProperties(
             Map.of(
                 "quarkus.datasource.db-kind", type,
-                "quarkus.datasource.jdbc.url", url + ";encrypt=false;", //turn off SSL similarly to springboot (method above)
+                "quarkus.datasource.jdbc.url", url,
                 "quarkus.datasource.username", username,
                 "quarkus.datasource.password", password
                 )
