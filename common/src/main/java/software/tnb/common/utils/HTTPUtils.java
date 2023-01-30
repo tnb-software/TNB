@@ -3,10 +3,7 @@ package software.tnb.common.utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLSession;
-import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -137,61 +134,56 @@ public final class HTTPUtils {
             }
         }
     };
-    private static final SSLContext trustAllSslContext;
+    private static final SSLContext sslContext;
 
     static {
         try {
-            trustAllSslContext = SSLContext.getInstance("SSL");
-            trustAllSslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            if (FIPSUtils.isFipsEnabled()) {
+                sslContext = SSLContext.getDefault();
+            } else {
+                sslContext = SSLContext.getInstance("SSL");
+                sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+            }
         } catch (NoSuchAlgorithmException | KeyManagementException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private static final SSLSocketFactory trustAllSslSocketFactory = trustAllSslContext.getSocketFactory();
+    public static SSLContext getSslContext() {
+        return sslContext;
+    }
 
     public static OkHttpClient trustAllSslClient() {
-
         OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
-        builder.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-        builder.hostnameVerifier(new HostnameVerifier() {
-            @Override
-            public boolean verify(String hostname, SSLSession session) {
-                return true;
-            }
-        });
+        builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0]);
+        builder.hostnameVerifier((hostname, session) -> true);
         return builder.build();
     }
     
     public static class OkHttpClientBuilder {
     
-    	private OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
+        private OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
     
-		public OkHttpClientBuilder trustAllSslClient() {
-			builder.sslSocketFactory(trustAllSslSocketFactory, (X509TrustManager) trustAllCerts[0]);
-			builder.hostnameVerifier(new HostnameVerifier() {
-				@Override
-				public boolean verify(String hostname, SSLSession session) {
-					return true;
-				}
-			});
-			return this;
-		}
-		
-		public OkHttpClientBuilder log() {
-			HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
-			logger.setLevel(HttpLoggingInterceptor.Level.BODY);
-			builder.addInterceptor(logger);
-			return this;
-		}
-		
-		public OkHttpClient.Builder getInternalBuilder() {
-			return builder;
-		}
-		
-		public OkHttpClient build() {
-			return builder.build();
-		}
-		
+        public OkHttpClientBuilder trustAllSslClient() {
+            builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0]);
+            builder.hostnameVerifier((hostname, session) -> true);
+            return this;
+        }
+        
+        public OkHttpClientBuilder log() {
+            HttpLoggingInterceptor logger = new HttpLoggingInterceptor();
+            logger.setLevel(HttpLoggingInterceptor.Level.BODY);
+            builder.addInterceptor(logger);
+            return this;
+        }
+        
+        public OkHttpClient.Builder getInternalBuilder() {
+            return builder;
+        }
+        
+        public OkHttpClient build() {
+            return builder.build();
+        }
+        
     }
 }
