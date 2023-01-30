@@ -70,8 +70,8 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
     @Override
     public void openResources() {
         localPort = NetworkUtils.getFreePort();
-        LOG.debug("Creating port-forward to {} for port {}", name(), port());
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
+        LOG.debug("Creating port-forward to {} for port {}", name(), DEFAULT_PORT);
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(DEFAULT_PORT, localPort);
         super.openResources();
     }
 
@@ -104,7 +104,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
         createMqscConfigMap();
 
-        Map<String, Integer> ports = Map.of(name(), port(), name() + "-console", CONSOLE_PORT);
+        Map<String, Integer> ports = Map.of(name(), DEFAULT_PORT, name() + "-console", CONSOLE_PORT);
         List<ContainerPort> containerPorts = ports.entrySet().stream()
             .map(e -> new ContainerPortBuilder().withName(e.getKey()).withContainerPort(e.getValue()).withProtocol("TCP").build())
             .collect(Collectors.toList());
@@ -222,7 +222,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public int port() {
-        return DEFAULT_PORT;
+        return localPort;
     }
 
     @Override
