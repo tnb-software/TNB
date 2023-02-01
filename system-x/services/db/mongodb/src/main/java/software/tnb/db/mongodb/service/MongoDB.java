@@ -15,6 +15,7 @@ import java.util.Map;
 
 public abstract class MongoDB implements Service, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
+    public static final int DEFAULT_PORT = 27017;
 
     private MongoDBAccount account;
     private MongoDBValidation validation;
@@ -52,7 +53,7 @@ public abstract class MongoDB implements Service, WithDockerImage {
     public abstract String replicaSetUrl();
 
     public int port() {
-        return 27017;
+        return DEFAULT_PORT;
     }
 
     public String defaultImage() {
