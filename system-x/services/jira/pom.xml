@@ -24,7 +24,7 @@
         <!-- once this is updated to 6.3.0, jakarta annotation can be bumped to latest version,
          see https://github.com/OpenAPITools/openapi-generator/issues/14010#issuecomment-1373474315
          -->
-        <openapi.maven.plugin.version>6.2.1</openapi.maven.plugin.version>
+        <openapi.maven.plugin.version>6.3.0</openapi.maven.plugin.version>
     </properties>
 
     <dependencies>
