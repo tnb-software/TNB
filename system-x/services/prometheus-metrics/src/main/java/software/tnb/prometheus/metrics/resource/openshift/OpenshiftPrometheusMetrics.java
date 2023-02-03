@@ -23,9 +23,10 @@ public class OpenshiftPrometheusMetrics extends PrometheusMetrics implements Ope
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        Route route = OpenshiftClient.get(OPENSHIFT_MONITORING_NS).getRoute(THANOS_OCP_NAME);
+        Route route = OpenshiftClient.get().inNamespace(OPENSHIFT_MONITORING_NS).routes().withName(THANOS_OCP_NAME)
+                .get();
         String url = "https://" + route.getSpec().getHost();
-        String token = OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
+        String token = OpenshiftClient.get().getOauthToken();
         LOG.info("Prometheus url: {}", url);
         validation = new PrometheusMetricsValidation(url, token, OpenshiftClient.get().getNamespace());
     }

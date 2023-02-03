@@ -2,6 +2,7 @@ package software.tnb.common.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
 import software.tnb.common.utils.WaitUtils;
@@ -9,13 +10,19 @@ import software.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BooleanSupplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import cz.xtf.core.openshift.OpenShift;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -36,6 +43,10 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfig;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
+import okhttp3.Headers;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 public class OpenshiftClient extends OpenShift {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
@@ -98,6 +109,38 @@ public class OpenshiftClient extends OpenShift {
             clientWrapper.init();
         }
         return clientWrapper.getClient();
+    }
+
+    public String getOauthToken() {
+        if (OpenshiftConfiguration.openshiftUrl() == null) {
+            return OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
+        } else {
+            return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(), 
+                OpenshiftConfiguration.openshiftPassword(), OpenshiftConfiguration.openshiftUrl());
+        }
+    }
+
+    private static String getTokenByUsernameAndPassword(String username, String password, String openshiftUrl) {
+        try {
+            String openshiftHost = new URI(openshiftUrl).getHost().replaceFirst("api.", "");
+            OkHttpClient httpClient = new HTTPUtils.OkHttpClientBuilder().trustAllSslClient()
+                .getInternalBuilder().followRedirects(false).build();
+            Request request = new Request.Builder().get().url("https://oauth-openshift.apps."
+                    + openshiftHost + "/oauth/authorize?response_type=token&client_id=openshift-challenging-client")
+                    .headers(Headers.of("Authorization",
+                            "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())))
+                    .build();
+            Response response = httpClient.newCall(request).execute();
+            Pattern p = Pattern.compile("(?<=access_token=)[^&]+");
+            Matcher m = p.matcher(new URI(response.headers().get("Location")).getFragment());
+            if (m.find()) {
+                return m.group(0);
+            } else {
+                throw new IllegalStateException("Oauth token not found");
+            }
+        } catch (IOException | URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
