@@ -20,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -39,10 +40,13 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 @AutoService(Splunk.class)
 public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployable {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSplunk.class);
-    protected static final String ROUTE_NAME = "api";
+    private static final String CRD_API = "v4";
+    private static final String SERVICE_NAME = "splunk-s1-standalone-service";
+    private static final String SERVICE_API_PORT = "https-splunkd";
+    private static final String ROUTE_NAME = "api";
     private static List<HasMetadata> createdResources;
     private CustomResourceDefinitionContext crdContext;
-    protected Route apiRoute;
+    private Route apiRoute;
     private String sccName;
 
     public OpenshiftSplunk() {
@@ -50,28 +54,21 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
     }
 
     private Map<String, Object> getSplunkCr() {
-        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
-            return Map.of(
-                "apiVersion", "enterprise.splunk.com/v3",
-                "kind", "Standalone",
-                "metadata", Map.of(
-                    "name", "s1")
-            );
-        } else {
-            return Map.of(
-                "apiVersion", "enterprise.splunk.com/v3",
-                "kind", "Standalone",
-                "metadata", Map.of(
-                    "name", "s1"),
-                "spec", Map.of(
-                    "extraEnv", List.of(
-                        Map.of(
-                            "name", "SPLUNKD_SSL_ENABLE",
-                            "value", "false")
-                    )
-                )
-            );
+        Map<String, Object> cr = new HashMap<>(Map.of(
+            "apiVersion", "enterprise.splunk.com/" + CRD_API,
+            "kind", "Standalone",
+            "metadata", Map.of(
+                "name", "s1")
+        ));
+        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
+            cr.put("spec", Map.of(
+                "extraEnv", List.of(
+                    Map.of(
+                        "name", "SPLUNKD_SSL_ENABLE",
+                        "value", "false")
+                )));
         }
+        return cr;
     }
 
     @Override
@@ -85,7 +82,9 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
             OpenshiftClient.get().getServiceAccountRef("default"));
 
         try {
-            if (getSplunkCrd() == null) { // test if CRD already exists on cluster
+            // test if CRD already exists on cluster or if there is the latest version
+            if (getSplunkCrd() == null
+                || getSplunkCrd().getSpec().getVersions().stream().noneMatch(crdVersion -> CRD_API.equals(crdVersion.getName()))) {
                 LOG.info("Creating Splunk CRD's from splunk-crds.yaml");
                 OpenshiftClient.get().load(this.getClass().getResourceAsStream("/splunk-crds.yaml")).createOrReplace();
             }
@@ -138,9 +137,9 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
                 .withName(ROUTE_NAME)
                 .endMetadata()
                 .editOrNewSpec()
-                .withNewTo().withKind("Service").withName("splunk-s1-standalone-service").withWeight(100)
+                .withNewTo().withKind("Service").withName(SERVICE_NAME).withWeight(100)
                 .endTo()
-                .withNewPort().withTargetPort(new IntOrString("https-splunkd")).endPort()
+                .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
                 .withNewTls().withTermination("reencrypt").withDestinationCACertificate(splunkCert).endTls()
                 .endSpec()
                 .build());
@@ -154,9 +153,9 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
                 .withName(ROUTE_NAME)
                 .endMetadata()
                 .editOrNewSpec()
-                .withNewTo().withKind("Service").withName("splunk-s1-standalone-service").withWeight(100)
+                .withNewTo().withKind("Service").withName(SERVICE_NAME).withWeight(100)
                 .endTo()
-                .withNewPort().withTargetPort(new IntOrString("https-splunkd")).endPort()
+                .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
                 .endSpec()
                 .build());
             // @formatter:on
@@ -222,11 +221,6 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
         return account;
     }
 
-    @Override
-    public String apiSchema() {
-        return getConfiguration().getProtocol().getValue();
-    }
-
     private CustomResourceDefinition getSplunkCrd() {
         return OpenshiftClient.get().apiextensions().v1().customResourceDefinitions().withName("standalones.enterprise.splunk.com").get();
     }
@@ -238,7 +232,7 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
                 .withGroup(crd.getSpec().getGroup())
                 .withPlural(crd.getSpec().getNames().getPlural())
                 .withScope(crd.getSpec().getScope())
-                .withVersion("v3");
+                .withVersion(CRD_API);
             crdContext = builder.build();
         }
         return crdContext;
@@ -246,10 +240,6 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
 
     @Override
     public int apiPort() {
-        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
-            return 443;
-        } else {
-            return 80;
-        }
+        return getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS) ? 443 : 80;
     }
 }

@@ -4,7 +4,6 @@ import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
-import software.tnb.splunk.service.configuration.SplunkConfiguration;
 import software.tnb.splunk.service.configuration.SplunkProtocol;
 
 import org.slf4j.Logger;
@@ -30,7 +29,7 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     @Override
     public void deploy() {
-        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)){
+        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
             throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
         }
         LOG.info("Starting Splunk container");
@@ -66,14 +65,6 @@ public class LocalSplunk extends Splunk implements Deployable {
         return account;
     }
 
-    public Map<String, String> containerEnvironment() {
-        return Map.of(
-            "SPLUNK_START_ARGS", "--accept-license",
-            "SPLUNKD_SSL_ENABLE", "false",
-            "SPLUNK_PASSWORD", PASSWORD
-        );
-    }
-
     @Override
     public String externalHostname() {
         return "localhost";
@@ -82,5 +73,13 @@ public class LocalSplunk extends Splunk implements Deployable {
     @Override
     public int apiPort() {
         return container.getMappedPort(containerApiPort);
+    }
+
+    public Map<String, String> containerEnvironment() {
+        return Map.of(
+            "SPLUNK_START_ARGS", "--accept-license",
+            "SPLUNKD_SSL_ENABLE", "false",
+            "SPLUNK_PASSWORD", PASSWORD
+        );
     }
 }
