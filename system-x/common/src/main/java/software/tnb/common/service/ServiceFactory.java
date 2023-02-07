@@ -3,6 +3,7 @@ package software.tnb.common.service;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.service.configuration.ServiceConfiguration;
 
 import org.junit.platform.commons.function.Try;
 import org.junit.platform.commons.util.ReflectionUtils;
@@ -63,6 +64,12 @@ public final class ServiceFactory {
             return Try.call(() -> ReflectionUtils.newInstance(clazz))
                 .getOrThrow((e) -> new IllegalArgumentException("Failed to instantiate class " + clazz.getSimpleName(), e));
         }
+    }
+
+    public static <C extends ServiceConfiguration, S extends ConfigurableService<C>> S create(Class<S> clazz, Consumer<C> config) {
+        S service = create(clazz);
+        config.accept(service.getConfiguration());
+        return service;
     }
 
     public static <S extends Service> void withService(Class<S> clazz, Consumer<S> code) {
