@@ -2,13 +2,14 @@ package software.tnb.splunk.service;
 
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.splunk.account.SplunkAccount;
+import software.tnb.splunk.service.configuration.SplunkConfiguration;
 import software.tnb.splunk.validation.SplunkValidation;
 
 import com.splunk.ServiceArgs;
 
-public abstract class Splunk implements Service, WithExternalHostname, WithDockerImage {
+public abstract class Splunk extends ConfigurableService<SplunkConfiguration> implements WithExternalHostname, WithDockerImage {
 
     protected SplunkAccount account;
     private com.splunk.Service client;
@@ -17,8 +18,6 @@ public abstract class Splunk implements Service, WithExternalHostname, WithDocke
     public abstract int apiPort();
 
     public abstract SplunkAccount account();
-
-    public abstract String apiSchema();
 
     /**
      * Due to self sign certificate, the client is not able to communicate via localhost and port-forward.
@@ -46,6 +45,10 @@ public abstract class Splunk implements Service, WithExternalHostname, WithDocke
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/splunk:9.0";
+        return "quay.io/fuse_qe/splunk:9.0.3-a2";
+    }
+
+    public String apiSchema() {
+        return getConfiguration().getProtocol().toString();
     }
 }

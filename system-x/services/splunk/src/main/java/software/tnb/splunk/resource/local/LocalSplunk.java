@@ -4,6 +4,7 @@ import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
+import software.tnb.splunk.service.configuration.SplunkProtocol;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,8 +23,15 @@ public class LocalSplunk extends Splunk implements Deployable {
     private final int containerApiPort = 8089;
     private static final String PASSWORD = "password";
 
+    public LocalSplunk() {
+        getConfiguration().protocol(SplunkProtocol.HTTP);
+    }
+
     @Override
     public void deploy() {
+        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
+            throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
+        }
         LOG.info("Starting Splunk container");
         container = new SplunkContainer(image(), containerApiPort, containerEnvironment());
         container.start();
@@ -57,21 +65,6 @@ public class LocalSplunk extends Splunk implements Deployable {
         return account;
     }
 
-    // SSL is disabled for local deployment because the app has self-signed certificate and Splunk client throws
-    // "SunCertPathBuilderException: unable to find valid certification path to requested target" exception
-    @Override
-    public String apiSchema() {
-        return "http";
-    }
-
-    public Map<String, String> containerEnvironment() {
-        return Map.of(
-            "SPLUNK_START_ARGS", "--accept-license",
-            "SPLUNKD_SSL_ENABLE", "false",
-            "SPLUNK_PASSWORD", PASSWORD
-        );
-    }
-
     @Override
     public String externalHostname() {
         return "localhost";
@@ -80,5 +73,13 @@ public class LocalSplunk extends Splunk implements Deployable {
     @Override
     public int apiPort() {
         return container.getMappedPort(containerApiPort);
+    }
+
+    public Map<String, String> containerEnvironment() {
+        return Map.of(
+            "SPLUNK_START_ARGS", "--accept-license",
+            "SPLUNKD_SSL_ENABLE", "false",
+            "SPLUNK_PASSWORD", PASSWORD
+        );
     }
 }

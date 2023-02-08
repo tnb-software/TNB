@@ -7,6 +7,7 @@ import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
+import software.tnb.splunk.service.configuration.SplunkProtocol;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -19,6 +20,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -38,13 +40,36 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 @AutoService(Splunk.class)
 public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployable {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSplunk.class);
-    public static final String ROUTE_NAME = "api";
-    public static final int API_PORT = 443;
+    private static final String CRD_API = "v4";
+    private static final String SERVICE_NAME = "splunk-s1-standalone-service";
+    private static final String SERVICE_API_PORT = "https-splunkd";
+    private static final String ROUTE_NAME = "api";
     private static List<HasMetadata> createdResources;
     private CustomResourceDefinitionContext crdContext;
     private Route apiRoute;
-
     private String sccName;
+
+    public OpenshiftSplunk() {
+        getConfiguration().protocol(SplunkProtocol.HTTPS);
+    }
+
+    private Map<String, Object> getSplunkCr() {
+        Map<String, Object> cr = new HashMap<>(Map.of(
+            "apiVersion", "enterprise.splunk.com/" + CRD_API,
+            "kind", "Standalone",
+            "metadata", Map.of(
+                "name", "s1")
+        ));
+        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
+            cr.put("spec", Map.of(
+                "extraEnv", List.of(
+                    Map.of(
+                        "name", "SPLUNKD_SSL_ENABLE",
+                        "value", "false")
+                )));
+        }
+        return cr;
+    }
 
     @Override
     public void create() {
@@ -57,7 +82,9 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
             OpenshiftClient.get().getServiceAccountRef("default"));
 
         try {
-            if (getSplunkCrd() == null) { // test if CRD already exists on cluster
+            // test if CRD already exists on cluster or if there is the latest version
+            if (getSplunkCrd() == null
+                || getSplunkCrd().getSpec().getVersions().stream().noneMatch(crdVersion -> CRD_API.equals(crdVersion.getName()))) {
                 LOG.info("Creating Splunk CRD's from splunk-crds.yaml");
                 OpenshiftClient.get().load(this.getClass().getResourceAsStream("/splunk-crds.yaml")).createOrReplace();
             }
@@ -73,16 +100,10 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
             throw new RuntimeException("Unable to read splunk-operator-namespace.yml or splunk-crds.yaml resource: ", e);
         }
 
-        Map<String, Object> splunkInstance = Map.of(
-            "apiVersion", "enterprise.splunk.com/v3",
-            "kind", "Standalone",
-            "metadata", Map.of(
-                "name", "s1")
-        );
         try {
             OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace()).delete();
             OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace())
-                .create(splunkInstance);
+                .create(getSplunkCr());
         } catch (IOException e) {
             throw new RuntimeException("Unable to create Splunk CR: ", e);
         }
@@ -107,24 +128,40 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
 
     @Override
     public void openResources() {
-        String splunkCert = OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("app.kubernetes.io/instance", "splunk-s1-standalone"))
-            .execute("cat", "/opt/splunk/etc/auth/cacert.pem").getOutput();
-
-        // @formatter:off
-        apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
-            .editOrNewMetadata()
+        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
+            String splunkCert = OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("app.kubernetes.io/instance", "splunk-s1-standalone"))
+                .execute("cat", "/opt/splunk/etc/auth/cacert.pem").getOutput();
+            // @formatter:off
+            apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+                .editOrNewMetadata()
                 .withName(ROUTE_NAME)
-            .endMetadata()
-            .editOrNewSpec()
-                .withNewTo().withKind("Service").withName("splunk-s1-standalone-service").withWeight(100)
+                .endMetadata()
+                .editOrNewSpec()
+                .withNewTo().withKind("Service").withName(SERVICE_NAME).withWeight(100)
                 .endTo()
-                .withNewPort().withTargetPort(new IntOrString("https-splunkd")).endPort()
+                .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
                 .withNewTls().withTermination("reencrypt").withDestinationCACertificate(splunkCert).endTls()
-            .endSpec()
-            .build());
-        // @formatter:on
-        WaitUtils.waitFor(() -> HTTPUtils.getInstance().get("https://" + apiRoute.getSpec().getHost()).isSuccessful(),
-            "Waiting until the Splunk API route is ready");
+                .endSpec()
+                .build());
+            // @formatter:on
+            WaitUtils.waitFor(() -> HTTPUtils.getInstance().get("https://" + apiRoute.getSpec().getHost()).isSuccessful(),
+                "Waiting until the Splunk API route is ready");
+        } else if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
+            // @formatter:off
+            apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+                .editOrNewMetadata()
+                .withName(ROUTE_NAME)
+                .endMetadata()
+                .editOrNewSpec()
+                .withNewTo().withKind("Service").withName(SERVICE_NAME).withWeight(100)
+                .endTo()
+                .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
+                .endSpec()
+                .build());
+            // @formatter:on
+            WaitUtils.waitFor(() -> HTTPUtils.getInstance().get("http://" + apiRoute.getSpec().getHost()).isSuccessful(),
+                "Waiting until the Splunk API route is ready");
+        }
     }
 
     @Override
@@ -184,11 +221,6 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
         return account;
     }
 
-    @Override
-    public String apiSchema() {
-        return "https";
-    }
-
     private CustomResourceDefinition getSplunkCrd() {
         return OpenshiftClient.get().apiextensions().v1().customResourceDefinitions().withName("standalones.enterprise.splunk.com").get();
     }
@@ -200,7 +232,7 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
                 .withGroup(crd.getSpec().getGroup())
                 .withPlural(crd.getSpec().getNames().getPlural())
                 .withScope(crd.getSpec().getScope())
-                .withVersion("v3");
+                .withVersion(CRD_API);
             crdContext = builder.build();
         }
         return crdContext;
@@ -208,6 +240,6 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
 
     @Override
     public int apiPort() {
-        return API_PORT;
+        return getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS) ? 443 : 80;
     }
 }

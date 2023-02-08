@@ -197,6 +197,32 @@ rules:
 - apiGroups:
   - enterprise.splunk.com
   resources:
+  - clustermanagers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
+  - clustermanagers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
+  - clustermanagers/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
   - clustermasters
   verbs:
   - create
@@ -242,6 +268,32 @@ rules:
   - enterprise.splunk.com
   resources:
   - indexerclusters/status
+  verbs:
+  - get
+  - patch
+  - update
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
+  - licensemanagers
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
+  - licensemanagers/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - enterprise.splunk.com
+  resources:
+  - licensemanagers/status
   verbs:
   - get
   - patch
@@ -352,38 +404,6 @@ rules:
   - update
 ---
 apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    name: splunk-operator
-  name: splunk-operator-metrics-reader
-rules:
-- nonResourceURLs:
-  - /metrics
-  verbs:
-  - get
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRole
-metadata:
-  labels:
-    name: splunk-operator
-  name: splunk-operator-proxy-role
-rules:
-- apiGroups:
-  - authentication.k8s.io
-  resources:
-  - tokenreviews
-  verbs:
-  - create
-- apiGroups:
-  - authorization.k8s.io
-  resources:
-  - subjectaccessreviews
-  verbs:
-  - create
----
-apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
   labels:
@@ -410,21 +430,6 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
   name: splunk-operator-manager-role
-subjects:
-- kind: ServiceAccount
-  name: splunk-operator-controller-manager
-  namespace: DESIRED_NAMESPACE
----
-apiVersion: rbac.authorization.k8s.io/v1
-kind: ClusterRoleBinding
-metadata:
-  labels:
-    name: splunk-operator
-  name: splunk-operator-proxy-rolebinding
-roleRef:
-  apiGroup: rbac.authorization.k8s.io
-  kind: ClusterRole
-  name: splunk-operator-proxy-role
 subjects:
 - kind: ServiceAccount
   name: splunk-operator-controller-manager
@@ -462,24 +467,6 @@ metadata:
     name: splunk-operator
   name: splunk-operator-manager-config
   namespace: DESIRED_NAMESPACE
----
-apiVersion: v1
-kind: Service
-metadata:
-  labels:
-    control-plane: controller-manager
-    name: splunk-operator
-  name: splunk-operator-controller-manager-metrics-service
-  namespace: DESIRED_NAMESPACE
-spec:
-  ports:
-  - name: https
-    port: 8443
-    protocol: TCP
-    targetPort: https
-  selector:
-    control-plane: controller-manager
-    name: splunk-operator
 ---
 apiVersion: v1
 kind: Service
@@ -549,7 +536,7 @@ spec:
         - --upstream=http://127.0.0.1:8080/
         - --logtostderr=true
         - --v=0
-        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.8.0
+        image: gcr.io/kubebuilder/kube-rbac-proxy:v0.13.0
         name: kube-rbac-proxy
         ports:
         - containerPort: 8443
@@ -562,6 +549,10 @@ spec:
           requests:
             cpu: 5m
             memory: 64Mi
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
       - args:
         - --leader-elect
         - --pprof
@@ -583,7 +574,7 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: metadata.name
-        image: quay.io/fuse_qe/splunk-operator:2.0.0
+        image: quay.io/fuse_qe/splunk-operator:2.2.0
         imagePullPolicy: Always
         livenessProbe:
           httpGet:
@@ -607,6 +598,8 @@ spec:
             memory: 2000Mi
         securityContext:
           allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
         volumeMounts:
         - mountPath: /opt/splunk/appframework/
           name: app-staging

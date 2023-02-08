@@ -5,6 +5,7 @@ import software.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.splunk.Event;
 import com.splunk.IndexCollection;
 import com.splunk.Job;
 import com.splunk.JobArgs;
@@ -14,8 +15,8 @@ import com.splunk.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SplunkValidation {
 
@@ -47,19 +48,22 @@ public class SplunkValidation {
         indexCollection.get(indexName.toLowerCase()).submit(data);
     }
 
-    public List<String> getAllMessages(String indexName) {
-        List<String> results = new ArrayList<>();
+    public List<String> getAllMessagesFromIndex(String indexName) {
+        return getAllEvents(String.format("search index=\"%s\"", indexName.toLowerCase()))
+            .stream().map(event -> event.get("_raw")).collect(Collectors.toList());
+    }
 
-        String searchQuery = String.format("search index=\"%s\"", indexName.toLowerCase());
+    public List<Event> getAllEvents(String query) {
+        List<Event> results = new ArrayList<>();
         JobArgs jobargs = new JobArgs();
         jobargs.setExecutionMode(JobArgs.ExecutionMode.BLOCKING);
-        Job job = client.getJobs().create(searchQuery, jobargs);
+        Job job = client.getJobs().create(query, jobargs);
         WaitUtils.waitFor(job::isDone, "Waiting till Splunk search job is done");
         try (InputStream resultsNormalSearch = job.getResults()) {
             ResultsReaderXml events = new ResultsReaderXml(resultsNormalSearch);
-            HashMap<String, String> event;
+            Event event;
             while ((event = events.getNextEvent()) != null) {
-                results.add(event.get("_raw")); // we are interested in only _raw data
+                results.add(event);
             }
         } catch (IOException e) {
             throw new RuntimeException(e);
