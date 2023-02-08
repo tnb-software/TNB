@@ -1,11 +1,11 @@
 package software.tnb.aws.sns.validation;
 
 import software.tnb.aws.sns.account.SNSAccount;
+import software.tnb.aws.sqs.service.SQS;
 import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
 
-import software.tnb.aws.sqs.service.SQS;
-
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,8 +27,8 @@ public class SNSValidation implements Validation {
 
     public void createTopic(String topic) {
         LOG.debug("Creating SNS topic {}", topic);
-        final CreateTopicResponse createTopicResonse = client.createTopic(b -> b.name(topic));
-        WaitUtils.waitFor(() -> topicExists(createTopicResonse.topicArn()), "Waiting until the topic " + topic + " is created");
+        final CreateTopicResponse createTopicResponse = client.createTopic(b -> b.name(topic));
+        WaitUtils.waitFor(() -> topicExists(createTopicResponse.topicArn()), "Waiting until the topic " + topic + " is created");
     }
 
     public void createTopicWithConsumer(String topic, String queue) {
@@ -53,7 +53,8 @@ public class SNSValidation implements Validation {
             .endpoint(sqs.account().queueArnPrefix() + queue));
     }
 
-    public boolean topicExists(String topicArn) {
-        return client.listTopics().topics().stream().anyMatch(topic -> topic.topicArn().equals(topicArn));
+    public boolean topicExists(String topicNameOrArn) {
+        return client.listTopics().topics().stream().anyMatch(topic ->
+            StringUtils.equalsAny(topic.topicArn(), topicNameOrArn, account.topicArnPrefix() + topicNameOrArn));
     }
 }
