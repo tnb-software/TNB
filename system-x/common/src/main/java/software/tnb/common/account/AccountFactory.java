@@ -10,6 +10,7 @@ import software.tnb.common.config.TestConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -67,8 +68,13 @@ public final class AccountFactory {
                 );
             }
         } else {
-            LOG.info("Loading credentials from file");
-            loader = new YamlCredentialsLoader(TestConfiguration.credentialsFile());
+            if (TestConfiguration.credentials() != null) {
+                LOG.info("loading credentials from property");
+                loader = new YamlCredentialsLoader(TestConfiguration.credentials());
+            } else {
+                LOG.info("Loading credentials from file");
+                loader = new YamlCredentialsLoader(new File(TestConfiguration.credentialsFile()));
+            }
         }
     }
 

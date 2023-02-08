@@ -6,8 +6,8 @@ import org.yaml.snakeyaml.Yaml;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 
+import java.io.File;
 import java.io.FileInputStream;
-import java.nio.file.Paths;
 import java.util.Map;
 
 public class YamlCredentialsLoader extends CredentialsLoader {
@@ -15,9 +15,13 @@ public class YamlCredentialsLoader extends CredentialsLoader {
 
     private final Map<String, Map<String, Object>> credentials;
 
-    public YamlCredentialsLoader(String credentialsFile) throws Exception {
-        try (FileInputStream fs = new FileInputStream(Paths.get(credentialsFile).toAbsolutePath().toString())) {
-            LOG.info("Loading credentials file from {}", Paths.get(credentialsFile).toAbsolutePath());
+    public YamlCredentialsLoader(String credentialsAsString) throws Exception {
+        credentials = (Map) ((Map) new Yaml().load(credentialsAsString)).get("services");
+    }
+
+    public YamlCredentialsLoader(File credentialsFile) throws Exception {
+        try (FileInputStream fs = new FileInputStream(credentialsFile.getAbsolutePath())) {
+            LOG.info("Loading credentials file from {}", credentialsFile.getAbsolutePath());
             credentials = (Map) ((Map) new Yaml().load(fs)).get("services");
         }
     }

@@ -16,6 +16,7 @@ public class TestConfiguration extends Configuration {
 
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
+    public static final String CREDENTIALS = "test.credentials";
     public static final String USE_VAULT = "test.credentials.use.vault";
     public static final String VAULT_TOKEN = "test.credentials.vault.token";
     private static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
@@ -80,6 +81,10 @@ public class TestConfiguration extends Configuration {
             throw new IllegalArgumentException("No credentials file specified!");
         }
         return credentials;
+    }
+
+    public static String credentials() {
+        return getProperty(CREDENTIALS);
     }
 
     public static String appGroupId() {
