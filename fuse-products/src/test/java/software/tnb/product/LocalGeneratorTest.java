@@ -1,10 +1,10 @@
 package software.tnb.product;
 
-import software.tnb.product.routebuilder.DirectToLogRoute;
-import software.tnb.util.maven.TestMaven;
 import software.tnb.common.product.ProductType;
 import software.tnb.product.customizer.Customizers;
 import software.tnb.product.integration.builder.IntegrationBuilder;
+import software.tnb.product.routebuilder.DirectToLogRoute;
+import software.tnb.util.maven.TestMaven;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;

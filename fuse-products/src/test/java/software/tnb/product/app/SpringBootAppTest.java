@@ -47,7 +47,7 @@ public class SpringBootAppTest extends LocalAppTestParent {
         assertThat(app.getName()).isEqualTo(name());
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 
-        Map<String, String> properties = new HashMap<>(11);
+        Map<String, String> properties = new HashMap<>(13);
         properties.putAll(Map.of(
             "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
             "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
@@ -57,8 +57,14 @@ public class SpringBootAppTest extends LocalAppTestParent {
             "version", "1.0.0-SNAPSHOT",
             "package", TestConfiguration.appGroupId(),
             "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-            "spring-boot-version", SpringBootConfiguration.springBootVersion(),
-            "camel-version", SpringBootConfiguration.camelSpringBootVersion()));
+            "default-spring-boot-version", SpringBootConfiguration.springBootVersion(),
+            "default-camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion()));
+        if (SpringBootConfiguration.camelSpringBootVersion().contains("redhat")) {
+            properties.put("dependencies-resolution", "redhat-platform");
+        }
+        if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 17) {
+            properties.put("java-version", "17");
+        }
         properties.put("archetypeCatalog", "internal");
 
         SoftAssertions sa = new SoftAssertions();
