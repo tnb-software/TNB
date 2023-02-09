@@ -48,14 +48,17 @@ public class OpenshiftClient extends OpenShift {
     private static OpenshiftClient createInstance() {
         OpenShiftConfigBuilder configBuilder;
 
-        if (OpenshiftConfiguration.openshiftUrl() == null) {
-            configBuilder = new OpenShiftConfigBuilder(
-                new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig()))));
-        } else {
+        if (OpenshiftConfiguration.openshiftUrl() != null) {
             configBuilder = new OpenShiftConfigBuilder()
                 .withMasterUrl(OpenshiftConfiguration.openshiftUrl())
                 .withUsername(OpenshiftConfiguration.openshiftUsername())
                 .withPassword(OpenshiftConfiguration.openshiftPassword());
+        } else if (OpenshiftConfiguration.openshiftKubeconfig() != null) {
+            configBuilder = new OpenShiftConfigBuilder(
+                new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig()))));
+        } else {
+            LOG.info("Auto-configuring openshift client");
+            configBuilder = new OpenShiftConfigBuilder(new OpenShiftConfig(Config.autoConfigure(null)));
         }
 
         String namespace = OpenshiftConfiguration.openshiftNamespace();

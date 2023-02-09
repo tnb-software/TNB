@@ -18,6 +18,7 @@ public class OpenshiftConfiguration extends Configuration {
     public static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
     public static final String OPENSHIFT_NAMESPACE_DELETE = "openshift.namespace.delete";
     public static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
+    public static final String KUBECONFIG = "kubeconfig";
     public static final String OPENSHIFT_HTTPS_PROXY = "openshift.https.proxy";
     public static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
@@ -68,7 +69,8 @@ public class OpenshiftConfiguration extends Configuration {
     }
 
     public static Path openshiftKubeconfig() {
-        return Paths.get(getProperty(OPENSHIFT_KUBECONFIG, System.getProperty("user.home") + "/.kube/config"));
+        String kubeconfig = getProperty(OPENSHIFT_KUBECONFIG, getProperty(KUBECONFIG));
+        return kubeconfig == null ? null : Paths.get(kubeconfig);
     }
 
     public static String openshiftDeploymentLabel() {
