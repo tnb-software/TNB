@@ -70,7 +70,7 @@ public class SpringBootConfiguration extends CamelConfiguration {
     }
 
     public static String camelSpringBootArchetypeVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "0.1.4");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "0.1.8");
     }
 
     public static String openshiftMavenPluginGroupId() {

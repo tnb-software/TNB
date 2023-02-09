@@ -45,7 +45,7 @@ public abstract class SpringBootApp extends App {
         } else {
             LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
-            Map<String, String> properties = new HashMap<>(11);
+            Map<String, String> properties = new HashMap<>(13);
             properties.putAll(Map.of(
                 "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
                 "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
@@ -55,8 +55,14 @@ public abstract class SpringBootApp extends App {
                 "version", "1.0.0-SNAPSHOT",
                 "package", TestConfiguration.appGroupId(),
                 "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-                "spring-boot-version", SpringBootConfiguration.springBootVersion(),
-                "camel-version", SpringBootConfiguration.camelSpringBootVersion()));
+                "default-spring-boot-version", SpringBootConfiguration.springBootVersion(),
+                "default-camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion()));
+            if (SpringBootConfiguration.camelSpringBootVersion().contains("redhat")) {
+                properties.put("dependencies-resolution", "redhat-platform");
+            }
+            if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 17) {
+                properties.put("java-version", "17");
+            }
             properties.put("archetypeCatalog", "internal");
 
             Maven.invoke(new BuildRequest.Builder()
