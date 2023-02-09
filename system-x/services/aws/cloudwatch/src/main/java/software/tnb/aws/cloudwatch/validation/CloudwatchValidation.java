@@ -1,23 +1,18 @@
 package software.tnb.aws.cloudwatch.validation;
 
+import software.tnb.aws.cloudwatch.validation.model.MetricsRequest;
 import software.tnb.common.service.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 import software.amazon.awssdk.services.cloudwatch.CloudWatchClient;
-import software.amazon.awssdk.services.cloudwatch.model.GetMetricDataRequest;
 import software.amazon.awssdk.services.cloudwatch.model.GetMetricDataResponse;
-import software.amazon.awssdk.services.cloudwatch.model.ListMetricsRequest;
 import software.amazon.awssdk.services.cloudwatch.model.ListMetricsResponse;
-import software.amazon.awssdk.services.cloudwatch.model.Metric;
-import software.amazon.awssdk.services.cloudwatch.model.MetricDataQuery;
 import software.amazon.awssdk.services.cloudwatch.model.MetricDataResult;
-import software.amazon.awssdk.services.cloudwatch.model.MetricStat;
 
 public class CloudwatchValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(CloudwatchValidation.class);
@@ -28,56 +23,32 @@ public class CloudwatchValidation implements Validation {
         this.client = client;
     }
 
-    public List<MetricDataResult> getMetrics(String namespace, String metricName, Instant start) {
-        LOG.debug("Fetching Couldwatch metrics {} from namespace {}", metricName, namespace);
-        List<MetricDataResult> data = new ArrayList<>();
-        Instant endDate = Instant.now();
+    public List<MetricDataResult> getMetrics(Consumer<MetricsRequest.MetricsRequestBuilder> requestBuilder) {
+        MetricsRequest.MetricsRequestBuilder builder = new MetricsRequest.MetricsRequestBuilder();
+        requestBuilder.accept(builder);
+        MetricsRequest request = builder.build();
+        LOG.debug("Fetching Couldwatch metrics {} from namespace {}", request.metricName(), request.namespace());
 
-        Metric met = Metric.builder()
-            .metricName(metricName)
-            .namespace(namespace)
-            .build();
+        GetMetricDataResponse response = client.getMetricData(b -> b
+            .maxDatapoints(request.maxDataPoints())
+            .startTime(request.start())
+            .endTime(request.end())
+            .metricDataQueries(dq -> dq
+                .id(request.queryId())
+                .returnData(true)
+                .metricStat(ms -> ms
+                    .stat(request.stat())
+                    .period(request.period())
+                    .metric(m -> m.metricName(request.metricName()).namespace(request.namespace()))
+                )
+            )
+        );
 
-        MetricStat metStat = MetricStat.builder()
-            .stat("Minimum")
-            .period(60)
-            .metric(met)
-            .build();
-
-        MetricDataQuery dataQUery = MetricDataQuery.builder()
-            .metricStat(metStat)
-            .id("foo2")
-            .returnData(true)
-            .build();
-
-        List<MetricDataQuery> dq = new ArrayList<>();
-        dq.add(dataQUery);
-
-        GetMetricDataRequest getMetReq = GetMetricDataRequest.builder()
-            .maxDatapoints(100)
-            .startTime(start)
-            .endTime(endDate)
-            .metricDataQueries(dq)
-            .build();
-
-        GetMetricDataResponse response = client.getMetricData(getMetReq);
-
-        if (response.hasMetricDataResults()) {
-            data = response.metricDataResults();
-        }
-        return data;
+        return response.hasMetricDataResults() ? response.metricDataResults() : List.of();
     }
 
     public ListMetricsResponse listMetrics(String namespace, String metricName) {
         LOG.debug("Fetching Couldwatch metric {} from namespace {}", metricName, namespace);
-
-        ListMetricsRequest request = ListMetricsRequest.builder()
-            .metricName(metricName)
-            .namespace(namespace)
-            .build();
-
-        ListMetricsResponse response = client.listMetrics(request);
-
-        return response;
+        return client.listMetrics(b -> b.metricName(metricName).namespace(namespace));
     }
 }
