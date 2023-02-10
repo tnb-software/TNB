@@ -15,7 +15,7 @@
 
     <properties>
         <strimzi.api.version>0.30.0</strimzi.api.version>
-        <kafka.client.version>3.3.0</kafka.client.version>
+        <kafka.client.version>3.4.0</kafka.client.version>
     </properties>
 
     <dependencies>
