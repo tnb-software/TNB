@@ -25,7 +25,7 @@ public class DependenciesToModelineCustomizerTest extends CustomizerTestParent {
         customizer.doCustomize();
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
-        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("// camel-k: dependency=mvn:com.test:example");
+        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("//camel-k: dependency=mvn:com.test:example");
     }
 
     @Test
@@ -34,7 +34,7 @@ public class DependenciesToModelineCustomizerTest extends CustomizerTestParent {
         customizer.doCustomize();
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
-        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("// camel-k: dependency=mvn:com.test:example:1.0");
+        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("//camel-k: dependency=mvn:com.test:example:1.0");
     }
 
     @Test
@@ -44,7 +44,7 @@ public class DependenciesToModelineCustomizerTest extends CustomizerTestParent {
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
         assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim())
-            .isEqualTo("// camel-k: dependency=github:openshift-integration:camel-k-example-event-streaming:1.6.x-SNAPSHOT");
+            .isEqualTo("//camel-k: dependency=github:openshift-integration:camel-k-example-event-streaming:1.6.x-SNAPSHOT");
     }
 
     @Test
@@ -54,7 +54,7 @@ public class DependenciesToModelineCustomizerTest extends CustomizerTestParent {
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
         assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim())
-            .isEqualTo("// camel-k: dependency=mvn:com.test:example dependency=mvn:com.test:model");
+            .isEqualTo("//camel-k: dependency=mvn:com.test:example dependency=mvn:com.test:model");
     }
 
     @Override

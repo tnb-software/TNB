@@ -14,6 +14,8 @@ import software.tnb.product.customizer.CustomizerTestParent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.nio.file.Paths;
 
@@ -53,7 +55,7 @@ public class ModelineCustomizerTest extends CustomizerTestParent {
         customizer.doCustomize();
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
-        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("// camel-k: test=property");
+        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("//camel-k: test=property");
     }
 
     @Test
@@ -62,7 +64,7 @@ public class ModelineCustomizerTest extends CustomizerTestParent {
         customizer.doCustomize();
 
         assertThat(ib.getRouteBuilder().get().getComment()).isPresent();
-        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("// camel-k: test=property k1=v1 k2=v2");
+        assertThat(ib.getRouteBuilder().get().getComment().get().toString().trim()).isEqualTo("//camel-k: test=property k1=v1 k2=v2");
     }
 
     @Test
@@ -99,9 +101,16 @@ public class ModelineCustomizerTest extends CustomizerTestParent {
         assertThat(ib.getContent().trim()).isEqualTo("// camel-k: test=property k1=v1 k2=v2\n" + remainder);
     }
 
-    @Test
-    public void shouldPrependToModelineWithNoSpaceInStringTest() {
-        final String cls = exampleClassWithModeline("//camel-k: k1=v1");
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "//camel-k: k1=v1",
+        "// camel-k: k1=v1",
+        "//  camel-k: k1=v1",
+        "//camel-k:k1=v1",
+        "// camel-k:  k1=v1"
+    })
+    public void shouldPrependToModelineWithIgnoringSpacesInStringTest(String modeline) {
+        final String cls = exampleClassWithModeline(modeline);
 
         CamelKIntegrationBuilder ib = new CamelKIntegrationBuilder("").fromString(cls);
         customizer.setIntegrationBuilder(ib);
