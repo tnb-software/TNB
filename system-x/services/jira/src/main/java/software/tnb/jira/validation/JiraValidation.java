@@ -1,6 +1,5 @@
 package software.tnb.jira.validation;
 
-import software.tnb.jira.account.JiraAccount;
 import software.tnb.jira.validation.generated.ApiClient;
 import software.tnb.jira.validation.generated.ApiException;
 import software.tnb.jira.validation.generated.api.IssueCommentsApi;
@@ -31,15 +30,13 @@ public class JiraValidation {
     private static final Logger LOG = LoggerFactory.getLogger(JiraValidation.class);
 
     private final ApiClient client;
-    private final JiraAccount account;
 
     private final IssuesApi issuesApi;
     private final IssueCommentsApi issueCommentsApi;
     private final IssueSearchApi issueSearchApi;
 
-    public JiraValidation(ApiClient client, JiraAccount account) {
+    public JiraValidation(ApiClient client) {
         this.client = client;
-        this.account = account;
         this.issuesApi = new IssuesApi(client);
         this.issueCommentsApi = new IssueCommentsApi(client);
         this.issueSearchApi = new IssueSearchApi(client);

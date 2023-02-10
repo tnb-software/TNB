@@ -18,12 +18,8 @@
         <swagger-core-version>1.6.5</swagger-core-version>
         <gson-fire-version>1.8.5</gson-fire-version>
         <apache-oltu-oauth2-version>1.0.2</apache-oltu-oauth2-version>
-        <jakarta-annotation-version>1.3.5</jakarta-annotation-version>
-        <jackson-databind-nullable-version>0.2.4</jackson-databind-nullable-version>
-        <javax.ws.rs-api-version>2.1.1</javax.ws.rs-api-version>
-        <!-- once this is updated to 6.3.0, jakarta annotation can be bumped to latest version,
-         see https://github.com/OpenAPITools/openapi-generator/issues/14010#issuecomment-1373474315
-         -->
+        <jakarta-annotation-version>2.1.1</jakarta-annotation-version>
+        <jakarta.ws.rs-api-version>3.1.0</jakarta.ws.rs-api-version>
         <openapi.maven.plugin.version>6.3.0</openapi.maven.plugin.version>
     </properties>
 
@@ -33,15 +29,18 @@
             <groupId>io.swagger</groupId>
             <artifactId>swagger-annotations</artifactId>
             <version>${swagger-core-version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>io.gsonfire</groupId>
             <artifactId>gson-fire</artifactId>
             <version>${gson-fire-version}</version>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.oltu.oauth2</groupId>
@@ -53,23 +52,21 @@
                     <artifactId>json</artifactId>
                 </exclusion>
             </exclusions>
+            <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>jakarta.annotation</groupId>
             <artifactId>jakarta.annotation-api</artifactId>
             <version>${jakarta-annotation-version}</version>
-            <scope>provided</scope>
+            <scope>compile</scope>
         </dependency>
         <dependency>
-            <groupId>org.openapitools</groupId>
-            <artifactId>jackson-databind-nullable</artifactId>
-            <version>${jackson-databind-nullable-version}</version>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>${jakarta.ws.rs-api-version}</version>
+            <scope>compile</scope>
         </dependency>
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>${javax.ws.rs-api-version}</version>
-        </dependency>
+
     </dependencies>
 
     <build>
@@ -95,6 +92,8 @@
                                 <artifactVersion>${project.version}</artifactVersion>
                                 <generateModelTests>false</generateModelTests>
                                 <generateApiTests>false</generateApiTests>
+                                <useJakartaEe>true</useJakartaEe>
+                                <openApiNullable>false</openApiNullable>
                             </configOptions>
                             <!-- JSON class generated some data format manipulation with hardcoded +0000 value `date.endsWith("+0000")`,
                              however, our JIRA Server sends the date with time zone +0100. We are not able to edit the JSON class because this plugin
