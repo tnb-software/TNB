@@ -240,10 +240,10 @@ public class CamelKApp extends App {
             );
         }
 
-        String modelinePrefix = integrationBuilder.getFileName().endsWith(".yaml") ? "# camel-k: " : "// camel-k: ";
+        String modelinePrefixPattern = integrationBuilder.getFileName().endsWith(".yaml") ? "^# *camel-k:" : "^// *camel-k:";
         List<String> modelines = integrationSourceCode.lines()
-            .filter(l -> l.trim().startsWith(modelinePrefix))
-            .map(l -> l.replaceAll(modelinePrefix, ""))
+            .filter(l -> l.trim().matches(modelinePrefixPattern + ".*"))
+            .map(l -> l.replaceAll(modelinePrefixPattern, ""))
             .flatMap(l -> Stream.of(l.split("\\s")))
             .collect(Collectors.toList());
 
