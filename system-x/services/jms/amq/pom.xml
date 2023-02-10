@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: JMS :: AMQ</name>
 
     <properties>
-        <artemis.jms.client.version>2.27.0</artemis.jms.client.version>
+        <artemis.jms.client.version>2.28.0</artemis.jms.client.version>
         <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
         <paho.mqtt5.client.version>1.2.5</paho.mqtt5.client.version>
     </properties>
