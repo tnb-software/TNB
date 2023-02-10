@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <properties>
-        <azure.core.version>1.35.0</azure.core.version>
+        <azure.core.version>1.36.0</azure.core.version>
         <!-- Align the version, as blob and queue may contain different versions -->
         <azure.storage.common.version>12.19.1</azure.storage.common.version>
     </properties>
