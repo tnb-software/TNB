@@ -15,7 +15,7 @@
 
     <properties>
         <commons-io-version>2.11.0</commons-io-version>
-        <okio-jvm-version>3.2.0</okio-jvm-version>
+        <okio-jvm-version>3.3.0</okio-jvm-version>
         <gson-fire-version>1.8.5</gson-fire-version>
     </properties>
 
