@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.StreamSupport;
 
 public class GoogleStorageValidation {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleStorageValidation.class);
@@ -79,5 +80,9 @@ public class GoogleStorageValidation {
     public void deleteFile(String bucketName, String fileName) {
         LOG.info("Deleting file \"{}\" in bucket \"{}\"", fileName, bucketName);
         client.delete(BlobId.of(bucketName, fileName));
+    }
+
+    public boolean bucketExists(String bucketName) {
+        return StreamSupport.stream(client.list().iterateAll().spliterator(), false).anyMatch(b -> bucketName.equals(b.asBucketInfo().getName()));
     }
 }
