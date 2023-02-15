@@ -7,6 +7,14 @@ import org.junit.platform.commons.util.ReflectionUtils;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
+/**
+ * For services which have can have more configurations for deployment.
+ * <p>
+ * WARNING: It is not recommended to use ConfigurableService with ReusableOpenshiftDeployable!
+ * When some service can have more deployment configuration in the one test run, it should not been long-running (ReusableOpenshiftDeployable)
+ * because mostly it cannot be installed two same service in the one namespace.
+ * @param <C> Service configuration class
+ */
 public abstract class ConfigurableService<C extends ServiceConfiguration> implements Service {
     private final C configuration;
 
