@@ -8,12 +8,13 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
 /**
- * For services which have can have more configurations for deployment.
+ * For services that can have more configurations for deployment
  * <p>
  * WARNING: It is not recommended to use ConfigurableService with ReusableOpenshiftDeployable!
- * When some service can have more deployment configuration in the one test run, it should not been long-running (ReusableOpenshiftDeployable)
- * because mostly it cannot be installed two same service in the one namespace.
- * @param <C> Service configuration class
+ * because ConfigurableService service can have more deployment configuration in the same test run,
+ * e.g. TestClass1 -> ServiceA.config1 , ... TestClass4 -> ServiceA.config2 , ... TestClass6 -> ServiceA.config1
+ * and in that case, the ServiceA.config1 will not be undeployed before ServiceA.config2 which would cause that deploy ServiceA.config2 would fail.
+ * @param <C> Service configuration class which extends ServiceConfiguration
  */
 public abstract class ConfigurableService<C extends ServiceConfiguration> implements Service {
     private final C configuration;
