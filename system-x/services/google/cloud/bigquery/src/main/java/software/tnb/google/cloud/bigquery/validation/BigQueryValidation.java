@@ -4,11 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.cloud.bigquery.BigQuery;
-import com.google.cloud.bigquery.Dataset;
 import com.google.cloud.bigquery.DatasetId;
 import com.google.cloud.bigquery.DatasetInfo;
 import com.google.cloud.bigquery.Field;
 import com.google.cloud.bigquery.FieldList;
+import com.google.cloud.bigquery.FieldValueList;
 import com.google.cloud.bigquery.QueryJobConfiguration;
 import com.google.cloud.bigquery.Schema;
 import com.google.cloud.bigquery.StandardSQLTypeName;
@@ -16,85 +16,68 @@ import com.google.cloud.bigquery.StandardTableDefinition;
 import com.google.cloud.bigquery.TableDefinition;
 import com.google.cloud.bigquery.TableId;
 import com.google.cloud.bigquery.TableInfo;
+import com.google.cloud.bigquery.TableResult;
 
-import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.StreamSupport;
 
 public class BigQueryValidation {
 
     private static final Logger LOG = LoggerFactory.getLogger(BigQueryValidation.class);
-    private BigQuery bigQuery;
-    private String projectId;
+    private final BigQuery bigQuery;
+    private final String projectId;
 
     public BigQueryValidation(BigQuery bigQuery, String projectId) {
         this.bigQuery = bigQuery;
         this.projectId = projectId;
     }
 
-    public void createTableWithSampleSchema(String dataSetId, String tableId) {
-        createTable(dataSetId, tableId, createSampleSchema());
-    }
-
     public void createTable(String dataSetId, String tableId, Schema schema) {
+        LOG.debug("Creating table {}", tableId);
         TableId id = TableId.of(projectId, dataSetId, tableId);
         TableDefinition.Builder builder = StandardTableDefinition.newBuilder().setSchema(schema);
         TableInfo tableInfo = TableInfo.of(id, builder.build());
         bigQuery.create(tableInfo);
     }
 
+    public void createTable(String dataSetId, String tableId, FieldList fieldList) {
+        createTable(dataSetId, tableId, Schema.of(fieldList));
+    }
+
+    public void createTable(String dataSetId, String tableId, Map<String, StandardSQLTypeName> schema) {
+        createTable(dataSetId, tableId, FieldList.of(schema.entrySet().stream()
+            .map(entry -> Field.of(entry.getKey(), entry.getValue())).collect(Collectors.toList())));
+    }
+
     public void deleteTable(String datasetName, String tableName) {
-        LOG.debug("Deleting BQ table " + tableName);
+        LOG.debug("Deleting table {}", tableName);
         bigQuery.delete(TableId.of(projectId, datasetName, tableName));
     }
 
     public void createDataset(String datasetName) {
-        DatasetInfo datasetInfo = DatasetInfo.newBuilder(datasetName).build();
-
-        Dataset newDataset = bigQuery.create(datasetInfo);
-        String newDatasetName = newDataset.getDatasetId().getDataset();
+        LOG.debug("Creating dataset {}", datasetName);
+        bigQuery.create(DatasetInfo.newBuilder(datasetName).build());
     }
 
     public void deleteDataset(String datasetName) {
-        DatasetId datasetId = DatasetId.of(projectId, datasetName);
-        bigQuery.delete(datasetId, BigQuery.DatasetDeleteOption.deleteContents());
+        LOG.debug("Deleting dataset {}", datasetName);
+        bigQuery.delete(DatasetId.of(projectId, datasetName), BigQuery.DatasetDeleteOption.deleteContents());
     }
 
-    public long tableRowsCount(String datasetName, String tableName) {
-        String query =
-            "SELECT * FROM `" + projectId + "." + datasetName + "." + tableName + "`";
-        try {
-            return bigQuery.query(QueryJobConfiguration.of(query)).getTotalRows();
-        } catch (InterruptedException e) {
-            throw new RuntimeException("Unable to query the BQ table", e);
-        }
+    public List<FieldValueList> tableContent(String datasetName, String tableName) {
+        return StreamSupport.stream(query("SELECT * FROM `" + projectId + "." + datasetName + "." + tableName + "`").iterateAll().spliterator(),
+            false).collect(Collectors.toList());
     }
 
-    public boolean tableContainsRow(String datasetName, String tableName, Map<String, String> row) {
-        String query = "SELECT * FROM `" + projectId + "." + datasetName + "." + tableName + "` WHERE "
-            + row.entrySet().stream()
-            .map(e -> e.getKey() + " = '" + e.getValue() + "'")
-            .collect(Collectors.joining(" AND "));
+    private TableResult query(String query) {
         LOG.debug("Query: {}", query);
         QueryJobConfiguration queryJobConfiguration = QueryJobConfiguration.of(query);
         try {
-            return bigQuery.query(queryJobConfiguration).getTotalRows() == 1;
+            return bigQuery.query(queryJobConfiguration);
         } catch (InterruptedException e) {
-            throw new RuntimeException("Unable to query the BQ table", e);
+            throw new RuntimeException("Unable to query BigQuery table", e);
         }
-    }
-
-    public Schema createSchema(Map<String, StandardSQLTypeName> schema) {
-        FieldList fields = FieldList.of(
-            schema.entrySet().stream().map(entry -> Field.of(entry.getKey(), entry.getValue())
-            ).collect(Collectors.toList()));
-        return Schema.of(fields);
-    }
-
-    public Schema createSampleSchema() {
-        Map<String, StandardSQLTypeName> schema = new HashMap<>();
-        schema.put("id", StandardSQLTypeName.STRING);
-        schema.put("field", StandardSQLTypeName.STRING);
-        return createSchema(schema);
     }
 }
