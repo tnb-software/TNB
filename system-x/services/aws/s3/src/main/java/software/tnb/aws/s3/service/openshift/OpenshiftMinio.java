@@ -18,6 +18,7 @@ import com.google.auto.service.AutoService;
 import java.util.LinkedList;
 import java.util.List;
 
+import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -105,6 +106,8 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().persistentVolumeClaims().withName(name()).delete();
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .timeout(120_000).waitFor();
     }
 
     @Override

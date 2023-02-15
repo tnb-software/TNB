@@ -1,7 +1,7 @@
 package software.tnb.splunk.resource.openshift;
 
 import software.tnb.common.account.AccountFactory;
-import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
@@ -26,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
@@ -38,7 +39,7 @@ import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Splunk.class)
-public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployable {
+public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSplunk.class);
     private static final String CRD_API = "v4";
     private static final String SERVICE_NAME = "splunk-s1-standalone-service";
@@ -124,6 +125,7 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
         //if CR creates PVC's, they need to be deleted. (usage of the finalizer in CR can in some situations (e.g. failure during operator
         // creation) cause the deletion of CR get stuck)
         OpenshiftClient.get().persistentVolumeClaims().withLabel("app.kubernetes.io/name", "standalone").delete();
+        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("name", "splunk-operator").timeout(120_000).waitFor();
     }
 
     @Override
@@ -191,19 +193,6 @@ public class OpenshiftSplunk extends Splunk implements ReusableOpenshiftDeployab
     private boolean isAppDeployed() {
         List<Pod> pods = OpenshiftClient.get().pods().withLabel("app.kubernetes.io/instance", "splunk-s1-standalone").list().getItems();
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0));
-    }
-
-    @Override
-    public void cleanup() {
-        for (String customIndex : client().getIndexes().keySet()) {
-            try {
-                client().getIndexes().remove(customIndex);
-            } catch (com.splunk.HttpException ex) { // ignore when internal or disabled indexes are not deleted.
-                if (!(ex.getDetail().contains("is internal") || ex.getDetail().contains("is disabled"))) {
-                    throw ex;
-                }
-            }
-        }
     }
 
     @Override
