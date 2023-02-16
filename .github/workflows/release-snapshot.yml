@@ -1,15 +1,17 @@
 name: Release snapshot
-
 on:
-  push:
-    branches:
-      - "main"
+  workflow_dispatch:
+    inputs:
+      release-version:
+        description: 'Version to create/release (-SNAPSHOT suffix is added automatically). If empty, the default value is NEXT_VERSION-DATE'
+        required: false
 
 env:
   # The setup-java action needs the name of the env variable with passwords
   GPG_PASSPHRASE: ${{ secrets.GPG_KEY_PASSWORD }}
   OSSRH_PASSWORD: ${{ secrets.OSSRH_PASSWORD }}
   OSSRH_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+  RELEASE_VERSION: ${{ inputs.release-version }}
 
 jobs:
   deploy-artifacts:
@@ -32,12 +34,16 @@ jobs:
           gpg-passphrase: GPG_PASSPHRASE
       - name: Create snapshot version
         run: |
-          # Get the latest released tag and increase its version (as we always stay on 1.0-SNAPSHOT in main branch for tnb-tests usage, but it would be better to have also the snapshot version incrementing)
-          # Only select tags matching 'v*'
-          previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' "refs/tags/v*" | awk -F"/" 'END{print substr($3,2)}')"
-          curl -o semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver && chmod +x semver
-          snapshot_version=$(./semver bump patch ${previous_tag})-SNAPSHOT
-          mvn --no-transfer-progress versions:set -DnewVersion=${snapshot_version} -DoldVersion=* -DgroupId=* -DartifactId=* -DgenerateBackupPoms=false
+          if [ -z "${RELEASE_VERSION}" ]; then
+            # Get the latest released tag and increase its version (as we always stay on 1.0-SNAPSHOT in main branch for tnb-tests usage, but it would be better to have also the snapshot version incrementing)
+            # Only select tags matching 'v*'
+            previous_tag="$(git for-each-ref --sort=creatordate --format '%(refname)' "refs/tags/v*" | awk -F"/" 'END{print substr($3,2)}')"
+            curl -o semver https://raw.githubusercontent.com/fsaintjacques/semver-tool/master/src/semver && chmod +x semver
+            RELEASE_VERSION="$(./semver bump patch ${previous_tag})-$(date +'%Y%m%d-%H%M%S')-SNAPSHOT"
+          elif [[ ! "${RELEASE_VERSION}" == *"-SNAPSHOT" ]]; then
+            RELEASE_VERSION="${RELEASE_VERSION}"-SNAPSHOT
+          fi
+          mvn --no-transfer-progress versions:set -DnewVersion=${RELEASE_VERSION} -DoldVersion=* -DgroupId=* -DartifactId=* -DgenerateBackupPoms=false
       - name: Deploy
         run: |
           if [ "${GITHUB_REPOSITORY_OWNER}" = "tnb-software" ]; then
