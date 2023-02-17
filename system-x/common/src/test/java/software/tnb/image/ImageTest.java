@@ -3,6 +3,7 @@ package software.tnb.image;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.image.util.ChildClass;
 import software.tnb.image.util.ParentClass;
 
@@ -28,10 +29,10 @@ public class ImageTest {
         ChildClass cc = new ChildClass();
         final String image = "overrideimage";
         try {
-            System.setProperty("parentclass.image", image);
+            System.setProperty(String.format(WithDockerImage.SYSTEM_PROPERTY_FORMAT, "parentclass"), image);
             assertThat(cc.image()).isEqualTo(image);
         } finally {
-            System.clearProperty("parentclass.image");
+            System.clearProperty(String.format(WithDockerImage.SYSTEM_PROPERTY_FORMAT, "parentclass"));
         }
     }
 }

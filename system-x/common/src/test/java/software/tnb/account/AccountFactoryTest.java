@@ -8,6 +8,7 @@ import software.tnb.account.util.TestAccountWithId;
 import software.tnb.account.util.TestAccountWithMissingId;
 import software.tnb.account.util.TestCompositeAccount;
 import software.tnb.common.account.AccountFactory;
+import software.tnb.common.account.WithId;
 import software.tnb.common.config.TestConfiguration;
 
 import org.junit.jupiter.api.AfterAll;
@@ -59,40 +60,40 @@ public class AccountFactoryTest {
 
     @Test
     public void shouldIgnoreMissingIDForCompositeAccountTest() {
-        System.setProperty("testawsaccount.id", "aws-nonexistent");
+        System.setProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testawsaccount"), "aws-nonexistent");
         try {
             TestCompositeAccount acc = AccountFactory.create(TestCompositeAccount.class);
             assertThat(acc.access_key()).isNull();
             assertThat(acc.secret_key()).isNull();
             assertThat(acc.new_key()).isEqualTo("new_value");
         } finally {
-            System.clearProperty("testawsaccount.id");
+            System.clearProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testawsaccount"));
         }
     }
 
     @Test
     public void shouldLoadParentValuesForCompositeAccountTest() {
-        System.setProperty("testcompositeaccount.id", "aws-composite-complete");
+        System.setProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testcompositeaccount"), "aws-composite-complete");
         try {
             TestCompositeAccount acc = AccountFactory.create(TestCompositeAccount.class);
             assertThat(acc.access_key()).isEqualTo("access");
             assertThat(acc.secret_key()).isEqualTo("secret");
             assertThat(acc.new_key()).isEqualTo("new_value");
         } finally {
-            System.clearProperty("testcompositeaccount.id");
+            System.clearProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testcompositeaccount"));
         }
     }
 
     @Test
     public void shouldOverrideIDsWithSystemPropertyTest() {
-        System.setProperty("testaccountwithid.id", "test-acc-property");
+        System.setProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testaccountwithid"), "test-acc-property");
         try {
             TestAccountWithId acc = AccountFactory.create(TestAccountWithId.class);
             assertThat(acc.getUsername()).isEqualTo("John");
             assertThat(acc.getPassword()).isEqualTo("Secret");
             assertThat(acc.accountId()).isEqualTo(999);
         } finally {
-            System.clearProperty("testaccountwithid.id");
+            System.clearProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testaccountwithid"));
         }
     }
 }
