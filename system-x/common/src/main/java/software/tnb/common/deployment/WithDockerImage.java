@@ -1,6 +1,8 @@
 package software.tnb.common.deployment;
 
 public interface WithDockerImage {
+    String SYSTEM_PROPERTY_FORMAT = "tnb.%s.image";
+
     /**
      * This method should always be called from Local/OpenshiftX, so it should always extend some X class and the property to use
      * to override the image would resolve to x.image
@@ -13,7 +15,7 @@ public interface WithDockerImage {
             throw new IllegalStateException("Current class " + this.getClass().getSimpleName() + " does not extend any other class"
                 + " and default method from WithDockerImage was called, either override this method or check what's wrong as this shouldn't happen");
         }
-        return System.getProperty(superclass.getSimpleName().toLowerCase() + ".image", defaultImage());
+        return System.getProperty(String.format(SYSTEM_PROPERTY_FORMAT, superclass.getSimpleName().toLowerCase()), defaultImage());
     }
 
     /**
