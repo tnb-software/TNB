@@ -102,6 +102,7 @@
         <gpg.plugin.version>3.0.1</gpg.plugin.version>
         <git.changelog.maven.plugin>1.95.2</git.changelog.maven.plugin>
         <okhttp-version>4.10.0</okhttp-version>
+        <failsafe-version>3.3.0</failsafe-version>
         <gson-version>2.10</gson-version>
     </properties>
 
@@ -143,6 +144,11 @@
                 <groupId>com.google.code.gson</groupId>
                 <artifactId>gson</artifactId>
                 <version>${gson-version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.failsafe</groupId>
+                <artifactId>failsafe-okhttp</artifactId>
+                <version>${failsafe-version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
