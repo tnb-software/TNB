@@ -124,10 +124,10 @@ public class JiraValidation {
         }
     }
 
-    public Iterable<Issue> getIssues(String project) {
+    public List<Issue> getIssues(String project) {
         assert StringUtils.isNotEmpty(project);
         try {
-            return issueSearchApi.searchForIssuesUsingJql(String.format("project = \"%s\"", "FUQT"), null, 200, null, null, null, null, null)
+            return issueSearchApi.searchForIssuesUsingJql(String.format("project = \"%s\"", project), null, 200, null, null, null, null, null)
                 .getIssues().stream()
                 .map(this::convertIssueBeanToIssue)
                 .collect(Collectors.toList());
@@ -136,7 +136,7 @@ public class JiraValidation {
         }
     }
 
-    public Iterable<Issue> getIssues(String project, String customJQL) {
+    public List<Issue> getIssues(String project, String customJQL) {
         assert StringUtils.isNotEmpty(project);
         assert StringUtils.isNotEmpty(customJQL);
         try {
