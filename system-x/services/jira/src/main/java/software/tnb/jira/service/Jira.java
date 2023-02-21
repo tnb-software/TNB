@@ -39,8 +39,6 @@ public class Jira implements Service {
             client.setBasePath(account().getJiraUrl());
             client.setUsername(account().getUsername());
             client.setPassword(account().getPassword());
-            // For some reason when generating with 6.3.0 version of openapi generator, the "server" configuration takes precedence over "basePath"
-            client.setServerIndex(null);
         }
         return client;
     }
