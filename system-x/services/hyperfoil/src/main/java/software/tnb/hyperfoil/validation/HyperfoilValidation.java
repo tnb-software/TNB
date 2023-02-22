@@ -48,7 +48,9 @@ public class HyperfoilValidation {
         if (HyperfoilConfiguration.isHttpLogEnabled()) {
             okHttpClientBuilder.log();
         }
-        ApiClient apiClient = new ApiClient(okHttpClientBuilder.build());
+        ApiClient apiClient = !HyperfoilConfiguration.isRetryPolicyEnabled()
+                ? new ApiClient(okHttpClientBuilder.build())
+                : new ApiClientWithRetryPolicy(okHttpClientBuilder.build());
         apiClient.setBasePath(basePath);
         apiClient.setVerifyingSsl(false);
         defaultApi = new DefaultApi(apiClient);
