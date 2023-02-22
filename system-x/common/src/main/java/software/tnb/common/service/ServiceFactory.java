@@ -73,19 +73,29 @@ public final class ServiceFactory {
     }
 
     public static <S extends Service> void withService(Class<S> clazz, Consumer<S> code) {
-        S service = create(clazz);
+        withService(create(clazz), code);
+    }
+
+    public static <C extends ServiceConfiguration, S extends ConfigurableService<C>> void withService(Class<S> clazz, Consumer<C> config,
+        Consumer<S> code) {
+        withService(create(clazz, config), code);
+    }
+
+    private static <S extends Service> void withService(S service, Consumer<S> code) {
         try {
             service.beforeAll(null);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        code.accept(service);
-
         try {
-            service.afterAll(null);
-        } catch (Exception e) {
-            LOG.warn("Exception thrown while undeploying service", e);
+            code.accept(service);
+        } finally {
+            try {
+                service.afterAll(null);
+            } catch (Exception e) {
+                LOG.warn("Exception thrown while undeploying service", e);
+            }
         }
     }
 }

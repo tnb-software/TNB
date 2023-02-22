@@ -20,19 +20,16 @@ public abstract class ConfigurableService<C extends ServiceConfiguration> implem
     private final C configuration;
 
     public ConfigurableService() {
-        Type type = this.getClass().getGenericSuperclass();
+        Class<?> current = this.getClass();
         while (true) {
-            if (type instanceof ParameterizedType) {
-                if (((ParameterizedType) type).getRawType().equals(ConfigurableService.class)) {
-                    break;
-                } else {
-                    throw new RuntimeException("Expected to find " + ConfigurableService.class.getSimpleName() + ", but found "
-                        + ((ParameterizedType) type).getRawType().getTypeName());
-                }
+            Type superClass = current.getGenericSuperclass();
+            if (superClass instanceof ParameterizedType && ((ParameterizedType) superClass).getRawType().equals(ConfigurableService.class)) {
+                break;
+            } else {
+                current = current.getSuperclass();
             }
-            type = ((Class) type).getGenericSuperclass();
         }
-        configuration = ReflectionUtils.newInstance((Class<C>) ((ParameterizedType) type).getActualTypeArguments()[0]);
+        configuration = ReflectionUtils.newInstance((Class<C>) ((ParameterizedType) current.getGenericSuperclass()).getActualTypeArguments()[0]);
     }
 
     public C getConfiguration() {

@@ -23,6 +23,11 @@ public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
         if (account == null) {
             LOG.debug("Creating new SQS account");
             account = AccountFactory.create(SQSAccount.class);
+
+            if (getConfiguration().isLocalstack()) {
+                account.setAccount_id("000000000000");
+            }
+
             // There two are derived other values
             account.setQueueUrlPrefix(String.format("https://sqs.%s.amazonaws.com/%s/", account.region(), account.accountId()));
             account.setQueueArnPrefix(String.format("arn:aws:sqs:%s:%s:", account.region(), account.accountId()));
@@ -32,6 +37,7 @@ public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        super.beforeAll(extensionContext);
         LOG.debug("Creating new SQS validation");
         validation = new SQSValidation(client(SqsClient.class), account());
     }
