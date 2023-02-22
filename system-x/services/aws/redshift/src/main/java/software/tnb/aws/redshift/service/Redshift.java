@@ -27,8 +27,10 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        super.beforeAll(extensionContext);
         LOG.debug("Creating new AWS Redshift validation");
-        redshiftClient = AWSClient.createDefaultClient(account(), RedshiftClient.class);
+        redshiftClient = AWSClient.createDefaultClient(account(), RedshiftClient.class,
+            getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
         validation = new RedshiftValidation(redshiftClient, client(RedshiftDataClient.class), account());
         LOG.debug("Clusters: " + redshiftClient.describeClusters().toString());
         resumeCluster();
@@ -103,9 +105,7 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
 
             //wait till cluster leaves "Modifying" state
             WaitUtils
-                .waitFor(() -> {
-                        return !getCluster().clusterAvailabilityStatus().equalsIgnoreCase("modifying");
-                    }, 30, 30000,
+                .waitFor(() -> !getCluster().clusterAvailabilityStatus().equalsIgnoreCase("modifying"), 30, 30000,
                     "Waiting for Cluster " + getCluster().clusterIdentifier() + " to process the snapshot");
         }
     }

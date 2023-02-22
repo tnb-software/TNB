@@ -1,10 +1,9 @@
 package software.tnb.aws.dynamodb.service;
 
-import software.tnb.aws.dynamodb.validation.DynamoDBValidation;
-
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.client.AWSClient;
 import software.tnb.aws.common.service.AWSService;
+import software.tnb.aws.dynamodb.validation.DynamoDBValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -19,8 +18,10 @@ public class DynamoDB extends AWSService<AWSAccount, DynamoDbClient, DynamoDBVal
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        super.beforeAll(extensionContext);
         LOG.debug("Creating new DynamoDB validation");
-        streamsClient = AWSClient.createDefaultClient(account(), DynamoDbStreamsClient.class);
+        streamsClient = AWSClient.createDefaultClient(account(), DynamoDbStreamsClient.class,
+            getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
         validation = new DynamoDBValidation(client(DynamoDbClient.class), streamsClient);
     }
 

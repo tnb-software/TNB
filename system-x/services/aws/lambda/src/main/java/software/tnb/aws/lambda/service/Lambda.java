@@ -1,11 +1,10 @@
 package software.tnb.aws.lambda.service;
 
-import software.tnb.aws.lambda.validation.LambdaValidation;
-
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.service.AWSService;
-import software.tnb.common.service.ServiceFactory;
 import software.tnb.aws.iam.service.IAM;
+import software.tnb.aws.lambda.validation.LambdaValidation;
+import software.tnb.common.service.ServiceFactory;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -19,12 +18,13 @@ public class Lambda extends AWSService<AWSAccount, LambdaClient, LambdaValidatio
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
-        super.afterAll(context);
         iam.afterAll(context);
+        super.afterAll(context);
     }
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
+        super.beforeAll(context);
         iam.beforeAll(context);
         LOG.debug("Creating new Lambda validation");
         validation = new LambdaValidation(client(LambdaClient.class), iam);
