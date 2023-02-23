@@ -42,6 +42,7 @@
         <module>mllp</module>
         <module>webhook</module>
         <module>splunk</module>
+        <module>microsoft</module>
     </modules>
 
     <dependencies>
