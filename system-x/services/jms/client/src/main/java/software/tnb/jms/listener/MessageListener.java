@@ -1,5 +1,6 @@
 package software.tnb.jms.listener;
 
+import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.WaitUtils;
 
 import java.util.ArrayList;
@@ -12,7 +13,11 @@ public class MessageListener<T> {
 
     public T next(long timeout) {
         checkSubscribe();
-        WaitUtils.waitFor(() -> index < messages.size(), 30, timeout / 30, "Waiting until a next message arrives");
+        try {
+            WaitUtils.waitFor(() -> index < messages.size(), 30, timeout / 30, "Waiting until a next message arrives");
+        } catch (TimeoutException e) {
+            return null;
+        }
         return messages.get(index++);
     }
 
