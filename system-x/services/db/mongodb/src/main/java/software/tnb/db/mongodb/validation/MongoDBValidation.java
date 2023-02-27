@@ -46,8 +46,12 @@ public class MongoDBValidation {
     }
 
     public List<Document> getDocuments(String collectionName, int count) {
-        LOG.debug("Getting documents in MongoDB collection {}", collectionName);
-        MongoCollection<Document> collection = client.getDatabase(account.database()).getCollection(collectionName);
+        return getDocuments(account.database(), collectionName, count);
+    }
+
+    private List<Document> getDocuments(String dbName, String collectionName, int count) {
+        LOG.debug("Getting documents in MongoDB database {} collection {}", dbName, collectionName);
+        MongoCollection<Document> collection = client.getDatabase(dbName).getCollection(collectionName);
         if (count == -1) {
             return StreamSupport.stream(collection.find().spliterator(), false).collect(Collectors.toList());
         } else {
@@ -73,5 +77,26 @@ public class MongoDBValidation {
 
     public void copyAllDocuments(String sourceCollection, String destCollection) {
         client.getDatabase(account.database()).getCollection(destCollection).insertMany(getDocuments(sourceCollection));
+    }
+
+    public void cloneDatabase(String sourceDatabase) {
+        client.getDatabase(sourceDatabase).listCollectionNames().forEach(c -> {
+            copyCollectionFromDatabase(sourceDatabase, c);
+        });
+    }
+
+    public void copyCollectionFromDatabase(String sourceDatabase, String collectionName) {
+        CreateCollectionOptions options = new CreateCollectionOptions();
+        options.capped(true);
+        options.sizeInBytes(1024 * 1024);
+
+        client.getDatabase(account.database()).createCollection(collectionName, options);
+
+        client.getDatabase(account.database()).getCollection(collectionName)
+            .insertMany(getDocuments(sourceDatabase, collectionName, -1));
+    }
+
+    public void dropDatabase(String databaseName) {
+        client.getDatabase(databaseName).drop();
     }
 }
