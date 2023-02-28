@@ -45,11 +45,14 @@ public abstract class SFTP implements FileTransferService, WithDockerImage {
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
-            "SFTP_USERS", String.format("%s:%s:::%s", account().username(), account().password(), account().baseDir())
+            "SFTP_SERVER_PORT", String.valueOf(port()),
+            "SFTP_SERVER_USERNAME", account().username(),
+            "SFTP_SERVER_PASSWORD", account().password(),
+            "SFTP_SERVER_HOME", account().homeDir()
         );
     }
 
     public String defaultImage() {
-        return "quay.io/fuse_qe/sftp:alpine";
+        return "quay.io/rh_integration/sftp-server:latest";
     }
 }

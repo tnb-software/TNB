@@ -28,6 +28,10 @@ public class SFTPAccount implements FileTransferAccount {
     }
     
     public String baseDir() {
-        return "sftp";
+        return homeDir() + "/" + username();
+    }
+
+    public String homeDir() {
+        return "data";
     }
 }

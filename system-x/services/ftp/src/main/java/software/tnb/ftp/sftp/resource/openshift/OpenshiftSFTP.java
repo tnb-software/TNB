@@ -19,6 +19,7 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
@@ -46,6 +47,11 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     private PortForward portForward;
     private int localPort;
     private final String serviceAccountName = name() + "-sa";
+
+    @Override
+    public int port() {
+        return 2222;
+    }
 
     @Override
     public void create() {
@@ -91,7 +97,8 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
                 .addNewContainer()
                 .withName(name()).withImage(image()).addAllToPorts(ports)
                 .withImagePullPolicy("IfNotPresent")
-                .withEnv(new EnvVar("SFTP_USERS", containerEnvironment().get("SFTP_USERS"), null))
+                .withEnv(containerEnvironment().entrySet().stream().map(entry -> new EnvVar(entry.getKey()
+                    , entry.getValue(), null)).collect(Collectors.toList()))
                 .editOrNewSecurityContext()
                 .editOrNewCapabilities()
                 .addNewAdd("SYS_CHROOT")
@@ -194,5 +201,10 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     @Override
     public String externalHostname() {
         return "localhost";
+    }
+
+    @Override
+    public String logs() {
+        return OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
     }
 }

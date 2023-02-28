@@ -1,8 +1,14 @@
 FROM registry.access.redhat.com/ubi8/openjdk-11
 
-ADD --chown=185:0 https://downloads.apache.org/mina/ftpserver/1.1.1/dist/apache-ftpserver-1.1.1.zip /tmp/apache-ftpserver.zip
+USER root
 
-ENV FTP_SERVER_DIR=/opt/apache-ftpserver-1.1.1
+RUN microdnf update -y && microdnf install unzip -y && microdnf clean all
+
+USER jboss
+
+ADD --chown=185:0 https://downloads.apache.org/mina/ftpserver/1.1.4/apache-ftpserver-1.1.4-bin.zip /tmp/apache-ftpserver.zip
+
+ENV FTP_SERVER_DIR=/opt/apache-ftpserver-1.1.4
 
 
 RUN cd /opt && \
