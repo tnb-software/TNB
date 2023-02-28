@@ -22,9 +22,9 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable, Wit
     @Override
     public void deploy() {
         LOG.info("Starting Elasticsearch container");
-        // Specify max 1GB of memory, seems to work ok, but without it the container can eat a lot of ram
+        // Specify max 2GB of memory, seems to work ok, but without it the container can eat a lot of ram
         container = new ElasticsearchContainer(image()).withPassword(PASSWORD)
-            .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMemory(1024L * 1024 * 1024));
+            .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMemory(1024L * 1024 * 1024 * 2));
         container.start();
         LOG.info("Elasticsearch container started");
     }

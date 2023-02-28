@@ -65,7 +65,7 @@ public abstract class Elasticsearch implements Service {
     }
 
     public String version() {
-        return System.getProperty(ELASTICSEARCH_VERSION, "7.17.7");
+        return System.getProperty(ELASTICSEARCH_VERSION, "7.17.9");
     }
 
     public String clusterName() {
