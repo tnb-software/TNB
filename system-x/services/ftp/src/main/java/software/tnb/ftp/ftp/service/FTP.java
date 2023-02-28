@@ -40,7 +40,7 @@ public abstract class FTP implements FileTransferService, WithDockerImage {
         return Map.of(
             "FTP_USERNAME", account().username(),
             "FTP_PASSWORD", account().password(),
-            "USERS", String.format("%s|%s", account.username(), account.password())
+            "USERS", String.format("%s|%s", account().username(), account().password())
         );
     }
 

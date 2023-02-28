@@ -168,6 +168,11 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
     }
 
     @Override
+    public String logs() {
+        return OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
+    }
+
+    @Override
     public String host() {
         return inClusterHostname();
     }

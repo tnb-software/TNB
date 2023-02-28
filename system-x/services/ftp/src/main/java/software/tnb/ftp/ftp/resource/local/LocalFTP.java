@@ -1,8 +1,8 @@
 package software.tnb.ftp.ftp.resource.local;
 
+import software.tnb.common.deployment.Deployable;
 import software.tnb.ftp.ftp.service.CustomFTPClient;
 import software.tnb.ftp.ftp.service.FTP;
-import software.tnb.common.deployment.Deployable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,6 +15,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @AutoService(FTP.class)
 public class LocalFTP extends FTP implements Deployable {
@@ -59,6 +62,22 @@ public class LocalFTP extends FTP implements Deployable {
     }
 
     @Override
+    public String logs() {
+        try {
+            Map<String, String> env = Arrays.stream(container.execInContainer("env").getStdout().split("\n"))
+                .collect(Collectors.toMap(
+                    envPair -> envPair.split("=")[0],
+                    envPair -> envPair.split("=")[1]));
+            if (env.containsKey("FTP_SERVER_DIR")) {
+                return container.execInContainer("cat", String.format("%s/res/log/ftpd.log", env.get("FTP_SERVER_DIR"))).getStdout();
+            }
+        } catch (IOException | InterruptedException e) {
+            LOG.warn("unable to read log file", e);
+        }
+        return "";
+    }
+
+    @Override
     public String host() {
         // container.getIpAddress() always returns "localhost" (see https://github.com/testcontainers/testcontainers-java/issues/452 ),
         // we need the actual container ip address, because ftp requires multiple ports.
@@ -92,7 +111,7 @@ public class LocalFTP extends FTP implements Deployable {
         @Override
         public void makeDirectory(String dirName) throws IOException {
             try {
-                container.execInContainer(String.format("mkdir -m a=rwx '%s/%s'", basePath(), dirName));
+                container.execInContainer("mkdir", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

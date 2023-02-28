@@ -10,4 +10,6 @@ public interface FileTransferService extends Service {
     FileTransferAccount account();
 
     FileTransferValidation validation();
+
+    String logs();
 }

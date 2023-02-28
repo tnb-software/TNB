@@ -62,4 +62,9 @@ public class LocalSFTP extends SFTP implements Deployable {
     public String host() {
         return container.getContainerInfo().getNetworkSettings().getNetworks().get("bridge").getIpAddress();
     }
+
+    @Override
+    public String logs() {
+        return container.getLogs();
+    }
 }
