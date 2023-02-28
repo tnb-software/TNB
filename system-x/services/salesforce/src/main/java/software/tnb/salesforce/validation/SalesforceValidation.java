@@ -104,6 +104,14 @@ public class SalesforceValidation {
         return queryResult.getTotalSize() > 0 ? Optional.of(queryResult.getRecords().get(0)) : Optional.empty();
     }
 
+    public List<Case> getCasesByAccountId(String accountId) {
+        final QueryResult<Case> queryResult =
+            client.query("SELECT Id,Status,Origin,AccountId,Subject FROM case where AccountId = '"
+                + accountId + "'", Case.class
+            );
+        return queryResult.getRecords();
+    }
+
     public ResourceRepresentation getBulkJob(String id, Boolean isBulkV2) throws ApiException {
         if (isBulkV2) {
             return client.get("/jobs/ingest/" + id);
