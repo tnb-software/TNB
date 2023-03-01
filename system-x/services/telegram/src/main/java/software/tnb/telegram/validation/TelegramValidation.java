@@ -1,17 +1,19 @@
 package software.tnb.telegram.validation;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 import software.tnb.telegram.service.Telegram;
+import software.tnb.telegram.validation.model.Message;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.util.List;
 
 public class TelegramValidation {
     private final Telegram client;
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     private static final Logger LOG = LoggerFactory.getLogger(TelegramValidation.class);
 
@@ -20,25 +22,24 @@ public class TelegramValidation {
     }
 
     public void sendMessage(String text) {
-        LOG.debug("Send message " + text + " from telegram-client ");
+        LOG.debug("Sending message {} from telegram-client", text);
         try {
             client.execInContainer("python3", "/app/send_message.py", text);
         } catch (Exception e) {
-            fail("Failed to send message", e);
+            throw new RuntimeException("Failed to send message", e);
         }
     }
 
-    public List<String> getLastNMessages(int n) {
+    public List<Message> getLastNMessages(int n) {
         LOG.debug("Get last " + n + " messages: ");
-        List<String> messages;
         try {
-            String messagesInStr = client.execInContainer("python3", "/app/get_messages.py", n + "");
-            LOG.debug(messagesInStr);
-            messages = Arrays.asList(messagesInStr.split("\n"));
+            String response = client.execInContainer("python3", "/app/get_messages.py", n + "");
+            LOG.debug("Received messages: {}", response);
+            return objectMapper.readValue(response, new TypeReference<>() {
+            });
         } catch (Exception e) {
             throw new RuntimeException("Failed to get messages", e);
         }
-        return messages;
     }
 }
 
