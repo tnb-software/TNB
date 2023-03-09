@@ -2,14 +2,18 @@ package software.tnb.ftp.sftp.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import software.tnb.common.utils.IOUtils;
 import software.tnb.ftp.common.FileTransferValidation;
 import software.tnb.ftp.sftp.account.SFTPAccount;
-import software.tnb.common.utils.IOUtils;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
+import net.schmizz.sshj.sftp.RemoteResourceInfo;
 import net.schmizz.sshj.sftp.SFTPClient;
 
 public class SFTPValidation implements FileTransferValidation {
@@ -54,6 +58,24 @@ public class SFTPValidation implements FileTransferValidation {
             client.mkdir(account.baseDir() + "/" + dirName);
         } catch (IOException e) {
             fail("Validation could not create directory in SFTP", e);
+        }
+    }
+
+    @Override
+    public Map<String, String> downloadAllFiles(String dirName) {
+        return listAllFiles(dirName).stream()
+            .collect(Collectors.toMap(file -> file, file -> this.downloadFile(String.format("%s/%s", dirName, file))));
+    }
+
+    @Override
+    public List<String> listAllFiles(String dirName) {
+        try {
+            return client.ls(account.baseDir() + "/" + dirName).stream()
+                .filter(RemoteResourceInfo::isRegularFile)
+                .map(RemoteResourceInfo::getName)
+                .collect(Collectors.toList());
+        } catch (IOException e) {
+            return fail("Validation could not list directory in SFTP", e);
         }
     }
 

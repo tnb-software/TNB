@@ -9,6 +9,9 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class FTPValidation implements FileTransferValidation {
 
@@ -44,6 +47,21 @@ public class FTPValidation implements FileTransferValidation {
             client.makeDirectory(dirName);
         } catch (IOException e) {
             fail("Validation could not create directory in FTP", e);
+        }
+    }
+
+    @Override
+    public Map<String, String> downloadAllFiles(String dirName) {
+        return listAllFiles(dirName).stream()
+            .collect(Collectors.toMap(file -> file, file -> this.downloadFile(String.format("%s/%s", dirName, file))));
+    }
+
+    @Override
+    public List<String> listAllFiles(String dirName) {
+        try {
+            return client.listFolder(dirName);
+        } catch (IOException e) {
+            return fail("Validation could not read directory in FTP", e);
         }
     }
 }

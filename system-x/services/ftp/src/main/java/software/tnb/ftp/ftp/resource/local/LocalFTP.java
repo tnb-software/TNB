@@ -16,6 +16,7 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -86,6 +87,11 @@ public class LocalFTP extends FTP implements Deployable {
         return container.getContainerInfo().getNetworkSettings().getNetworks().get("bridge").getIpAddress();
     }
 
+    @Override
+    public String hostForActiveConnection() {
+        return host();
+    }
+
     /**
      * Custom client to make transfering files into the server faster and more stable.
      */
@@ -112,6 +118,16 @@ public class LocalFTP extends FTP implements Deployable {
         public void makeDirectory(String dirName) throws IOException {
             try {
                 container.execInContainer("mkdir", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        @Override
+        public List<String> listFolder(String dirName) throws IOException {
+            try {
+                return List.of(container.execInContainer("/bin/bash", "-c", String.format("ls -p %s/%s | grep -v /", basePath(), dirName))
+                    .getStdout().split("\n"));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }

@@ -199,6 +199,11 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     }
 
     @Override
+    public String hostForActiveConnection() {
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).get(0).getStatus().getPodIP();
+    }
+
+    @Override
     public String externalHostname() {
         return "localhost";
     }
