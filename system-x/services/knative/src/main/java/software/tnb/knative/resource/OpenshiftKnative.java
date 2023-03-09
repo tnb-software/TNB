@@ -13,13 +13,17 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
+import dev.failsafe.Failsafe;
+import dev.failsafe.FailsafeException;
+import dev.failsafe.RetryPolicy;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.KubernetesClientTimeoutException;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Knative.class)
@@ -83,12 +87,17 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
 
         // Create eventing and serving custom resource
         try {
-            OpenshiftClient.get().customResource(EVENTING_CTX).inNamespace(EVENTING_NAMESPACE)
-                .createOrReplace(createCr("KnativeEventing", EVENTING_CR_NAME, EVENTING_NAMESPACE));
-            OpenshiftClient.get().customResource(SERVING_CTX).inNamespace(SERVING_NAMESPACE)
-                .createOrReplace(createCr("KnativeServing", SERVING_CR_NAME, SERVING_NAMESPACE));
-        } catch (IOException e) {
-            fail("Unable to create custom resources: ", e);
+            RetryPolicy<Void> retryPolicy = RetryPolicy.<Void>builder()
+                .handle(KubernetesClientTimeoutException.class)
+                .withDelay(Duration.ofSeconds(5))
+                .withMaxRetries(3)
+                .build();
+            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().customResource(EVENTING_CTX).inNamespace(EVENTING_NAMESPACE)
+                .createOrReplace(createCr("KnativeEventing", EVENTING_CR_NAME, EVENTING_NAMESPACE)));
+            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().customResource(SERVING_CTX).inNamespace(SERVING_NAMESPACE)
+                .createOrReplace(createCr("KnativeServing", SERVING_CR_NAME, SERVING_NAMESPACE)));
+        } catch (FailsafeException e) {
+            fail("Unable to create custom resources: ", e.getCause());
         }
     }
 
