@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 public class WebhookSiteRequest {
+    private String method;
 
     private String uuid;
 
@@ -13,6 +14,14 @@ public class WebhookSiteRequest {
     private String content;
 
     private LocalDateTime created_at;
+
+    public String getMethod() {
+        return method;
+    }
+
+    public void setMethod(String method) {
+        this.method = method;
+    }
 
     public String getUuid() {
         return uuid;
