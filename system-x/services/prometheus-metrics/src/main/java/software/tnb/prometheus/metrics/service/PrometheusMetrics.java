@@ -10,4 +10,6 @@ public abstract class PrometheusMetrics implements Service {
     public PrometheusMetricsValidation validation() {
         return validation;
     }
+
+    public abstract String getUrl();
 }

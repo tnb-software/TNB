@@ -60,4 +60,17 @@ public class OpenshiftPrometheusMetrics extends PrometheusMetrics implements Ope
     public boolean isReady() {
         return true;
     }
+
+    @Override
+    public String getUrl() {
+        //eager init if url is requested
+        if (validation == null) {
+            try {
+                beforeAll(null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return validation.getUrl();
+    }
 }

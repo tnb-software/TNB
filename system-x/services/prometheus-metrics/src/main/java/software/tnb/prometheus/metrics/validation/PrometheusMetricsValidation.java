@@ -282,4 +282,8 @@ public class PrometheusMetricsValidation {
             this.query = query;
         }
     }
+
+    public String getUrl() {
+        return this.url;
+    }
 }

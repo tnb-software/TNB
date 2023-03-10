@@ -23,6 +23,7 @@
         <module>google</module>
         <module>knative</module>
         <module>slack</module>
+        <module>jaeger</module>
         <module>jira</module>
         <module>http</module>
         <module>kafka</module>
