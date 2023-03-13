@@ -177,6 +177,11 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
         return inClusterHostname();
     }
 
+    @Override
+    public String hostForActiveConnection() {
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).get(0).getStatus().getPodIP();
+    }
+
     public class OpenShiftFTPClient implements CustomFTPClient {
 
         @Override
@@ -205,6 +210,17 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
         public void makeDirectory(String dirName) {
             getPodResource().writingOutput(new ByteArrayOutputStream())
                 .exec("mkdir", "-p", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
+        }
+
+        @Override
+        public List<String> listFolder(String dirName) {
+            try {
+                return List.of(new String(getPodResource().redirectingOutput()
+                    .exec("/bin/bash", "-c", String.format("ls -p %s/%s | grep -v /", basePath(), dirName)).getOutput().readAllBytes())
+                    .split("\n"));
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to read command output: " + e);
+            }
         }
 
         private PodResource<Pod> getPodResource() {

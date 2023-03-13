@@ -7,6 +7,8 @@ public interface FileTransferService extends Service {
 
     int port();
 
+    String hostForActiveConnection();
+
     FileTransferAccount account();
 
     FileTransferValidation validation();

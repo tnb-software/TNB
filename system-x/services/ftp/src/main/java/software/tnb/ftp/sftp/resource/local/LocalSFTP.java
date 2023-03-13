@@ -64,6 +64,11 @@ public class LocalSFTP extends SFTP implements Deployable {
     }
 
     @Override
+    public String hostForActiveConnection() {
+        return host();
+    }
+
+    @Override
     public String logs() {
         return container.getLogs();
     }
