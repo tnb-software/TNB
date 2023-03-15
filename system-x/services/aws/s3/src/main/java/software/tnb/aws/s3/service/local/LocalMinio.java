@@ -49,6 +49,11 @@ public class LocalMinio extends Minio implements Deployable {
     }
 
     @Override
+    public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        Deployable.super.beforeAll(extensionContext);
+    }
+
+    @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         super.afterAll(extensionContext);
         undeploy();
