@@ -70,6 +70,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private int port = 8080;
 
+    private String jvmAgentPath;
+
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
     }
@@ -410,5 +412,19 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public int getPort() {
         return port;
+    }
+
+    /**
+     * Add command parameter -javaagent:path/to/jvmagent.jar
+     * @param jvmAgentPath String, the path of the agent
+     * @return SELF
+     */
+    public SELF jvmAgentPath(String jvmAgentPath) {
+        this.jvmAgentPath = jvmAgentPath;
+        return self();
+    }
+
+    public String getJvmAgentPath() {
+        return jvmAgentPath;
     }
 }

@@ -148,7 +148,9 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties());
         }
 
-        return entriesInString(entries);
+        return Optional.ofNullable(integrationBuilder.getJvmAgentPath())
+            .map(path -> String.format("-javaagent:/deployments/data/%s ", path)) //all the resources are copied in the data folder
+            .orElse("") + entriesInString(entries);
     }
 
     protected String getPropertiesForMaven(AbstractIntegrationBuilder<?> integrationBuilder) {

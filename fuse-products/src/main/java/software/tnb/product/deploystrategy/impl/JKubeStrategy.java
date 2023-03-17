@@ -16,6 +16,7 @@ import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -94,49 +95,52 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
         Path jkubeFolder = Path.of(baseDirectory.toAbsolutePath().toString(), "src", "main", "jkube");
         jkubeFolder.toFile().mkdirs();
         String properties = "";
+
+        //copy resources
+        copyResources(baseDirectory, "jkube-resources");
+
+        //add resources via plugin config
+        final File pomFile = baseDirectory.resolve("pom.xml").toFile();
+
+        try (InputStreamReader reader =
+                 new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
+
+            final Xpp3Dom ompConfig = Xpp3DomBuilder.build(reader);
+
+            final Model model = Maven.loadPom(pomFile);
+
+            final Optional<Plugin> existingOmp = model.getBuild().getPlugins().stream()
+                .filter(plugin -> plugin.getArtifactId().equals(OPENSHIFT_MAVEN_PLUGIN_AID))
+                .findFirst();
+            existingOmp.ifPresentOrElse(plugin -> {
+                if (existingOmp.get().getConfiguration() != null  //existing plugin in pom.xml
+                    && ((Xpp3Dom) existingOmp.get().getConfiguration()).getChild("images") != null) { //existing plugin config
+                    existingOmp.get().setConfiguration(Xpp3DomUtils.mergeXpp3Dom(ompConfig
+                        , ((Xpp3Dom) existingOmp.get().getConfiguration())));
+                } else {
+                    existingOmp.get().setConfiguration(ompConfig); //non existing config in existing plugin
+                }
+            }, () -> { //non existing plugin in pom.xml
+                final Plugin omp = new Plugin();
+                omp.setArtifactId(OPENSHIFT_MAVEN_PLUGIN_AID);
+                omp.setGroupId(SpringBootConfiguration.openshiftMavenPluginGroupId());
+                omp.setVersion(SpringBootConfiguration.openshiftMavenPluginVersion());
+                omp.setConfiguration(ompConfig);
+                model.getBuild().getPlugins().add(omp);
+            });
+
+            model.getBuild().setFinalName(integrationBuilder.getIntegrationName());
+
+            Maven.writePom(pomFile, model);
+        } catch (IOException | XmlPullParserException e) {
+            throw new RuntimeException("Error configuring jkube plugin", e);
+        }
+
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
 
             properties = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet().stream()
                 .map(entry -> "    " + entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
-
-            //copy resources
-            copyResources(baseDirectory, "jkube-resources");
-
-            //add resources via plugin config
-            final File pomFile = baseDirectory.resolve("pom.xml").toFile();
-
-            try (InputStreamReader reader =
-                     new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
-
-                final Xpp3Dom ompConfig = Xpp3DomBuilder.build(reader);
-
-                final Model model = Maven.loadPom(pomFile);
-
-                final Optional<Plugin> existingOmp = model.getBuild().getPlugins().stream()
-                    .filter(plugin -> plugin.getArtifactId().equals(OPENSHIFT_MAVEN_PLUGIN_AID))
-                    .findFirst();
-                existingOmp.ifPresentOrElse(plugin -> {
-                    if (existingOmp.get().getConfiguration() != null  //existing plugin in pom.xml
-                        && ((Xpp3Dom) existingOmp.get().getConfiguration()).getChild("images") != null) { //existing plugin config
-                        existingOmp.get().setConfiguration(Xpp3DomUtils.mergeXpp3Dom(ompConfig
-                            , ((Xpp3Dom) existingOmp.get().getConfiguration())));
-                    } else {
-                        existingOmp.get().setConfiguration(ompConfig); //non existing config in existing plugin
-                    }
-                }, () -> { //non existing plugin in pom.xml
-                    final Plugin omp = new Plugin();
-                    omp.setArtifactId(OPENSHIFT_MAVEN_PLUGIN_AID);
-                    omp.setGroupId(SpringBootConfiguration.openshiftMavenPluginGroupId());
-                    omp.setVersion(SpringBootConfiguration.openshiftMavenPluginVersion());
-                    omp.setConfiguration(ompConfig);
-                    model.getBuild().getPlugins().add(omp);
-                });
-
-                Maven.writePom(pomFile, model);
-            } catch (IOException | XmlPullParserException e) {
-                throw new RuntimeException("Error configuring jkube plugin", e);
-            }
 
             //patch to avoid too characters on OCP resource names
             final Model model = Maven.loadPom(pomFile);
@@ -157,8 +161,8 @@ public class JKubeStrategy extends OpenshiftBaseDeployer {
         software.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("configmap.yaml"), jkubeFileContent);
 
         try {
-            final String deploymentContent = IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8)
-                .replaceAll("XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder));
+            final String deploymentContent = StringUtils.replace(IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8),
+                "XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder).replaceAll("\"", "\\\\\""));
             software.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("deployment.yaml"), deploymentContent);
         } catch (IOException e) {
             throw new RuntimeException("Error creating custom deployment.yaml", e);
