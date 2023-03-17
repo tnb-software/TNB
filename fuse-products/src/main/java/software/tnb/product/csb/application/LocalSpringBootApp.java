@@ -9,6 +9,7 @@ import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,6 +49,10 @@ public class LocalSpringBootApp extends SpringBootApp {
         Path integrationTarget = projectPath.resolve("target");
 
         command = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
+
+        if (StringUtils.isNotEmpty(integrationBuilder.getJvmAgentPath())) {
+           command.add("-javaagent:" + projectPath.resolve("src/main/resources/").resolve(integrationBuilder.getJvmAgentPath()).toAbsolutePath());
+        }
 
         command.addAll(args);
         command.add("-jar");
