@@ -80,7 +80,6 @@ public class EventHubs implements Service {
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         storageBlob.beforeAll(extensionContext);
         blobContainer = "event-hub-blob-" + new Date().getTime();
-        LOG.debug("Creating new Azure Storage Blob validation");
         storageBlob.validation().createBlobContainer(blobContainer);
 
         producerClient = producerClient();
