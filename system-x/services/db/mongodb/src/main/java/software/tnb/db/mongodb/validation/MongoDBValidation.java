@@ -3,12 +3,15 @@ package software.tnb.db.mongodb.validation;
 import software.tnb.db.mongodb.account.MongoDBAccount;
 
 import org.bson.Document;
+import org.bson.conversions.Bson;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.model.CreateCollectionOptions;
+import com.mongodb.client.result.DeleteResult;
+import com.mongodb.client.result.UpdateResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,6 +60,23 @@ public class MongoDBValidation {
         } else {
             return StreamSupport.stream(collection.find().spliterator(), false).limit(count).collect(Collectors.toList());
         }
+    }
+
+    public UpdateResult replaceDocument(String collectionName, Bson filter, Document document) {
+        LOG.info("Replacing at most one document specified by filter {} with new document {} in a collection named {}", filter, document.toJson(),
+            collectionName);
+        return client.getDatabase(account.database()).getCollection(collectionName).replaceOne(filter, document);
+    }
+
+    public UpdateResult updateDocument(String collectionName, Bson filter, Document document) {
+        LOG.info("Updating at most one document specified by filter {} with new document {} in a collection named {}", filter, document.toJson(),
+            collectionName);
+        return client.getDatabase(account.database()).getCollection(collectionName).updateOne(filter, document);
+    }
+
+    public DeleteResult deleteDocument(String collectionName, Bson filter) {
+        LOG.info("Replacing at most one document by filter {} in a collection named {}", filter, collectionName);
+        return client.getDatabase(account.database()).getCollection(collectionName).deleteOne(filter);
     }
 
     public void createCollection(String collectionName) {
