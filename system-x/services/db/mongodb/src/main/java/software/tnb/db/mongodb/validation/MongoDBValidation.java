@@ -68,14 +68,14 @@ public class MongoDBValidation {
         return client.getDatabase(account.database()).getCollection(collectionName).replaceOne(filter, document);
     }
 
-    public UpdateResult updateDocument(String collectionName, Bson filter, Document document) {
-        LOG.info("Updating at most one document specified by filter {} with new document {} in a collection named {}", filter, document.toJson(),
-            collectionName);
+    public UpdateResult updateDocument(String collectionName, Bson filter, Bson document) {
+        LOG.info("Updating at most one document specified by filter {} with new document {} in a collection named {}", filter,
+            document.toBsonDocument().toJson(), collectionName);
         return client.getDatabase(account.database()).getCollection(collectionName).updateOne(filter, document);
     }
 
     public DeleteResult deleteDocument(String collectionName, Bson filter) {
-        LOG.info("Replacing at most one document by filter {} in a collection named {}", filter, collectionName);
+        LOG.info("Deleting at most one document by filter {} in a collection named {}", filter, collectionName);
         return client.getDatabase(account.database()).getCollection(collectionName).deleteOne(filter);
     }
 
