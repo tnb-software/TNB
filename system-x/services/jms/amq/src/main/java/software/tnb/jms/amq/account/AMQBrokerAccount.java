@@ -4,9 +4,9 @@ import software.tnb.common.account.Account;
 
 public class AMQBrokerAccount implements Account {
     private String username = "admin";
-    private String password = "admin123.";
-    private String keystorePassword = "changeme";
-    private String truststorePassword = "changeme";
+    private String password = "admin123.admin123.admin123.";
+    private String keystorePassword = "changemechangemechangeme";
+    private String truststorePassword = "changemechangemechangeme";
 
     public String keystorePassword() {
         return keystorePassword;
