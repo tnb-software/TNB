@@ -172,7 +172,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         final Map<String, String> data = Map.of(
             "keyStorePassword", encode(account().keystorePassword().getBytes()),
             "trustStorePassword", encode(account().truststorePassword().getBytes()),
-            "client.ts", encodeResource("broker.ts"),
+            "client.ts", encodeResource("client.ts"),
             "broker.ks", encodeResource("broker.ks")
         );
 
