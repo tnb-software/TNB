@@ -21,10 +21,12 @@ import java.security.cert.CertificateFactory;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
@@ -94,6 +96,16 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     public void create() {
         createSubscription();
         deployKafkaCR();
+    }
+
+    /**
+     * https://strimzi.io/blog/2023/01/25/running-apache-kafka-on-fips-enabled-kubernetes-cluster/
+     * until Strimzi 0.33 will be used
+     * @return
+     */
+    @Override
+    public List<EnvVar> getOperatorEnvVariables() {
+        return List.of(new EnvVar("FIPS_MODE", "disabled", null));
     }
 
     @Override

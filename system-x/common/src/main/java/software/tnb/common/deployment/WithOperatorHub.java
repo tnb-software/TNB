@@ -3,8 +3,12 @@ package software.tnb.common.deployment;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.BooleanSupplier;
+
+import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfig;
 
 public interface WithOperatorHub {
     String operatorName();
@@ -52,8 +56,17 @@ public interface WithOperatorHub {
     default void createSubscription() {
         OpenshiftClient.get()
             .createSubscription(getOperatorChannel(), getOperatorName(), getOperatorCatalog(), subscriptionName(), getOperatorCatalogNamespace(),
-                targetNamespace(), clusterWide());
+                targetNamespace(), clusterWide(), null, Optional.ofNullable(getOperatorEnvVariables())
+                    .map(envVars -> {
+                        SubscriptionConfig config = new SubscriptionConfig();
+                        config.setEnv(envVars);
+                        return config;
+                    }).orElse(null));
         OpenshiftClient.get().waitForInstallPlanToComplete(subscriptionName(), targetNamespace());
+    }
+
+    default List<EnvVar> getOperatorEnvVariables() {
+        return null;
     }
 
     default void deleteSubscription(BooleanSupplier waitCondition) {
