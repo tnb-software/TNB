@@ -10,6 +10,7 @@ public class SalesforceAccount implements Account, WithId {
     private String client_secret;
     private String userName;
     private String password;
+    private String secureSocketProtocol;
 
     @Override
     public String credentialsId() {
@@ -62,5 +63,13 @@ public class SalesforceAccount implements Account, WithId {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String secureSocketProtocol() {
+        return secureSocketProtocol;
+    }
+
+    public void setSecureSocketProtocol(String secureSocketProtocol) {
+        this.secureSocketProtocol = secureSocketProtocol;
     }
 }
