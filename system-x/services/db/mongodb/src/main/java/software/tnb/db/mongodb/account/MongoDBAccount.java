@@ -4,13 +4,13 @@ import software.tnb.common.account.Account;
 
 public class MongoDBAccount implements Account {
     private String username = "user";
-    private String password = "user";
+    private String password = "useruseruseruseruseruser";
     private String database = "sampledb";
     private String replicaSetUrl;
     private String replicaSetName = "rs0";
     private String replicaSetMode = "primary";
     private String replicaSetKey = "replica";
-    private String rootPassword = "admin";
+    private String rootPassword = "adminadminadminadminadmin";
     private String clientBeanName = "camelMongoClient";
 
     public void setUsername(String username) {
