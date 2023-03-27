@@ -68,7 +68,10 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     public boolean isReady() {
         try {
             final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), finalName));
-            return !pods.isEmpty() && pods.stream().allMatch(Readiness::isPodReady);
+            return !pods.isEmpty() && pods.stream()
+                .filter(pod -> !pod.isMarkedForDeletion())
+                .filter(pod -> !"Evicted".equals(pod.getStatus().getReason()))
+                .allMatch(Readiness::isPodReady);
         } catch (Exception ignored) {
             return false;
         }
