@@ -25,5 +25,6 @@
         <module>event-hubs</module>
         <module>storage-blob</module>
         <module>storage-queue</module>
+        <module>service-bus</module>
     </modules>
 </project>
