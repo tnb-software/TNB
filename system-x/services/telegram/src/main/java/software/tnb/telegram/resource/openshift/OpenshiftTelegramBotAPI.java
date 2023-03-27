@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.telegram.service.TelegramBotApi;
 
 import org.slf4j.Logger;
@@ -14,10 +15,9 @@ import com.google.auto.service.AutoService;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -28,6 +28,8 @@ import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
 import io.fabric8.openshift.api.model.ImageStream;
@@ -51,8 +53,7 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
         LOG.debug("Deleting image stream");
         OpenshiftClient.get().imageStreams().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
 
@@ -192,16 +193,20 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
 
     @Override
     public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
-            return OpenshiftClient.get().getLogs(pods.get(0)).contains("Create tcp listener [address:0.0.0.0][port:" + getPort() + "]");
-        }
-        return false;
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get())
+            .contains("Create tcp listener [address:0.0.0.0][port:" + getPort() + "]");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        final DeploymentConfig dc = OpenshiftClient.get().deploymentConfigs().withName(name()).get();
+        return dc != null && !dc.isMarkedForDeletion();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
@@ -223,7 +228,7 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
 
     @Override
     public String getLogs() {
-        return OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName()).getLog();
+        return OpenshiftClient.get().getLogs(servicePod().get());
     }
 
     @Override

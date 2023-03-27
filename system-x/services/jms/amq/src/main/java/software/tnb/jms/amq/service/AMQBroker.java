@@ -11,7 +11,7 @@ public abstract class AMQBroker implements Service {
     protected Connection connection;
 
     protected AMQBrokerAccount account;
-    private AMQValidation validation;
+    protected AMQValidation validation;
 
     public AMQBrokerAccount account() {
         if (account == null) {

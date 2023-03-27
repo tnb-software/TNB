@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import dev.failsafe.Failsafe;
@@ -117,6 +118,17 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
             && ((List) OpenshiftClient.get().customResource(EVENTING_CTX).list(EVENTING_NAMESPACE).get("items")).size() == 1
             && ((List) OpenshiftClient.get().customResource(SERVING_CTX).list(SERVING_NAMESPACE).get("items")).size() == 1;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        // not applicable for knative
+        return null;
+    }
+
+    @Override
+    public void restart() {
+        // not applicable for knative
     }
 
     private Map<String, Object> createCr(String kind, String name, String namespace) {

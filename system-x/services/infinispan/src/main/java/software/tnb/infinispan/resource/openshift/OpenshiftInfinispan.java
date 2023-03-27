@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.infinispan.service.Infinispan;
 
 import org.apache.commons.io.IOUtils;
@@ -12,12 +13,10 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
@@ -35,8 +34,7 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
     public void undeploy() {
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
-            .areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -112,30 +110,30 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
 
         OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
             .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .withName(name())
+            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
-                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addNewPort()
-                    .withName(name())
-                    .withProtocol("TCP")
-                    .withPort(PORT)
-                .withTargetPort(new IntOrString(PORT))
-                .endPort()
+            .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .addNewPort()
+            .withName(name())
+            .withProtocol("TCP")
+            .withPort(PORT)
+            .withTargetPort(new IntOrString(PORT))
+            .endPort()
             .endSpec()
-        .build());
-    }
-
-    @Override
-    public boolean isReady() {
-        List<Pod> list = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(list);
+            .build());
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() > 0;
+        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+            .getItems().size() > 0;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override

@@ -10,6 +10,7 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
+import software.tnb.common.utils.WaitUtils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -17,19 +18,20 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import software.amazon.awssdk.services.s3.S3Client;
 
 @AutoService(Minio.class)
@@ -106,8 +108,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().persistentVolumeClaims().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -119,22 +120,26 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     public void closeResources() {
+        client = null;
         IOUtils.closeQuietly(portForward);
         NetworkUtils.releasePort(localPort);
     }
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            .contains("1 Online, 0 Offline.");
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("1 Online, 0 Offline.");
     }
 
     @Override
     public boolean isDeployed() {
         Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
         return deployment != null && !deployment.isMarkedForDeletion();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override

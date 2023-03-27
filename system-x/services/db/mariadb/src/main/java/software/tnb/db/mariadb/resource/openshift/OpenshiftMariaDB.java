@@ -8,6 +8,10 @@ import software.tnb.db.mariadb.service.MariaDB;
 
 import com.google.auto.service.AutoService;
 
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.Pod;
+
 @AutoService(MariaDB.class)
 public class OpenshiftMariaDB extends MariaDB implements OpenshiftDeployable, WithName, WithInClusterHostname {
     private final OpenshiftDB openshiftDb = new OpenshiftDB(this, PORT);
@@ -30,6 +34,7 @@ public class OpenshiftMariaDB extends MariaDB implements OpenshiftDeployable, Wi
     @Override
     public void closeResources() {
         openshiftDb.closeResources();
+        validation = null;
     }
 
     @Override
@@ -40,6 +45,11 @@ public class OpenshiftMariaDB extends MariaDB implements OpenshiftDeployable, Wi
     @Override
     public boolean isDeployed() {
         return openshiftDb.isDeployed();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return openshiftDb.podSelector();
     }
 
     @Override

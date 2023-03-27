@@ -15,9 +15,9 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -28,6 +28,7 @@ import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(LocalStack.class)
 public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -135,16 +136,19 @@ public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployab
 
     @Override
     public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
-            return OpenshiftClient.get().getLogs(pods.get(0)).contains("Ready.");
-        }
-        return false;
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Ready.");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+            .getItems().size() > 0;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override

@@ -4,15 +4,15 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.http.service.HTTP;
 
 import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -34,8 +34,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
     public void undeploy() {
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
-            .areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -134,19 +133,19 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
     }
 
     @Override
-    public boolean isReady() {
-        List<Pod> list = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(list);
+    public boolean isDeployed() {
+        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+            .getItems().size() > 0;
     }
 
     @Override
-    public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() > 0;
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
     public String getLog() {
-        return OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName()).getLog();
+        return OpenshiftClient.get().getLogs(servicePod().get());
     }
 
     @Override

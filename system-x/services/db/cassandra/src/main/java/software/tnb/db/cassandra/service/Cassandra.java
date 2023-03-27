@@ -14,8 +14,8 @@ public abstract class Cassandra implements Service, WithDockerImage {
 
     public static final int CASSANDRA_PORT = 9042;
 
-    private CassandraValidation validation;
     private CassandraAccount account;
+    protected CassandraValidation validation;
 
     public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box

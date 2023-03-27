@@ -8,6 +8,10 @@ import software.tnb.db.mssql.service.MSSQL;
 
 import com.google.auto.service.AutoService;
 
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.Pod;
+
 @AutoService(MSSQL.class)
 public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithName, WithInClusterHostname {
     private final OpenshiftDB openshiftDb = new OpenshiftDB(this, PORT);
@@ -30,6 +34,7 @@ public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithNa
     @Override
     public void closeResources() {
         openshiftDb.closeResources();
+        validation = null;
     }
 
     @Override
@@ -40,6 +45,11 @@ public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithNa
     @Override
     public boolean isDeployed() {
         return openshiftDb.isDeployed();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return openshiftDb.podSelector();
     }
 
     @Override

@@ -41,7 +41,7 @@ public class LocalJaeger extends Jaeger implements Deployable, WithDockerImage {
 
     @Override
     public void closeResources() {
-
+        validation = null;
     }
 
     @Override

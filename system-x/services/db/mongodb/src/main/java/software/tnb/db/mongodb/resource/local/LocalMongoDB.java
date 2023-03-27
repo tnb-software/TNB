@@ -43,6 +43,7 @@ public class LocalMongoDB extends MongoDB implements Deployable {
             LOG.debug("Closing MongoDB client");
             client.close();
         }
+        validation = null;
     }
 
     @Override

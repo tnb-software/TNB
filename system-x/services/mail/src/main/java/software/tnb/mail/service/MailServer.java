@@ -8,13 +8,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class MailServer implements Service, WithDockerImage {
+    private static final Logger LOG = LoggerFactory.getLogger(MailServer.class);
     protected static final int SMTP_PORT = 25;
     protected static final int HTTP_PORT = 8000;
     protected static final int IMAP_PORT = 143;
     protected static final int POP3_PORT = 110;
 
-    private static final Logger LOG = LoggerFactory.getLogger(MailServer.class);
-    private MailValidation validation;
+    protected MailValidation validation;
 
     public MailValidation validation() {
         if (validation == null) {

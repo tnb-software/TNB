@@ -20,12 +20,12 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 
 @AutoService(Hyperfoil.class)
 public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperatorHub {
@@ -47,8 +47,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         if (!HyperfoilConfiguration.keepRunning()) {
             try {
                 OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
-                WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", HYPERFOIL_CTX.getName(), "app", APP_NAME))
-                    .isEmpty(), "Waiting until hyperfoil pods are deleted");
+                WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
                 deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
                     .stream().noneMatch(p -> p.getMetadata().getName().contains("hyperfoil")));
             } catch (IOException e) {
@@ -92,18 +91,17 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     }
 
     @Override
-    public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods("app", APP_NAME);
-        return pods.size() > 0 && pods.stream().allMatch(OpenShiftReadiness::isPodReady);
+    public boolean isDeployed() {
+        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems()
+            .stream()
+            .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
+            && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
     }
 
     @Override
-    public boolean isDeployed() {
-        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems()
-                .stream()
-                .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
-        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-                && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
+    public Predicate<Pod> podSelector() {
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("app", APP_NAME));
     }
 
     @Override

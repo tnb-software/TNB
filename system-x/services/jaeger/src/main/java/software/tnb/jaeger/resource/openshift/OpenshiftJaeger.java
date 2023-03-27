@@ -18,13 +18,11 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
+import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 
 @AutoService(Jaeger.class)
 public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, WithExternalHostname, WithOperatorHub {
@@ -53,7 +51,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
 
     @Override
     public void closeResources() {
-
+        validation = null;
     }
 
     @Override
@@ -70,17 +68,15 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     }
 
     @Override
-    public boolean isReady() {
-        final List<Pod> labeledPods = OpenshiftClient.get()
-            .getLabeledPods(Map.of("app", "jaeger", "app.kubernetes.io/name", JAEGER_INSTANCE_NAME));
-        return labeledPods.size() > 0 && labeledPods.stream().allMatch(OpenShiftReadiness::isPodReady);
-    }
-
-    @Override
     public boolean isDeployed() {
         return OpenshiftClient.get().apps().deployments()
             .inNamespace(targetNamespace()).list().getItems().stream()
             .anyMatch(deployment -> JAEGER_INSTANCE_NAME.equals(deployment.getMetadata().getName()));
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("app", "jaeger", "app.kubernetes.io/name", JAEGER_INSTANCE_NAME));
     }
 
     @Override
@@ -95,9 +91,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
 
     @Override
     public String getLog() {
-        return OpenshiftClient.get().getPodLog(OpenshiftClient.get().pods().inNamespace(targetNamespace())
-            .withLabel("app.kubernetes.io/name", JAEGER_INSTANCE_NAME).list().getItems().stream().findFirst()
-            .orElseThrow(() -> new NoSuchElementException("unable to find pods")), "jaeger");
+        return OpenshiftClient.get().getPodLog(servicePod().get(), "jaeger");
     }
 
     @Override

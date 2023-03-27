@@ -7,13 +7,16 @@ import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.NetworkUtils;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.db.common.service.SQL;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
+import java.util.function.Predicate;
+
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
 
@@ -106,8 +109,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
         OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
-            .areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -123,14 +125,14 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     }
 
     @Override
-    public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
+    public boolean isDeployed() {
+        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
+        return deployment != null && !deployment.isMarkedForDeletion();
     }
 
     @Override
-    public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() > 0;
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override

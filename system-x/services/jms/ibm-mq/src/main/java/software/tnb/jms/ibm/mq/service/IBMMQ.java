@@ -90,6 +90,7 @@ public abstract class IBMMQ implements Service, WithDockerImage {
     }
 
     public void closeResources() {
+        validation = null;
         if (connection != null) {
             try {
                 connection.stop();

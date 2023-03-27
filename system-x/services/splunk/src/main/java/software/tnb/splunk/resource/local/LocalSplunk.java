@@ -53,7 +53,8 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     @Override
     public void closeResources() {
-        // nothing to do
+        validation = null;
+        client = null;
     }
 
     @Override

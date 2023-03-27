@@ -17,7 +17,7 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
     private SQLAccount account;
-    private SQLValidation validation;
+    protected SQLValidation validation;
 
     protected abstract Class<? extends SQLAccount> accountClass();
 

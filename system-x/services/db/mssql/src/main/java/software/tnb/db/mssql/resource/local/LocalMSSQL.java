@@ -40,6 +40,7 @@ public class LocalMSSQL extends MSSQL implements Deployable {
     @Override
     public void closeResources() {
         localDb.closeResources();
+        validation = null;
     }
 
     @Override

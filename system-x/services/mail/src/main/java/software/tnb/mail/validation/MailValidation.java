@@ -81,9 +81,9 @@ public class MailValidation {
 
         if (response.getResponseCode() == 204) {
             accounts.put(username, password);
-            LOG.info("User {} created - {}", username, response.getBody());
+            LOG.info("User {} created", username);
         } else {
-            throw new IllegalArgumentException("The username" + username + " is not valid, due to: " + response.getBody());
+            throw new IllegalArgumentException("The username " + username + " is not valid, due to: " + response.getBody());
         }
     }
 }

@@ -40,6 +40,7 @@ public class LocalPostgreSQL extends PostgreSQL implements Deployable {
     @Override
     public void closeResources() {
         localDb.closeResources();
+        validation = null;
     }
 
     @Override
