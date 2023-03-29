@@ -1,14 +1,15 @@
 package software.tnb.aws.sqs.validation;
 
+import software.tnb.aws.sqs.account.SQSAccount;
 import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
-import software.tnb.aws.sqs.account.SQSAccount;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,10 +89,15 @@ public class SQSValidation implements Validation {
     }
 
     public List<Message> getMessages(String queue, int count) {
+        return getMessages(queue, null, count);
+    }
+
+    public List<Message> getMessages(String queue, Collection<String> attributeNames, int count) {
         return WaitUtils.withTimeout(() -> {
             List<Message> messages = new ArrayList<>();
             while (messages.size() != count) {
-                List<Message> current = client.receiveMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue).maxNumberOfMessages(10)).messages();
+                List<Message> current = client.receiveMessage(b -> b.queueUrl(account.queueUrlPrefix() + queue)
+                        .attributeNamesWithStrings(attributeNames).maxNumberOfMessages(10)).messages();
                 for (Message m : current) {
                     if (!messages.contains(m)) {
                         messages.add(m);
