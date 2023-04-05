@@ -12,11 +12,15 @@ import org.apache.http.client.CredentialsProvider;
 import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.elasticsearch.client.RestClient;
-import org.elasticsearch.client.RestHighLevelClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+
+import co.elastic.clients.elasticsearch.ElasticsearchClient;
+import co.elastic.clients.json.jackson.JacksonJsonpMapper;
+import co.elastic.clients.transport.ElasticsearchTransport;
+import co.elastic.clients.transport.rest_client.RestClientTransport;
 
 public abstract class Elasticsearch implements Service {
     private static final Logger LOG = LoggerFactory.getLogger(Elasticsearch.class);
@@ -24,23 +28,27 @@ public abstract class Elasticsearch implements Service {
     private static final String ELASTICSEARCH_VERSION = "elasticsearch.version";
 
     protected ElasticsearchAccount account;
-    protected RestHighLevelClient client;
+    protected ElasticsearchClient client;
     private ElasticsearchValidation validation;
 
-    protected RestHighLevelClient client() {
+    protected ElasticsearchClient client() {
 
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(account().user(), account().password()));
 
-        return new RestHighLevelClient(RestClient
-            .builder(HttpHost.create(clientHost()))
-            .setHttpClientConfigCallback(config ->
-                config
-                    .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                    .setSSLContext(HTTPUtils.getSslContext())
-                    .setDefaultCredentialsProvider(credentialsProvider)
-            )
-        );
+        RestClient httpClient = RestClient
+                .builder(HttpHost.create(clientHost()))
+                .setHttpClientConfigCallback(config -> config
+                        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                        .setSSLContext(HTTPUtils.getSslContext())
+                        .setDefaultCredentialsProvider(credentialsProvider))
+                .build();
+
+        ElasticsearchTransport transport = new RestClientTransport(
+                httpClient,
+                new JacksonJsonpMapper());
+
+        return new ElasticsearchClient(transport);
     }
 
     public ElasticsearchValidation validation() {
@@ -57,7 +65,7 @@ public abstract class Elasticsearch implements Service {
     public void closeResources() {
         if (client != null) {
             try {
-                client.close();
+                client._transport().close();
             } catch (IOException e) {
                 LOG.warn("Unable to close elasticsearch client: ", e);
             }

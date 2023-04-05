@@ -14,13 +14,13 @@
     <name>TNB :: System-X :: Services :: ElasticSearch</name>
 
     <properties>
-        <elasticsearch.client.version>7.17.4</elasticsearch.client.version>
+        <elasticsearch.client.version>8.7.0</elasticsearch.client.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>org.elasticsearch.client</groupId>
-            <artifactId>elasticsearch-rest-high-level-client</artifactId>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
             <version>${elasticsearch.client.version}</version>
         </dependency>
         <dependency>
