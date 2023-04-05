@@ -9,10 +9,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.ElasticsearchException;
-import co.elastic.clients.elasticsearch._types.ExpandWildcard;
 import co.elastic.clients.elasticsearch.core.IndexRequest;
 import co.elastic.clients.elasticsearch.core.IndexResponse;
 import co.elastic.clients.elasticsearch.core.SearchRequest;
@@ -21,8 +21,6 @@ import co.elastic.clients.elasticsearch.core.search.HitsMetadata;
 import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
-import co.elastic.clients.elasticsearch.indices.GetIndexRequest;
-import co.elastic.clients.elasticsearch.indices.GetIndexResponse;
 
 public class ElasticsearchValidation {
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchValidation.class);
@@ -77,10 +75,8 @@ public class ElasticsearchValidation {
     }
 
     public List<String> getIndices() {
-        GetIndexRequest request = new GetIndexRequest.Builder().expandWildcards(ExpandWildcard.All).build();
-        GetIndexResponse response = null;
         try {
-            response = client.indices().get(request);
+            return client.cat().indices().valueBody().stream().map(i -> i.index()).collect(Collectors.toList());
         } catch (ElasticsearchException ese) {
             if (ese.getMessage().contains("index_not_found_exception")) {
                 return new ArrayList<>();
@@ -90,7 +86,7 @@ public class ElasticsearchValidation {
         } catch (IOException e) {
             fail("Unable to list indices: ", e);
         }
-        return new ArrayList<>(response.result().keySet());
+        return new ArrayList<>();
     }
 
     public boolean indexExists(String index) {
