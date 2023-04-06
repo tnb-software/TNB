@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kinesis.KinesisClient;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse;
-import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.Shard;
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 
@@ -44,7 +43,11 @@ public class KinesisValidation implements Validation {
         client.putRecord(b -> b.streamName(stream).partitionKey(partitionKey).data(SdkBytes.fromUtf8String(message)));
     }
 
-    public List<Record> getRecords(String streamName) {
+    public GetRecordsResponse getRecords(String streamName) {
+        return getRecords(streamName, 25);
+    }
+
+    public GetRecordsResponse getRecords(String streamName, int maxNumberOfRecords) {
         List<Shard> initialShardData = client.describeStream(b -> b.streamName(streamName)).streamDescription().shards();
 
         List<String> initialShardIterators = initialShardData.stream().map(s ->
@@ -55,8 +58,10 @@ public class KinesisValidation implements Validation {
         ).collect(Collectors.toList());
         // The stream has only one shard, so use only that shard
         String shardIterator = initialShardIterators.get(0);
-        GetRecordsResponse recordResult = client.getRecords(b -> b.shardIterator(shardIterator).limit(25));
+        return getRecords(streamName, maxNumberOfRecords, shardIterator);
+    }
 
-        return recordResult.records();
+    public GetRecordsResponse getRecords(String streamName, int maxNumberOfRecords, String shardIterator) {
+        return client.getRecords(b -> b.shardIterator(shardIterator).limit(maxNumberOfRecords));
     }
 }
