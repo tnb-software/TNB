@@ -8,11 +8,14 @@ import org.slf4j.LoggerFactory;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
+import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
 
@@ -67,6 +70,11 @@ public class S3Validation implements Validation {
             throw new RuntimeException("Unable to transfer object contents", e);
         }
         return outputStream.toString();
+    }
+
+    public GetObjectAttributesResponse getFileAttributesFromBucket(String bucketName, String key) {
+        return client.getObjectAttributes(
+                b -> b.bucket(bucketName).key(key).objectAttributes(new ArrayList<ObjectAttributes>(ObjectAttributes.knownValues())));
     }
 
     public void createFile(String bucketName, String key, String content) {
