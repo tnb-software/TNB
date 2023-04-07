@@ -19,7 +19,7 @@ import io.fabric8.kubernetes.model.annotation.Version;
 })
 @Generated("jsonschema2pojo")
 @Group("broker.amq.io")
-@Version("v2alpha5")
+@Version("v1beta1")
 public class ActiveMQArtemis extends CustomResource<ActiveMQArtemisSpec, ActiveMQArtemisStatus> {
 
 }
