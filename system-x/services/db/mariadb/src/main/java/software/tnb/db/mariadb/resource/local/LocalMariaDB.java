@@ -40,6 +40,7 @@ public class LocalMariaDB extends MariaDB implements Deployable {
     @Override
     public void closeResources() {
         localDb.closeResources();
+        validation = null;
     }
 
     @Override

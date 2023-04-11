@@ -35,6 +35,7 @@ public class LocalMailServer extends MailServer implements Deployable {
 
     @Override
     public void closeResources() {
+        validation = null;
     }
 
     @Override

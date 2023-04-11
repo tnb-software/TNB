@@ -17,12 +17,13 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.openshift.client.internal.readiness.OpenShiftReadiness;
 import okhttp3.Request;
 
 @AutoService(Cryostat.class)
@@ -43,8 +44,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     public void undeploy() {
         try {
             OpenshiftClient.get().customResource(CRYOSTAT_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
-            WaitUtils.waitFor(() -> OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat", "app", APP_NAME))
-                .isEmpty(), "Waiting until Cryostat pods are deleted");
+            WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
             deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
                 .stream().noneMatch(p -> p.getMetadata().getName().contains("cryostat")));
         } catch (IOException e) {
@@ -85,10 +85,9 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public boolean isReady() {
-        final List<Pod> labeledPods = OpenshiftClient.get().getLabeledPods(Map.of("kind", "cryostat", "app", APP_NAME));
+        final PodResource<Pod> pod = servicePod();
         try {
-            return labeledPods.size() > 0
-                && labeledPods.stream().allMatch(OpenShiftReadiness::isPodReady)
+            return pod != null && pod.isReady()
                 && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
                 , OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost())).build()).execute().isSuccessful();
         } catch (IOException e) {
@@ -103,6 +102,11 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
             .filter(p -> p.getMetadata().getName().contains("cryostat")).collect(Collectors.toList());
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
             && ((List) OpenshiftClient.get().customResource(CRYOSTAT_CTX).list().get("items")).size() == 1;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("kind", "cryostat", "app", APP_NAME));
     }
 
     @Override

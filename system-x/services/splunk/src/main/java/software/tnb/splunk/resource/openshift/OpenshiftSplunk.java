@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
@@ -34,6 +35,7 @@ import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.apiextensions.v1.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.rbac.ClusterRole;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
@@ -114,7 +116,7 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
     public void undeploy() {
         LOG.info("Undeploying Splunk resources");
         OpenshiftClient.get().customResource(createSplunkContext()).inNamespace(OpenshiftClient.get().getNamespace()).delete();
-        WaitUtils.waitFor(() -> !this.isAppDeployed(), "Waiting until Splunk CR is uninstalled.");
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
         OpenshiftClient.get().resourceList(createdResources.stream()
             .filter(res -> !(res instanceof CustomResourceDefinition
                 || res instanceof io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinitionVersion
@@ -166,33 +168,36 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
         }
     }
 
+    // TODO(anyone): If you need this, then the related PV must be cleaned
+    @Override
+    public void restart() {
+        OpenshiftDeployable.super.restart();
+    }
+
     @Override
     public void closeResources() {
         if (apiRoute != null) {
             OpenshiftClient.get().routes().delete(apiRoute);
         }
+        validation = null;
+        client = null;
     }
 
     @Override
     public boolean isReady() {
-        return isAppDeployed()
-            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod("app.kubernetes.io/instance", "splunk-s1-standalone"))
-            .contains("Ansible playbook complete");
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Ansible playbook complete");
     }
 
     @Override
     public boolean isDeployed() {
-        return isOperatorDeployedAndReady() && isAppDeployed();
-    }
-
-    private boolean isOperatorDeployedAndReady() {
         List<Pod> pods = OpenshiftClient.get().pods().withLabel("name", "splunk-operator").list().getItems();
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0));
     }
 
-    private boolean isAppDeployed() {
-        List<Pod> pods = OpenshiftClient.get().pods().withLabel("app.kubernetes.io/instance", "splunk-s1-standalone").list().getItems();
-        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0));
+    @Override
+    public Predicate<Pod> podSelector() {
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("app.kubernetes.io/instance", "splunk-s1-standalone"));
     }
 
     @Override

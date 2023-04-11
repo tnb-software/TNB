@@ -6,16 +6,46 @@ import software.tnb.common.utils.WaitUtils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import java.util.List;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
+
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.client.KubernetesClientException;
+import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.kubernetes.client.dsl.Readiable;
+
 public interface OpenshiftDeployable extends Deployable {
     void create();
 
-    boolean isReady();
+    default boolean isReady() {
+        final List<PodResource<Pod>> servicePods = servicePods();
+        return servicePods != null && servicePods.size() > 0 && servicePods.stream().allMatch(Readiable::isReady);
+    }
 
     boolean isDeployed();
 
     default long waitTime() {
         return 300_000;
     }
+
+    default PodResource<Pod> servicePod() {
+        return servicePods().size() > 0 ? servicePods().get(0) : null;
+    }
+
+    default List<PodResource<Pod>> servicePods() {
+        try {
+            return OpenshiftClient.get().pods().list().getItems().stream()
+                .filter(podSelector())
+                .map(p -> OpenshiftClient.get().pods().withName(p.getMetadata().getName()))
+                .collect(Collectors.toList());
+        } catch (KubernetesClientException kce) {
+            // Just in case of some transient error
+            return null;
+        }
+    }
+
+    Predicate<Pod> podSelector();
 
     @Override
     default void deploy() {
@@ -34,5 +64,14 @@ public interface OpenshiftDeployable extends Deployable {
             // In parallel execution, each test class has its own namespace
             OpenshiftClient.deleteNamespace();
         }
+    }
+
+    @Override
+    default void restart() {
+        closeResources();
+        servicePod().delete();
+        WaitUtils.waitFor(() -> servicePods().stream().allMatch(p -> p.isReady() && !p.get().isMarkedForDeletion()),
+            "Restart: Waiting until the service is restarted");
+        openResources();
     }
 }

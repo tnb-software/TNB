@@ -34,4 +34,11 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
         closeResources();
         undeploy();
     }
+
+    default void restart() {
+        closeResources();
+        undeploy();
+        deploy();
+        openResources();
+    }
 }

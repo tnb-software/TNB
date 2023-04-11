@@ -12,8 +12,8 @@ import com.splunk.ServiceArgs;
 public abstract class Splunk extends ConfigurableService<SplunkConfiguration> implements WithExternalHostname, WithDockerImage {
 
     protected SplunkAccount account;
-    private com.splunk.Service client;
-    private SplunkValidation validation;
+    protected com.splunk.Service client;
+    protected SplunkValidation validation;
 
     public abstract int apiPort();
 

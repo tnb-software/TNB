@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.db.mongodb.service.MongoDB;
 
 import org.slf4j.Logger;
@@ -20,10 +21,9 @@ import com.mongodb.client.MongoDatabase;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -32,7 +32,9 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(MongoDB.class)
@@ -111,8 +113,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         OpenshiftClient.get().services().withName(name()).delete();
         LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -126,16 +127,20 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
 
     @Override
     public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
-            return OpenshiftClient.get().getLogs(pods.get(0)).contains("Transition to primary complete; database writes are now permitted");
-        }
-        return false;
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get())
+            .contains("Transition to primary complete; database writes are now permitted");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
+        return deployment != null && !deployment.isMarkedForDeletion();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
@@ -179,6 +184,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
             IOUtils.closeQuietly(portForward);
         }
         NetworkUtils.releasePort(localPort);
+        validation = null;
     }
 
     @Override

@@ -5,8 +5,10 @@ import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
+import software.tnb.common.deployment.WithName;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.jms.amq.resource.openshift.generated.Acceptor;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemis;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemisList;
@@ -34,9 +36,8 @@ import java.util.Base64;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -47,10 +48,9 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 
 @AutoService(AMQBroker.class)
-public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname, WithOperatorHub {
+public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname, WithOperatorHub,
+    WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQBroker.class);
-
-    public static final String BROKER_NAME = "tnb-amq-broker";
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
 
     private static final CustomResourceDefinitionContext ARTEMIS_CTX = new CustomResourceDefinitionContext.Builder()
@@ -67,31 +67,29 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         // Create subscription for amq broker operator
         createSubscription();
         // Create amq-broker custom resource
-        amqBrokerCli().createOrReplace(createBrokerCR());
-    }
-
-    @Override
-    public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("ActiveMQArtemis", BROKER_NAME));
+        amqBrokerClient().createOrReplace(createBrokerCR());
     }
 
     @Override
     public boolean isDeployed() {
-        List<Pod> pods = OpenshiftClient.get().pods().withLabel("name", "amq-broker-operator").list().getItems();
-        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0)) && amqBrokerCli().list().getItems().size() > 0;
+        List<Pod> pods = OpenshiftClient.get().getLabeledPods("name", "amq-broker-operator");
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0)) && amqBrokerClient().list().getItems().size() > 0;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("ActiveMQArtemis", name()));
     }
 
     @Override
     public String inClusterHostname() {
-        final String podName = OpenshiftClient.get().getLabeledPods("ActiveMQArtemis", BROKER_NAME).get(0).getMetadata().getName();
-        return String.format("%s.%s-hdls-svc.%s.svc.cluster.local", podName, BROKER_NAME, OpenshiftClient.get().getNamespace());
+        return String.format("%s.%s-hdls-svc.%s.svc.cluster.local", servicePod().get().getMetadata().getName(), name(),
+            OpenshiftClient.get().getNamespace());
     }
 
     @Override
     public String externalHostname() {
-        final List<Route>
-            routes = OpenshiftClient.get().routes().withLabel("ActiveMQArtemis", BROKER_NAME).list()
-            .getItems();
+        final List<Route> routes = OpenshiftClient.get().routes().withLabel("ActiveMQArtemis", name()).list().getItems();
 
         if (routes.size() != 1) {
             throw new RuntimeException("Expected single route to be present but was " + routes.size());
@@ -102,9 +100,8 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public void undeploy() {
-        amqBrokerCli().withName(BROKER_NAME).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areExactlyNPodsRunning(0, "ActiveMQArtemis", BROKER_NAME)
-            .timeout(120_000).waitFor();
+        amqBrokerClient().withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
         OpenshiftClient.get().deleteSecret(SSL_SECRET_NAME);
         deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("name", "amq-broker-operator").isEmpty());
     }
@@ -116,6 +113,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public void closeResources() {
+        validation = null;
         try {
             connection.close();
         } catch (JMSException e) {
@@ -180,7 +178,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         OpenshiftClient.get().secrets().createOrReplace(sb.build());
 
         final ActiveMQArtemis broker = new ActiveMQArtemis();
-        broker.getMetadata().setName(BROKER_NAME);
+        broker.getMetadata().setName(name());
 
         // see https://access.redhat.com/documentation/en-us/red_hat_amq/2020
         //.q4/html/deploying_amq_broker_on_openshift/deploying-broker-on-ocp-using-operator_broker-ocp#operator-based-broker-deployment
@@ -252,7 +250,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
      *
      * @return
      */
-    private NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>> amqBrokerCli() {
+    private NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>> amqBrokerClient() {
         return OpenshiftClient.get().customResources(ARTEMIS_CTX, ActiveMQArtemis.class, ActiveMQArtemisList.class)
             .inNamespace(OpenshiftClient.get().getNamespace());
     }
@@ -265,5 +263,10 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     @Override
     public String operatorName() {
         return "amq-broker-rhel8";
+    }
+
+    @Override
+    public String name() {
+        return "tnb-amq-broker";
     }
 }

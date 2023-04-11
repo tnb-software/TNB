@@ -45,6 +45,7 @@ public class LocalMySQL extends MySQL implements Deployable {
     @Override
     public void closeResources() {
         localDb.closeResources();
+        validation = null;
     }
 
     @Override

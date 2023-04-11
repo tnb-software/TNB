@@ -44,6 +44,7 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
 
     @Override
     public void closeResources() {
+        validation = null;
         try {
             connection.close();
         } catch (JMSException e) {

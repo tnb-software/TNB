@@ -22,7 +22,7 @@ public class SplunkValidation {
 
     private static final Logger LOG = LoggerFactory.getLogger(SplunkValidation.class);
 
-    private IndexCollection indexCollection = null;
+    private final IndexCollection indexCollection;
     private final Service client;
 
     public SplunkValidation(Service client) {

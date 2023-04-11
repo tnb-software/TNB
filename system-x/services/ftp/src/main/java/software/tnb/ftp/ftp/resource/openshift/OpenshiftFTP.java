@@ -5,6 +5,7 @@ import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.ftp.ftp.service.CustomFTPClient;
 import software.tnb.ftp.ftp.service.FTP;
 
@@ -22,9 +23,8 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
@@ -124,8 +124,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
         LOG.info("Undeploying OpenShift ftp");
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -140,16 +139,19 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            .contains("FtpServer started");
+        final PodResource<Pod> pod = servicePod();
+        return pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("FtpServer started");
     }
 
     @Override
     public boolean isDeployed() {
         Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
         return deployment != null && !deployment.isMarkedForDeletion();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
@@ -169,7 +171,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     @Override
     public String logs() {
-        return OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
+        return OpenshiftClient.get().getLogs(servicePod().get());
     }
 
     @Override
@@ -179,7 +181,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     @Override
     public String hostForActiveConnection() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).get(0).getStatus().getPodIP();
+        return servicePod().get().getStatus().getPodIP();
     }
 
     public class OpenShiftFTPClient implements CustomFTPClient {
@@ -189,7 +191,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
             Path tempFile = Files.createTempFile(null, null);
             try {
                 Files.copy(fileContent, tempFile, StandardCopyOption.REPLACE_EXISTING);
-                getPodResource().file("/tmp/" + account().username() + "/" + fileName).upload(tempFile);
+                servicePod().file("/tmp/" + account().username() + "/" + fileName).upload(tempFile);
             } finally {
                 tempFile.toFile().delete();
             }
@@ -199,7 +201,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
         public void retrieveFile(String fileName, OutputStream local) throws IOException {
             Path tempFile = Files.createTempFile(null, null);
             try {
-                getPodResource().file("/tmp/" + account().username() + "/" + fileName).copy(tempFile);
+                servicePod().file("/tmp/" + account().username() + "/" + fileName).copy(tempFile);
                 org.apache.commons.io.IOUtils.copy(Files.newInputStream(tempFile), local);
             } finally {
                 tempFile.toFile().delete();
@@ -208,24 +210,19 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
         @Override
         public void makeDirectory(String dirName) {
-            getPodResource().writingOutput(new ByteArrayOutputStream())
+            servicePod().writingOutput(new ByteArrayOutputStream())
                 .exec("mkdir", "-p", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
         }
 
         @Override
         public List<String> listFolder(String dirName) {
             try {
-                return List.of(new String(getPodResource().redirectingOutput()
+                return List.of(new String(servicePod().redirectingOutput()
                     .exec("/bin/bash", "-c", String.format("ls -p %s/%s | grep -v /", basePath(), dirName)).getOutput().readAllBytes())
                     .split("\n"));
             } catch (IOException e) {
                 throw new RuntimeException("Unable to read command output: " + e);
             }
-        }
-
-        private PodResource<Pod> getPodResource() {
-            Pod ftpPod = OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-            return OpenshiftClient.get().pods().withName(ftpPod.getMetadata().getName());
         }
     }
 }

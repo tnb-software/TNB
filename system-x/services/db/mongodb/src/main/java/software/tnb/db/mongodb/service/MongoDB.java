@@ -18,7 +18,7 @@ public abstract class MongoDB implements Service, WithDockerImage {
     public static final int DEFAULT_PORT = 27017;
 
     private MongoDBAccount account;
-    private MongoDBValidation validation;
+    protected MongoDBValidation validation;
     protected MongoClient client;
 
     public MongoDBAccount account() {

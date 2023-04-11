@@ -63,6 +63,7 @@ public abstract class Elasticsearch implements Service {
     }
 
     public void closeResources() {
+        validation = null;
         if (client != null) {
             try {
                 client._transport().close();

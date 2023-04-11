@@ -12,6 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.openshift.api.model.Route;
 
 @AutoService(PrometheusMetrics.class)
@@ -38,6 +41,11 @@ public class OpenshiftPrometheusMetrics extends PrometheusMetrics implements Ope
     @Override
     public boolean isDeployed() {
         return true;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return null;
     }
 
     @Override

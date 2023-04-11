@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.mail.service.MailServer;
 
 import org.slf4j.Logger;
@@ -18,9 +19,8 @@ import com.google.auto.service.AutoService;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
@@ -152,8 +153,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
         LOG.debug("Deleting deploymentconfig {}", name());
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -165,16 +165,19 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        if (ResourceFunctions.areExactlyNPodsReady(1).apply(pods)) {
-            return OpenshiftClient.get().getLogs(pods.get(0)).contains("AddUser command executed sucessfully in");
-        }
-        return false;
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("AddUser command executed sucessfully in");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        return OpenshiftClient.get().deploymentConfigs().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+            .getItems().size() > 0;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
@@ -188,6 +191,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public void closeResources() {
+        validation = null;
         if (smtpPortForward != null && smtpPortForward.isAlive()) {
             LOG.debug("Closing port-forward");
             IOUtils.closeQuietly(smtpPortForward);

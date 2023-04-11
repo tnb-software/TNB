@@ -23,7 +23,7 @@ public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> im
 
     protected abstract JaegerValidation getClientBasedValidation();
 
-    private JaegerValidation validation;
+    protected JaegerValidation validation;
 
     protected Map<String, String> env() {
         Map<String, String> env = new HashMap<>();
@@ -37,7 +37,7 @@ public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> im
         return env;
     }
 
-    public JaegerValidation getValidation() {
+    public JaegerValidation validation() {
         return Optional.ofNullable(validation).orElseGet(() -> validation = getClientBasedValidation());
     }
 }

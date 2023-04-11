@@ -19,20 +19,22 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import net.schmizz.sshj.SSHClient;
 import net.schmizz.sshj.sftp.SFTPClient;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
@@ -138,8 +140,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
         OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
@@ -159,15 +160,19 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1)
-            .apply(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            && OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
-            .contains("Server listening on");
+        final PodResource<Pod> pod = servicePod();
+        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Server listening on");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
+        return deployment != null && !deployment.isMarkedForDeletion();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
@@ -200,7 +205,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public String hostForActiveConnection() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).get(0).getStatus().getPodIP();
+        return servicePod().get().getStatus().getPodIP();
     }
 
     @Override
@@ -210,6 +215,6 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public String logs() {
-        return OpenshiftClient.get().getLogs(OpenshiftClient.get().getAnyPod(OpenshiftConfiguration.openshiftDeploymentLabel(), name()));
+        return OpenshiftClient.get().getLogs(servicePod().get());
     }
 }

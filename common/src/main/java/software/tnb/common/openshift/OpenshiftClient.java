@@ -534,4 +534,14 @@ public class OpenshiftClient extends OpenShift {
     public String getServiceAccountRef(String serviceAccountName) {
         return "system:serviceaccount:" + get().getNamespace() + ":" + serviceAccountName;
     }
+
+    public boolean hasLabels(Pod pod, Map<String, String> expectedLabels) {
+        final Map<String, String> labels = pod.getMetadata().getLabels();
+        for (Map.Entry<String, String> expected : expectedLabels.entrySet()) {
+            if (!labels.containsKey(expected.getKey()) || !labels.get(expected.getKey()).equals(expected.getValue())) {
+                return false;
+            }
+        }
+        return true;
+    }
 }

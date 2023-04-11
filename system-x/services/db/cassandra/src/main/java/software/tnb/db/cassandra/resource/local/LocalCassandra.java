@@ -54,6 +54,7 @@ public class LocalCassandra extends Cassandra implements Deployable {
 
     @Override
     public void closeResources() {
+        validation = null;
         if (session != null) {
             session.close();
             session = null;

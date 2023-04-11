@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.telegram.service.Telegram;
 
 import org.slf4j.Logger;
@@ -13,14 +14,13 @@ import com.google.auto.service.AutoService;
 
 import java.io.IOException;
 import java.util.Arrays;
-import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.openshift.api.model.DeploymentConfig;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
 import io.fabric8.openshift.api.model.ImageStream;
@@ -35,8 +35,7 @@ public class OpenshiftTelegram extends Telegram implements OpenshiftDeployable, 
     public void undeploy() {
         LOG.info("Undeploying Telegram client");
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
         OpenshiftClient.get().imageStreams().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
     }
 
@@ -106,21 +105,20 @@ public class OpenshiftTelegram extends Telegram implements OpenshiftDeployable, 
     }
 
     @Override
-    public boolean isReady() {
-        List<Pod> pods = OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(pods);
+    public boolean isDeployed() {
+        final DeploymentConfig dc = OpenshiftClient.get().deploymentConfigs().withName(name()).get();
+        return dc != null && !dc.isMarkedForDeletion();
     }
 
     @Override
-    public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).size() != 0;
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
     }
 
     @Override
     public String execInContainer(String... commands) {
         try {
-            return new String(OpenshiftClient.get().pods().withName(OpenshiftClient.get().getAnyPod(name()).getMetadata().getName())
-                .redirectingOutput().exec(commands).getOutput().readAllBytes());
+            return new String(servicePod().redirectingOutput().exec(commands).getOutput().readAllBytes());
         } catch (IOException e) {
             throw new RuntimeException("Unable to read command output: " + e);
         }
