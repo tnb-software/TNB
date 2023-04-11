@@ -56,7 +56,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     private static final CustomResourceDefinitionContext ARTEMIS_CTX = new CustomResourceDefinitionContext.Builder()
         .withName("ActiveMQArtemis")
         .withGroup("broker.amq.io")
-        .withVersion("v2alpha5")
+        .withVersion("v1beta1")
         .withPlural("activemqartemises")
         .withScope("Namespaced")
         .build();
@@ -259,7 +259,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public String operatorChannel() {
-        return "7.10.x";
+        return "7.11.x";
     }
 
     @Override

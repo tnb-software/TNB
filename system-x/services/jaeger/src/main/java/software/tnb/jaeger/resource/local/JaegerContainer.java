@@ -12,7 +12,7 @@ public class JaegerContainer extends GenericContainer<JaegerContainer> {
         super(image);
         withEnv(env);
         withNetworkMode("host");
-        waitingFor(Wait.forLogMessage(".*Channel Connectivity change to IDLE\",\"system\":\"grpc\".*", 1)
-            .withStartupTimeout(Duration.ofMinutes(5)));
+        waitingFor(Wait.forLogMessage(".*Channel Connectivity change to READY\",\"system\":\"grpc\".*", 1)
+            .withStartupTimeout(Duration.ofMinutes(2)));
     }
 }
