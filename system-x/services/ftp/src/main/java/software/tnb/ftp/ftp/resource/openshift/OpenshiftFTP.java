@@ -23,6 +23,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -139,8 +140,10 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
-        return pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("FtpServer started");
+        return Optional.ofNullable(servicePod())
+            .filter(PodResource::isReady)
+            .map(pod -> OpenshiftClient.get().getLogs(pod.get()).contains("FtpServer started"))
+            .orElse(false);
     }
 
     @Override

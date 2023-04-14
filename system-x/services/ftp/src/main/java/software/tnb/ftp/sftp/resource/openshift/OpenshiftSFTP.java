@@ -19,6 +19,7 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -160,8 +161,10 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
-        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Server listening on");
+        return Optional.ofNullable(servicePod())
+            .filter(PodResource::isReady)
+            .map(pod -> OpenshiftClient.get().getLogs(pod.get()).contains("Server listening on"))
+            .orElse(false);
     }
 
     @Override
