@@ -6,11 +6,11 @@
     <parent>
         <groupId>software.tnb</groupId>
         <artifactId>system-x-services</artifactId>
-        <version>0.0.11</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <artifactId>system-x-fhir</artifactId>
-    <version>0.0.11</version>
+    <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: FHIR</name>
 
     <dependencies>

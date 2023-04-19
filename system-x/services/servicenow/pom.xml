@@ -6,12 +6,12 @@
     <parent>
         <groupId>software.tnb</groupId>
         <artifactId>system-x-services</artifactId>
-        <version>0.0.11</version>
+        <version>1.0-SNAPSHOT</version>
     </parent>
 
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-servicenow</artifactId>
-    <version>0.0.11</version>
+    <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: ServiceNow</name>
 </project>
