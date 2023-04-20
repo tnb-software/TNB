@@ -1,17 +1,17 @@
+{{#printBreakingChanges commits}}{{/printBreakingChanges}}
 ## What's Changed
 
 {{#commits}}
-{{#ifMatches messageTitle ".*[bB]ump .*"}}{{else}}
-{{>commit}}
-
-{{/ifMatches}}
+    {{#ifMatches messageTitle ".*[bB]ump .*"}}
+    {{else}}
+        {{#printCommit .}}{{/printCommit}}
+    {{/ifMatches}}
 {{/commits}}
 
 ## Dependency updates
 
 {{#commits}}
-{{#ifMatches messageTitle ".*[bB]ump .*"}}
-{{>commit}}
-
-{{/ifMatches}}
+    {{#ifMatches messageTitle ".*[bB]ump .*"}}
+        {{#printCommit .}}{{/printCommit}}
+    {{/ifMatches}}
 {{/commits}}

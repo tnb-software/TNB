@@ -104,6 +104,7 @@
         <okhttp-version>4.10.0</okhttp-version>
         <failsafe-version>3.3.0</failsafe-version>
         <gson-version>2.10</gson-version>
+        <nashorn.version>15.4</nashorn.version>
     </properties>
 
     <dependencyManagement>
@@ -320,13 +321,19 @@
         </profile>
         <profile>
             <id>changelog</id>
-
             <build>
                 <plugins>
                     <plugin>
                         <groupId>se.bjurr.gitchangelog</groupId>
                         <artifactId>git-changelog-maven-plugin</artifactId>
                         <version>${git.changelog.maven.plugin}</version>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.openjdk.nashorn</groupId>
+                                <artifactId>nashorn-core</artifactId>
+                                <version>${nashorn.version}</version>
+                            </dependency>
+                        </dependencies>
                         <executions>
                             <execution>
                                 <id>GenerateGitChangelog</id>
@@ -338,6 +345,41 @@
                                     <templateBaseDir>templates</templateBaseDir>
                                     <templateFile>templates/changelog.mustache</templateFile>
                                     <ignoreCommitsIfMessageMatches>(Merge (pull request|branch).*)|(\[BOM\] Sync .*)</ignoreCommitsIfMessageMatches>
+                                    <javascriptHelper>
+                                        <![CDATA[
+                                            Handlebars.registerHelper('printBreakingChanges', function(commits) {
+                                              let marker = "breaking: "
+                                              let msg = ""
+
+                                              for (let i = 0; i < commits.length; i++) {
+                                                let commit = commits[i];
+
+                                                let idx = commit.messageBody.indexOf(marker);
+                                                if (idx !== -1) {
+                                                  let end = commit.messageBody.indexOf("\n", idx);
+                                                  if (end == -1) {
+                                                    end = commit.messageBody.length
+                                                  }
+                                                  msg += "- " + commit.messageBody.substring(idx + marker.length, end) + " " + Handlebars.helpers.createCommitLink(commit.hash) + "\n";
+                                                }
+                                              }
+
+                                              if (msg.trim()) {
+                                                msg = "## Breaking changes\n\n" + msg + "\n";
+                                              }
+
+                                              return msg;
+                                            });
+
+                                            Handlebars.registerHelper('createCommitLink', function(hash) {
+                                              return "[[" + hash + "](https://github.com/tnb-software/TNB/commit/" + hash + ")]";
+                                            });
+
+                                            Handlebars.registerHelper('printCommit', function(commit) {
+                                              return "- **" + commit.messageTitle + "** by " + commit.authorName + " " + Handlebars.helpers.createCommitLink(commit.hash) + "\n";
+                                            });
+                                        ]]>
+                                    </javascriptHelper>
                                 </configuration>
                             </execution>
                         </executions>
