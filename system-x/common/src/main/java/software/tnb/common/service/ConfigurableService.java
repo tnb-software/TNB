@@ -35,4 +35,9 @@ public abstract class ConfigurableService<C extends ServiceConfiguration> implem
     public C getConfiguration() {
         return configuration;
     }
+
+    /**
+     * The default configuration in case no customizations are made.
+     */
+    protected abstract void defaultConfiguration();
 }

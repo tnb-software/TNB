@@ -23,7 +23,8 @@ public class LocalSplunk extends Splunk implements Deployable {
     private final int containerApiPort = 8089;
     private static final String PASSWORD = "password";
 
-    public LocalSplunk() {
+    @Override
+    public void defaultConfiguration() {
         getConfiguration().protocol(SplunkProtocol.HTTP);
     }
 

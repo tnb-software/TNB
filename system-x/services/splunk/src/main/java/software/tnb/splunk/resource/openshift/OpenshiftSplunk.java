@@ -52,7 +52,8 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
     private Route apiRoute;
     private String sccName;
 
-    public OpenshiftSplunk() {
+    @Override
+    public void defaultConfiguration() {
         getConfiguration().protocol(SplunkProtocol.HTTPS);
     }
 

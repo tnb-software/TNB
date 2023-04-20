@@ -68,6 +68,7 @@ public final class ServiceFactory {
 
     public static <C extends ServiceConfiguration, S extends ConfigurableService<C>> S create(Class<S> clazz, Consumer<C> config) {
         S service = create(clazz);
+        service.defaultConfiguration();
         config.accept(service.getConfiguration());
         return service;
     }
