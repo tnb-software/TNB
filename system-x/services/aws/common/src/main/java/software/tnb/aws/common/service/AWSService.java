@@ -24,7 +24,8 @@ public abstract class AWSService<A extends AWSAccount, C extends SdkClient, V ex
     protected C client;
     protected V validation;
 
-    public AWSService() {
+    @Override
+    protected void defaultConfiguration() {
         getConfiguration().useLocalstack(false);
     }
 

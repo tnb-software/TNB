@@ -25,6 +25,10 @@ public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> im
 
     protected JaegerValidation validation;
 
+    @Override
+    protected void defaultConfiguration() {
+    }
+
     protected Map<String, String> env() {
         Map<String, String> env = new HashMap<>();
         env.put("COLLECTOR_OTLP_ENABLED", "true");
