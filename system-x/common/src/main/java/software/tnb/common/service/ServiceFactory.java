@@ -30,6 +30,14 @@ public final class ServiceFactory {
      * @param <S> type
      */
     public static <S extends Service> S create(Class<S> clazz) {
+        S service = loadService(clazz);
+        if (service instanceof ConfigurableService<?>) {
+            ((ConfigurableService<?>) service).defaultConfiguration();
+        }
+        return service;
+    }
+
+    private static <S extends Service> S loadService(Class<S> clazz) {
         if (ReflectionUtils.isAbstract(clazz) || clazz.isInterface()) {
             final ServiceLoader<S> loader = ServiceLoader.load(clazz);
             if (loader.stream().findAny().isEmpty()) {
@@ -68,7 +76,6 @@ public final class ServiceFactory {
 
     public static <C extends ServiceConfiguration, S extends ConfigurableService<C>> S create(Class<S> clazz, Consumer<C> config) {
         S service = create(clazz);
-        service.defaultConfiguration();
         config.accept(service.getConfiguration());
         return service;
     }
