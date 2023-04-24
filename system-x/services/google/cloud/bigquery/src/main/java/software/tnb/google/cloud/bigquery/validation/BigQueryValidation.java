@@ -1,5 +1,7 @@
 package software.tnb.google.cloud.bigquery.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,7 +25,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class BigQueryValidation {
+public class BigQueryValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(BigQueryValidation.class);
     private final BigQuery bigQuery;

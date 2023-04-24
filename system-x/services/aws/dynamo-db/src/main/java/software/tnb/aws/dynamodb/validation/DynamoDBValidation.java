@@ -1,7 +1,7 @@
 package software.tnb.aws.dynamodb.validation;
 
-import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

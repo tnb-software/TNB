@@ -1,8 +1,6 @@
 package software.tnb.ftp.common;
 
-import software.tnb.common.service.Service;
-
-public interface FileTransferService extends Service {
+public interface FileTransferService {
     String host();
 
     int port();

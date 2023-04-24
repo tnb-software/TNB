@@ -1,7 +1,7 @@
 package software.tnb.google.cloud.functions.validation;
 
-import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 import software.tnb.google.cloud.functions.account.GoogleFunctionsAccount;
 import software.tnb.google.storage.service.GoogleStorage;
 

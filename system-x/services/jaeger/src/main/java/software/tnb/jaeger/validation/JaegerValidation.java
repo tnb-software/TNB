@@ -1,12 +1,13 @@
 package software.tnb.jaeger.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.jaeger.client.JaegerClient;
 import software.tnb.jaeger.validation.model.Span;
 
 import java.util.List;
 import java.util.Map;
 
-public class JaegerValidation {
+public class JaegerValidation implements Validation {
 
     private final JaegerClient client;
 

@@ -39,6 +39,6 @@ public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         super.beforeAll(extensionContext);
         LOG.debug("Creating new SQS validation");
-        validation = new SQSValidation(client(SqsClient.class), account());
+        validation = new SQSValidation(client(), account());
     }
 }

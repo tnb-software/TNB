@@ -1,5 +1,7 @@
 package software.tnb.kafka.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
@@ -16,7 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class KafkaValidation<T> {
+public class KafkaValidation<T> implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaValidation.class);
     private final KafkaProducer<String, T> producer;
     private final KafkaConsumer<String, T> consumer;

@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 
 @AutoService(MongoDB.class)
@@ -44,11 +43,6 @@ public class LocalMongoDB extends MongoDB implements Deployable {
             client.close();
         }
         validation = null;
-    }
-
-    @Override
-    protected MongoClient client() {
-        return client;
     }
 
     @Override

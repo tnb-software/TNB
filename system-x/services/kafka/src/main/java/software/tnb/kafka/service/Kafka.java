@@ -1,6 +1,7 @@
 package software.tnb.kafka.service;
 
 import software.tnb.common.account.AccountFactory;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.service.Service;
 import software.tnb.kafka.account.KafkaAccount;
 import software.tnb.kafka.validation.KafkaValidation;
@@ -19,7 +20,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
-public abstract class Kafka implements Service {
+public abstract class Kafka extends Service<KafkaAccount, NoClient, KafkaValidation<?>> {
     protected Map<Class<?>, KafkaValidation> validations;
     protected Properties props = defaultClientProperties();
     private KafkaAccount account;

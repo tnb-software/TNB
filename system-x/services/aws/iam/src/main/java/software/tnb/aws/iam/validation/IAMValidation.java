@@ -1,6 +1,6 @@
 package software.tnb.aws.iam.validation;
 
-import software.tnb.common.service.Validation;
+import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

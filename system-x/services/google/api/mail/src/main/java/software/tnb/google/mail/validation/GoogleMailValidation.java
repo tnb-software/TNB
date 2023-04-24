@@ -1,6 +1,6 @@
 package software.tnb.google.mail.validation;
 
-import software.tnb.common.service.Validation;
+import software.tnb.common.validation.Validation;
 import software.tnb.google.mail.validation.model.GoogleEmail;
 
 import org.slf4j.Logger;
@@ -21,10 +21,6 @@ public class GoogleMailValidation implements Validation {
 
     public GoogleMailValidation(Gmail client) {
         this.client = client;
-    }
-
-    public Gmail x() {
-        return client;
     }
 
     public List<GoogleEmail> getEmails(String query) {

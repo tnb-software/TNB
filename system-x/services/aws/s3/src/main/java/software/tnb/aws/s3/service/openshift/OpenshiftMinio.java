@@ -32,7 +32,6 @@ import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import software.amazon.awssdk.services.s3.S3Client;
 
 @AutoService(Minio.class)
 public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -115,7 +114,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
     public void openResources() {
         localPort = NetworkUtils.getFreePort();
         portForward = OpenshiftClient.get().services().withName(name()).portForward(CONTAINER_API_PORT, localPort);
-        validation = new S3Validation(client(S3Client.class));
+        validation = new S3Validation(client());
     }
 
     @Override

@@ -2,6 +2,7 @@ package software.tnb.knative.validation;
 
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import io.fabric8.knative.messaging.v1.ChannelBuilder;
 import io.fabric8.knative.messaging.v1.InMemoryChannel;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 
-public class KnativeValidation {
+public class KnativeValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(KnativeValidation.class);
     // This string is from the error message when you try to create a resource with invalid name
     private static final String NAME_VALIDATION_REGEX = "[a-z]([-a-z0-9]*[a-z0-9])?";

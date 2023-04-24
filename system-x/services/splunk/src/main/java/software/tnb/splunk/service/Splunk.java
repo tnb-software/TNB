@@ -7,17 +7,17 @@ import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.configuration.SplunkConfiguration;
 import software.tnb.splunk.validation.SplunkValidation;
 
+import com.splunk.Service;
 import com.splunk.ServiceArgs;
 
-public abstract class Splunk extends ConfigurableService<SplunkConfiguration> implements WithExternalHostname, WithDockerImage {
+public abstract class Splunk extends ConfigurableService<SplunkAccount, Service, SplunkValidation, SplunkConfiguration>
+    implements WithExternalHostname, WithDockerImage {
 
     protected SplunkAccount account;
     protected com.splunk.Service client;
     protected SplunkValidation validation;
 
     public abstract int apiPort();
-
-    public abstract SplunkAccount account();
 
     /**
      * Due to self sign certificate, the client is not able to communicate via localhost and port-forward.

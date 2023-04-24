@@ -1,10 +1,10 @@
 package software.tnb.jms.ibm.mq.validation;
 
-import software.tnb.jms.ibm.mq.account.IBMMQAccount;
-
+import software.tnb.common.validation.Validation;
 import software.tnb.jms.client.JMSClientManager;
 import software.tnb.jms.client.JMSQueueClient;
 import software.tnb.jms.client.JMSTopicClient;
+import software.tnb.jms.ibm.mq.account.IBMMQAccount;
 
 import com.ibm.mq.MQException;
 import com.ibm.mq.MQQueueManager;
@@ -19,7 +19,7 @@ import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
 
-public class IBMMQValidation {
+public class IBMMQValidation implements Validation {
     private final IBMMQAccount account;
 
     private JMSClientManager client;

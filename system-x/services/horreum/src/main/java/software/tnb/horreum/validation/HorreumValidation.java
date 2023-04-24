@@ -2,6 +2,7 @@ package software.tnb.horreum.validation;
 
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.HTTPUtils.Response;
+import software.tnb.common.validation.Validation;
 import software.tnb.horreum.account.HorreumAccount;
 import software.tnb.horreum.configuration.HorreumConfiguration;
 import software.tnb.horreum.validation.generated.ApiClient;
@@ -25,7 +26,7 @@ import java.util.stream.Collectors;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
-public class HorreumValidation {
+public class HorreumValidation implements Validation {
 
     public static final MediaType FORM_URLENC = MediaType.get("application/x-www-form-urlencoded; charset=utf-8");
 

@@ -1,5 +1,7 @@
 package software.tnb.db.cassandra.validation;
 
+import software.tnb.common.validation.Validation;
+
 import com.datastax.oss.driver.api.core.CqlIdentifier;
 import com.datastax.oss.driver.api.core.CqlSession;
 import com.datastax.oss.driver.api.core.cql.ResultSet;
@@ -10,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-public class CassandraValidation {
+public class CassandraValidation implements Validation {
 
     private final CqlSession session;
 

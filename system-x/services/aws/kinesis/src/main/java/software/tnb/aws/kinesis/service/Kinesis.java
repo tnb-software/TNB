@@ -16,6 +16,6 @@ public class Kinesis extends AWSService<AWSAccount, KinesisClient, KinesisValida
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         super.beforeAll(extensionContext);
         LOG.debug("Creating new Kinesis validation");
-        validation = new KinesisValidation(client(KinesisClient.class));
+        validation = new KinesisValidation(client());
     }
 }

@@ -6,7 +6,8 @@ import software.tnb.aws.common.service.configuration.AWSConfiguration;
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.ConfigurableService;
 import software.tnb.common.service.ServiceFactory;
-import software.tnb.common.service.Validation;
+import software.tnb.common.util.ReflectionUtil;
+import software.tnb.common.validation.Validation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -15,36 +16,32 @@ import org.slf4j.LoggerFactory;
 
 import software.amazon.awssdk.core.SdkClient;
 
-public abstract class AWSService<A extends AWSAccount, C extends SdkClient, V extends Validation> extends ConfigurableService<AWSConfiguration> {
+public abstract class AWSService<A extends AWSAccount, C extends SdkClient, V extends Validation>
+    extends ConfigurableService<A, C, V, AWSConfiguration> {
     protected LocalStack localStack;
 
     protected static final Logger LOG = LoggerFactory.getLogger(AWSService.class);
-
-    protected A account;
-    protected C client;
-    protected V validation;
 
     @Override
     protected void defaultConfiguration() {
         getConfiguration().useLocalstack(false);
     }
 
+    @Override
     public A account() {
         if (account == null) {
-            account = (A) AccountFactory.create(AWSAccount.class);
+            Class<A> accountClass = (Class<A>) ReflectionUtil.getGenericTypesOf(AWSService.class, this.getClass())[0];
+            account = AccountFactory.create(accountClass);
         }
         return account;
     }
 
-    protected C client(Class<C> clazz) {
+    protected C client() {
         if (client == null) {
-            client = AWSClient.createDefaultClient(account(), clazz, getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
+            Class<C> clientClass = (Class<C>) ReflectionUtil.getGenericTypesOf(AWSService.class, this.getClass())[1];
+            client = AWSClient.createDefaultClient(account(), clientClass, getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
         }
         return client;
-    }
-
-    public V validation() {
-        return validation;
     }
 
     @Override

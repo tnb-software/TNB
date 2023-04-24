@@ -1,9 +1,11 @@
 package software.tnb.ftp.common;
 
+import software.tnb.common.validation.Validation;
+
 import java.util.List;
 import java.util.Map;
 
-public interface FileTransferValidation {
+public interface FileTransferValidation extends Validation {
     void createFile(String fileName, String fileContent);
 
     String downloadFile(String fileName);

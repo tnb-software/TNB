@@ -16,6 +16,6 @@ public class Cloudwatch extends AWSService<AWSAccount, CloudWatchClient, Cloudwa
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         super.beforeAll(extensionContext);
         LOG.debug("Creating new Cloudwatch validation");
-        validation = new CloudwatchValidation(client(CloudWatchClient.class));
+        validation = new CloudwatchValidation(client());
     }
 }

@@ -2,7 +2,6 @@ package software.tnb.azure.storage.blob.service;
 
 import software.tnb.azure.common.account.AzureAccount;
 import software.tnb.azure.storage.blob.validation.StorageBlobValidation;
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -16,19 +15,9 @@ import com.azure.storage.common.StorageSharedKeyCredential;
 import com.google.auto.service.AutoService;
 
 @AutoService(StorageBlob.class)
-public class StorageBlob implements Service {
+public class StorageBlob extends Service<AzureAccount, BlobServiceClient, StorageBlobValidation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlob.class);
-
-    private AzureAccount account;
-    private StorageBlobValidation validation;
-
-    public AzureAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(AzureAccount.class);
-        }
-        return account;
-    }
 
     protected BlobServiceClient client() {
         LOG.debug("Creating new Azure Storage Blob client");
@@ -36,10 +25,6 @@ public class StorageBlob implements Service {
             .endpoint(String.format("https://%s.blob.core.windows.net/%s", account().accountName(), account().accessKey()))
             .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
             .buildClient();
-    }
-
-    public StorageBlobValidation validation() {
-        return validation;
     }
 
     @Override

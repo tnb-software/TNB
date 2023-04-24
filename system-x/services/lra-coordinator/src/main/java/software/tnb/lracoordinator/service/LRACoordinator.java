@@ -1,15 +1,14 @@
 package software.tnb.lracoordinator.service;
 
+import software.tnb.common.account.NoAccount;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import software.tnb.common.validation.NoValidation;
 
 import java.util.Map;
 
-public abstract class LRACoordinator implements Service, WithDockerImage {
-    private static final Logger LOG = LoggerFactory.getLogger(LRACoordinator.class);
+public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
 
     public static final int DEFAULT_PORT = 8888;
 

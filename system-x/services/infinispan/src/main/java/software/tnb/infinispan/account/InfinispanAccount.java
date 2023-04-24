@@ -1,4 +1,4 @@
-package software.tnb.infinispan.resource.account;
+package software.tnb.infinispan.account;
 
 import software.tnb.common.account.Account;
 

@@ -1,7 +1,10 @@
 package software.tnb.db.dballocator.service;
 
-import software.tnb.db.dballocator.validation.SqlValidation;
+import software.tnb.common.account.NoAccount;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.service.Service;
+import software.tnb.db.dballocator.configuration.DbAllocatorConfiguration;
+import software.tnb.db.dballocator.validation.SqlValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -16,13 +19,12 @@ import com.google.auto.service.AutoService;
 import java.util.Optional;
 
 @AutoService(DbAllocator.class)
-public class DbAllocator implements Service {
+public class DbAllocator extends Service<NoAccount, NoClient, SqlValidation> {
 
     private static final String API = DbAllocatorConfiguration.getUrl();
     private static final Logger LOG = LoggerFactory.getLogger(DbAllocator.class);
 
-    private DbAllocatorResource resource;
-    private Optional<SqlValidation> validation;
+    private final DbAllocatorResource resource;
 
     private Optional<JaxbAllocation> allocation = Optional.empty();
 
@@ -47,14 +49,8 @@ public class DbAllocator implements Service {
             DbAllocatorConfiguration.getExpire(),
             DbAllocatorConfiguration.getErase())
         );
-        allocation.ifPresent(a -> {
-            LOG.info("Database '{}' has been allocated {}", label, a.getUuid());
-        });
-        validation = allocation.map(i -> new SqlValidation(i, RestClientFactory.getSqlExecutorRestClient(API + "/sql-executor/api/")));
-    }
-
-    public SqlValidation validation() {
-        return validation.orElse(null);
+        allocation.ifPresent(a -> LOG.info("Database '{}' has been allocated {}", label, a.getUuid()));
+        validation = allocation.map(i -> new SqlValidation(i, RestClientFactory.getSqlExecutorRestClient(API + "/sql-executor/api/"))).get();
     }
 
     public Optional<JaxbAllocation> getAllocation() {

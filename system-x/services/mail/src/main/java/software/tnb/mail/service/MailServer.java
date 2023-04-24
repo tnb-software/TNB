@@ -1,5 +1,7 @@
 package software.tnb.mail.service;
 
+import software.tnb.common.account.NoAccount;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.mail.validation.MailValidation;
@@ -7,7 +9,7 @@ import software.tnb.mail.validation.MailValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public abstract class MailServer implements Service, WithDockerImage {
+public abstract class MailServer extends Service<NoAccount, NoClient, MailValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MailServer.class);
     protected static final int SMTP_PORT = 25;
     protected static final int HTTP_PORT = 8000;

@@ -1,6 +1,5 @@
 package software.tnb.salesforce.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.salesforce.account.SalesforceAccount;
@@ -16,19 +15,8 @@ import com.force.api.ForceApi;
 import com.google.auto.service.AutoService;
 
 @AutoService(Salesforce.class)
-public class Salesforce implements Service {
+public class Salesforce extends Service<SalesforceAccount, ForceApi, SalesforceValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(Salesforce.class);
-
-    private SalesforceAccount account;
-    private ForceApi client;
-    private SalesforceValidation validation;
-
-    public SalesforceAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(SalesforceAccount.class);
-        }
-        return account;
-    }
 
     protected ForceApi client() {
         if (client == null) {

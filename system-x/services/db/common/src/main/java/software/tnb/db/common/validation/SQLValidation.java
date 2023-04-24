@@ -1,5 +1,6 @@
 package software.tnb.db.common.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.db.common.account.SQLAccount;
 
 import java.sql.Connection;
@@ -8,7 +9,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.function.Consumer;
 
-public class SQLValidation {
+public class SQLValidation implements Validation {
     private final String jdbcConnectionUrl;
     private final SQLAccount account;
 

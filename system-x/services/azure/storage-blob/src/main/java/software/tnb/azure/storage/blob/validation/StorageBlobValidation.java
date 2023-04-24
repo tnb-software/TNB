@@ -1,5 +1,7 @@
 package software.tnb.azure.storage.blob.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,7 +13,7 @@ import java.io.ByteArrayOutputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class StorageBlobValidation {
+public class StorageBlobValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlobValidation.class);
 

@@ -56,7 +56,9 @@ using JUnit's `@AfterAll` method).
 
 ## Example service
 
-Each service implements a marker interface [Service](./system-x/common/src/main/java/software/tnb/common/service/Service.java).
+Each service extends an abstract [Service](./system-x/common/src/main/java/software/tnb/common/service/Service.java) class that provides
+the `account`,
+`client` and `validation` fields and methods.
 
 ### Remote service
 

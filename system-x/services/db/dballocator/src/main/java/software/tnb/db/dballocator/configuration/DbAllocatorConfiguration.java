@@ -1,4 +1,4 @@
-package software.tnb.db.dballocator.service;
+package software.tnb.db.dballocator.configuration;
 
 import software.tnb.common.config.Configuration;
 

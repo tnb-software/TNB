@@ -1,6 +1,7 @@
 package software.tnb.mail.validation;
 
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.validation.Validation;
 
 import org.apache.commons.mail.DefaultAuthenticator;
 import org.apache.commons.mail.Email;
@@ -15,7 +16,7 @@ import java.util.Map;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
-public class MailValidation {
+public class MailValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(MailValidation.class);
 
     private final Map<String, String> accounts = new HashMap<>();

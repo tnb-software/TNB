@@ -1,5 +1,6 @@
 package software.tnb.telegram.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.telegram.service.Telegram;
 import software.tnb.telegram.validation.model.Message;
 
@@ -11,7 +12,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.util.List;
 
-public class TelegramValidation {
+public class TelegramValidation implements Validation {
     private final Telegram client;
     private final ObjectMapper objectMapper = new ObjectMapper();
 

@@ -2,7 +2,8 @@ package software.tnb.prometheus.metrics.validation;
 
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.HTTPUtils.Response;
-import software.tnb.prometheus.metrics.service.PrometheusMetricsConfiguration;
+import software.tnb.common.validation.Validation;
+import software.tnb.prometheus.metrics.configuration.PrometheusMetricsConfiguration;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,7 +20,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class PrometheusMetricsValidation {
+public class PrometheusMetricsValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(PrometheusMetricsValidation.class);
 

@@ -72,7 +72,7 @@ public class LocalCassandra extends Cassandra implements Deployable {
     }
 
     @Override
-    protected CqlSession session() {
+    protected CqlSession client() {
         return session;
     }
 

@@ -4,7 +4,6 @@ import software.tnb.aws.common.client.AWSClient;
 import software.tnb.aws.common.service.AWSService;
 import software.tnb.aws.redshift.account.RedshiftAccount;
 import software.tnb.aws.redshift.validation.RedshiftValidation;
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.utils.WaitUtils;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -31,7 +30,7 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
         LOG.debug("Creating new AWS Redshift validation");
         redshiftClient = AWSClient.createDefaultClient(account(), RedshiftClient.class,
             getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
-        validation = new RedshiftValidation(redshiftClient, client(RedshiftDataClient.class), account());
+        validation = new RedshiftValidation(redshiftClient, client(), account());
         LOG.debug("Clusters: " + redshiftClient.describeClusters().toString());
         resumeCluster();
     }
@@ -43,14 +42,6 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
         if (redshiftClient != null) {
             redshiftClient.close();
         }
-    }
-
-    @Override
-    public RedshiftAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(RedshiftAccount.class);
-        }
-        return account;
     }
 
     public Cluster getCluster() {

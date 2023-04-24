@@ -1,8 +1,8 @@
 package software.tnb.aws.redshift.validation;
 
 import software.tnb.aws.redshift.account.RedshiftAccount;
-import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.junit.jupiter.api.Assertions;
 
