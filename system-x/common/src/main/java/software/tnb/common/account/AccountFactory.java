@@ -3,6 +3,7 @@ package software.tnb.common.account;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import software.tnb.common.account.loader.CredentialsLoader;
+import software.tnb.common.account.loader.DelegatingCredentialsLoader;
 import software.tnb.common.account.loader.VaultCredentialsLoader;
 import software.tnb.common.account.loader.YamlCredentialsLoader;
 import software.tnb.common.config.TestConfiguration;
@@ -37,7 +38,7 @@ public final class AccountFactory {
             LOG.debug("Loading {} account", accountClass.getSimpleName());
             if (loader == null) {
                 try {
-                    createLoader();
+                    loader = defaultLoader();
                 } catch (Exception e) {
                     fail("Could not load credentials", e);
                 }
@@ -49,33 +50,34 @@ public final class AccountFactory {
         }
     }
 
-    private static void createLoader() throws Exception {
-        if (TestConfiguration.useVault()) {
-            if (TestConfiguration.vaultToken() != null) {
-                LOG.info("Logging into vault using github token");
-                loader = new VaultCredentialsLoader(
-                    TestConfiguration.vaultAddress(),
-                    TestConfiguration.vaultPathPattern(),
-                    TestConfiguration.vaultToken()
-                );
-            } else {
-                LOG.info("Logging into vault using approle");
-                loader = new VaultCredentialsLoader(
-                    TestConfiguration.vaultAddress(),
-                    TestConfiguration.vaultPathPattern(),
-                    TestConfiguration.vaultRoleId(),
-                    TestConfiguration.vaultSecretId()
-                );
-            }
-        } else {
-            if (TestConfiguration.credentials() != null) {
-                LOG.info("loading credentials from property");
-                loader = new YamlCredentialsLoader(TestConfiguration.credentials());
-            } else {
-                LOG.info("Loading credentials from file");
-                loader = new YamlCredentialsLoader(new File(TestConfiguration.credentialsFile()));
-            }
+    public static CredentialsLoader defaultLoader() throws Exception {
+        List<CredentialsLoader> availableLoaders = new ArrayList<>();
+        if (TestConfiguration.vaultToken() != null) {
+            availableLoaders.add(new VaultCredentialsLoader(
+                TestConfiguration.vaultAddress(),
+                TestConfiguration.vaultPathPattern(),
+                TestConfiguration.vaultToken()
+            ));
         }
+        if (TestConfiguration.vaultRoleId() != null && TestConfiguration.vaultSecretId() != null) {
+            availableLoaders.add(new VaultCredentialsLoader(
+                TestConfiguration.vaultAddress(),
+                TestConfiguration.vaultPathPattern(),
+                TestConfiguration.vaultRoleId(),
+                TestConfiguration.vaultSecretId()
+            ));
+        }
+        if (TestConfiguration.credentials() != null) {
+            availableLoaders.add(new YamlCredentialsLoader(TestConfiguration.credentials()));
+        }
+        if (TestConfiguration.credentialsFile() != null) {
+            availableLoaders.add(new YamlCredentialsLoader(new File(TestConfiguration.credentialsFile())));
+        }
+        return new DelegatingCredentialsLoader(availableLoaders);
+    }
+
+    public static void setCredentialsLoader(CredentialsLoader l) {
+        loader = l;
     }
 
     private static <T extends Account> List<String> getCredentialsIds(T instance) {

@@ -4,6 +4,8 @@ TNB is a collection of JUnit 5 extensions designed for testing with external ser
 
 For testing Camel based applications see [fuse-products](./fuse-products/README.md) README file.
 
+For using System-X services from your terminal see [jbang integration](./jbang/README.md) README file.
+
 ---
 
 There are two categories of System-X services: `Remote` and `Self-hosted`.
