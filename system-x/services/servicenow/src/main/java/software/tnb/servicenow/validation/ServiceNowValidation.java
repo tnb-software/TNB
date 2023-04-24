@@ -1,10 +1,11 @@
 package software.tnb.servicenow.validation;
 
+import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.validation.Validation;
 import software.tnb.servicenow.account.ServiceNowAccount;
 import software.tnb.servicenow.dto.Incident;
 import software.tnb.servicenow.dto.IncidentRecordList;
 import software.tnb.servicenow.dto.IncidentSingleResponse;
-import software.tnb.common.utils.HTTPUtils;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,20 +14,20 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import okhttp3.Credentials;
 
-public class ServiceNowValidation {
+public class ServiceNowValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(ServiceNowValidation.class);
 
-    private ServiceNowAccount account;
-    private ObjectMapper om;
+    private final ServiceNowAccount account;
+    private final ObjectMapper om;
 
     public ServiceNowValidation(ServiceNowAccount account) {
         this.account = account;
@@ -42,11 +43,7 @@ public class ServiceNowValidation {
 
         String getUrl = account.url() + "?sysparm_limit=" + limit;
         if (filter != null) {
-            try {
-                getUrl += "&sysparm_query=" + URLEncoder.encode(filter, "UTF-8");
-            } catch (UnsupportedEncodingException e) {
-                throw new RuntimeException(e);
-            }
+            getUrl += "&sysparm_query=" + URLEncoder.encode(filter, StandardCharsets.UTF_8);
         }
         HTTPUtils.Response r =
             HTTPUtils.getInstance().get(getUrl, Map.of("Authorization", Credentials.basic(account.userName(), account.password())));

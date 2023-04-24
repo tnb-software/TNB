@@ -3,6 +3,7 @@ package software.tnb.slack.validation;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 import software.tnb.slack.account.SlackAccount;
 import software.tnb.slack.validation.util.ThrowingFunction;
 
@@ -24,7 +25,7 @@ import com.slack.api.model.Message;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class SlackValidation {
+public class SlackValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SlackValidation.class);
 
     private final Slack client;

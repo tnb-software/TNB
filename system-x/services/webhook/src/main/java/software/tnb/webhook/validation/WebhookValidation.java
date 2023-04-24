@@ -1,7 +1,7 @@
 package software.tnb.webhook.validation;
 
-import software.tnb.common.service.Validation;
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.validation.Validation;
 import software.tnb.webhook.validation.model.WebhookSiteRequest;
 import software.tnb.webhook.validation.model.WebhookSiteRequests;
 

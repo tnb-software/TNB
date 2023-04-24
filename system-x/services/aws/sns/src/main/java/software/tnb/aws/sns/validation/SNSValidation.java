@@ -2,8 +2,8 @@ package software.tnb.aws.sns.validation;
 
 import software.tnb.aws.sns.account.SNSAccount;
 import software.tnb.aws.sqs.service.SQS;
-import software.tnb.common.service.Validation;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;

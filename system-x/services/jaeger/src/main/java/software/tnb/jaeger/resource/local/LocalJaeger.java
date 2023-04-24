@@ -2,10 +2,10 @@ package software.tnb.jaeger.resource.local;
 
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.jaeger.client.JaegerClient;
 import software.tnb.jaeger.client.UnauthenticatedJaegerClient;
 import software.tnb.jaeger.service.Jaeger;
 import software.tnb.jaeger.service.configuration.JaegerConfiguration;
-import software.tnb.jaeger.validation.JaegerValidation;
 
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
@@ -65,8 +65,8 @@ public class LocalJaeger extends Jaeger implements Deployable, WithDockerImage {
     }
 
     @Override
-    protected JaegerValidation getClientBasedValidation() {
-        return new JaegerValidation(new UnauthenticatedJaegerClient(getQueryUrl(JaegerConfiguration.QueryPort.HTTP)));
+    protected JaegerClient client() {
+        return new UnauthenticatedJaegerClient(getQueryUrl(JaegerConfiguration.QueryPort.HTTP));
     }
 
     @NotNull

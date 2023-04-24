@@ -1,5 +1,6 @@
 package software.tnb.db.mongodb.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.db.mongodb.account.MongoDBAccount;
 
 import org.bson.Document;
@@ -18,7 +19,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
-public class MongoDBValidation {
+public class MongoDBValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDBValidation.class);
 
     private final MongoClient client;

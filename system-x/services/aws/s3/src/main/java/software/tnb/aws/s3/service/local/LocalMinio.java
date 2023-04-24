@@ -13,8 +13,6 @@ import com.google.auto.service.AutoService;
 
 import java.util.Map;
 
-import software.amazon.awssdk.services.s3.S3Client;
-
 @AutoService(Minio.class)
 public class LocalMinio extends Minio implements Deployable {
 
@@ -40,7 +38,7 @@ public class LocalMinio extends Minio implements Deployable {
 
     @Override
     public void openResources() {
-        validation = new S3Validation(client(S3Client.class));
+        validation = new S3Validation(client());
     }
 
     @Override

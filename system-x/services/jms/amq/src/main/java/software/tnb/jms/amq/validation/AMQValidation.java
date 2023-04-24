@@ -1,5 +1,6 @@
 package software.tnb.jms.amq.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.jms.amq.account.AMQBrokerAccount;
 import software.tnb.jms.client.JMSClientManager;
 import software.tnb.jms.client.JMSQueueClient;
@@ -11,7 +12,7 @@ import javax.jms.Connection;
 
 import java.util.UUID;
 
-public class AMQValidation {
+public class AMQValidation implements Validation {
     private final Connection connection;
     private JMSClientManager client;
     private final AMQBrokerAccount account;

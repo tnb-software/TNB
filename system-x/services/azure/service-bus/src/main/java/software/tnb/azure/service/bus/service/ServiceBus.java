@@ -1,8 +1,7 @@
 package software.tnb.azure.service.bus.service;
 
-import software.tnb.azure.common.account.AzureServiceBusAccount;
+import software.tnb.azure.service.bus.account.ServiceBusAccount;
 import software.tnb.azure.service.bus.validation.ServiceBusValidation;
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -12,19 +11,13 @@ import com.azure.messaging.servicebus.administration.ServiceBusAdministrationCli
 import com.google.auto.service.AutoService;
 
 @AutoService(ServiceBus.class)
-public class ServiceBus implements Service {
-    private ServiceBusValidation validation;
-
-    private static AzureServiceBusAccount azureServiceBusAccount() {
-        return AccountFactory.create(AzureServiceBusAccount.class);
-    }
-
-    private static ServiceBusAdministrationClient getAdminClient() {
-        return new ServiceBusAdministrationClientBuilder().connectionString(azureServiceBusAccount().connectionString()).buildClient();
-    }
-
-    public ServiceBusValidation validation() {
-        return validation;
+public class ServiceBus extends Service<ServiceBusAccount, ServiceBusAdministrationClient, ServiceBusValidation> {
+    @Override
+    protected ServiceBusAdministrationClient client() {
+        if (client == null) {
+            client = new ServiceBusAdministrationClientBuilder().connectionString(account().connectionString()).buildClient();
+        }
+        return client;
     }
 
     @Override
@@ -34,6 +27,6 @@ public class ServiceBus implements Service {
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) {
-        validation = new ServiceBusValidation(azureServiceBusAccount(), getAdminClient());
+        validation = new ServiceBusValidation(account(), client());
     }
 }

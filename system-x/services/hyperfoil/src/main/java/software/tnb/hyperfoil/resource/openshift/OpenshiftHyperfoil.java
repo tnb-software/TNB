@@ -61,7 +61,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     public void openResources() {
         WaitUtils.waitFor(() -> {
             try {
-                return getValidation().getDefaultApi().openApiWithHttpInfo().getStatusCode() == 200;
+                return validation().getDefaultApi().openApiWithHttpInfo().getStatusCode() == 200;
             } catch (ApiException e) {
                 return false;
             }

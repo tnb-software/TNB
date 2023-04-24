@@ -1,6 +1,5 @@
 package software.tnb.microsoft.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.microsoft.account.MicrosoftAccount;
 import software.tnb.microsoft.validation.GraphValidation;
@@ -19,22 +18,8 @@ import com.microsoft.graph.requests.GraphServiceClient;
 import okhttp3.Request;
 
 @AutoService(Graph.class)
-public class Graph implements Service {
+public class Graph extends Service<MicrosoftAccount, GraphServiceClient<Request>, GraphValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
-    private GraphValidation validation;
-    private MicrosoftAccount account;
-
-    public MicrosoftAccount account() {
-        if (account == null) {
-            LOG.debug("Creating new Graph account");
-            account = AccountFactory.create(MicrosoftAccount.class);
-        }
-        return account;
-    }
-
-    public GraphValidation validation() {
-        return validation;
-    }
 
     protected GraphServiceClient<Request> client() {
         final ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()

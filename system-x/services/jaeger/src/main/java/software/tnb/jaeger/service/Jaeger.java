@@ -1,7 +1,8 @@
 package software.tnb.jaeger.service;
 
+import software.tnb.common.account.NoAccount;
 import software.tnb.common.service.ConfigurableService;
-import software.tnb.common.service.Service;
+import software.tnb.jaeger.client.JaegerClient;
 import software.tnb.jaeger.service.configuration.JaegerConfiguration;
 import software.tnb.jaeger.validation.JaegerValidation;
 
@@ -11,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> implements Service {
+public abstract class Jaeger extends ConfigurableService<NoAccount, JaegerClient, JaegerValidation, JaegerConfiguration> {
 
     public abstract String getLog();
 
@@ -20,8 +21,6 @@ public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> im
     public abstract String getQueryUrl(JaegerConfiguration.QueryPort port);
 
     public abstract String getExternalUrl();
-
-    protected abstract JaegerValidation getClientBasedValidation();
 
     protected JaegerValidation validation;
 
@@ -42,6 +41,6 @@ public abstract class Jaeger extends ConfigurableService<JaegerConfiguration> im
     }
 
     public JaegerValidation validation() {
-        return Optional.ofNullable(validation).orElseGet(() -> validation = getClientBasedValidation());
+        return Optional.ofNullable(validation).orElseGet(() -> validation = new JaegerValidation(client()));
     }
 }

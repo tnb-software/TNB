@@ -1,9 +1,8 @@
 package software.tnb.aws.iam.service;
 
-import software.tnb.aws.iam.validation.IAMValidation;
-
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.service.AWSService;
+import software.tnb.aws.iam.validation.IAMValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -16,7 +15,7 @@ import software.amazon.awssdk.services.iam.IamClient;
 @AutoService(IAM.class)
 public class IAM extends AWSService<AWSAccount, IamClient, IAMValidation> {
     @Override
-    protected IamClient client(Class<IamClient> clazz) {
+    protected IamClient client() {
         // IAM client doesn't have the "create" method as other clients, probably because it's not tied to any region
         if (client == null) {
             client = IamClient.builder()
@@ -30,6 +29,6 @@ public class IAM extends AWSService<AWSAccount, IamClient, IAMValidation> {
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
         LOG.debug("Creating new IAM validation");
-        validation = new IAMValidation(client(IamClient.class));
+        validation = new IAMValidation(client());
     }
 }

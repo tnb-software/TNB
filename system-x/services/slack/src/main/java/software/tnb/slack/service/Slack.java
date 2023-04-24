@@ -1,6 +1,5 @@
 package software.tnb.slack.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.slack.account.SlackAccount;
 import software.tnb.slack.validation.SlackValidation;
@@ -13,29 +12,13 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 @AutoService(Slack.class)
-public class Slack implements Service {
+public class Slack extends Service<SlackAccount, com.slack.api.Slack, SlackValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(Slack.class);
-
-    private SlackAccount account;
-    private com.slack.api.Slack client;
-    private SlackValidation validation;
-
-    public SlackAccount account() {
-        if (account == null) {
-            LOG.debug("Creating new Slack account");
-            account = AccountFactory.create(SlackAccount.class);
-        }
-        return account;
-    }
 
     protected com.slack.api.Slack client() {
         LOG.debug("Creating new Slack client");
         client = com.slack.api.Slack.getInstance();
         return client;
-    }
-
-    public SlackValidation validation() {
-        return validation;
     }
 
     @Override

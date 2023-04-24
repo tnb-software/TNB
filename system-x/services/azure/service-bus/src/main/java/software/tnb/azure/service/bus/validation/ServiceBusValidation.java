@@ -1,9 +1,10 @@
 package software.tnb.azure.service.bus.validation;
 
-import software.tnb.azure.common.account.AzureServiceBusAccount;
+import software.tnb.azure.service.bus.account.ServiceBusAccount;
 import software.tnb.azure.service.bus.service.ErrorProcessor;
 import software.tnb.azure.service.bus.service.MessageProcessor;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import com.azure.messaging.servicebus.ServiceBusClientBuilder;
 import com.azure.messaging.servicebus.ServiceBusMessage;
@@ -15,17 +16,17 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class ServiceBusValidation {
-    private final AzureServiceBusAccount azureServiceBusAccount;
+public class ServiceBusValidation implements Validation {
+    private final ServiceBusAccount serviceBusAccount;
     private final ServiceBusAdministrationClient adminClient;
 
-    public ServiceBusValidation(AzureServiceBusAccount azureServiceBusAccount, ServiceBusAdministrationClient adminClient) {
-        this.azureServiceBusAccount = azureServiceBusAccount;
+    public ServiceBusValidation(ServiceBusAccount serviceBusAccount, ServiceBusAdministrationClient adminClient) {
+        this.serviceBusAccount = serviceBusAccount;
         this.adminClient = adminClient;
     }
 
-    public AzureServiceBusAccount getAzureServiceBusAccount() {
-        return azureServiceBusAccount;
+    public ServiceBusAccount getAzureServiceBusAccount() {
+        return serviceBusAccount;
     }
 
     public void createQueue(String queue) {
@@ -42,7 +43,7 @@ public class ServiceBusValidation {
 
     public void sendMessage(String queue, String message) {
         ServiceBusSenderClient client = new ServiceBusClientBuilder()
-            .connectionString(azureServiceBusAccount.connectionString())
+            .connectionString(serviceBusAccount.connectionString())
             .sender()
             .queueName(queue)
             .buildClient();
@@ -55,7 +56,7 @@ public class ServiceBusValidation {
         final ErrorProcessor errorProcessor = new ErrorProcessor();
 
         try (ServiceBusProcessorClient client = new ServiceBusClientBuilder()
-            .connectionString(azureServiceBusAccount.connectionString())
+            .connectionString(serviceBusAccount.connectionString())
             .processor()
             .queueName(queue)
             .processMessage(messageProcessor)

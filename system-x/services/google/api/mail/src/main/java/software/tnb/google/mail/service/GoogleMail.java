@@ -9,7 +9,7 @@ import com.google.api.services.gmail.Gmail;
 import com.google.auto.service.AutoService;
 
 @AutoService(GoogleMail.class)
-public class GoogleMail extends GoogleAPIService<GoogleMailValidation> {
+public class GoogleMail extends GoogleAPIService<Gmail, GoogleMailValidation> {
     private static final String APPLICATION_NAME = "tnb-system-x-google-mail";
 
     @Override
@@ -19,7 +19,10 @@ public class GoogleMail extends GoogleAPIService<GoogleMailValidation> {
     }
 
     protected Gmail client() {
-        LOG.debug("Creating new Google Mail client");
-        return new Gmail.Builder(httpTransport, JSON_FACTORY, createCredentials()).setApplicationName(APPLICATION_NAME).build();
+        if (client == null) {
+            LOG.debug("Creating new Google Mail client");
+            client = new Gmail.Builder(httpTransport, JSON_FACTORY, createCredentials()).setApplicationName(APPLICATION_NAME).build();
+        }
+        return client;
     }
 }

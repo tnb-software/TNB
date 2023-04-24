@@ -1,7 +1,7 @@
 package software.tnb.ftp.ftp.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.common.service.Service;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.ftp.account.FTPAccount;
 import software.tnb.ftp.ftp.validation.FTPValidation;
@@ -11,21 +11,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class FTP implements FileTransferService, WithDockerImage {
+public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValidation> implements FileTransferService, WithDockerImage {
+
     private static final Logger LOG = LoggerFactory.getLogger(FTP.class);
-
-    private FTPAccount account;
-    private FTPValidation validation;
-
-    protected abstract CustomFTPClient client();
-
-    @Override
-    public FTPAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(FTPAccount.class);
-        }
-        return account;
-    }
 
     @Override
     public FTPValidation validation() {

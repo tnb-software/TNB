@@ -21,7 +21,7 @@ public class KinesisFirehose extends AWSService<AWSAccount, FirehoseClient, Kine
         super.beforeAll(extensionContext);
         iam.beforeAll(extensionContext);
         LOG.debug("Creating new Kinesis validation");
-        validation = new KinesisFirehoseValidation(client(FirehoseClient.class), iam);
+        validation = new KinesisFirehoseValidation(client(), iam);
     }
 
     @Override

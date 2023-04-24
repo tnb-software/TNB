@@ -1,6 +1,5 @@
 package software.tnb.jira.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.jira.account.JiraAccount;
 import software.tnb.jira.validation.JiraValidation;
@@ -15,23 +14,11 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 @AutoService(Jira.class)
-public class Jira implements Service {
+public class Jira extends Service<JiraAccount, ApiClient, JiraValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(Jira.class);
 
-    private JiraAccount account;
-    private ApiClient client;
-    private JiraValidation validation;
-
-    public JiraAccount account() {
-        if (account == null) {
-            LOG.debug("Creating new Jira account");
-            account = AccountFactory.create(JiraAccount.class);
-        }
-        return account;
-    }
-
+    @Override
     protected ApiClient client() {
-
         if (client == null) {
             LOG.debug("Creating new JiraRest client");
 
@@ -41,10 +28,6 @@ public class Jira implements Service {
             client.setPassword(account().getPassword());
         }
         return client;
-    }
-
-    public JiraValidation validation() {
-        return validation;
     }
 
     @Override

@@ -1,5 +1,7 @@
 package software.tnb.microsoft.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +18,7 @@ import java.util.LinkedList;
 
 import okhttp3.Request;
 
-public class GraphValidation {
+public class GraphValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(GraphValidation.class);
 
     private final GraphServiceClient<Request> client;

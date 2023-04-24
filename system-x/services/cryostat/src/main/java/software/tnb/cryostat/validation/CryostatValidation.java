@@ -1,9 +1,10 @@
 package software.tnb.cryostat.validation;
 
+import software.tnb.common.validation.Validation;
+import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.generated.recording.Recording;
 import software.tnb.cryostat.generated.targets.Cryostat;
 import software.tnb.cryostat.generated.targets.Target;
-import software.tnb.cryostat.client.CryostatClient;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class CryostatValidation {
+public class CryostatValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(CryostatValidation.class);
 

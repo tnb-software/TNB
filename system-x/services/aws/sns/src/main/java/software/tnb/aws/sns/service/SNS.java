@@ -51,6 +51,6 @@ public class SNS extends AWSService<SNSAccount, SnsClient, SNSValidation> {
         sqs = ServiceFactory.create(SQS.class, config -> config.useLocalstack(getConfiguration().isLocalstack()));
         sqs.beforeAll(extensionContext);
         LOG.debug("Creating new SNS validation");
-        validation = new SNSValidation(client(SnsClient.class), account(), sqs);
+        validation = new SNSValidation(client(), account(), sqs);
     }
 }

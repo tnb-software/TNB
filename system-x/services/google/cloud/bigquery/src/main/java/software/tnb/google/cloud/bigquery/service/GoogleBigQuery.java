@@ -1,6 +1,5 @@
 package software.tnb.google.cloud.bigquery.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.google.cloud.bigquery.validation.BigQueryValidation;
 import software.tnb.google.cloud.common.account.GoogleCloudAccount;
@@ -23,30 +22,16 @@ import java.io.InputStream;
 import java.util.Base64;
 
 @AutoService(GoogleBigQuery.class)
-public class GoogleBigQuery implements Service {
-
+public class GoogleBigQuery extends Service<GoogleCloudAccount, BigQuery, BigQueryValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleBigQuery.class);
 
-    private GoogleCloudAccount account;
-    private BigQueryValidation validation;
-
-    private BigQuery client;
-
-    public GoogleCloudAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(GoogleCloudAccount.class);
-        }
-        return account;
-    }
-
-    protected BigQuery client() throws IOException {
+    protected BigQuery client() {
         if (client == null) {
             LOG.debug("Creating new Google BigQuery client");
             try {
-                client =
-                    BigQueryOptions.newBuilder().setCredentials(credentialsProvider().getCredentials()).build().getService();
+                client = BigQueryOptions.newBuilder().setCredentials(credentialsProvider().getCredentials()).build().getService();
             } catch (Exception e) {
-                throw new RuntimeException("Unable to create new Google Storage client", e);
+                throw new RuntimeException("Unable to create new Google BigQuery client", e);
             }
         }
         return client;
@@ -55,10 +40,6 @@ public class GoogleBigQuery implements Service {
     private CredentialsProvider credentialsProvider() throws IOException {
         InputStream serviceAccountKey = new ByteArrayInputStream(Base64.getDecoder().decode(account().serviceAccountKey()));
         return FixedCredentialsProvider.create(GoogleCredentials.fromStream(serviceAccountKey));
-    }
-
-    public BigQueryValidation validation() {
-        return validation;
     }
 
     @Override

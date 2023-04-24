@@ -15,7 +15,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
@@ -146,11 +145,6 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     @Override
     public String name() {
         return "mongodb";
-    }
-
-    @Override
-    protected MongoClient client() {
-        return client;
     }
 
     @Override

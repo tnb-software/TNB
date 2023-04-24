@@ -16,6 +16,6 @@ public class S3 extends AWSService<AWSAccount, S3Client, S3Validation> {
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         super.beforeAll(extensionContext);
         LOG.debug("Creating new S3 validation");
-        validation = new S3Validation(client(S3Client.class));
+        validation = new S3Validation(client());
     }
 }

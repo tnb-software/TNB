@@ -22,7 +22,7 @@ public class DynamoDB extends AWSService<AWSAccount, DynamoDbClient, DynamoDBVal
         LOG.debug("Creating new DynamoDB validation");
         streamsClient = AWSClient.createDefaultClient(account(), DynamoDbStreamsClient.class,
             getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
-        validation = new DynamoDBValidation(client(DynamoDbClient.class), streamsClient);
+        validation = new DynamoDBValidation(client(), streamsClient);
     }
 
     @Override

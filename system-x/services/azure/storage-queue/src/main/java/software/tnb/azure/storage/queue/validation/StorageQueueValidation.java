@@ -1,5 +1,7 @@
 package software.tnb.azure.storage.queue.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -9,7 +11,7 @@ import com.azure.storage.queue.models.QueueMessageItem;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StorageQueueValidation {
+public class StorageQueueValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(StorageQueueValidation.class);
 
     private final QueueServiceClient client;

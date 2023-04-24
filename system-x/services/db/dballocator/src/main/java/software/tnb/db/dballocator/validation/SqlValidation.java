@@ -1,5 +1,7 @@
 package software.tnb.db.dballocator.validation;
 
+import software.tnb.common.validation.Validation;
+
 import org.jboss.qa.dballoc.api.allocator.entity.JaxbAllocation;
 import org.jboss.qa.dballoc.api.executor.SqlExecutor;
 import org.jboss.qa.dballoc.api.executor.SqlRequest;
@@ -9,7 +11,7 @@ import org.jboss.resteasy.client.ClientResponse;
 import java.util.Arrays;
 import java.util.List;
 
-public class SqlValidation {
+public class SqlValidation implements Validation {
 
     private JaxbAllocation allocation;
     private SqlExecutor executor;

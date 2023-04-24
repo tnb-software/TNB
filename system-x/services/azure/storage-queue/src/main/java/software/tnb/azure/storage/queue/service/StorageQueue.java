@@ -2,7 +2,6 @@ package software.tnb.azure.storage.queue.service;
 
 import software.tnb.azure.common.account.AzureAccount;
 import software.tnb.azure.storage.queue.validation.StorageQueueValidation;
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -16,18 +15,8 @@ import com.azure.storage.queue.QueueServiceClientBuilder;
 import com.google.auto.service.AutoService;
 
 @AutoService(StorageQueue.class)
-public class StorageQueue implements Service {
+public class StorageQueue extends Service<AzureAccount, QueueServiceClient, StorageQueueValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(StorageQueue.class);
-
-    private AzureAccount account;
-    private StorageQueueValidation validation;
-
-    public AzureAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(AzureAccount.class);
-        }
-        return account;
-    }
 
     protected QueueServiceClient client() {
         LOG.debug("Creating new Storage Queue client");
@@ -35,10 +24,6 @@ public class StorageQueue implements Service {
             .endpoint(String.format("https://%s.queue.core.windows.net/%s", account().accountName(), account().accessKey()))
             .credential(new StorageSharedKeyCredential(account().accountName(), account().accessKey()))
             .buildClient();
-    }
-
-    public StorageQueueValidation validation() {
-        return validation;
     }
 
     @Override

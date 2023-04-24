@@ -2,6 +2,8 @@ package software.tnb.elasticsearch.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
+import software.tnb.common.validation.Validation;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -22,7 +24,7 @@ import co.elastic.clients.elasticsearch.indices.CreateIndexRequest;
 import co.elastic.clients.elasticsearch.indices.DeleteIndexRequest;
 import co.elastic.clients.elasticsearch.indices.ExistsRequest;
 
-public class ElasticsearchValidation {
+public class ElasticsearchValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(ElasticsearchValidation.class);
 
     private final ElasticsearchClient client;

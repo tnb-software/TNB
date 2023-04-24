@@ -9,12 +9,15 @@ import com.google.api.services.sheets.v4.Sheets;
 import com.google.auto.service.AutoService;
 
 @AutoService(GoogleSheets.class)
-public class GoogleSheets extends GoogleAPIService<GoogleSheetsValidation> {
+public class GoogleSheets extends GoogleAPIService<Sheets, GoogleSheetsValidation> {
     private static final String APPLICATION_NAME = "tnb-system-x-google-sheets";
 
     protected Sheets client() {
-        LOG.debug("Creating new Google Sheets client");
-        return new Sheets.Builder(httpTransport, JSON_FACTORY, createCredentials()).setApplicationName(APPLICATION_NAME).build();
+        if (client == null) {
+            LOG.debug("Creating new Google Sheets client");
+            client = new Sheets.Builder(httpTransport, JSON_FACTORY, createCredentials()).setApplicationName(APPLICATION_NAME).build();
+        }
+        return client;
     }
 
     @Override

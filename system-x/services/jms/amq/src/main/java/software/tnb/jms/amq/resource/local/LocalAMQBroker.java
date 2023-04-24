@@ -39,14 +39,14 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
 
     @Override
     public void openResources() {
-        connection = createConnection();
+        client = createConnection();
     }
 
     @Override
     public void closeResources() {
         validation = null;
         try {
-            connection.close();
+            client.close();
         } catch (JMSException e) {
             throw new RuntimeException("Can't close JMS connection", e);
         }

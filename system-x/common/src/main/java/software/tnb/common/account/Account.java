@@ -19,7 +19,10 @@ public interface Account {
         for (Field field : getAllFields(new ArrayList<>(), this.getClass())) {
             try {
                 field.setAccessible(true);
-                properties.put(StringUtils.replaceUnderscoreWithCamelCase(field.getName()), field.get(this));
+                // Null values can't be stored in properties
+                if (field.get(this) != null) {
+                    properties.put(StringUtils.replaceUnderscoreWithCamelCase(field.getName()), field.get(this));
+                }
             } catch (IllegalAccessException e) {
                 throw new RuntimeException("Unable to get field " + field.getName() + " value: ", e);
             }

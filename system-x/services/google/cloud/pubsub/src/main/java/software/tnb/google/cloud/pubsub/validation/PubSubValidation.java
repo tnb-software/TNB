@@ -1,16 +1,16 @@
 package software.tnb.google.cloud.pubsub.validation;
 
+import software.tnb.common.validation.Validation;
+import software.tnb.google.cloud.pubsub.client.PubSubClients;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.api.core.ApiFuture;
-import com.google.api.gax.core.CredentialsProvider;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
-import com.google.cloud.pubsub.v1.SubscriptionAdminClient;
-import com.google.cloud.pubsub.v1.TopicAdminClient;
 import com.google.protobuf.ByteString;
 import com.google.pubsub.v1.ProjectSubscriptionName;
 import com.google.pubsub.v1.PubsubMessage;
@@ -25,31 +25,26 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-public class PubSubValidation {
+public class PubSubValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(PubSubValidation.class);
 
-    private TopicAdminClient topicAdminClient;
-    private SubscriptionAdminClient subscriptionAdminClient;
-    private String projectId;
-    private CredentialsProvider credsProvider;
+    private final PubSubClients clients;
+    private final String projectId;
 
-    public PubSubValidation(TopicAdminClient topicAdminClient, SubscriptionAdminClient subscriptionAdminClient, CredentialsProvider credsProvider,
-        String projectId) {
-        this.topicAdminClient = topicAdminClient;
-        this.subscriptionAdminClient = subscriptionAdminClient;
+    public PubSubValidation(PubSubClients clients, String projectId) {
+        this.clients = clients;
         this.projectId = projectId;
-        this.credsProvider = credsProvider;
     }
 
     public Topic createNewTopic(String topicId) {
-        Topic topic = topicAdminClient.createTopic(TopicName.of(projectId, topicId));
+        Topic topic = clients.topicAdminClient().createTopic(TopicName.of(projectId, topicId));
         LOG.info("Created google pubsub topic: " + topic.getName());
         return topic;
     }
 
     public void deleteTopic(String topicId) {
-        topicAdminClient.deleteTopic(TopicName.of(projectId, topicId));
+        clients.topicAdminClient().deleteTopic(TopicName.of(projectId, topicId));
         LOG.info("Deleted google pubsub topic: " + topicId);
     }
 
@@ -57,13 +52,14 @@ public class PubSubValidation {
         SubscriptionName subscriptionName = SubscriptionName.of(projectId, subscriptionId);
         TopicName topicName = TopicName.of(projectId, topicId);
 
-        Subscription subscription = subscriptionAdminClient.createSubscription(subscriptionName, topicName, PushConfig.getDefaultInstance(), 10);
+        Subscription subscription =
+            clients.subscriptionAdminClient().createSubscription(subscriptionName, topicName, PushConfig.getDefaultInstance(), 10);
         LOG.info("Created google pubsub subscription: " + subscription.getName());
         return subscription;
     }
 
     public void deleteSubscription(String subscriptionId) {
-        subscriptionAdminClient.deleteSubscription(SubscriptionName.of(projectId, subscriptionId));
+        clients.subscriptionAdminClient().deleteSubscription(SubscriptionName.of(projectId, subscriptionId));
         LOG.info("Deleted google pubsub subscription: " + subscriptionId);
     }
 
@@ -71,7 +67,7 @@ public class PubSubValidation {
         Publisher publisher = null;
         try {
             // Create a publisher instance with default settings bound to the topic
-            publisher = Publisher.newBuilder(TopicName.of(projectId, topicId)).setCredentialsProvider(credsProvider).build();
+            publisher = Publisher.newBuilder(TopicName.of(projectId, topicId)).setCredentialsProvider(clients.credentialsProvider()).build();
 
             ByteString data = ByteString.copyFromUtf8(message);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
@@ -118,7 +114,7 @@ public class PubSubValidation {
 
         Subscriber subscriber = null;
         try {
-            subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(credsProvider).build();
+            subscriber = Subscriber.newBuilder(subscriptionName, receiver).setCredentialsProvider(clients.credentialsProvider()).build();
             // Start the subscriber.
             subscriber.startAsync().awaitRunning();
             LOG.info("Listening for messages on {}", subscriptionName.toString());

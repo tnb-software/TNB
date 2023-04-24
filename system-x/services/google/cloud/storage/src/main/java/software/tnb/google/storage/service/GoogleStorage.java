@@ -1,6 +1,5 @@
 package software.tnb.google.storage.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.Service;
 import software.tnb.google.cloud.common.account.GoogleCloudAccount;
 import software.tnb.google.storage.validation.GoogleStorageValidation;
@@ -19,19 +18,8 @@ import com.google.cloud.storage.StorageOptions;
 import io.fabric8.kubernetes.client.utils.Base64;
 
 @AutoService(GoogleStorage.class)
-public class GoogleStorage implements Service {
+public class GoogleStorage extends Service<GoogleCloudAccount, Storage, GoogleStorageValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleStorage.class);
-
-    private GoogleCloudAccount account;
-    private Storage client;
-    private GoogleStorageValidation validation;
-
-    public GoogleCloudAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(GoogleCloudAccount.class);
-        }
-        return account;
-    }
 
     protected Storage client() {
         if (client == null) {
@@ -45,10 +33,6 @@ public class GoogleStorage implements Service {
             }
         }
         return client;
-    }
-
-    public GoogleStorageValidation validation() {
-        return validation;
     }
 
     @Override

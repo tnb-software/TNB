@@ -1,5 +1,6 @@
 package software.tnb.salesforce.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.salesforce.dto.Account;
 import software.tnb.salesforce.dto.Case;
 import software.tnb.salesforce.dto.Lead;
@@ -23,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class SalesforceValidation {
+public class SalesforceValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SalesforceValidation.class);
 
     private final ForceApi client;

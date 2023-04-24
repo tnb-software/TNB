@@ -1,13 +1,16 @@
 package software.tnb.http.service;
 
+import software.tnb.common.account.NoAccount;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
+import software.tnb.common.validation.NoValidation;
 
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-public abstract class HTTP implements Service, WithDockerImage {
+public abstract class HTTP extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
 
     public static final int HTTP_PORT = 8080;
     public static final int HTTPS_PORT = 8443;

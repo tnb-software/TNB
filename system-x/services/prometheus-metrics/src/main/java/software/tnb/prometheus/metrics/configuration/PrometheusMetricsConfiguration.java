@@ -1,4 +1,4 @@
-package software.tnb.prometheus.metrics.service;
+package software.tnb.prometheus.metrics.configuration;
 
 import software.tnb.common.config.Configuration;
 

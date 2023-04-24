@@ -27,6 +27,6 @@ public class Lambda extends AWSService<AWSAccount, LambdaClient, LambdaValidatio
         super.beforeAll(context);
         iam.beforeAll(context);
         LOG.debug("Creating new Lambda validation");
-        validation = new LambdaValidation(client(LambdaClient.class), iam);
+        validation = new LambdaValidation(client(), iam);
     }
 }

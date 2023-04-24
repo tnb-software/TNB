@@ -6,10 +6,10 @@ import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.jaeger.client.JaegerClient;
 import software.tnb.jaeger.client.UnauthenticatedJaegerClient;
 import software.tnb.jaeger.service.Jaeger;
 import software.tnb.jaeger.service.configuration.JaegerConfiguration;
-import software.tnb.jaeger.validation.JaegerValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -110,8 +110,8 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     }
 
     @Override
-    protected JaegerValidation getClientBasedValidation() {
-        return new JaegerValidation(new UnauthenticatedJaegerClient(getExternalUrl()));
+    protected JaegerClient client() {
+        return new UnauthenticatedJaegerClient(getExternalUrl());
     }
 
     @Override

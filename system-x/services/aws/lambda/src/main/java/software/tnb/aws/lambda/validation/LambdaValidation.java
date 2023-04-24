@@ -2,9 +2,9 @@ package software.tnb.aws.lambda.validation;
 
 import static org.junit.jupiter.api.Assertions.fail;
 
-import software.tnb.common.service.Validation;
-import software.tnb.common.utils.WaitUtils;
 import software.tnb.aws.iam.service.IAM;
+import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;

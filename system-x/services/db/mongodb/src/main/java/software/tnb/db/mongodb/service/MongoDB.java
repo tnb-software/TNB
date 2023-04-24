@@ -1,6 +1,5 @@
 package software.tnb.db.mongodb.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.db.mongodb.account.MongoDBAccount;
@@ -13,22 +12,9 @@ import com.mongodb.client.MongoClient;
 
 import java.util.Map;
 
-public abstract class MongoDB implements Service, WithDockerImage {
+public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, MongoDBValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
     public static final int DEFAULT_PORT = 27017;
-
-    private MongoDBAccount account;
-    protected MongoDBValidation validation;
-    protected MongoClient client;
-
-    public MongoDBAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(MongoDBAccount.class);
-        }
-        return account;
-    }
-
-    protected abstract MongoClient client();
 
     public MongoDBValidation validation() {
         if (validation == null) {

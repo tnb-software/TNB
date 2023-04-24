@@ -33,7 +33,7 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
     }
 
     @Override
-    protected S3Client client(Class<S3Client> clazz) {
+    protected S3Client client() {
         if (client == null) {
             client = S3Client.builder()
                 .endpointOverride(URI.create(clientHostname()))

@@ -1,6 +1,7 @@
 package software.tnb.hyperfoil.validation;
 
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.validation.Validation;
 import software.tnb.hyperfoil.service.HyperfoilConfiguration;
 import software.tnb.hyperfoil.validation.generated.ApiClient;
 import software.tnb.hyperfoil.validation.generated.ApiException;
@@ -35,7 +36,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
-public class HyperfoilValidation {
+public class HyperfoilValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(HyperfoilValidation.class);
     private static final Long WAIT_BENCHMARK_SLEEP_TIME = 10000L;
     private static final ObjectMapper yamlMapper = new YAMLMapper();

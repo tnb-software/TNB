@@ -1,25 +1,18 @@
 package software.tnb.telegram.service;
 
-import software.tnb.common.account.AccountFactory;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.service.Service;
+import software.tnb.common.validation.Validation;
 import software.tnb.telegram.account.TelegramAccount;
 
 import java.util.Map;
 
-public abstract class TelegramBotApi implements Service, WithExternalHostname, WithDockerImage {
+public abstract class TelegramBotApi extends Service<TelegramAccount, NoClient, Validation> implements WithExternalHostname, WithDockerImage {
 
     private static final String PORT = System.getProperty("telegram-bot-api.port", "8081");
     private static final String VERBOSITY = System.getProperty("telegram-bot-api.verbosity", "9");
-    private TelegramAccount account;
-
-    protected TelegramAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(TelegramAccount.class);
-        }
-        return account;
-    }
 
     protected Map<String, String> getEnv() {
         return Map.of("TELEGRAM_API_ID", account().getAppId(),
@@ -48,5 +41,4 @@ public abstract class TelegramBotApi implements Service, WithExternalHostname, W
     protected abstract String getWorkingDir();
 
     protected abstract String getUploadDir();
-
 }

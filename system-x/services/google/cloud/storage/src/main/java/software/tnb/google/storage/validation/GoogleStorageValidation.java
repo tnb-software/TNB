@@ -1,6 +1,7 @@
 package software.tnb.google.storage.validation;
 
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,7 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.StreamSupport;
 
-public class GoogleStorageValidation {
+public class GoogleStorageValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(GoogleStorageValidation.class);
 
     private final Storage client;

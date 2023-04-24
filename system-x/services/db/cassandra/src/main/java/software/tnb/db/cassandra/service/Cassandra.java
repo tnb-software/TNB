@@ -10,12 +10,9 @@ import com.datastax.oss.driver.api.core.CqlSession;
 
 import java.util.Map;
 
-public abstract class Cassandra implements Service, WithDockerImage {
+public abstract class Cassandra extends Service<CassandraAccount, CqlSession, CassandraValidation> implements WithDockerImage {
 
     public static final int CASSANDRA_PORT = 9042;
-
-    private CassandraAccount account;
-    protected CassandraValidation validation;
 
     public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box
@@ -24,12 +21,10 @@ public abstract class Cassandra implements Service, WithDockerImage {
 
     public CassandraValidation validation() {
         if (validation == null) {
-            validation = new CassandraValidation(session());
+            validation = new CassandraValidation(client());
         }
         return validation;
     }
-
-    protected abstract CqlSession session();
 
     public abstract int port();
 

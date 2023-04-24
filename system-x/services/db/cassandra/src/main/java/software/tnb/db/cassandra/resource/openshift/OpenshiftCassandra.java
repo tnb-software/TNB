@@ -104,7 +104,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
     }
 
     @Override
-    protected CqlSession session() {
+    protected CqlSession client() {
         return session;
     }
 

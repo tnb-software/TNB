@@ -1,9 +1,9 @@
-package software.tnb.azure.common.account;
+package software.tnb.azure.service.bus.account;
 
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-public class AzureServiceBusAccount implements Account, WithId {
+public class ServiceBusAccount implements Account, WithId {
     private String connection_string;
 
     @Override

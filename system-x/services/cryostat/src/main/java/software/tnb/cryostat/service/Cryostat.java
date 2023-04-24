@@ -1,15 +1,13 @@
 package software.tnb.cryostat.service;
 
+import software.tnb.common.account.Account;
 import software.tnb.common.service.Service;
 import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.validation.CryostatValidation;
 
 import java.util.Optional;
 
-public abstract class Cryostat implements Service {
-
-    protected CryostatValidation validation;
-
+public abstract class Cryostat extends Service<Account, CryostatClient, CryostatValidation> {
     public abstract String connectionUrl();
 
     public abstract CryostatClient client();

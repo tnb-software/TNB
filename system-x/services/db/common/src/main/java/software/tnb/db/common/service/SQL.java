@@ -1,6 +1,7 @@
 package software.tnb.db.common.service;
 
 import software.tnb.common.account.AccountFactory;
+import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
@@ -13,11 +14,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class SQL implements Service, WithName, WithExternalHostname, WithDockerImage {
+public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> implements WithName, WithExternalHostname, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
-
-    private SQLAccount account;
-    protected SQLValidation validation;
 
     protected abstract Class<? extends SQLAccount> accountClass();
 
@@ -38,6 +36,7 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
         return port();
     }
 
+    @Override
     public SQLValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new SQL validation");
@@ -48,6 +47,7 @@ public abstract class SQL implements Service, WithName, WithExternalHostname, Wi
 
     /**
      * Override this method in case the default replace doesn't work for the given type of database
+     *
      * @return local connection url (through port-forward in case of openshift)
      */
     protected String localConnectionUrl() {

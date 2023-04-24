@@ -1,5 +1,6 @@
 package software.tnb.jira.validation;
 
+import software.tnb.common.validation.Validation;
 import software.tnb.jira.validation.generated.ApiClient;
 import software.tnb.jira.validation.generated.ApiException;
 import software.tnb.jira.validation.generated.api.IssueCommentsApi;
@@ -26,7 +27,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-public class JiraValidation {
+public class JiraValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(JiraValidation.class);
 
     private final ApiClient client;
