@@ -61,7 +61,7 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
                 // https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-2.7-Release-Notes#microsoft-sql-server-jdbc-drive-10
                 url = url + ";encrypt=false;";
             } else if (type.contains("mysql")) {
-                dependencies.add("mysql:mysql-connector-java");
+                dependencies.add("com.mysql:mysql-connector-j");
             }  else if (type.contains("mariadb")) {
                 dependencies.add("org.mariadb.jdbc:mariadb-java-client");
             } else if (type.contains("db2")) {
