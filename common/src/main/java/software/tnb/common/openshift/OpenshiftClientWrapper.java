@@ -2,6 +2,7 @@ package software.tnb.common.openshift;
 
 import software.tnb.common.config.TestConfiguration;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 /**
@@ -25,7 +26,7 @@ public class OpenshiftClientWrapper {
 
     public void closeClient() {
         getClient().close();
-        threadLocalClient.set(null);
+        Optional.ofNullable(threadLocalClient).ifPresent(tlc -> tlc.set(null));
         openshiftClient = null;
     }
 }

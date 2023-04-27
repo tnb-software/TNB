@@ -31,7 +31,13 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
     }
 
     default void afterAll(ExtensionContext extensionContext) throws Exception {
-        closeResources();
-        undeploy();
+        try {
+            closeResources();
+            undeploy();
+        } catch (Exception e) {
+            // The exception stack trace will be swallowed by junit, so catch it and print it manually
+            e.printStackTrace();
+            throw e;
+        }
     }
 }
