@@ -15,9 +15,15 @@ public abstract class OpenshiftProduct extends Product {
     }
 
     public void afterAll(ExtensionContext extensionContext) throws Exception {
-        if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
-            teardownProduct();
-            deleteNamespace();
+        try {
+            if (!JUnitUtils.isExtensionStillNeeded(extensionContext, this.getClass())) {
+                teardownProduct();
+                deleteNamespace();
+            }
+        } catch (Exception e) {
+            // Print the stackstace as it is swallowed by junit somehow
+            e.printStackTrace();
+            throw e;
         }
     }
 
