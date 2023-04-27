@@ -67,7 +67,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
 
     @Override
     public String getUrl() {
-        return String.format("http://%s:%s", hostname(), port());
+        return String.format("http://%s:%s", name(), port());
     }
 
     @Override
