@@ -35,7 +35,7 @@ public class OpenshiftLog extends Log {
         Predicate<Pod> readyPredicate = podPredicate.and(p ->
             "True".equals(p.getStatus().getConditions().stream().filter(c -> "ContainersReady".equals(c.getType())).findFirst()
                 .orElse(new PodConditionBuilder().withStatus("False").build()).getStatus()));
-        Optional<Pod> podOptional = OpenshiftClient.get().getPods().stream().filter(readyPredicate).findFirst();
+        Optional<Pod> podOptional = OpenshiftClient.get().pods().list().getItems().stream().filter(readyPredicate).findFirst();
 
         if (podOptional.isEmpty()) {
             LOG.trace("Specified pod doesn't exist (yet), returning empty string as logs");
@@ -55,7 +55,7 @@ public class OpenshiftLog extends Log {
             return toString();
         }
 
-        if (OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().isEmpty()) {
+        if (OpenshiftClient.get().pods().list().getItems().stream().filter(podPredicate).findFirst().isEmpty()) {
             // It can happen that the integration wasn't built at all, so no pod will be present
             return "<No integration pod, probably the build of the integration failed>";
         }
@@ -64,7 +64,8 @@ public class OpenshiftLog extends Log {
             WaitUtils.waitFor(
                 () -> {
                     try {
-                        return OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().filter(this::podFailed).isPresent();
+                        return OpenshiftClient.get().pods().list().getItems().stream().filter(podPredicate).findFirst().filter(this::podFailed)
+                            .isPresent();
                     } catch (Exception ignored) {
                         return false;
                     }
@@ -72,7 +73,7 @@ public class OpenshiftLog extends Log {
                 60,
                 1000,
                 "Waiting until the pod is terminated to collect logs from failed integration");
-            Pod p = OpenshiftClient.get().getPods().stream().filter(podPredicate).findFirst().get();
+            Pod p = OpenshiftClient.get().pods().list().getItems().stream().filter(podPredicate).findFirst().get();
 
             return StringUtils.removeColorCodes(OpenshiftClient.get().pods().withName(p.getMetadata().getName())
                 .inContainer(OpenshiftClient.get().getIntegrationContainer(p)).terminated().getLog());

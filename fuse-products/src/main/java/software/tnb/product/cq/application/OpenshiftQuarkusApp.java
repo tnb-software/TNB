@@ -2,6 +2,7 @@ package software.tnb.product.cq.application;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceFunctions;
 import software.tnb.product.application.Phase;
 import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
@@ -29,7 +30,6 @@ import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.Pod;
 

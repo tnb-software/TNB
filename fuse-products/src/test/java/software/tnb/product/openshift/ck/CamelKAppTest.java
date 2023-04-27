@@ -4,7 +4,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import software.tnb.product.parent.TestParent;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.ck.application.CamelKApp;
@@ -14,6 +13,7 @@ import software.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import software.tnb.product.ck.integration.resource.ResourceType;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.parent.TestParent;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
@@ -114,7 +114,8 @@ public class CamelKAppTest extends CamelKTestParent {
         Integration i = createAndGetIntegration(ckib().fromString("// camel-k: jvm=k1=v1 build-property=k2=v2 build-property=k3=v3"));
         assertThat(i.getSpec().getTraits()).containsKey("builder");
         Map<String, Object> config = new ObjectMapper().convertValue(i.getSpec().getTraits().get("builder").getConfiguration(),
-            new TypeReference<>() { });
+            new TypeReference<>() {
+            });
         assertThat(config.get("properties")).isEqualTo(List.of("k2=v2", "k3=v3"));
     }
 
@@ -123,7 +124,8 @@ public class CamelKAppTest extends CamelKTestParent {
         Integration i = createAndGetIntegration(ckib().fromString("// camel-k: trait=prometheus.enabled=true"));
         assertThat(i.getSpec().getTraits()).containsKey("prometheus");
         Map<String, Object> config = new ObjectMapper().convertValue(i.getSpec().getTraits().get("prometheus").getConfiguration(),
-            new TypeReference<>() { });
+            new TypeReference<>() {
+            });
         assertThat(config).isEqualTo(Map.of("enabled", true));
     }
 
@@ -138,7 +140,7 @@ public class CamelKAppTest extends CamelKTestParent {
         assertThat(config.getType()).isEqualTo("configmap");
         assertThat(config.getValue()).isEqualTo(TestParent.name());
 
-        ConfigMap cm = OpenshiftClient.get().getConfigMap(TestParent.name());
+        ConfigMap cm = OpenshiftClient.get().configMaps().withName(TestParent.name()).get();
         assertThat(cm).isNotNull();
         assertThat(cm.getData()).containsKey("application.properties");
         assertThat(cm.getData().get("application.properties")).isEqualTo(key + "=" + value);
@@ -263,7 +265,8 @@ public class CamelKAppTest extends CamelKTestParent {
         CamelKApp app = new CamelKApp(new KameletBindingBuilder().withNewMetadata().withName(TestParent.name()).endMetadata().build());
         executor.submit(app::start);
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(kameletBindingClient.withName(TestParent.name()).get()).isNotNull());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(kameletBindingClient.withName(TestParent.name()).get()).isNotNull());
     }
 
     @Test
@@ -295,7 +298,6 @@ public class CamelKAppTest extends CamelKTestParent {
             .endStatus()
             .build()
         );
-
     }
 
     private class TestIntegrationSpecCustomizer extends CamelKCustomizer implements IntegrationSpecCustomizer {
@@ -305,6 +307,7 @@ public class CamelKAppTest extends CamelKTestParent {
         }
 
         @Override
-        public void customize() { }
+        public void customize() {
+        }
     }
 }

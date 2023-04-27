@@ -4,6 +4,7 @@ import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.client.openshift.OpenshiftCryostatClient;
@@ -20,7 +21,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -89,7 +89,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
         try {
             return pod != null && pod.isReady()
                 && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
-                , OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost())).build()).execute().isSuccessful();
+                , OpenshiftClient.get().routes().withName(APP_NAME).get().getSpec().getHost())).build()).execute().isSuccessful();
         } catch (IOException e) {
             return false;
         }
@@ -111,7 +111,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public String connectionUrl() {
-        return String.format("https://%s", OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost());
+        return String.format("https://%s", OpenshiftClient.get().routes().withName(APP_NAME).get().getSpec().getHost());
     }
 
     @Override

@@ -13,27 +13,29 @@ import org.slf4j.LoggerFactory;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
-import java.util.function.BooleanSupplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import cz.xtf.core.openshift.OpenShift;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.PodList;
+import io.fabric8.kubernetes.api.model.PodSpec;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.dsl.FilterWatchListDeletable;
+import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
@@ -41,6 +43,7 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.InstallPlan;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfig;
+import io.fabric8.openshift.client.DefaultOpenShiftClient;
 import io.fabric8.openshift.client.OpenShiftConfig;
 import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 import okhttp3.Headers;
@@ -48,7 +51,7 @@ import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class OpenshiftClient extends OpenShift {
+public class OpenshiftClient extends DefaultOpenShiftClient {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftClient.class);
     protected static OpenshiftClientWrapper clientWrapper;
 
@@ -115,7 +118,7 @@ public class OpenshiftClient extends OpenShift {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
             return OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
         } else {
-            return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(), 
+            return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(),
                 OpenshiftConfiguration.openshiftPassword(), OpenshiftConfiguration.openshiftUrl());
         }
     }
@@ -127,9 +130,9 @@ public class OpenshiftClient extends OpenShift {
                 .getInternalBuilder().followRedirects(false).build();
             Request request = new Request.Builder().get().url("https://oauth-openshift.apps."
                     + openshiftHost + "/oauth/authorize?response_type=token&client_id=openshift-challenging-client")
-                    .headers(Headers.of("Authorization",
-                            "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())))
-                    .build();
+                .headers(Headers.of("Authorization",
+                    "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())))
+                .build();
             Response response = httpClient.newCall(request).execute();
             Pattern p = Pattern.compile("(?<=access_token=)[^&]+");
             Matcher m = p.matcher(new URI(response.headers().get("Location")).getFragment());
@@ -327,24 +330,6 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
-     * Starts a new s2i build from a given file.
-     *
-     * @param name buildconfig name
-     * @param filePath path to the file
-     */
-    public void doS2iBuild(String name, Path filePath) {
-        LOG.info("Instantiating a new build for buildconfig {} from file {}", name, filePath.toAbsolutePath());
-        get().buildConfigs().withName(name).instantiateBinary().fromFile(filePath.toFile());
-
-        BooleanSupplier success = () -> "complete".equalsIgnoreCase(get()
-            .getBuild(name + "-" + get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
-        BooleanSupplier fail = () -> "failed".equalsIgnoreCase(get()
-            .getBuild(name + "-" + get().getBuildConfig(name).getStatus().getLastVersion()).getStatus().getPhase());
-
-        WaitUtils.waitFor(success, fail, 5000L, "Waiting until the build completes");
-    }
-
-    /**
      * Create namespace with given name.
      *
      * @param name of namespace to be created
@@ -438,6 +423,10 @@ public class OpenshiftClient extends OpenShift {
         return get().pods().withName(p.getMetadata().getName()).inContainer(getIntegrationContainer(p)).getLog();
     }
 
+    public String getLogs(Pod p, String containerName) {
+        return get().pods().withName(p.getMetadata().getName()).inContainer(containerName).getLog();
+    }
+
     /**
      * Creates a secret from given properties, wrappen into a application.properties key.
      *
@@ -474,6 +463,22 @@ public class OpenshiftClient extends OpenShift {
         } catch (Exception ignored) {
             return false;
         }
+    }
+
+    public List<Container> getAllContainers(Pod pod) {
+        return (List) Optional.ofNullable(pod.getSpec()).map(PodSpec::getContainers).orElse(new ArrayList());
+    }
+
+    public Pod getPod(String name) {
+        return (Pod) ((PodResource) this.pods().withName(name)).get();
+    }
+
+    public List<Pod> getLabeledPods(String key, String value) {
+        return this.getLabeledPods(Collections.singletonMap(key, value));
+    }
+
+    public List<Pod> getLabeledPods(Map<String, String> labels) {
+        return ((PodList) ((FilterWatchListDeletable) this.pods().withLabels(labels)).list()).getItems();
     }
 
     /**
@@ -543,5 +548,13 @@ public class OpenshiftClient extends OpenShift {
             }
         }
         return true;
+    }
+
+    public String getRouteHostName(String hostname) {
+        return String.format("%s-%s.%s",
+            hostname,
+            getNamespace(),
+            get().config().ingresses().withName("cluster").get().getSpec().getDomain()
+        );
     }
 }

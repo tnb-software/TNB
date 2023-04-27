@@ -2,6 +2,7 @@ package software.tnb.product.deploystrategy.impl;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.openshift.OpenShiftBinary;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.product.ProductType;
 import software.tnb.product.application.Phase;
@@ -28,8 +29,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 
-import cz.xtf.core.openshift.OpenShiftBinary;
-import cz.xtf.core.openshift.OpenShifts;
 import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 
 @AutoService(OpenshiftDeployStrategy.class)
@@ -41,7 +40,7 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public ProductType[] products() {
-        return new ProductType[]{ProductType.CAMEL_SPRINGBOOT};
+        return new ProductType[] {ProductType.CAMEL_SPRINGBOOT};
     }
 
     @Override
@@ -149,7 +148,8 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
 
     private void initBinary() {
         final OpenShiftConfigAPIGroupDSL config = OpenshiftClient.get().config();
-        binary = OpenShifts.masterBinary(config.getNamespace());
+        // FIXME xtf
+        binary = new OpenShiftBinary("", "");
+        binary.project(config.getNamespace());
     }
-
 }

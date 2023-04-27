@@ -3,6 +3,7 @@ package software.tnb.product.ck.application;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.ResourceFunctions;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.application.App;
 import software.tnb.product.application.Phase;
@@ -48,7 +49,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.camelk.v1.ConfigurationSpecBuilder;
 import io.fabric8.camelk.v1.IntegrationSpecBuilder;

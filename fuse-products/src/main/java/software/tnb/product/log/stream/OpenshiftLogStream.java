@@ -2,6 +2,7 @@ package software.tnb.product.log.stream;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.util.executor.Executor;
 
@@ -17,7 +18,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 
@@ -68,8 +68,9 @@ public class OpenshiftLogStream implements LogStream {
 
     /**
      * Start the log stream for given pod.
-     *
+     * <p>
      * If the pod has multiple containers, use "integration" container (for knative integrations)
+     *
      * @param pod pod
      */
     private void startWatch(Pod pod) {
@@ -84,7 +85,7 @@ public class OpenshiftLogStream implements LogStream {
 
     /**
      * Stop the watch for given pod name.
-     *
+     * <p>
      * After stopping the log stream, don't remove the pod name from the map, so that the watcher isn't started back in the next loop step
      * (for example, the log stream is stopped before the integration pod is stopped, so it is very likely, that the next loop step would see
      * the integration pod as running and it would start the stream again)

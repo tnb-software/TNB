@@ -1,9 +1,12 @@
 package software.tnb.splunk.resource.openshift;
 
+import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
+
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
@@ -14,21 +17,19 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.google.common.io.Resources;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -92,10 +93,10 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
                 LOG.info("Creating Splunk CRD's from splunk-crds.yaml");
                 OpenshiftClient.get().load(this.getClass().getResourceAsStream("/splunk-crds.yaml")).createOrReplace();
             }
-            String resources =
-                Resources.toString(Objects.requireNonNull(this.getClass().getResource("/splunk-operator-namespace.yaml")), StandardCharsets.UTF_8)
-                    .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace())
-                    .replace("SPLUNK_IMAGE", image());
+            // FIXME verify
+            String resources = IOUtils.toString(this.getClass().getResourceAsStream("/splunk-operator-namespace.yaml"), StandardCharsets.UTF_8)
+                .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace())
+                .replace("SPLUNK_IMAGE", image());
             InputStream is = IOUtils.toInputStream(resources, "UTF-8");
 
             LOG.info("Creating Splunk openshift resources from splunk-operator-namespace.yaml");
@@ -128,14 +129,23 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
         //if CR creates PVC's, they need to be deleted. (usage of the finalizer in CR can in some situations (e.g. failure during operator
         // creation) cause the deletion of CR get stuck)
         OpenshiftClient.get().persistentVolumeClaims().withLabel("app.kubernetes.io/name", "standalone").delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("name", "splunk-operator").timeout(120_000).waitFor();
+        // FIXME verify
+        await()
+            .atMost(2, TimeUnit.MINUTES)
+            .until(() -> OpenshiftClient.get().getLabeledPods("name", "splunk-operator"), List::isEmpty);
     }
 
     @Override
     public void openResources() {
         if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
-            String splunkCert = OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("app.kubernetes.io/instance", "splunk-s1-standalone"))
-                .execute("cat", "/opt/splunk/etc/auth/cacert.pem").getOutput();
+            // FIXME verify
+            String splunkCert = null;
+            try {
+                splunkCert = IOUtils.toString(servicePod().file("/opt/splunk/etc/auth/cacert.pem").read(), (Charset) null);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
             // @formatter:off
             apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
                 .editOrNewMetadata()
@@ -211,7 +221,8 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
         if (account == null) {
             account = AccountFactory.create(SplunkAccount.class);
             account.setPassword(
-                new String(Base64.getDecoder().decode(OpenshiftClient.get().getSecret("splunk-s1-standalone-secret-v1").getData().get("password"))));
+                new String(Base64.getDecoder()
+                    .decode(OpenshiftClient.get().secrets().withName("splunk-s1-standalone-secret-v1").get().getData().get("password"))));
         }
         return account;
     }

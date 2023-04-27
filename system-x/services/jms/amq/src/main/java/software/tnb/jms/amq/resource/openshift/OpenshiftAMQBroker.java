@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.jms.amq.resource.openshift.generated.Acceptor;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemis;
@@ -38,7 +39,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;

@@ -1,11 +1,11 @@
 package software.tnb.cryostat.client.openshift;
 
-import software.tnb.cryostat.generated.targets.Target;
-import software.tnb.cryostat.client.BaseCryostatClient;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.StringUtils;
+import software.tnb.cryostat.client.BaseCryostatClient;
 import software.tnb.cryostat.generated.recording.Recording;
+import software.tnb.cryostat.generated.targets.Target;
 
 import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
@@ -24,7 +24,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.http.HttpClient;
@@ -53,7 +52,8 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     @Override
     public List<Target> targets(String apiContextUrl) throws IOException {
         return mapper.readValue(get(apiContextUrl, "unable to retrieve targets: %s %s").body()
-            , new TypeReference<List<Target>>() { });
+            , new TypeReference<List<Target>>() {
+            });
     }
 
     @Override
@@ -67,20 +67,21 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
             , "annotations.cryostat.PORT", port
             , "annotations.cryostat.NAMESPACE", OpenshiftClient.get().getNamespace()
             , "annotations.cryostat.POD_NAME", podName
-            ), Map.class);
+        ), Map.class);
     }
 
     @Override
     public List<Recording> recordings(String apiContextUrl) throws IOException {
         return mapper.readValue(get(apiContextUrl, "unable to retrieve recordings: %s %s").body()
-            , new TypeReference<List<Recording>>() { });
+            , new TypeReference<List<Recording>>() {
+            });
     }
 
     @Override
     public void startRecording(String apiContextUrl, String name, Map<String, String> labels) throws IOException {
         final HttpResponse<Reader> result = post(apiContextUrl, Map.of("recordingName", name
-            , "events", "template=" + getJfrTemplate()
-            , "metadata", "{\"labels\":" + mapper.writeValueAsString(labels) + "}")
+                , "events", "template=" + getJfrTemplate()
+                , "metadata", "{\"labels\":" + mapper.writeValueAsString(labels) + "}")
             , Reader.class);
         if (result.code() != 201) {
             throw new IOException("Unable to start recording :" + result.code());
@@ -165,10 +166,10 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     }
 
     private Pod getPod(String appName) {
-        return Optional.ofNullable(OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel()
-                    , appName)
-                .stream().findFirst()
-                .orElseGet(() -> OpenshiftClient.get().getAnyPod(appName)))
+        return OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), appName)
+            .stream().findFirst()
+            // FIXME verify -- cryostat needs to find pods of other services - getAnyPod looks for dc - make sure to convert everything to deployment
+            // .orElseGet(() -> OpenshiftClient.get().getAnyPod(appName)))
             .orElseThrow(() -> new IllegalArgumentException("no pod found for integration"));
     }
 

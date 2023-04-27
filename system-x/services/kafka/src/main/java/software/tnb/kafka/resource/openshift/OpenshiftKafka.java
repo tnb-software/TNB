@@ -1,5 +1,7 @@
 package software.tnb.kafka.resource.openshift;
 
+import static org.awaitility.Awaitility.await;
+
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
@@ -23,9 +25,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -85,8 +87,10 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
         if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
             KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
-                .timeout(120_000).waitFor();
+            // FIXME verify
+            await()
+                .atMost(2, TimeUnit.MINUTES)
+                .until(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/cluster", name()), List::isEmpty);
             deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
         }
     }

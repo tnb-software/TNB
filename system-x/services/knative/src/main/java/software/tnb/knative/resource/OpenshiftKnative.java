@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.knative.service.Knative;
 
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
@@ -157,5 +157,4 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
     public boolean clusterWide() {
         return true;
     }
-
 }

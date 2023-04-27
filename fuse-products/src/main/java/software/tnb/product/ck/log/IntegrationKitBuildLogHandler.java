@@ -2,6 +2,7 @@ package software.tnb.product.ck.log;
 
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.application.Phase;
 import software.tnb.product.log.stream.LogStream;
@@ -15,7 +16,6 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.kubernetes.api.model.Pod;
 

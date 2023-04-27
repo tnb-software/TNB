@@ -1,5 +1,7 @@
 package software.tnb.aws.common.resource.openshift;
 
+import static org.awaitility.Awaitility.await;
+
 import software.tnb.aws.common.service.LocalStack;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
@@ -15,9 +17,9 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -43,8 +45,13 @@ public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployab
         OpenshiftClient.get().services().withName(name()).delete();
         LOG.debug("Deleting deployment {}", name());
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .timeout(120_000).waitFor();
+        // FIXME verify
+        await()
+            .atMost(2, TimeUnit.MINUTES)
+            .until(
+                () -> OpenshiftClient.get().getLabeledPods(OpenshiftConfiguration.openshiftDeploymentLabel(), name()),
+                List::isEmpty
+            );
     }
 
     @Override

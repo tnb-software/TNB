@@ -177,7 +177,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
     }
 
     protected boolean isIntegrationPodFailed() {
-        final Optional<Pod> integrationPod = OpenshiftClient.get().getPods().stream().filter(this.podSelector()).findFirst();
+        final Optional<Pod> integrationPod = OpenshiftClient.get().pods().list().getItems().stream().filter(this.podSelector()).findFirst();
         return integrationPod.isPresent() && OpenshiftClient.get().isPodFailed(integrationPod.get());
     }
 }

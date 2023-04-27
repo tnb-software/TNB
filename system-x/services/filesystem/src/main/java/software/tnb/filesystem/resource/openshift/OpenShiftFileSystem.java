@@ -1,6 +1,9 @@
 package software.tnb.filesystem.resource.openshift;
 
+import static org.awaitility.Awaitility.await;
+
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceFunctions;
 import software.tnb.filesystem.service.FileSystem;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -15,7 +18,6 @@ import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.Pod;
 
 @AutoService(FileSystem.class)
@@ -60,8 +62,11 @@ public class OpenShiftFileSystem extends FileSystem {
 
     private void podIsReady(String key, String value) {
         try {
-            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false)
-                .areExactlyNPodsReady(1, key, value).interval(TimeUnit.SECONDS, 10).timeout(TimeUnit.MINUTES, 10).waitFor();
+            // FIXME verify
+            await()
+                .pollInterval(10, TimeUnit.SECONDS)
+                .atMost(10, TimeUnit.MINUTES)
+                .until(() -> OpenshiftClient.get().getLabeledPods(key, value), ResourceFunctions::isSinglePodReady);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

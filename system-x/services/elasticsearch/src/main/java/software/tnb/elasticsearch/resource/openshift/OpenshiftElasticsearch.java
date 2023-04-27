@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.elasticsearch.account.ElasticsearchAccount;
 import software.tnb.elasticsearch.service.Elasticsearch;
@@ -24,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -111,7 +111,9 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
         if (account == null) {
             account = AccountFactory.create(ElasticsearchAccount.class);
             account.setPassword(new String(
-                Base64.getDecoder().decode(OpenshiftClient.get().getSecret(clusterName() + "-es-elastic-user").getData().get("elastic"))));
+                Base64.getDecoder().decode(OpenshiftClient.get()
+                    .secrets().withName(clusterName() + "-es-elastic-user")
+                    .get().getData().get("elastic"))));
         }
         return account;
     }

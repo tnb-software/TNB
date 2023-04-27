@@ -28,8 +28,5 @@
         <Logger name="software.tnb.product.log.stream" additivity="false">
             <AppenderRef ref="LogStream"/>
         </Logger>
-        <Logger name="cz.xtf">
-            <AppenderRef ref="Console" level="INFO"/>
-        </Logger>
     </Loggers>
 </Configuration>

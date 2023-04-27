@@ -5,10 +5,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import software.tnb.product.openshift.OpenshiftTestParent;
-import software.tnb.product.parent.TestParent;
-import software.tnb.util.ck.TestCamelK;
-import software.tnb.util.openshift.TestOpenshiftClient;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
@@ -17,6 +13,10 @@ import software.tnb.product.ck.CamelK;
 import software.tnb.product.ck.configuration.CamelKConfiguration;
 import software.tnb.product.ck.configuration.CamelKProdConfiguration;
 import software.tnb.product.ck.configuration.CamelKUpstreamConfiguration;
+import software.tnb.product.openshift.OpenshiftTestParent;
+import software.tnb.product.parent.TestParent;
+import software.tnb.util.ck.TestCamelK;
+import software.tnb.util.openshift.TestOpenshiftClient;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -146,8 +146,8 @@ public class CamelKTest extends CamelKTestParent {
             assertThat(configMapKeyRef.getKey()).isEqualTo("settings.xml");
             assertThat(configMapKeyRef.getName()).isEqualTo(config.mavenSettingsConfigMapName());
 
-            assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName())).isNotNull();
-            assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName()).getData())
+            assertThat(OpenshiftClient.get().configMaps().withName(config.mavenSettingsConfigMapName()).get()).isNotNull();
+            assertThat(OpenshiftClient.get().configMaps().withName(config.mavenSettingsConfigMapName()).get().getData())
                 .isEqualTo(Map.of("settings.xml", settingsContent));
         } catch (Exception e) {
             fail("Unable to load settings file", e);
@@ -162,8 +162,9 @@ public class CamelKTest extends CamelKTestParent {
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
             assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms()
                 .withName(config.integrationPlatformName()).get()).isNotNull());
-        assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName())).isNotNull();
-        assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName()).getData().get("settings.xml")).contains("my-repo");
+        assertThat(OpenshiftClient.get().configMaps().withName(config.mavenSettingsConfigMapName()).get()).isNotNull();
+        assertThat(OpenshiftClient.get().configMaps().withName(config.mavenSettingsConfigMapName()).get().getData().get("settings.xml"))
+            .contains("my-repo");
     }
 
     @Test

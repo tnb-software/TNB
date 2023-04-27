@@ -4,6 +4,7 @@ import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.ResourceParsers;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.hyperfoil.service.Hyperfoil;
 import software.tnb.hyperfoil.service.HyperfoilConfiguration;
@@ -23,7 +24,6 @@ import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
@@ -35,12 +35,12 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     private static final String APP_NAME = "hyperfoil-" + OpenshiftClient.get().getNamespace();
 
     private static final CustomResourceDefinitionContext HYPERFOIL_CTX = new CustomResourceDefinitionContext.Builder()
-            .withName("Hyperfoil")
-            .withGroup("hyperfoil.io")
-            .withVersion("v1alpha2")
-            .withPlural("hyperfoils")
-            .withScope("Namespaced")
-            .build();
+        .withName("Hyperfoil")
+        .withGroup("hyperfoil.io")
+        .withVersion("v1alpha2")
+        .withPlural("hyperfoils")
+        .withScope("Namespaced")
+        .build();
 
     @Override
     public void undeploy() {
@@ -121,8 +121,11 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     private Map<String, Object> getHyperfoilDefinition(boolean includesAgentLog) {
         Map<String, Object> metadata = Map.of("name", APP_NAME, "namespace", OpenshiftClient.get().getNamespace());
-        Map<String, Object> spec = Map.of("agentDeployTimeout", 120000, "version", "latest", "route",
-                Map.of("host", OpenshiftClient.get().generateHostname("hyperfoil")) // "hyperfoil.apps.mycloud.example.com"
+        // FIXME verify
+        Map<String, Object> spec = Map.of(
+            "agentDeployTimeout", 120000,
+            "version", "latest",
+            "route", Map.of("host", OpenshiftClient.get().getRouteHostName("hyperfoil")) // "hyperfoil.apps.mycloud.example.com"
         );
         if (includesAgentLog) {
             spec = new HashMap<>(spec);
@@ -130,14 +133,14 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         }
 
         return Map.of("kind", HYPERFOIL_CTX.getName(), "apiVersion",
-                String.format("%s/%s", HYPERFOIL_CTX.getGroup(), HYPERFOIL_CTX.getVersion()), "metadata", metadata,
-                "spec", spec);
+            String.format("%s/%s", HYPERFOIL_CTX.getGroup(), HYPERFOIL_CTX.getVersion()), "metadata", metadata,
+            "spec", spec);
     }
 
     private void createAgentLogConfigMap(String agentLogConfPath) {
         try {
             OpenshiftClient.get().createConfigMap(HyperfoilConfiguration.agentLogMapConfig(),
-                    Map.of(HyperfoilConfiguration.agentLogFileName(), Files.readString(Path.of(agentLogConfPath))));
+                Map.of(HyperfoilConfiguration.agentLogFileName(), Files.readString(Path.of(agentLogConfPath))));
         } catch (IOException e) {
             LOG.error("Error on Hyperfoil creation", e);
             throw new RuntimeException(e);
@@ -151,7 +154,9 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public String externalHostname() {
-        return OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost();
+        return OpenshiftClient.get()
+            .routes().withName(APP_NAME)
+            .get().getSpec().getHost();
     }
 
     @Override

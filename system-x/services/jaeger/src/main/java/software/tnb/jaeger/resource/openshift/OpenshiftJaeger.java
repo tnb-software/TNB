@@ -81,7 +81,9 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
 
     @Override
     public String externalHostname() {
-        return "https://" + OpenshiftClient.get().getRoute(JAEGER_INSTANCE_NAME).getSpec().getHost();
+        return "https://" + OpenshiftClient.get()
+            .routes().withName(JAEGER_INSTANCE_NAME).get()
+            .getSpec().getHost();
     }
 
     @Override
@@ -91,7 +93,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
 
     @Override
     public String getLog() {
-        return OpenshiftClient.get().getPodLog(servicePod().get(), "jaeger");
+        return OpenshiftClient.get().getLogs(servicePod().get(), "jaeger");
     }
 
     @Override
@@ -141,5 +143,4 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         cr.put("spec", spec);
         return cr;
     }
-
 }

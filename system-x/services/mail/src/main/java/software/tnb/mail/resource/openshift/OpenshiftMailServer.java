@@ -201,7 +201,9 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public String externalHostname() {
-        return OpenshiftClient.get().getRoute(name() + "-http").getSpec().getHost();
+        return OpenshiftClient.get()
+            .routes().withName(name() + "-http")
+            .get().getSpec().getHost();
     }
 
     @Override

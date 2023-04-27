@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.ResourceFunctions;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.OpenshiftProduct;
 import software.tnb.product.Product;
@@ -23,6 +24,7 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import org.apache.commons.io.output.WriterOutputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -38,6 +40,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.StringWriter;
+import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -48,9 +52,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
-import cz.xtf.core.openshift.PodShellOutput;
-import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.camelk.v1.IntegrationPlatform;
 import io.fabric8.camelk.v1.IntegrationPlatformBuilder;
@@ -61,6 +64,7 @@ import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Quantity;
 import io.fabric8.kubernetes.api.model.Secret;
+import io.fabric8.kubernetes.client.dsl.ExecWatch;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
 import io.fabric8.kubernetes.client.dsl.base.PatchContext;
 import io.fabric8.kubernetes.client.dsl.base.PatchType;
@@ -184,20 +188,33 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
     }
 
     private boolean kameletsDeployed() {
+        // FIXME verify
         if (operatorKameletCount == -1) {
-            final PodShellOutput shellOutput =
-                OpenshiftClient.get().podShell(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0))
-                    .executeWithBash("ls /kamelets/* | wc -l");
-            if (!shellOutput.getError().isEmpty()) {
-                LOG.error("Unable to list all kamelets: {}", shellOutput.getError());
+            var pod = OpenshiftClient.get().pods().withName(
+                OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0).getMetadata().getName());
+
+            // FIXME: maybe it would be worth it refactoring into a separate class
+            StringWriter writer = new StringWriter();
+            CountDownLatch latch = new CountDownLatch(1);
+            try (ExecWatch exec = pod
+                .writingOutput(new WriterOutputStream(writer, Charset.defaultCharset()))
+                .writingError(System.err)
+                .usingListener((code, reason) -> latch.countDown())
+                .exec("bash", "-c", "ls /kamelets/* | wc -l")) {
+                latch.await(1, TimeUnit.MINUTES);
+            } catch (InterruptedException e) {
+                LOG.error("Unable to list all kamelets", e);
                 return false;
             }
-            if (shellOutput.getOutput().isEmpty()) {
+
+            String output = writer.toString();
+
+            if (output.isEmpty()) {
                 LOG.error("Unable to list all kamelets: empty response");
                 return false;
             }
 
-            operatorKameletCount = Integer.parseInt(shellOutput.getOutput().trim());
+            operatorKameletCount = Integer.parseInt(output.trim());
         }
 
         // https://github.com/fabric8io/kubernetes-client/issues/3852
