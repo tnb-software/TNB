@@ -23,7 +23,6 @@ import java.util.stream.Collectors;
 
 public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
-    private final boolean isProd = QuarkusConfiguration.camelQuarkusVersion().contains("redhat");
 
     public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
@@ -87,18 +86,14 @@ public abstract class QuarkusApp extends App {
         File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
-        // For community versions use camel platform bom only, for productized append the camel platform bom (quarkus bom already present)
+        // Append the camel platform bom (quarkus bom already present)
         Dependency camelQuarkusBom = new Dependency();
         camelQuarkusBom.setGroupId(QuarkusConfiguration.camelPlatformGroupId());
         camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelPlatformArtifactId());
         camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusVersion());
         camelQuarkusBom.setType("pom");
         camelQuarkusBom.setScope("import");
-        if (isProd) {
-            model.getDependencyManagement().getDependencies().add(camelQuarkusBom);
-        } else {
-            model.getDependencyManagement().setDependencies(List.of(camelQuarkusBom));
-        }
+        model.getDependencyManagement().getDependencies().add(camelQuarkusBom);
 
         if (!OpenshiftConfiguration.isOpenshift()) {
             // quarkus-resteasy is needed for the openshift.yml to be generated, but the resteasy itself is not used anywhere

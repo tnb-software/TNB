@@ -18,11 +18,11 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static final String MAVEN_PLUGIN_VERSION = "quarkus.maven.plugin.version";
 
     public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "2.2.3.Final");
+        return getProperty(QUARKUS_VERSION, "2.13.7.Final");
     }
 
     public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION, "2.2.0");
+        return getProperty(CAMEL_QUARKUS_VERSION, "2.13.3");
     }
 
     public static boolean isQuarkusNative() {
