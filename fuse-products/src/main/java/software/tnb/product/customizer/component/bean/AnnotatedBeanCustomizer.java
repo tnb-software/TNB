@@ -1,5 +1,6 @@
 package software.tnb.product.customizer.component.bean;
 
+import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.ProductsCustomizer;
 import software.tnb.product.util.jparser.AnnotationUtils;
 
@@ -8,10 +9,9 @@ import com.github.javaparser.ast.CompilationUnit;
 import java.util.List;
 
 public class AnnotatedBeanCustomizer extends ProductsCustomizer {
+    private Class<?>[] classes;
 
-    private Class[] classes;
-
-    public AnnotatedBeanCustomizer(Class... classes) {
+    public AnnotatedBeanCustomizer(Class<?>... classes) {
         this.classes = classes;
     }
 
@@ -21,10 +21,12 @@ public class AnnotatedBeanCustomizer extends ProductsCustomizer {
 
     @Override
     public void customizeQuarkus() {
-        for (Class clazz : classes) {
+        // quarkus 3 migrated to jakarta ee
+        final String packageName = QuarkusConfiguration.quarkusVersion().startsWith("2") ? "javax" : "jakarta";
+        for (Class<?> clazz : classes) {
             CompilationUnit compilationUnit = getIntegrationBuilder().getCompilationUnit(clazz);
             AnnotationUtils.addAnnotationsToClass(
-                compilationUnit, List.of("javax.enterprise.context.ApplicationScoped", "javax.inject.Named"),
+                compilationUnit, List.of(packageName + ".enterprise.context.ApplicationScoped", packageName + ".inject.Named"),
                 List.of("ApplicationScoped", "Named"));
 
             getIntegrationBuilder().addClass(compilationUnit);
@@ -33,12 +35,10 @@ public class AnnotatedBeanCustomizer extends ProductsCustomizer {
 
     @Override
     public void customizeSpringboot() {
-        for (Class clazz : classes) {
+        for (Class<?> clazz : classes) {
             CompilationUnit compilationUnit = getIntegrationBuilder().getCompilationUnit(clazz);
             getIntegrationBuilder().getRouteBuilder().ifPresent(
-                cu -> cu.getPackageDeclaration().ifPresent(
-                    pd -> compilationUnit.setPackageDeclaration(pd)
-                )
+                cu -> cu.getPackageDeclaration().ifPresent(compilationUnit::setPackageDeclaration)
             );
 
             AnnotationUtils.addAnnotationsToClass(
