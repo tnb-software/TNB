@@ -2,8 +2,6 @@ package software.tnb.product.app;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.assertj.core.api.Assertions;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
@@ -20,6 +18,7 @@ import org.apache.maven.model.Dependency;
 import org.apache.maven.model.DependencyManagement;
 import org.apache.maven.model.Model;
 import org.apache.maven.shared.invoker.InvocationRequest;
+import org.assertj.core.api.Assertions;
 import org.assertj.core.api.SoftAssertions;
 
 import java.util.ArrayList;
@@ -95,37 +94,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
     }
 
     @Test
-    public void shouldSetCamelQuarkusBomForUpstreamTest() {
-        TEST_INVOKER.mockExecution(() -> {
-            Model model = Maven.loadPom(POM_PATH.toFile());
-
-            DependencyManagement dm = new DependencyManagement();
-            Dependency d = new Dependency();
-            d.setGroupId("com.example");
-            d.setArtifactId("test");
-            d.setVersion("1.0");
-            List<Dependency> dependencies = new ArrayList<>();
-            dependencies.add(d);
-            dm.setDependencies(dependencies);
-            model.setDependencyManagement(dm);
-            Maven.writePom(POM_PATH.toFile(), model);
-        });
-
-        new LocalQuarkusApp(dummyIb());
-
-        final Model pom = Maven.loadPom(POM_PATH.toFile());
-        assertThat(pom.getDependencyManagement().getDependencies()).hasSize(1);
-
-        Dependency d = pom.getDependencyManagement().getDependencies().get(0);
-        assertThat(d.getGroupId()).isEqualTo(QuarkusConfiguration.camelPlatformGroupId());
-        assertThat(d.getArtifactId()).isEqualTo(QuarkusConfiguration.camelPlatformArtifactId());
-        assertThat(d.getVersion()).isEqualTo(QuarkusConfiguration.camelQuarkusVersion());
-        assertThat(d.getType()).isEqualTo("pom");
-        assertThat(d.getScope()).isEqualTo("import");
-    }
-
-    @Test
-    public void shouldAppendCamelQuarkusBomForProdTest() {
+    public void shouldAppendCamelQuarkusBomTest() {
         final String productizedVersion = "1.0.redhat-1";
         System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_VERSION, productizedVersion);
 
