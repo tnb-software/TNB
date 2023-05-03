@@ -1,5 +1,7 @@
 package software.tnb.common.utils;
 
+import static org.awaitility.Awaitility.await;
+
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.exception.TimeoutException;
@@ -8,16 +10,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
-import java.time.Instant;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 
 public final class WaitUtils {
     private static final Logger LOG = LoggerFactory.getLogger(WaitUtils.class);
-    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(1);
+    private static final ExecutorService EXECUTOR_SERVICE = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors());
 
     private WaitUtils() {
     }
@@ -56,20 +59,12 @@ public final class WaitUtils {
      */
     public static void waitFor(BooleanSupplier resourceCheck, int retries, long waitTime, String logMessage) throws TimeoutException {
         LOG.info(logMessage);
-        boolean state;
-        do {
-            state = resourceCheck.getAsBoolean();
-
-            if (!state) {
-                LOG.debug("Condition not met yet, sleeping for {}", waitTime);
-                retries--;
-                sleep(waitTime);
-            }
-        } while (!state && retries > 0);
-
-        if (!state) {
-            throw new TimeoutException("Timeout exceeded");
-        }
+        await()
+            .atMost(retries * waitTime, TimeUnit.MILLISECONDS)
+            .pollInterval(waitTime, TimeUnit.MILLISECONDS)
+            .pollDelay(0, TimeUnit.SECONDS)
+            .conditionEvaluationListener(condition -> LOG.debug("Condition not met yet, sleeping for {}", waitTime))
+            .until(resourceCheck::getAsBoolean);
         LOG.debug("Done waiting");
     }
 
@@ -85,22 +80,13 @@ public final class WaitUtils {
      * @throws FailureConditionMetException when the fail condition is true
      */
     public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
-        LOG.info(logMessage);
-        Instant start = Instant.now();
-        while (true) {
-            if (check.getAsBoolean()) {
-                break;
-            } else if (fail.getAsBoolean()) {
-                throw new FailureConditionMetException("Specified fail condition met");
-            } else if (Duration.between(start, Instant.now()).compareTo(TestConfiguration.testWaitKillTimeout()) > 0) {
-                LOG.error("Wait killed after {} minutes", TestConfiguration.testWaitKillTimeout().toMinutes());
-                break;
-            } else {
-                LOG.debug("Condition not met yet, sleeping for {}", timeout);
-                sleep(timeout);
-            }
-        }
-        LOG.debug("Done waiting");
+        await()
+            .atMost(TestConfiguration.testWaitKillTimeout())
+            .pollInterval(timeout, TimeUnit.MILLISECONDS)
+            .pollDelay(0, TimeUnit.MILLISECONDS)
+            .failFast(fail::getAsBoolean)
+            .conditionEvaluationListener(condition -> LOG.debug("Condition not met yet, sleeping for {}", timeout))
+            .until(check::getAsBoolean);
     }
 
     /**
@@ -123,20 +109,13 @@ public final class WaitUtils {
      * @return callable result or TimeoutException
      */
     public static <T> T withTimeout(Callable<T> callable, Duration waitTime) {
-        Instant end = Instant.now().plus(waitTime);
         final Future<T> future = EXECUTOR_SERVICE.submit(callable);
-        while (Instant.now().isBefore(end) && !future.isDone()) {
-            sleep(100L);
-        }
-        if (!future.isDone()) {
-            future.cancel(true);
-            throw new TimeoutException("Timeout exceeded");
-        } else {
-            try {
-                return future.get();
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to get callable result: ", e);
-            }
+        try {
+            return future.get(waitTime.toMillis(), TimeUnit.MILLISECONDS);
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Unable to get callable result: ", e);
+        } catch (java.util.concurrent.TimeoutException e) {
+            throw new TimeoutException(e);
         }
     }
 }
