@@ -1,6 +1,5 @@
 package software.tnb.kafka.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.service.Service;
 import software.tnb.kafka.account.KafkaAccount;
@@ -23,20 +22,12 @@ import java.util.UUID;
 public abstract class Kafka extends Service<KafkaAccount, NoClient, KafkaValidation<?>> {
     protected Map<Class<?>, KafkaValidation> validations;
     protected Properties props = defaultClientProperties();
-    private KafkaAccount account;
 
     public abstract String bootstrapServers();
 
     public abstract String bootstrapSSLServers();
 
     public abstract void createTopic(String name, int partitions, int replicas);
-
-    public KafkaAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(KafkaAccount.class);
-        }
-        return account;
-    }
 
     public <T> KafkaValidation<T> validation(Class<T> clazz) {
         if (!validations.containsKey(clazz)) {
@@ -76,10 +67,12 @@ public abstract class Kafka extends Service<KafkaAccount, NoClient, KafkaValidat
     }
 
     public void closeResources() {
-        validations.values().forEach(validation -> {
-            validation.closeProducer();
-            validation.closeConsumer();
-        });
-        validations = null;
+        if (validations != null) {
+            validations.values().forEach(validation -> {
+                validation.closeProducer();
+                validation.closeConsumer();
+            });
+            validations = null;
+        }
     }
 }

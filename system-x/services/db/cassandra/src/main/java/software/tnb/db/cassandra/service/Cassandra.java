@@ -1,6 +1,5 @@
 package software.tnb.db.cassandra.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.db.cassandra.account.CassandraAccount;
@@ -40,12 +39,5 @@ public abstract class Cassandra extends Service<CassandraAccount, CqlSession, Ca
             "CASSANDRA_PASSWORD", account().password(),
             "CASSANDRA_PASSWORD_SEEDER", "yes"
         );
-    }
-
-    public CassandraAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(CassandraAccount.class);
-        }
-        return account;
     }
 }

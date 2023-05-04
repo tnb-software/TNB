@@ -1,6 +1,5 @@
 package software.tnb.infinispan.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
@@ -13,15 +12,6 @@ public abstract class Infinispan extends Service<InfinispanAccount, NoClient, No
     public static final int PORT = 11222;
 
     public abstract int getPortMapping();
-
-    private InfinispanAccount account;
-
-    public InfinispanAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(InfinispanAccount.class);
-        }
-        return account;
-    }
 
     public abstract String getHost();
 

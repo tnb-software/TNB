@@ -238,8 +238,8 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public void cleanup() {
         LOG.debug("Cleaning kafka instance");
-        AdminClient adminClient = AdminClient.create(props);
         try {
+            AdminClient adminClient = AdminClient.create(props);
             adminClient.deleteTopics(adminClient.listTopics().names().get());
             adminClient.close();
         } catch (Exception e) {
