@@ -39,7 +39,7 @@ public class LocalLocalStack extends LocalStack implements Deployable {
 
     @Override
     public String serviceUrl() {
-        return "http://localhost:" + container.getPort();
+        return String.format("http://%s:%d", container.getHost(), container.getPort());
     }
 
     @Override

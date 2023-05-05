@@ -18,20 +18,24 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 @AutoService(SFTP.class)
 public class LocalSFTP extends SFTP implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSFTP.class);
-    private SftpContainer container;
+    private SFTPContainer container;
     private SFTPClient client;
     
     @Override
 
     public void deploy() {
-        LOG.info("Starting sftp container");
-        container = new SftpContainer(image(), containerEnvironment());
+        LOG.info("Starting SFTP container");
+        container = new SFTPContainer(image(), port(), containerEnvironment());
         container.start();
+        LOG.info("SFTP container started");
     }
 
     @Override
     public void undeploy() {
-        container.stop();
+        if (container != null) {
+            LOG.info("Stopping SFTP container");
+            container.stop();
+        }
     }
 
     @Override
@@ -60,7 +64,7 @@ public class LocalSFTP extends SFTP implements Deployable {
 
     @Override
     public String host() {
-        return container.getContainerInfo().getNetworkSettings().getNetworks().get("bridge").getIpAddress();
+        return container.getHost();
     }
 
     @Override

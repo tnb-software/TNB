@@ -5,6 +5,7 @@ import software.tnb.infinispan.service.Infinispan;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import com.google.auto.service.AutoService;
 
@@ -16,7 +17,7 @@ public class LocalInfinispan extends Infinispan implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting Infinispan container");
-        container = new InfinispanContainer(defaultImage(), PORT, containerEnvironment());
+        container = new InfinispanContainer(image(), PORT, containerEnvironment());
         container.start();
         LOG.info("Infinispan container started");
     }
@@ -31,12 +32,12 @@ public class LocalInfinispan extends Infinispan implements Deployable {
 
     @Override
     public int getPortMapping() {
-        return container.getMappedPort(PORT);
+        return TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST") == null ? container.getMappedPort(PORT) : PORT;
     }
 
     @Override
     public String getHost() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

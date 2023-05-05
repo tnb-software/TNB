@@ -2,6 +2,7 @@ package software.tnb.db.common.service;
 
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.client.NoClient;
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
@@ -51,9 +52,11 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
      * @return local connection url (through port-forward in case of openshift)
      */
     protected String localConnectionUrl() {
-        return jdbcConnectionUrl()
+        return OpenshiftConfiguration.isOpenshift()
+            ? jdbcConnectionUrl()
             .replace("://" + hostname(), "://" + externalHostname())
-            .replace(":" + port(), ":" + localPort());
+            .replace(":" + port(), ":" + localPort())
+            : jdbcConnectionUrl();
     }
 
     public abstract Map<String, String> containerEnvironment();

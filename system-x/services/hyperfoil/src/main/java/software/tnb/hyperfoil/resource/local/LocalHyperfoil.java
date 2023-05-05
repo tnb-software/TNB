@@ -42,7 +42,7 @@ public class LocalHyperfoil extends Hyperfoil implements Deployable, WithDockerI
 
     @Override
     public String hyperfoilUrl() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

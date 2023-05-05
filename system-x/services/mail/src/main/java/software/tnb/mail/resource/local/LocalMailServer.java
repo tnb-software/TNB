@@ -40,22 +40,22 @@ public class LocalMailServer extends MailServer implements Deployable {
 
     @Override
     public String smtpHostname() {
-        return "localhost:" + container.getSmtpPort();
+        return String.format("%s:%d", container.getHost(), container.getSmtpPort());
     }
 
     @Override
     public String imapHostname() {
-        return "localhost:" + container.getImapPort();
+        return String.format("%s:%d", container.getHost(), container.getImapPort());
     }
 
     @Override
     public String pop3Hostname() {
-        return "localhost:" + container.getPop3Port();
+        return String.format("%s:%d", container.getHost(), container.getPop3Port());
     }
 
     @Override
     public String httpHostname() {
-        return "localhost:" + container.getHttpPort();
+        return String.format("%s:%d", container.getHost(), container.getHttpPort());
     }
 
     @Override

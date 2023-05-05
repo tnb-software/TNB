@@ -14,7 +14,7 @@ public class LocalMSSQL extends MSSQL implements Deployable {
 
     @Override
     public String hostname() {
-        return "localhost";
+        return localDb.getHost();
     }
 
     @Override

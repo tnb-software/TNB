@@ -44,26 +44,16 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     private final CustomFTPClient client = new OpenShiftFTPClient();
 
-    public static final int FTP_COMMAND_PORT = 2121;
-    public static final int FTP_DATA_PORT_START = 2122;
-    public static final int FTP_DATA_PORT_END = 2130;
-
     @Override
     public void create() {
 
         List<ContainerPort> ports = new LinkedList<>();
-        ports.add(new ContainerPortBuilder()
-            .withName("ftp-cmd")
-            .withContainerPort(port())
-            .withProtocol("TCP").build());
-
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
-            ContainerPort containerPort = new ContainerPortBuilder()
-                .withName("ftp-data-" + dataPort)
-                .withContainerPort(dataPort)
-                .withProtocol("TCP")
-                .build();
-            ports.add(containerPort);
+        List<Integer> ftpPorts = containerPorts();
+        for (int i = 0; i < ftpPorts.size(); i++) {
+            ports.add(new ContainerPortBuilder()
+                .withName("ftp-" + i)
+                .withContainerPort(ftpPorts.get(i))
+                .withProtocol("TCP").build());
         }
 
         OpenshiftClient.get().apps().deployments().createOrReplace(
@@ -94,17 +84,11 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
-        serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName("ftp-cmd")
-            .withPort(port())
-            .withTargetPort(new IntOrString(port()))
-            .build());
-
-        for (int dataPort = FTP_DATA_PORT_START; dataPort <= FTP_DATA_PORT_END; dataPort++) {
+        for (int i = 0; i < ftpPorts.size(); i++) {
             serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-                .withName("ftp-data-" + dataPort)
-                .withPort(dataPort)
-                .withTargetPort(new IntOrString(dataPort))
+                .withName("ftp-" + i)
+                .withPort(ftpPorts.get(i))
+                .withTargetPort(new IntOrString(ftpPorts.get(i)))
                 .build());
         }
 
@@ -165,11 +149,6 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
     @Override
     protected CustomFTPClient client() {
         return client;
-    }
-
-    @Override
-    public int port() {
-        return FTP_COMMAND_PORT;
     }
 
     @Override

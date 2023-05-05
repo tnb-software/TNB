@@ -14,7 +14,7 @@ public class LocalMariaDB extends MariaDB implements Deployable {
 
     @Override
     public String hostname() {
-        return "localhost";
+        return localDb.getHost();
     }
 
     @Override

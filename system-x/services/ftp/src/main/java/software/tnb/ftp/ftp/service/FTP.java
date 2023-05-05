@@ -9,7 +9,10 @@ import software.tnb.ftp.ftp.validation.FTPValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValidation> implements FileTransferService, WithDockerImage {
 
@@ -24,12 +27,16 @@ public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValida
         return validation;
     }
 
-    public Map<String, String> containerEnvironment() {
+    protected Map<String, String> containerEnvironment() {
         return Map.of(
             "FTP_USERNAME", account().username(),
             "FTP_PASSWORD", account().password(),
             "USERS", String.format("%s|%s", account().username(), account().password())
         );
+    }
+
+    protected List<Integer> containerPorts() {
+        return IntStream.range(2121, 2131).boxed().collect(Collectors.toList());
     }
 
     protected String basePath() {
@@ -39,5 +46,9 @@ public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValida
 
     public String defaultImage() {
         return "quay.io/fuse_qe/apache-ftp:latest";
+    }
+
+    public int port() {
+        return 2121;
     }
 }

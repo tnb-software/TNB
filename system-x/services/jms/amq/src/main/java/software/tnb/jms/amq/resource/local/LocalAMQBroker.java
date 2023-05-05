@@ -54,7 +54,7 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
 
     @Override
     public String brokerUrl() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

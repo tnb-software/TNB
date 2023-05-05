@@ -17,7 +17,7 @@ public class LocalTelegramBotAPI extends TelegramBotApi implements Deployable {
 
     @Override
     public String externalHostname() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

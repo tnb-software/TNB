@@ -69,7 +69,7 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     @Override
     public String externalHostname() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override
