@@ -24,7 +24,7 @@ public class LocalPrometheusMetrics extends PrometheusMetrics implements Deploya
         if (container == null) {
             deploy();
         }
-        return "http://localhost:" + container.getPort();
+        return String.format("http://%s:%d", container.getHost(), container.getPort());
     }
 
     @Override

@@ -18,7 +18,7 @@ public abstract class SFTP extends Service<SFTPAccount, SFTPClient, SFTPValidati
 
     @Override
     public int port() {
-        return 22;
+        return 2222;
     }
 
     @Override

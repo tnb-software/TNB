@@ -42,4 +42,8 @@ public class LocalDB implements Deployable {
     public int getPort() {
         return container.getPort();
     }
+
+    public String getHost() {
+        return container.getHost();
+    }
 }

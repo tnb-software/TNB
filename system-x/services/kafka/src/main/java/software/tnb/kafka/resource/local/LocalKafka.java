@@ -19,7 +19,7 @@ public class LocalKafka extends Kafka implements Deployable, WithDockerImage {
 
     @Override
     public String bootstrapServers() {
-        return strimziContainer.getContainerIpAddress() + ":" + strimziContainer.getKafkaPort();
+        return strimziContainer.getHost() + ":" + strimziContainer.getKafkaPort();
     }
 
     @Override

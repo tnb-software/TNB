@@ -46,11 +46,11 @@ public class LocalHTTP extends HTTP implements Deployable {
 
     @Override
     public String httpUrl() {
-        return "http://localhost:" + container.getHttpPort() + "/";
+        return String.format("http://%s:%d/", container.getHost(), container.getHttpPort());
     }
 
     @Override
     public String httpsUrl() {
-        return "https://localhost:" + container.getHttpsPort() + "/";
+        return String.format("https://%s:%d/", container.getHost(), container.getHttpsPort());
     }
 }

@@ -43,7 +43,7 @@ public class LocalMllpServer extends MllpServer implements Deployable {
 
     @Override
     public String host() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

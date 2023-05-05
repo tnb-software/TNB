@@ -41,7 +41,7 @@ public class LocalFhir extends Fhir implements Deployable {
 
     @Override
     public String getServerUrl() {
-        return "http://localhost:" + getPortMapping() + "/";
+        return String.format("http://%s:%d/", container.getHost(), getPortMapping());
     }
 
     @Override

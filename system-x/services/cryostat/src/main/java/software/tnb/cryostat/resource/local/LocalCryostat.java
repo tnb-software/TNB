@@ -60,7 +60,7 @@ public class LocalCryostat extends Cryostat implements Deployable, WithDockerIma
 
     @Override
     public String connectionUrl() {
-        return String.format("http://localhost:%s", getPortMapping(8181));
+        return String.format("http://%s:%d", container.getHost(), getPortMapping(8181));
     }
 
     @Override

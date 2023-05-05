@@ -27,17 +27,19 @@ public abstract class Elasticsearch extends Service<ElasticsearchAccount, Elasti
     private static final String CLUSTER_NAME = "tnb-es";
     private static final String ELASTICSEARCH_VERSION = "elasticsearch.version";
 
+    protected static final int PORT = 9200;
+
     protected ElasticsearchClient client() {
 
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(account().user(), account().password()));
 
         RestClient httpClient = RestClient
-                .builder(HttpHost.create(clientHost()))
-                .setHttpClientConfigCallback(config -> config
-                        .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
-                        .setSSLContext(HTTPUtils.getSslContext())
-                        .setDefaultCredentialsProvider(credentialsProvider))
+            .builder(HttpHost.create(clientHost()))
+            .setHttpClientConfigCallback(config -> config
+                .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
+                .setSSLContext(HTTPUtils.getSslContext())
+                .setDefaultCredentialsProvider(credentialsProvider))
                 .build();
 
         ElasticsearchTransport transport = new RestClientTransport(
@@ -76,8 +78,6 @@ public abstract class Elasticsearch extends Service<ElasticsearchAccount, Elasti
     public String clusterName() {
         return CLUSTER_NAME;
     }
-
-    public abstract ElasticsearchAccount account();
 
     protected abstract String clientHost();
 

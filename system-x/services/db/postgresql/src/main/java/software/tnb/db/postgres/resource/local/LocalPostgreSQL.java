@@ -14,7 +14,7 @@ public class LocalPostgreSQL extends PostgreSQL implements Deployable {
 
     @Override
     public String hostname() {
-        return "localhost";
+        return localDb.getHost();
     }
 
     @Override

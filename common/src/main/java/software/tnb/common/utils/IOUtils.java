@@ -12,6 +12,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -51,7 +52,7 @@ public final class IOUtils {
 
     public static String readFile(Path file) {
         try {
-            return Files.readString(file);
+            return Files.readString(file, Charset.defaultCharset());
         } catch (IOException e) {
             throw new RuntimeException("Unable to read file " + file, e);
         }

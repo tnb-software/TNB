@@ -29,15 +29,15 @@ public class IBMMQValidation implements Validation {
     private final Set<String> createdQueues = new HashSet<>();
     private final Set<String> createdTopics = new HashSet<>();
 
-    public IBMMQValidation(IBMMQAccount account, int port, Connection connection) {
+    public IBMMQValidation(IBMMQAccount account, String host, int port, Connection connection) {
         this.account = account;
         this.connection = connection;
-        agent = createPCFAgent(port);
+        agent = createPCFAgent(host, port);
     }
 
-    private MQQueueManager createQueueManager(int port) {
+    private MQQueueManager createQueueManager(String host, int port) {
         Hashtable<String, Object> properties = new Hashtable<>();
-        properties.put(MQConstants.HOST_NAME_PROPERTY, "localhost");
+        properties.put(MQConstants.HOST_NAME_PROPERTY, host);
         properties.put(MQConstants.PORT_PROPERTY, port);
         properties.put(MQConstants.CHANNEL_PROPERTY, "DEV.ADMIN.SVRCONN");
         properties.put(MQConstants.USE_MQCSP_AUTHENTICATION_PROPERTY, true);
@@ -50,9 +50,9 @@ public class IBMMQValidation implements Validation {
         }
     }
 
-    private PCFMessageAgent createPCFAgent(int port) {
+    private PCFMessageAgent createPCFAgent(String host, int port) {
         try {
-            return new PCFMessageAgent(createQueueManager(port));
+            return new PCFMessageAgent(createQueueManager(host, port));
         } catch (MQDataException e) {
             throw new RuntimeException("Unable to create PCFMessageAgent:", e);
         }

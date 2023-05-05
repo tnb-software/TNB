@@ -30,7 +30,7 @@ public class LocalLRACoordinator extends LRACoordinator implements Deployable {
 
     @Override
     public String hostname() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override
@@ -40,7 +40,7 @@ public class LocalLRACoordinator extends LRACoordinator implements Deployable {
 
     @Override
     public String getUrl() {
-        return String.format("http://localhost:%s", port());
+        return String.format("http://%s:%d", hostname(), port());
     }
 
     @Override

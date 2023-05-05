@@ -28,16 +28,16 @@ public class LocalFTP extends FTP implements Deployable {
 
     @Override
     public void deploy() {
-        LOG.info("Starting Ftp container");
-        container = new FTPContainer(image(), port(), containerEnvironment());
+        LOG.info("Starting FTP container");
+        container = new FTPContainer(image(), containerEnvironment(), containerPorts());
         container.start();
-        LOG.info("Ftp container started");
+        LOG.info("FTP container started");
     }
 
     @Override
     public void undeploy() {
         if (container != null) {
-            LOG.info("Stopping Ftp container");
+            LOG.info("Stopping FTP container");
             container.stop();
         }
     }
@@ -58,11 +58,6 @@ public class LocalFTP extends FTP implements Deployable {
     }
 
     @Override
-    public int port() {
-        return 2121;
-    }
-
-    @Override
     public String logs() {
         try {
             Map<String, String> env = Arrays.stream(container.execInContainer("env").getStdout().split("\n"))
@@ -80,11 +75,7 @@ public class LocalFTP extends FTP implements Deployable {
 
     @Override
     public String host() {
-        // container.getIpAddress() always returns "localhost" (see https://github.com/testcontainers/testcontainers-java/issues/452 ),
-        // we need the actual container ip address, because ftp requires multiple ports.
-        // Also tried exposing all the ports and using localhost, but then the integration would not work for some reason
-        //      (probably because the ftp server is listening for passive connections on the ip, not on localhost)
-        return container.getContainerInfo().getNetworkSettings().getNetworks().get("bridge").getIpAddress();
+        return container.getHost();
     }
 
     @Override

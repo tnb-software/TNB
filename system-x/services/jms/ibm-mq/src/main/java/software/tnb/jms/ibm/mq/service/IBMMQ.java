@@ -27,7 +27,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
     public IBMMQValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new IBM MQ validation");
-            validation = new IBMMQValidation(account(), port(), client());
+            validation = new IBMMQValidation(account(), hostname(), port(), client());
         }
         return validation;
     }
@@ -64,7 +64,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
             // IBM MQ creates a log file by default, so redirect it to target
             System.setProperty("com.ibm.msg.client.commonservices.log.outputName", new File("target/ibmmq.log").getAbsolutePath());
             MQConnectionFactory connectionFactory = new MQConnectionFactory();
-            connectionFactory.setHostName("localhost");
+            connectionFactory.setHostName(hostname());
             connectionFactory.setPort(port());
             connectionFactory.setChannel(account().channel());
             connectionFactory.setQueueManager(account().queueManager());

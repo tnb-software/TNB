@@ -30,7 +30,7 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
 
     @Override
     public String hostname() {
-        return "localhost";
+        return container.getHost();
     }
 
     @Override

@@ -1,14 +1,12 @@
 package software.tnb.elasticsearch.resource.local;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.elasticsearch.account.ElasticsearchAccount;
 import software.tnb.elasticsearch.service.Elasticsearch;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.elasticsearch.ElasticsearchContainer;
+import org.testcontainers.utility.TestcontainersConfiguration;
 
 import com.google.auto.service.AutoService;
 
@@ -23,7 +21,7 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable, Wit
     public void deploy() {
         LOG.info("Starting Elasticsearch container");
         // Specify max 2GB of memory, seems to work ok, but without it the container can eat a lot of ram
-        container = new ElasticsearchContainer(image()).withPassword(PASSWORD)
+        container = new ElasticsearchContainer(image(), PORT, account().password())
             .withCreateContainerCmdModifier(cmd -> cmd.getHostConfig().withMemory(1024L * 1024 * 1024 * 2));
         container.start();
         LOG.info("Elasticsearch container started");
@@ -38,22 +36,14 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable, Wit
     }
 
     @Override
-    public ElasticsearchAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(ElasticsearchAccount.class);
-            account.setPassword(PASSWORD);
-        }
-        return account;
-    }
-
-    @Override
     protected String clientHost() {
-        return container.getHttpHostAddress();
+        return host();
     }
 
     @Override
     public String host() {
-        return container.getHttpHostAddress();
+        return container.getHost() + ":" + (TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST") == null
+            ? container.getMappedPort(PORT) : PORT);
     }
 
     public String defaultImage() {
