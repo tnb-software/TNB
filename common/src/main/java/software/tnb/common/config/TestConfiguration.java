@@ -34,6 +34,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_SETTINGS = "test.maven.settings";
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
+    public static final String MAVEN_EXTRA_ARGS = "test.maven.extra.args";
     public static final String REPORT_PORTAL = "test.report.portal.enabled";
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
@@ -113,6 +114,10 @@ public class TestConfiguration extends Configuration {
 
     public static String mavenSettings() {
         return getProperty(MAVEN_SETTINGS);
+    }
+
+    public static String mavenExtraArgs() {
+        return getProperty(MAVEN_EXTRA_ARGS, "");
     }
 
     public static String mavenSettingsFileName() {
