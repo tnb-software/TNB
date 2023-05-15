@@ -135,6 +135,10 @@ public class Maven {
             .setOutputHandler(buildRequest.getOutputHandler())
             .setErrorHandler(buildRequest.getOutputHandler());
 
+        //add extra args
+        final String mavenExtraArgs = TestConfiguration.mavenExtraArgs();
+        Arrays.stream(mavenExtraArgs.split(" ")).forEach(request::addArg);
+
         // If you didn't specify custom maven settings, use settings.xml file created in createSettingsXmlFile method as the global settings
         if (TestConfiguration.mavenSettings() == null) {
             mavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
@@ -158,6 +162,13 @@ public class Maven {
             + (request.getUserSettingsFile() == null ? "" : "  User settings: " + request.getUserSettingsFile().getAbsolutePath() + "\n")
             + "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n"
         );
+
+        if (StringUtils.isNotBlank(mavenExtraArgs)) {
+            propertiesLog.append("  Extra args: ")
+                .append(mavenExtraArgs)
+                .append("\n");
+        }
+
         if (!properties.isEmpty()) {
             propertiesLog.append("  Properties:").append("\n");
             properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
