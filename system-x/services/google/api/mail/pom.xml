@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Google :: API :: Mail</name>
 
     <properties>
-        <google.mail.client.version>v1-rev20230403-2.0.0</google.mail.client.version>
+        <google.mail.client.version>v1-rev20230424-2.0.0</google.mail.client.version>
     </properties>
 
     <dependencies>
