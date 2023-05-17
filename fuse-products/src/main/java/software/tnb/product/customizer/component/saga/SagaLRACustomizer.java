@@ -1,7 +1,6 @@
 package software.tnb.product.customizer.component.saga;
 
 import software.tnb.product.customizer.component.rest.RestCustomizer;
-import software.tnb.product.util.maven.Maven;
 
 import java.util.Map;
 
@@ -20,7 +19,6 @@ public class SagaLRACustomizer extends RestCustomizer {
         getIntegrationBuilder().addToProperties("quarkus.http.root-path", "/camel");
         getIntegrationBuilder().addToProperties(getCommonProperties());
         getIntegrationBuilder().dependencies("lra");
-        getIntegrationBuilder().dependencies(Maven.createDependency("io.quarkus:quarkus-resteasy"));
     }
 
     @Override
