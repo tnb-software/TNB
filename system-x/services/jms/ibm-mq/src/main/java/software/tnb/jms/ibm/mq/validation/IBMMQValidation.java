@@ -39,7 +39,7 @@ public class IBMMQValidation implements Validation {
         Hashtable<String, Object> properties = new Hashtable<>();
         properties.put(MQConstants.HOST_NAME_PROPERTY, host);
         properties.put(MQConstants.PORT_PROPERTY, port);
-        properties.put(MQConstants.CHANNEL_PROPERTY, "DEV.ADMIN.SVRCONN");
+        properties.put(MQConstants.CHANNEL_PROPERTY, account.adminChannel());
         properties.put(MQConstants.USE_MQCSP_AUTHENTICATION_PROPERTY, true);
         properties.put(MQConstants.USER_ID_PROPERTY, account.adminUsername());
         properties.put(MQConstants.PASSWORD_PROPERTY, account.adminPassword());
