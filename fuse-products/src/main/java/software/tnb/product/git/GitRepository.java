@@ -1,13 +1,15 @@
 package software.tnb.product.git;
 
-import software.tnb.product.integration.builder.AbstractGitIntegrationBuilder;
-
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.FIPSUtils;
+import software.tnb.product.git.support.GitHttpConnectionFactory;
+import software.tnb.product.integration.builder.AbstractGitIntegrationBuilder;
 
 import org.eclipse.jgit.api.Git;
 import org.eclipse.jgit.api.errors.GitAPIException;
 import org.eclipse.jgit.errors.ConfigInvalidException;
 import org.eclipse.jgit.storage.file.FileBasedConfig;
+import org.eclipse.jgit.transport.TransportHttp;
 import org.eclipse.jgit.util.FS;
 import org.eclipse.jgit.util.SystemReader;
 import org.slf4j.Logger;
@@ -49,16 +51,23 @@ public class GitRepository {
         if (!projectDirectory.exists()) {
             LOG.info("Check out {} on branch {}", repositoryUrl, branch);
 
-            try {
-                FileBasedConfig fileBasedConfig = SystemReader.getInstance().openJGitConfig(null, FS.DETECTED);
-                fileBasedConfig.load();
-                fileBasedConfig.setBoolean("http", null, "sslVerify", false);
-                fileBasedConfig.save();
-            } catch (IOException | ConfigInvalidException e) {
-                throw new IllegalStateException("Can't update git config", e);
+            if (!FIPSUtils.isFipsEnabled()) {
+                try {
+                    FileBasedConfig fileBasedConfig = SystemReader.getInstance().openJGitConfig(null, FS.DETECTED);
+                    fileBasedConfig.load();
+                    fileBasedConfig.setBoolean("http", null, "sslVerify", false);
+                    fileBasedConfig.save();
+                } catch (IOException | ConfigInvalidException e) {
+                    throw new IllegalStateException("Can't update git config", e);
+                }
             }
 
             try (Git ignored = Git.cloneRepository()
+                .setTransportConfigCallback(transport -> {
+                    if (transport instanceof TransportHttp) {
+                        ((TransportHttp) transport).setHttpConnectionFactory(new GitHttpConnectionFactory());
+                    }
+                })
                 .setURI(repositoryUrl)
                 .setDirectory(projectDirectory)
                 .setBranch(branch)
