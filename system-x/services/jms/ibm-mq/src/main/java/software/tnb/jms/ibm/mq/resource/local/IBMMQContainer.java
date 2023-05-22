@@ -19,7 +19,8 @@ public class IBMMQContainer extends GenericContainer<IBMMQContainer> {
         withExposedPorts(IBMMQ.DEFAULT_PORT);
         withFileSystemBind(mqscCommandFilePath.toAbsolutePath().toString(), IBMMQ.MQSC_COMMAND_FILES_LOCATION + "/" + IBMMQ.MQSC_COMMAND_FILE_NAME);
         withEnv(env);
-        waitingFor(Wait.forLogMessage(".*Started web server.*", 1));
+        // AMQ5806I is a message code for queue manager start
+        waitingFor(Wait.forLogMessage(".*AMQ5806I.*", 1));
     }
 
     private void createLocalMqscCommandFile(String content) {

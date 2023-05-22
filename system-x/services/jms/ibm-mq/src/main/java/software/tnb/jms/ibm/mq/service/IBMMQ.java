@@ -45,7 +45,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
     public abstract int port();
 
     public String defaultImage() {
-        return "icr.io/ibm-messaging/mq:9.2.5.0-r1";
+        return "icr.io/ibm-messaging/mq:9.3.2.1-r1";
     }
 
     /**
@@ -56,7 +56,8 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
      */
     public String mqscConfig() {
         return "SET AUTHREC PROFILE('*') PRINCIPAL('" + account().username() + "') OBJTYPE(TOPIC) AUTHADD(ALL)\n"
-            + "SET AUTHREC PROFILE('*') PRINCIPAL('" + account().username() + "') OBJTYPE(QUEUE) AUTHADD(ALL)\n";
+            + "SET AUTHREC PROFILE('*') PRINCIPAL('" + account().username() + "') OBJTYPE(QUEUE) AUTHADD(ALL)\n"
+            + "SET AUTHREC PROFILE('SYSTEM.DEFAULT.MODEL.QUEUE') OBJTYPE(QUEUE) PRINCIPAL('" + account().username() + "') AUTHADD(ALL)\n";
     }
 
     public void openResources() {
