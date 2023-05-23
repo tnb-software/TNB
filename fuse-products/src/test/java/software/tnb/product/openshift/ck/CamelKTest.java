@@ -5,10 +5,6 @@ import static org.junit.jupiter.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
-import software.tnb.product.openshift.OpenshiftTestParent;
-import software.tnb.product.parent.TestParent;
-import software.tnb.util.ck.TestCamelK;
-import software.tnb.util.openshift.TestOpenshiftClient;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
@@ -17,6 +13,10 @@ import software.tnb.product.ck.CamelK;
 import software.tnb.product.ck.configuration.CamelKConfiguration;
 import software.tnb.product.ck.configuration.CamelKProdConfiguration;
 import software.tnb.product.ck.configuration.CamelKUpstreamConfiguration;
+import software.tnb.product.openshift.OpenshiftTestParent;
+import software.tnb.product.parent.TestParent;
+import software.tnb.util.ck.TestCamelK;
+import software.tnb.util.openshift.TestOpenshiftClient;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -182,6 +182,7 @@ public class CamelKTest extends CamelKTestParent {
         expectOperatorGet();
         expectKameletLs();
         expectKamelets(null);
+        expectIntegrationPlatform();
 
         camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isFalse();
@@ -194,6 +195,7 @@ public class CamelKTest extends CamelKTestParent {
         expectOperatorGet();
         expectKameletLs();
         expectKamelets(false);
+        expectIntegrationPlatform();
 
         camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isFalse();
@@ -206,6 +208,7 @@ public class CamelKTest extends CamelKTestParent {
         expectOperatorGet();
         expectKameletLs();
         expectKamelets(true);
+        expectIntegrationPlatform();
 
         camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isTrue();

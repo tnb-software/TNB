@@ -8,6 +8,7 @@ import io.fabric8.kubernetes.api.model.Duration;
 
 public abstract class CamelKConfiguration extends CamelConfiguration {
     public static final String FORCE_UPSTREAM = "force.upstream";
+    public static final String USE_GLOBAL_INSTALLATION = "camelk.operator.global";
 
     public static final String SUBSCRIPTION_CHANNEL = "camelk.subscription.channel";
     public static final String SUBSCRIPTION_OPERATOR_NAME = "camelk.subscription.operatorName";
@@ -53,6 +54,10 @@ public abstract class CamelKConfiguration extends CamelConfiguration {
 
     public static boolean forceUpstream() {
         return getBoolean(FORCE_UPSTREAM, false);
+    }
+
+    public static boolean useGlobalInstallation() {
+        return getBoolean(USE_GLOBAL_INSTALLATION, false);
     }
 
     public static CamelKConfiguration getConfiguration() {
