@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>system-x-services</artifactId>
+        <groupId>software.tnb</groupId>
+        <version>1.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
+
+    <properties>
+        <exec.plugin.version>3.1.0</exec.plugin.version>
+        <xml.format.plugin.version>3.2.1</xml.format.plugin.version>
+    </properties>
+
+    <modelVersion>4.0.0</modelVersion>
+    <name>TNB :: System-X :: Services :: All</name>
+    <artifactId>system-x-all</artifactId>
+
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>bom</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <scope>import</scope>
+                <type>pom</type>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
+
+    <dependencies>
+    </dependencies>
+
+    <profiles>
+        <profile>
+            <id>update-system-x-all</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>exec-maven-plugin</artifactId>
+                        <version>${exec.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>bash</executable>
+                                    <arguments>update_pom.sh</arguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>au.com.acegi</groupId>
+                        <artifactId>xml-format-maven-plugin</artifactId>
+                        <version>${xml.format.plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <phase>package</phase>
+                                <id>xml-format</id>
+                                <goals>
+                                    <goal>xml-format</goal>
+                                </goals>
+                                <configuration>
+                                    <indentSize>4</indentSize>
+                                    <keepBlankLines>true</keepBlankLines>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+</project>
