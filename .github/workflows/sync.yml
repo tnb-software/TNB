@@ -1,14 +1,13 @@
-name: Sync BOM
+name: Sync
 on:
   push:
     branches:
       - main
 
 # Use a personal token so that this action will trigger other actions (when the PR is created, all other checks are triggered)
-
 jobs:
   sync-bom:
-    name: Sync BOM
+    name: Sync
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -19,7 +18,11 @@ jobs:
           distribution: 'adopt'
       - name: Build BOM
         run: |
+          # We need to first update BOM and only then update system-x-all, as that uses the BOM
           mvn --no-transfer-progress --activate-profiles update-bom clean install
+      - name: Build system-x-all
+        run: |
+          mvn --no-transfer-progress --activate-profiles update-system-x-all clean install
       - uses: tibdex/github-app-token@v1
         id: generate-token
         with:
