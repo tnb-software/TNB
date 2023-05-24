@@ -5,12 +5,12 @@
     <parent>
         <artifactId>system-x-azure</artifactId>
         <groupId>software.tnb</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.12</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-azure-storage-blob</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.12</version>
     <name>TNB :: System-X :: Services :: Azure :: Storage Blob</name>
 
     <properties>
@@ -21,7 +21,7 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-azure-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>0.0.12</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>

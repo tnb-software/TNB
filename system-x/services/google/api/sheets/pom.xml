@@ -5,12 +5,12 @@
     <parent>
         <artifactId>system-x-google-api</artifactId>
         <groupId>software.tnb</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.12</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-google-sheets</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.12</version>
     <name>TNB :: System-X :: Services :: Google :: API :: Sheets</name>
 
     <properties>
@@ -22,7 +22,7 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-google-api-common</artifactId>
-            <version>1.0-SNAPSHOT</version>
+            <version>0.0.12</version>
         </dependency>
         <dependency>
             <groupId>com.google.apis</groupId>
