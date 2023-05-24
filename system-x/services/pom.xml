@@ -44,6 +44,7 @@
         <module>webhook</module>
         <module>splunk</module>
         <module>microsoft</module>
+        <module>all</module>
     </modules>
 
     <dependencies>

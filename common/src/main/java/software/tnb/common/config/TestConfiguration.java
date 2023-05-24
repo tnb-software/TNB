@@ -17,7 +17,6 @@ public class TestConfiguration extends Configuration {
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
     public static final String CREDENTIALS = "test.credentials";
-    public static final String USE_VAULT = "test.credentials.use.vault";
     public static final String VAULT_TOKEN = "test.credentials.vault.token";
     private static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
     private static final String VAULT_ROLE_ID = "test.credentials.vault.role.id";
@@ -52,10 +51,6 @@ public class TestConfiguration extends Configuration {
                 () -> new IllegalArgumentException(String.format("Unable to find enum for system property %s = %s", PRODUCT, getProperty(PRODUCT))));
     }
 
-    public static boolean useVault() {
-        return getBoolean(USE_VAULT, false);
-    }
-
     public static String vaultToken() {
         return getProperty(VAULT_TOKEN);
     }
@@ -77,11 +72,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String credentialsFile() {
-        final String credentials = getProperty(CREDENTIALS_FILE);
-        if (credentials == null) {
-            throw new IllegalArgumentException("No credentials file specified!");
-        }
-        return credentials;
+        return getProperty(CREDENTIALS_FILE);
     }
 
     public static String credentials() {
