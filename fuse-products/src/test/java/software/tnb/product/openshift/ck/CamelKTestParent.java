@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+import io.fabric8.camelk.v1.IntegrationPlatformBuilder;
+import io.fabric8.camelk.v1.IntegrationPlatformListBuilder;
+import io.fabric8.camelk.v1.IntegrationPlatformStatusBuilder;
 import io.fabric8.camelk.v1alpha1.KameletBinding;
 import io.fabric8.camelk.v1alpha1.KameletBindingList;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
@@ -79,6 +82,17 @@ public class CamelKTestParent extends OpenshiftTestParent {
             .andReturn(200,
                 new PodListBuilder()
                     .addNewItemLike(operatorPod(true))
+                    .endItem().build()
+            ).always();
+    }
+
+    protected void expectIntegrationPlatform() {
+        expectServer.expect().get().withPath("/apis/camel.apache.org/v1/namespaces/test/integrationplatforms")
+            .andReturn(200,
+                new IntegrationPlatformListBuilder()
+                    .addNewItemLike(new IntegrationPlatformBuilder()
+                        .withStatus(new IntegrationPlatformStatusBuilder().withPhase("Ready").build())
+                        .build())
                     .endItem().build()
             ).always();
     }

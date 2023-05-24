@@ -21,6 +21,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BooleanSupplier;
+import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -141,6 +142,25 @@ public class OpenshiftClient extends OpenShift {
         } catch (IOException | URISyntaxException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    /**
+     * Executes function in given namespace.
+     *
+     * @param ns namespace to use
+     * @param function a function to execute
+     * @return result of the function
+     */
+    public synchronized <T> T inNamespace(String ns, Function<OpenshiftClient, T> function) {
+        String currentNs = get().config.getNamespace();
+        get().config.setNamespace(ns);
+        T result;
+        try {
+           result = function.apply(get());
+        } finally {
+            get().config.setNamespace(currentNs);
+        }
+        return result;
     }
 
     /**

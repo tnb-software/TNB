@@ -78,6 +78,14 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
     protected CamelKClient camelKClient;
 
+    private boolean useGlobalInstallation() {
+        return CamelKConfiguration.getConfiguration().useGlobalInstallation();
+    }
+
+    private String operatorNamespace() {
+        return useGlobalInstallation() ? "openshift-operators" : OpenshiftClient.get().getNamespace();
+    }
+
     @Override
     public void setupProduct() {
         // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
@@ -87,26 +95,31 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
         CamelKConfiguration config = CamelKConfiguration.getConfiguration();
 
         if (!isReady()) {
-            LOG.info("Deploying Camel-K");
-            if (CamelKConfiguration.forceUpstream()) {
-                LOG.warn(
-                    "You are going to deploy upstream version of Camel-K. "
-                        + "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can break the "
-                        + "cluster for other tests."
-                );
-            }
-            if (OpenshiftClient.get().operatorHub().catalogSources().inNamespace(config.subscriptionSourceNamespace())
-                .withName(config.subscriptionSource()).get() == null) {
-                LOG.error("Operator Hub catalog source {} not found! Set {} property to an existing catalog source or create a new catalog source"
-                        + " with {} name in {} namespace. Be careful, as if someone else uses the same cluster with a different version,"
-                        + " the deployments may fail due changes in CRDs between versions", config.subscriptionSource(),
-                    CamelKConfiguration.SUBSCRIPTION_SOURCE, config.subscriptionSource(), config.subscriptionSourceNamespace());
-                throw new RuntimeException("Operator Hub catalog source " + config.subscriptionSource() + " not found!");
-            }
+            if (!useGlobalInstallation()) {
+                LOG.info("Deploying Camel-K");
+                if (CamelKConfiguration.forceUpstream()) {
+                    LOG.warn(
+                        "You are going to deploy upstream version of Camel-K. "
+                            + "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can "
+                            + "break the "
+                            + "cluster for other tests."
+                    );
+                }
+                if (OpenshiftClient.get().operatorHub().catalogSources().inNamespace(config.subscriptionSourceNamespace())
+                    .withName(config.subscriptionSource()).get() == null) {
+                    LOG.error("Operator Hub catalog source {} not found! Set {} property to an existing catalog source or create a new catalog source"
+                            + " with {} name in {} namespace. Be careful, as if someone else uses the same cluster with a different version,"
+                            + " the deployments may fail due changes in CRDs between versions", config.subscriptionSource(),
+                        CamelKConfiguration.SUBSCRIPTION_SOURCE, config.subscriptionSource(), config.subscriptionSourceNamespace());
+                    throw new RuntimeException("Operator Hub catalog source " + config.subscriptionSource() + " not found!");
+                }
 
-            OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
-                config.subscriptionName(), config.subscriptionSourceNamespace(), OpenshiftClient.get().getNamespace(), false);
-            OpenshiftClient.get().waitForInstallPlanToComplete(config.subscriptionName());
+                OpenshiftClient.get().createSubscription(config.subscriptionChannel(), config.subscriptionOperatorName(), config.subscriptionSource(),
+                    config.subscriptionName(), config.subscriptionSourceNamespace(), OpenshiftClient.get().getNamespace(), false);
+                OpenshiftClient.get().waitForInstallPlanToComplete(config.subscriptionName());
+            } else {
+                LOG.info("Reusing global Camel-K installation.");
+            }
         }
 
         // @formatter:off
@@ -174,8 +187,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
     private boolean kameletsDeployed() {
         if (operatorKameletCount == -1) {
             final PodShellOutput shellOutput =
-                OpenshiftClient.get().podShell(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0))
-                    .executeWithBash("ls /kamelets/* | wc -l");
+                OpenshiftClient.get().inNamespace(operatorNamespace(), c -> c.podShell(c.getLabeledPods("name", "camel-k-operator").get(0))
+                    .executeWithBash("ls /kamelets/* | wc -l"));
             if (!shellOutput.getError().isEmpty()) {
                 LOG.error("Unable to list all kamelets: {}", shellOutput.getError());
                 return false;
@@ -202,8 +215,17 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
         });
     }
 
+    private boolean platformReady() {
+        List<IntegrationPlatform> ip = camelKClient.v1().integrationPlatforms().list().getItems();
+        return ip.size() == 1 && ip.get(0).getStatus() != null && ip.get(0).getStatus().getPhase().equals("Ready");
+    }
+
     @Override
     public void teardownProduct() {
+        if (useGlobalInstallation()) {
+            LOG.debug("Skipping product teardown for global operator.");
+            return;
+        }
         OpenshiftClient.get().deleteSubscription(CamelKConfiguration.getConfiguration().subscriptionName());
         removeKamelets();
     }
@@ -266,8 +288,9 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("name", "camel-k-operator"))
-            && kameletsDeployed() && kameletsReady();
+        return ResourceFunctions.areExactlyNPodsReady(1).apply(
+            OpenshiftClient.get().inNamespace(operatorNamespace(), c -> c.getLabeledPods("name", "camel-k-operator")))
+            && platformReady() && kameletsDeployed() && kameletsReady();
     }
 
     @Override
@@ -366,7 +389,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
     @Override
     public void beforeEach(ExtensionContext extensionContext) throws Exception {
-        Pod operator = OpenshiftClient.get().getLabeledPods("name", "camel-k-operator").get(0);
+        Pod operator = OpenshiftClient.get(operatorNamespace()).getLabeledPods("name", "camel-k-operator").get(0);
         operatorLogOutput = TestConfiguration.appLocation()
             .resolve(String.format("camel-k-operator-%s.log", extensionContext.getParent().get().getDisplayName()));
 
