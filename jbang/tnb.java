@@ -1,5 +1,5 @@
 ///usr/bin/env jbang "$0" "$@" ; exit $?
-//DEPS software.tnb:system-x-all:0.0.12
+//DEPS software.tnb:system-x-all:1.0-SNAPSHOT
 //DEPS org.jline:jline-groovy:3.22.0
 //DEPS org.slf4j:slf4j-nop:1.7.36
 //RUNTIME_OPTIONS --add-opens java.base/java.lang=ALL-UNNAMED
