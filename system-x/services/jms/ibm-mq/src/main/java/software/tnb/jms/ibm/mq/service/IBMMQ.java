@@ -1,5 +1,6 @@
 package software.tnb.jms.ibm.mq.service;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
@@ -27,7 +28,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
     public IBMMQValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new IBM MQ validation");
-            validation = new IBMMQValidation(account(), hostname(), port(), client());
+            validation = new IBMMQValidation(account(), clientHostname(), clientPort(), client());
         }
         return validation;
     }
@@ -43,6 +44,10 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
     public abstract String hostname();
 
     public abstract int port();
+
+    protected int clientPort() {
+        return port();
+    }
 
     public String defaultImage() {
         return "icr.io/ibm-messaging/mq:9.3.2.1-r1";
@@ -65,8 +70,8 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
             // IBM MQ creates a log file by default, so redirect it to target
             System.setProperty("com.ibm.msg.client.commonservices.log.outputName", new File("target/ibmmq.log").getAbsolutePath());
             MQConnectionFactory connectionFactory = new MQConnectionFactory();
-            connectionFactory.setHostName(hostname());
-            connectionFactory.setPort(port());
+            connectionFactory.setHostName(clientHostname());
+            connectionFactory.setPort(clientPort());
             connectionFactory.setChannel(account().channel());
             connectionFactory.setQueueManager(account().queueManager());
             connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
@@ -75,6 +80,12 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
         } catch (Exception e) {
             throw new RuntimeException("Unable to create MQConnectionFactory:", e);
         }
+    }
+
+    private String clientHostname() {
+        // For openshift, return localhost, as the client is connected via port-forward
+        // For local, return "hostname()", as that may be different than "localhost" when running testcontainers on a different host
+        return OpenshiftConfiguration.isOpenshift() ? "localhost" : hostname();
     }
 
     public void closeResources() {
