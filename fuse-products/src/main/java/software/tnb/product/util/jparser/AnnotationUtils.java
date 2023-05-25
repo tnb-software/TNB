@@ -1,5 +1,7 @@
 package software.tnb.product.util.jparser;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.github.javaparser.ast.CompilationUnit;
 
 import java.util.List;
@@ -31,7 +33,12 @@ public final class AnnotationUtils {
             .findAny()
             .ifPresent(routeBuilderType -> {
                 for (String annotation : annotations) {
-                    routeBuilderType.addAnnotation(annotation);
+                    if (annotation.contains("(")) {
+                        routeBuilderType.addSingleMemberAnnotation(StringUtils.substringBefore(annotation, "(")
+                            , StringUtils.substringBetween(annotation, "(", ")"));
+                    } else {
+                        routeBuilderType.addAnnotation(annotation);
+                    }
                 }
             });
     }
