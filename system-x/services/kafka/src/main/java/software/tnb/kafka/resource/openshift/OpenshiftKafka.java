@@ -83,11 +83,13 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public void undeploy() {
         // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
-        if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
-            KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
-            OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
-                .timeout(120_000).waitFor();
-            deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
+        if (!usePreparedGlobalInstallation()) {
+            if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
+                KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+                OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
+                    .timeout(120_000).waitFor();
+                deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
+            }
         }
     }
 
@@ -101,8 +103,10 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     @Override
     public void create() {
-        createSubscription();
-        deployKafkaCR();
+        if (!usePreparedGlobalInstallation()) { // could be: if (prepareGlobalKafka || !usePreparedGlobalInstallation)
+            createSubscription();
+            deployKafkaCR();
+        }
     }
 
     /**
@@ -120,6 +124,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     public boolean isReady() {
         try {
             return KAFKA_CRD_CLIENT
+                .inNamespace(targetNamespace())
                 .withName(name())
                 .get()
                 .getStatus().getConditions()
@@ -135,8 +140,8 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().getLabeledPods("name", "amq-streams-cluster-operator").size() != 0
-            && KAFKA_CRD_CLIENT.withName(name()).get() != null;
+        return OpenshiftClient.get().inNamespace(targetNamespace(), c -> c.getLabeledPods("name", "amq-streams-cluster-operator").size() != 0
+            && KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).withName(name()).get() != null);
     }
 
     @Override
@@ -183,7 +188,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             .build();
         //@formatter:on
 
-        KAFKA_CRD_CLIENT.createOrReplace(kafka);
+        KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).createOrReplace(kafka);
     }
 
     @Override
@@ -197,7 +202,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     }
 
     private String findBootstrapServers(String listnerType) {
-        return KAFKA_CRD_CLIENT.withName(name()).get().getStatus().getListeners()
+        return KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).withName(name()).get().getStatus().getListeners()
             .stream()
             .filter(l -> listnerType.equals(l.getType()))
             .findFirst().get().getBootstrapServers();
@@ -217,7 +222,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             .endSpec()
             .build();
         //@formatter:on
-        KAFKA_TOPIC_CRD_CLIENT.createOrReplace(kafkaTopic);
+        KAFKA_TOPIC_CRD_CLIENT.inNamespace(targetNamespace()).createOrReplace(kafkaTopic);
     }
 
     private void createBasicUser() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
@@ -249,10 +254,12 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     public void extractCertificate() {
         LOG.debug("Extracting kafka certificate");
-        String cert = new String(Base64.getDecoder()
-            .decode(OpenshiftClient.get().secrets().withName(name() + "-cluster-ca-cert").get().getData().get("ca.crt")));
+        String cert = new String(Base64.getDecoder() // created while installation of kafka in target namespace
+            .decode(OpenshiftClient.get().inNamespace(targetNamespace(), c -> c.secrets().withName(name() + "-cluster-ca-cert")).get().getData()
+                .get("ca.crt")));
         String password = new String(Base64.getDecoder()
-            .decode(OpenshiftClient.get().secrets().withName(name() + "-cluster-ca-cert").get().getData().get("ca.password")));
+            .decode(OpenshiftClient.get().inNamespace(targetNamespace(), c -> c.secrets().withName(name() + "-cluster-ca-cert")).get().getData()
+                .get("ca.password")));
         account().setTrustStorePassword(password);
         try {
             KeyStore ks = KeyStore.getInstance("PKCS12");
@@ -281,5 +288,14 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public String operatorName() {
         return "amq-streams";
+    }
+
+    private boolean usePreparedGlobalInstallation() {
+        return TestConfiguration.useGlobalOpenshiftKafka();
+    }
+
+    @Override
+    public String targetNamespace() {
+        return usePreparedGlobalInstallation() ? "openshift-operators" : OpenshiftClient.get().getNamespace();
     }
 }

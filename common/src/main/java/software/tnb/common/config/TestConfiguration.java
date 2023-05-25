@@ -39,6 +39,7 @@ public class TestConfiguration extends Configuration {
     public static final String STREAM_LOGS = "stream.logs";
     public static final String JIRA_ALLOWED_RESOLUTIONS = "jira.allowed.resolutions";
     public static final String PARALLEL = "test.parallel";
+    public static final String TEST_USE_GLOBAL_OPENSHIFT_KAFKA = "test.use.global.openshift.kafka";
 
     public static final String VARIABLE_PLACEHOLDER_START = "\\$\\{";
     public static final String VARIABLE_PLACEHOLDER_END = "\\}";
@@ -160,5 +161,9 @@ public class TestConfiguration extends Configuration {
 
     public static boolean parallel() {
         return getBoolean(PARALLEL, false);
+    }
+
+    public static boolean useGlobalOpenshiftKafka() {
+        return getBoolean(TEST_USE_GLOBAL_OPENSHIFT_KAFKA, false);
     }
 }
