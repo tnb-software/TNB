@@ -28,6 +28,8 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -180,6 +182,26 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public SELF addToProperties(Properties properties) {
         properties.forEach((key, value) -> this.properties.setProperty(key.toString(), value.toString()));
+        return self();
+    }
+
+    public SELF addToProperties(InputStream inputStream) {
+        try (inputStream) {
+            final Properties p = new Properties();
+            p.load(inputStream);
+            addToProperties(p);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return self();
+    }
+
+    public SELF addToProperties(File pFile) {
+        try (InputStream is = new FileInputStream(pFile)) {
+            addToProperties(is);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
         return self();
     }
 
