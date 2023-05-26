@@ -97,9 +97,9 @@ public abstract class QuarkusApp extends App {
 
         if (!OpenshiftConfiguration.isOpenshift()) {
             // quarkus-resteasy is needed for the openshift.yml to be generated, but the resteasy itself is not used anywhere
-            // remove quarkus-resteasy in local deployments as it can throw exceptions for occupied 8080 port
+            // remove quarkus-resteasy-reactive in local deployments as it can throw exceptions for occupied 8080 port
             model.setDependencies(
-                model.getDependencies().stream().filter(d -> !"quarkus-resteasy".equals(d.getArtifactId())).collect(Collectors.toList())
+                model.getDependencies().stream().filter(d -> !"quarkus-resteasy-reactive".equals(d.getArtifactId())).collect(Collectors.toList())
             );
         }
 
