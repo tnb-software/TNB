@@ -21,6 +21,9 @@ public class SpringBootConfiguration extends CamelConfiguration {
 
     public static final String CAMEL_SPRINGBOOT_EXAMPLES_REPO = "camel.springboot.examples.repo";
     public static final String CAMEL_SPRINGBOOT_EXAMPLES_BRANCH = "camel.springboot.examples.branch";
+    public static final String SAP_QUICKSTARTS_REPO = "sap.quickstarts.repo";
+    public static final String SAP_QUICKSTARTS_BRANCH = "sap.quickstarts.branch";
+    public static final String SAP_LIBS_URI = "sap.libs.uri";
 
     public static final String OPENSHIFT_MAVEN_PLUGIN_GROUP_ID = "openshift-maven-plugin-group-id";
     public static final String OPENSHIFT_MAVEN_PLUGIN_VERSION = "openshift-maven-plugin-version";
@@ -39,6 +42,18 @@ public class SpringBootConfiguration extends CamelConfiguration {
 
     public static String getCamelSpringbootExamplesRepo() {
         return getProperty(CAMEL_SPRINGBOOT_EXAMPLES_REPO, "https://github.com/apache/camel-spring-boot-examples");
+    }
+
+    public static String getSapQuickstartsRepo() {
+        return getProperty(SAP_QUICKSTARTS_REPO, "https://code.engineering.redhat.com/gerrit/jboss-fuse/sap-quickstarts");
+    }
+
+    public static String getSapQuickstartsBranch() {
+        return getProperty(SAP_QUICKSTARTS_BRANCH, "3.20.1.redhat-00001-11b6bff1");
+    }
+
+    public static String getSapQuickstartsLibsBaseUri() {
+        return getProperty(SAP_LIBS_URI, "http://nexus.fuse-qe.eng.rdu2.redhat.com/repository/fuse-all/");
     }
 
     public static String camelSpringBootExamplesBranch() {
