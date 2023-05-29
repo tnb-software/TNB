@@ -225,6 +225,11 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public int port() {
+        return DEFAULT_PORT;
+    }
+
+    @Override
+    public int clientPort() {
         return localPort;
     }
 
