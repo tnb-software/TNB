@@ -4,25 +4,37 @@ import software.tnb.product.camel.CamelConfiguration;
 
 public class QuarkusConfiguration extends CamelConfiguration {
     public static final String CAMEL_QUARKUS_VERSION = "camel.quarkus.version";
+
+    public static final String DEFAULT_CAMEL_QUARKUS_VERSION = "2.13.3";
+
     public static final String QUARKUS_VERSION = "quarkus.version";
+
+    public static final String DEFAULT_QUARKUS_VERSION = "2.13.7.Final";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
 
     public static final String QUARKUS_PLATFORM_GROUP_ID = "quarkus.platform.group.id";
     public static final String QUARKUS_PLATFORM_ARTIFACT_ID = "quarkus.platform.artifact.id";
 
-    public static final String CAMEL_PLATFORM_GROUP_ID = "camel.quarkus.platform.group.id";
-    public static final String CAMEL_PLATFORM_ARTIFACT_ID = "camel.quarkus.platform.artifact.id";
+    public static final String QUARKUS_PLATFORM_VERSION = "quarkus.platform.version";
 
-    public static final String MAVEN_PLUGIN_GROUP_ID = "quarkus.maven.plugin.group.id";
-    public static final String MAVEN_PLUGIN_ARTIFACT_ID = "quarkus.maven.plugin.artifact.id";
-    public static final String MAVEN_PLUGIN_VERSION = "quarkus.maven.plugin.version";
+    public static final String DEFAULT_QUARKUS_PLATFORM_GROUP_ID = "io.quarkus";
+    public static final String DEFAULT_QUARKUS_PLATFORM_ARTIFACT_ID = "quarkus-bom";
+
+    public static final String CAMEL_QUARKUS_PLATFORM_GROUP_ID = "camel.quarkus.platform.group.id";
+    public static final String CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel.quarkus.platform.artifact.id";
+
+    public static final String CAMEL_QUARKUS_PLATFORM_VERSION = "camel.quarkus.platform.version";
+
+    public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_GROUP_ID = "org.apache.camel.quarkus";
+
+    public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel-quarkus-bom";
 
     public static String quarkusVersion() {
-        return getProperty(QUARKUS_VERSION, "2.13.7.Final");
+        return getProperty(QUARKUS_VERSION);
     }
 
     public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION, "2.13.3");
+        return getProperty(CAMEL_QUARKUS_VERSION);
     }
 
     public static boolean isQuarkusNative() {
@@ -30,30 +42,27 @@ public class QuarkusConfiguration extends CamelConfiguration {
     }
 
     public static String quarkusPlatformGroupId() {
-        return getProperty(QUARKUS_PLATFORM_GROUP_ID, "io.quarkus");
+        return getProperty(QUARKUS_PLATFORM_GROUP_ID);
     }
 
     public static String quarkusPlatformArtifactId() {
-        return getProperty(QUARKUS_PLATFORM_ARTIFACT_ID, "quarkus-bom");
+        return getProperty(QUARKUS_PLATFORM_ARTIFACT_ID);
     }
 
-    public static String camelPlatformGroupId() {
-        return getProperty(CAMEL_PLATFORM_GROUP_ID, "org.apache.camel.quarkus");
+    public static String quarkusPlatformVersion() {
+        return getProperty(QUARKUS_PLATFORM_VERSION);
     }
 
-    public static String camelPlatformArtifactId() {
-        return getProperty(CAMEL_PLATFORM_ARTIFACT_ID, "camel-quarkus-bom");
+    public static String camelQuarkusPlatformGroupId() {
+        return getProperty(CAMEL_QUARKUS_PLATFORM_GROUP_ID);
     }
 
-    public static String mavenPluginGroupId() {
-        return getProperty(MAVEN_PLUGIN_GROUP_ID, "io.quarkus");
+    public static String camelQuarkusPlatformArtifactId() {
+        return getProperty(CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID);
     }
 
-    public static String mavenPluginArtifactId() {
-        return getProperty(MAVEN_PLUGIN_ARTIFACT_ID, "quarkus-maven-plugin");
+    public static String camelQuarkusPlatformVersion() {
+        return getProperty(CAMEL_QUARKUS_PLATFORM_VERSION);
     }
 
-    public static String mavenPluginVersion() {
-        return getProperty(MAVEN_PLUGIN_VERSION, quarkusVersion());
-    }
 }

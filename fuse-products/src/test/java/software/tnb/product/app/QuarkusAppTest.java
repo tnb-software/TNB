@@ -50,13 +50,13 @@ public class QuarkusAppTest extends LocalAppTestParent {
         sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(TestConfiguration.appLocation().toAbsolutePath().toString());
         sa.assertThat(request.getGoals()).hasSize(1);
         sa.assertThat(request.getGoals().get(0)).isEqualTo(String.format("%s:%s:%s:create",
-            QuarkusConfiguration.mavenPluginGroupId(), QuarkusConfiguration.mavenPluginArtifactId(), QuarkusConfiguration.mavenPluginVersion()));
+            QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion()));
         sa.assertThat(request.getProperties()).isEqualTo(Map.of(
             "projectGroupId", TestConfiguration.appGroupId(),
             "projectArtifactId", name(),
             "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
             "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
-            "platformVersion", QuarkusConfiguration.quarkusVersion(),
+            "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
             "extensions", ""
         ));
         sa.assertThat(request.getOutputHandler(null)).isInstanceOf(MavenFileOutputHandler.class);
@@ -118,9 +118,9 @@ public class QuarkusAppTest extends LocalAppTestParent {
         assertThat(pom.getDependencyManagement().getDependencies()).hasSize(2);
 
         Dependency d = pom.getDependencyManagement().getDependencies().get(1);
-        assertThat(d.getGroupId()).isEqualTo(QuarkusConfiguration.camelPlatformGroupId());
-        assertThat(d.getArtifactId()).isEqualTo(QuarkusConfiguration.camelPlatformArtifactId());
-        assertThat(d.getVersion()).isEqualTo(QuarkusConfiguration.camelQuarkusVersion());
+        assertThat(d.getGroupId()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformGroupId());
+        assertThat(d.getArtifactId()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformArtifactId());
+        assertThat(d.getVersion()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformVersion());
         assertThat(d.getType()).isEqualTo("pom");
         assertThat(d.getScope()).isEqualTo("import");
     }
