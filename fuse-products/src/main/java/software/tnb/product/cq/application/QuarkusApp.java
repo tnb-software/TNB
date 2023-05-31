@@ -29,7 +29,7 @@ public abstract class QuarkusApp extends App {
         LOG.info("Creating Camel Quarkus application project for integration {}", name);
 
         String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
-            QuarkusConfiguration.mavenPluginGroupId(), QuarkusConfiguration.mavenPluginArtifactId(), QuarkusConfiguration.mavenPluginVersion());
+            QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
 
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
@@ -39,7 +39,7 @@ public abstract class QuarkusApp extends App {
                 "projectArtifactId", name,
                 "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
                 "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
-                "platformVersion", QuarkusConfiguration.quarkusVersion(),
+                "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
                 "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
             ))
             .withLogFile(getLogPath(Phase.GENERATE))
@@ -88,9 +88,9 @@ public abstract class QuarkusApp extends App {
 
         // Append the camel platform bom (quarkus bom already present)
         Dependency camelQuarkusBom = new Dependency();
-        camelQuarkusBom.setGroupId(QuarkusConfiguration.camelPlatformGroupId());
-        camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelPlatformArtifactId());
-        camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusVersion());
+        camelQuarkusBom.setGroupId(QuarkusConfiguration.camelQuarkusPlatformGroupId());
+        camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelQuarkusPlatformArtifactId());
+        camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusPlatformVersion());
         camelQuarkusBom.setType("pom");
         camelQuarkusBom.setScope("import");
         model.getDependencyManagement().getDependencies().add(camelQuarkusBom);

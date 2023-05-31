@@ -70,8 +70,8 @@ public class LocalDependencyCustomizerTest extends CamelKTestParent {
         assertThat(req.getGoals()).containsOnly("clean", "package");
         assertThat(req.getProperties()).isEqualTo(Map.of(
             "skipTests", "true",
-            "quarkus.version", QuarkusConfiguration.quarkusVersion(),
-            "camel.quarkus.version", QuarkusConfiguration.camelQuarkusVersion()
+            "quarkus.version", QuarkusConfiguration.DEFAULT_QUARKUS_VERSION,
+            "camel.quarkus.version", QuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_VERSION
         ));
     }
 
