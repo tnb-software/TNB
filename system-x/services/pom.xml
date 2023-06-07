@@ -22,6 +22,7 @@
         <module>ftp</module>
         <module>google</module>
         <module>knative</module>
+        <module>ldap</module>
         <module>slack</module>
         <module>jaeger</module>
         <module>jira</module>
@@ -39,6 +40,7 @@
         <module>cryostat</module>
         <module>horreum</module>
         <module>prometheus-metrics</module>
+        <module>redis</module>
         <module>lra-coordinator</module>
         <module>mllp</module>
         <module>webhook</module>
