@@ -203,6 +203,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-ldap</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-lra-coordinator</artifactId>
         </dependency>
         <dependency>
@@ -244,6 +248,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-rabbitmq</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-redis</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
