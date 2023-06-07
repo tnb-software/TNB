@@ -31,7 +31,7 @@ import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 public class OpenshiftKnative extends Knative implements OpenshiftDeployable, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKnative.class);
     private static final String CRD_GROUP = "operator.knative.dev";
-    private static final String CRD_VERSION = "v1alpha1";
+    private static final String CRD_VERSION = "v1beta1";
 
     private static final CustomResourceDefinitionContext EVENTING_CTX = new CustomResourceDefinitionContext.Builder()
         .withName("KnativeEventing")
