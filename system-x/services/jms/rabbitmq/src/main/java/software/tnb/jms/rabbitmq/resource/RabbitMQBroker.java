@@ -1,8 +1,9 @@
 package software.tnb.jms.rabbitmq.resource;
 
+import com.rabbitmq.jms.admin.RMQConnectionFactory;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 
 import com.google.auto.service.AutoService;
 
@@ -80,13 +81,13 @@ public class RabbitMQBroker extends RabbitMQ implements Deployable, WithDockerIm
 
     private Connection createConnection() {
         try {
-            CachingConnectionFactory connectionFactory = new CachingConnectionFactory();
+            RMQConnectionFactory connectionFactory = new RMQConnectionFactory();
             connectionFactory.setHost("localhost");
             connectionFactory.setPort(getPortMapping(5672));
             connectionFactory.setUsername(account().username());
             connectionFactory.setPassword(account().password());
 
-            Connection connection = (Connection) connectionFactory.createConnection();
+            Connection connection = connectionFactory.createConnection();
             connection.start();
 
             return connection;
