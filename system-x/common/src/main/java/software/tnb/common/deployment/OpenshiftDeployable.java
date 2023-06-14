@@ -30,7 +30,8 @@ public interface OpenshiftDeployable extends Deployable {
     }
 
     default PodResource<Pod> servicePod() {
-        return servicePods().size() > 0 ? servicePods().get(0) : null;
+        var pods = servicePods();
+        return pods.size() > 0 ? pods.get(0) : null;
     }
 
     default List<PodResource<Pod>> servicePods() {
