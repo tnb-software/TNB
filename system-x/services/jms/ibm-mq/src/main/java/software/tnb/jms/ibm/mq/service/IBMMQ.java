@@ -9,14 +9,14 @@ import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.ibm.mq.jms.MQConnectionFactory;
-import com.ibm.msg.client.wmq.WMQConstants;
-
-import javax.jms.Connection;
-import javax.jms.JMSException;
+import com.ibm.mq.jakarta.jms.MQConnectionFactory;
+import com.ibm.msg.client.jakarta.wmq.WMQConstants;
 
 import java.io.File;
 import java.util.Map;
+
+import jakarta.jms.Connection;
+import jakarta.jms.JMSException;
 
 public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQ.class);

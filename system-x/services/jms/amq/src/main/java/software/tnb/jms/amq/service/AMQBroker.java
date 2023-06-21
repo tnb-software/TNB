@@ -4,7 +4,7 @@ import software.tnb.common.service.Service;
 import software.tnb.jms.amq.account.AMQBrokerAccount;
 import software.tnb.jms.amq.validation.AMQValidation;
 
-import javax.jms.Connection;
+import jakarta.jms.Connection;
 
 public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AMQValidation> {
     public abstract String brokerUrl();

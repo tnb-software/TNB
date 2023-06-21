@@ -6,13 +6,13 @@ import software.tnb.jms.listener.JMSMessageListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
-
 import java.util.List;
 import java.util.stream.Collectors;
+
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.Session;
 
 public class JMSTopicClient extends JMSClient implements TopicClient {
     private static final Logger LOG = LoggerFactory.getLogger(JMSTopicClient.class);

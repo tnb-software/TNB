@@ -23,9 +23,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -46,6 +43,8 @@ import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
+import jakarta.jms.Connection;
+import jakarta.jms.JMSException;
 
 @AutoService(AMQBroker.class)
 public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable, WithInClusterHostname, WithExternalHostname, WithOperatorHub,
