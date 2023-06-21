@@ -8,9 +8,9 @@ import software.tnb.jms.client.JMSTopicClient;
 import software.tnb.jms.client.MQTT5TopicClient;
 import software.tnb.jms.client.MQTTTopicClient;
 
-import javax.jms.Connection;
-
 import java.util.UUID;
+
+import jakarta.jms.Connection;
 
 public class AMQValidation implements Validation {
     private final Connection connection;

@@ -10,11 +10,11 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import jakarta.jms.Connection;
+import jakarta.jms.JMSException;
 
 @AutoService(AMQBroker.class)
 public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerImage {

@@ -14,15 +14,15 @@
     <name>TNB :: System-X :: Services :: JMS :: Client</name>
 
     <properties>
-        <jms.api.version>2.0.1</jms.api.version>
+        <jms.api.version>3.1.0</jms.api.version>
         <paho.mqtt.client.version>1.2.5</paho.mqtt.client.version>
         <paho.mqtt5.client.version>1.2.5</paho.mqtt5.client.version>
     </properties>
 
     <dependencies>
         <dependency>
-            <groupId>javax.jms</groupId>
-            <artifactId>javax.jms-api</artifactId>
+            <groupId>jakarta.jms</groupId>
+            <artifactId>jakarta.jms-api</artifactId>
             <version>${jms.api.version}</version>
             <scope>compile</scope>
         </dependency>
