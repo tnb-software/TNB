@@ -1,9 +1,10 @@
 package software.tnb.product;
 
-import software.tnb.util.maven.TestMaven;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.application.App;
 import software.tnb.product.csb.integration.builder.SpringBootIntegrationBuilder;
+import software.tnb.product.parent.TestParent;
+import software.tnb.util.maven.TestMaven;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Tag;
@@ -16,7 +17,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 @Tag("integration")
-public class SpringBootXmlGeneratorTest {
+public class SpringBootXmlGeneratorTest extends TestParent {
 
     @Test
     public void test() throws Exception {
