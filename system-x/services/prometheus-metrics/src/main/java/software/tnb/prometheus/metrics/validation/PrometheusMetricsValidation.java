@@ -53,8 +53,7 @@ public class PrometheusMetricsValidation implements Validation {
         LOG.info("getting metrics until instant in EPOCH seconds: {}", time);
         Response response = client.get(url + "/api/v1/query?query=" + query + "&time=" + time,
             Map.of("Authorization", "Bearer " + token));
-        JsonParser parser = new JsonParser();
-        JsonObject json = parser.parse(response.getBody()).getAsJsonObject();
+        JsonObject json = JsonParser.parseString(response.getBody()).getAsJsonObject();
         if (!json.get("status").getAsString().equalsIgnoreCase("success")) {
             throw new IllegalStateException("The metric query failed");
         }
@@ -71,8 +70,7 @@ public class PrometheusMetricsValidation implements Validation {
     public JsonObject executeQuery(String query) {
         Response response = client.get(url + "/api/v1/query?query=" + query,
             Map.of("Authorization", "Bearer " + token));
-        JsonParser parser = new JsonParser();
-        JsonObject json = parser.parse(response.getBody()).getAsJsonObject();
+        JsonObject json = JsonParser.parseString(response.getBody()).getAsJsonObject();
         if (!json.get("status").getAsString().equalsIgnoreCase("success")) {
             throw new IllegalStateException("The metric query failed");
         }
@@ -93,8 +91,7 @@ public class PrometheusMetricsValidation implements Validation {
         Response response = client.get(
             String.format("%s/api/v1/query_range?query=%s&start=%d&end=%d&step=%d", url, query, start, end, step),
             Map.of("Authorization", "Bearer " + token));
-        JsonParser parser = new JsonParser();
-        JsonObject json = parser.parse(response.getBody()).getAsJsonObject();
+        JsonObject json = JsonParser.parseString(response.getBody()).getAsJsonObject();
         if (!json.get("status").getAsString().equalsIgnoreCase("success")) {
             throw new IllegalStateException("The metric query failed");
         }
@@ -173,7 +170,11 @@ public class PrometheusMetricsValidation implements Validation {
         return executeQueryRangeSingleMetricWithVector(metric.query, start, end, step, nodeName);
     }
 
-    /**
+    public List<InstantValue> executeQuery(CamelKMetric metric, String podName) {
+        return executeQueryToGetVector(metric.query, targetNamespace, podName);
+    }
+
+        /**
      * Executes a generic query using <i>query_range</i> request and returning a vector
      * 
      * @param query generic query, which can contain placeholders with the <i>String.format</i> convention, of a <i>query_range</i> request
@@ -199,6 +200,28 @@ public class PrometheusMetricsValidation implements Validation {
             instantValues.add(new InstantValue(jsonValues.get(1).getAsNumber(), jsonValues.get(0).getAsLong()));
         }
         return instantValues;
+    }
+
+    public List<InstantValue> executeQueryToGetVector(String query, Object... params) {
+        String queryToExecute = String.format(query, params);
+        JsonObject json = executeQuery(queryToExecute);
+        JsonArray result = json.get("data").getAsJsonObject().get("result").getAsJsonArray();
+        if (result.size() == 0) {
+            return Collections.emptyList();
+        }
+        JsonArray value = result.get(0).getAsJsonObject().get("value").getAsJsonArray();
+        return Collections.singletonList(new InstantValue(value.get(1).getAsNumber(), value.get(0).getAsLong()));
+    }
+
+    public List<InstantValue> executeQueryToGetVector(String query, long time, Object... params) {
+        String queryToExecute = String.format(query, params);
+        JsonObject json = executeQuery(queryToExecute, time);
+        JsonArray result = json.get("data").getAsJsonObject().get("result").getAsJsonArray();
+        if (result.size() == 0) {
+            return Collections.emptyList();
+        }
+        JsonArray value = result.get(0).getAsJsonObject().get("value").getAsJsonArray();
+        return Collections.singletonList(new InstantValue(value.get(1).getAsNumber(), value.get(0).getAsLong()));
     }
 
     /**
@@ -259,6 +282,25 @@ public class PrometheusMetricsValidation implements Validation {
         String query;
 
         PodMetric(String query) {
+            this.query = query;
+        }
+    }
+
+    public enum CamelKMetric {
+        BUILD_DURATION_SEC_COUNT("camel_k_build_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
+        BUILD_DURATION_SEC_SUM("camel_k_build_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
+        BUILD_QUEUE_DURATION_SEC_COUNT("camel_k_build_queue_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
+        BUILD_QUEUE_DURATION_SEC_SUM("camel_k_build_queue_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
+        BUILD_RECOVERY_ATTEMPTS_COUNT("camel_k_build_recovery_attempts_count{namespace=\"%s\",pod=\"%s\"}"),
+        BUILD_RECOVERY_ATTEMPTS_SUM("camel_k_build_recovery_attempts_sum{namespace=\"%s\",pod=\"%s\"}"),
+        INTEGRATION_FIRST_READINESS_SEC_COUNT("camel_k_integration_first_readiness_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
+        INTEGRATION_FIRST_READINESS_SEC_SUM("camel_k_integration_first_readiness_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
+        RECONCILIATION_DURATION_SEC_COUNT("camel_k_reconciliation_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
+        RECONCILIATION_DURATION_SEC_SUM("camel_k_reconciliation_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}");
+
+        String query;
+        
+        CamelKMetric(String query) {
             this.query = query;
         }
     }
