@@ -101,7 +101,7 @@
         <javadoc.plugin.version>3.5.0</javadoc.plugin.version>
         <gpg.plugin.version>3.1.0</gpg.plugin.version>
         <git.changelog.maven.plugin>1.97.0</git.changelog.maven.plugin>
-        <okhttp-version>4.10.0</okhttp-version>
+        <okhttp-version>4.11.0</okhttp-version>
         <failsafe-version>3.3.0</failsafe-version>
         <gson-version>2.10</gson-version>
         <nashorn.version>15.4</nashorn.version>
