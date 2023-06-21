@@ -58,10 +58,6 @@ public final class IntegrationGenerator {
     public static void toFile(AbstractIntegrationBuilder<?> integrationBuilder, Path location) {
         final Path sources = location.resolve("src/main/java");
 
-        // Add additional resources to the application
-        final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach(resource -> doWriteResource(resourcesPath, resource));
-
         if (!integrationBuilder.getResources().isEmpty()) {
             integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->
                     i.addToProperties("quarkus.native.resources.includes",
@@ -72,6 +68,9 @@ public final class IntegrationGenerator {
         }
 
         processCustomizers(integrationBuilder);
+        // Add additional resources to the application
+        final Path resourcesPath = location.resolve("src/main/resources");
+        integrationBuilder.getResources().forEach(resource -> doWriteResource(resourcesPath, resource));
 
         //Add additional classes to the application
         integrationBuilder.getAdditionalClasses().forEach(cu -> {
