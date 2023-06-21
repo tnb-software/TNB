@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Google :: Cloud :: BigQuery</name>
 
     <properties>
-        <google-cloud-bigquery.version>2.26.1</google-cloud-bigquery.version>
+        <google-cloud-bigquery.version>2.28.0</google-cloud-bigquery.version>
     </properties>
 
     <dependencies>
