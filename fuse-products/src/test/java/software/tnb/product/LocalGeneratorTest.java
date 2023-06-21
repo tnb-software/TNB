@@ -3,6 +3,7 @@ package software.tnb.product;
 import software.tnb.common.product.ProductType;
 import software.tnb.product.customizer.Customizers;
 import software.tnb.product.integration.builder.IntegrationBuilder;
+import software.tnb.product.parent.TestParent;
 import software.tnb.product.routebuilder.DirectToLogRoute;
 import software.tnb.util.maven.TestMaven;
 
@@ -20,7 +21,7 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 @Tag("integration")
-public class LocalGeneratorTest {
+public class LocalGeneratorTest extends TestParent {
     private static final Logger log = LoggerFactory.getLogger(LoggerFactory.class);
 
     @ParameterizedTest
