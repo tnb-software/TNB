@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.product.customizer.Customizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.IntegrationBuilder;
@@ -101,7 +102,6 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
 
         assertThat(expectedPath).exists();
         assertThat(expectedPath).content().isEqualTo(classContent);
-
     }
 
     @Test
@@ -143,5 +143,22 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
             .resolve(TestConfiguration.appGroupId().replaceAll("\\.", "/"))
             .resolve(ib.getFileName());
         assertThat(IOUtils.readFile(routeBuilderPath)).contains("import software.tnb.product.generator.AddedClass;");
+    }
+
+    @Test
+    public void shouldCreateResourceAddedInCustomizerTest() {
+        setProduct(ProductType.CAMEL_SPRINGBOOT);
+        final String name = "customizerResource";
+        final String content = "customizerResourceContent";
+        Customizer c = new Customizer() {
+            @Override
+            public void customize() {
+                getIntegrationBuilder().addResource(new Resource(name, content));
+            }
+        };
+        process(dummyIb().addCustomizer(c));
+        Path expectedFile = TEST_DIR.resolve("src/main/resources").resolve(name);
+        assertThat(expectedFile).exists();
+        assertThat(IOUtils.readFile(expectedFile)).isEqualTo(content);
     }
 }
