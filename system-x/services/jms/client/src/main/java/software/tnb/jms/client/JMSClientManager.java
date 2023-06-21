@@ -1,11 +1,11 @@
 package software.tnb.jms.client;
 
-import javax.jms.Connection;
-import javax.jms.JMSException;
-import javax.jms.Session;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import jakarta.jms.Connection;
+import jakarta.jms.JMSException;
+import jakarta.jms.Session;
 
 public class JMSClientManager {
     private final Connection connection;

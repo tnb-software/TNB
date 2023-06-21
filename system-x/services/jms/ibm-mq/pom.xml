@@ -29,7 +29,7 @@
         </dependency>
         <dependency>
             <groupId>com.ibm.mq</groupId>
-            <artifactId>com.ibm.mq.allclient</artifactId>
+            <artifactId>com.ibm.mq.jakarta.client</artifactId>
             <version>${ibm.mq.version}</version>
         </dependency>
     </dependencies>
