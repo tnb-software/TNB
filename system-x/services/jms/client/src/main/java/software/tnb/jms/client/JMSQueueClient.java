@@ -5,10 +5,10 @@ import software.tnb.jms.DestinationType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.Session;
+import jakarta.jms.JMSException;
+import jakarta.jms.Message;
+import jakarta.jms.MessageConsumer;
+import jakarta.jms.Session;
 
 public class JMSQueueClient extends JMSClient {
     private static final Logger LOG = LoggerFactory.getLogger(JMSQueueClient.class);
