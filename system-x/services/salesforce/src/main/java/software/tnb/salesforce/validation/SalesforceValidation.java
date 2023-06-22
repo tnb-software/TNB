@@ -120,7 +120,7 @@ public class SalesforceValidation implements Validation {
             ObjectMapper jsonMapper = new ObjectMapper();
             jsonMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
             HttpResponse res = Http.send(new HttpRequest()
-                .url(client.getSession().getApiEndpoint() + "/services/async/54.0/job/" + id)
+                .url(client.getSession().getApiEndpoint() + "/services/async/56.0/job/" + id)
                 .method("GET")
                 .header("X-SFDC-Session", client.getSession().getAccessToken())
                 .header("Accept", "application/json")
