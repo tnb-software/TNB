@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: DB :: MongoDB</name>
 
     <properties>
-        <mongodb.driver.version>4.9.0</mongodb.driver.version>
+        <mongodb.driver.version>4.10.0</mongodb.driver.version>
     </properties>
 
     <dependencies>
