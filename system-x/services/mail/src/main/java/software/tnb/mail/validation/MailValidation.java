@@ -3,16 +3,20 @@ package software.tnb.mail.validation;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.validation.Validation;
 
-import org.apache.commons.mail.DefaultAuthenticator;
-import org.apache.commons.mail.Email;
-import org.apache.commons.mail.EmailException;
-import org.apache.commons.mail.SimpleEmail;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
+import jakarta.mail.Authenticator;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.PasswordAuthentication;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.MimeMessage;
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
 
@@ -34,18 +38,29 @@ public class MailValidation implements Validation {
         }
         String[] parts = smtpHostname.split(":");
         try {
-            Email email = new SimpleEmail();
-            email.setHostName(parts[0]);
-            email.setSmtpPort(Integer.parseInt(parts[1]));
-            email.setAuthenticator(new DefaultAuthenticator(sender, accounts.get(sender)));
-            email.setFrom(sender);
-            email.setSubject(subject);
-            email.setMsg(message);
-            email.addTo(receiver);
-            email.send();
-        } catch (EmailException ex) {
-            LOG.error(ex.getMessage(), ex);
-            throw new RuntimeException(ex);
+            Authenticator auth = new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(sender, accounts.get(sender));
+                }
+            };
+
+            Properties properties = new Properties();
+            properties.put("mail.smtp.auth", "true");
+            properties.put("mail.smtp.starttls.enable", "true");
+            properties.put("mail.smtp.host", parts[0]);
+            properties.put("mail.smtp.port", Integer.parseInt(parts[1]));
+
+            MimeMessage mimeMessage = new MimeMessage(Session.getInstance(properties, auth));
+
+            mimeMessage.setFrom(sender);
+            mimeMessage.setRecipients(Message.RecipientType.TO, receiver);
+            mimeMessage.setText(message);
+            mimeMessage.setSubject(subject);
+
+            Transport.send(mimeMessage);
+        } catch (MessagingException e) {
+            LOG.error(e.getMessage(), e);
+            throw new RuntimeException(e);
         }
     }
 
