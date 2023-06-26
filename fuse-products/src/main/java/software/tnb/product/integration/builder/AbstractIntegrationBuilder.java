@@ -3,6 +3,7 @@ package software.tnb.product.integration.builder;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.MapUtils;
 import software.tnb.product.customizer.Customizer;
+import software.tnb.product.deploystrategy.impl.custom.OpenshiftCustomDeployer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.util.maven.Maven;
 
@@ -73,6 +74,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private int port = 8080;
 
     private String jvmAgentPath;
+
+    private OpenshiftCustomDeployer customStrategy;
 
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
@@ -448,5 +451,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public String getJvmAgentPath() {
         return jvmAgentPath;
+    }
+
+    public SELF useOcpCustomStrategy(OpenshiftCustomDeployer customStrategy) {
+        this.customStrategy = customStrategy;
+        return self();
+    }
+
+    public OpenshiftCustomDeployer getOCPCustomStrategy() {
+        return customStrategy;
     }
 }
