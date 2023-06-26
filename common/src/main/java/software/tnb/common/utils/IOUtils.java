@@ -2,6 +2,8 @@ package software.tnb.common.utils;
 
 import software.tnb.common.config.TestConfiguration;
 
+import org.junit.jupiter.api.Assertions;
+
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.io.FileUtils;
@@ -21,7 +23,9 @@ import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -147,6 +151,19 @@ public final class IOUtils {
                 keysValues.getProperty(key.toString()));
         }
         writeFile(output, withVars);
+    }
+
+    /**
+     * Replace keys with values in a file
+     * @param input {@link Path} the file
+     * @param replacement {@link Map} key to replace with value
+     */
+    public static void replaceInFile(Path input, Map<String, String> replacement) {
+        Assertions.assertTrue(input != null && input.toFile().canWrite());
+        Assertions.assertNotNull(replacement);
+        final AtomicReference<String> content = new AtomicReference<>(readFile(input));
+        replacement.entrySet().forEach(e -> content.getAndUpdate(val -> val.replaceAll(e.getKey(), e.getValue())));
+        writeFile(input, content.get());
     }
 
     public static Path zipFiles(String zipFileName, Path... files) {
