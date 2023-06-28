@@ -8,14 +8,14 @@ import javax.jms.Connection;
 
 public class RabbitMQValidation implements Validation {
     private final Connection connection;
-    private JMSClientManager client;
     private final RabbitmqAccount account;
-    private final String mqttUrl;
+    private final String serverUrl;
+    private JMSClientManager client;
 
-    public RabbitMQValidation(Connection connection, RabbitmqAccount account, String mqttUrl) {
+    public RabbitMQValidation(Connection connection, RabbitmqAccount account, String serverUrl) {
         this.connection = connection;
         this.account = account;
-        this.mqttUrl = mqttUrl;
+        this.serverUrl = serverUrl;
     }
 
     private JMSClientManager client() {
@@ -23,5 +23,13 @@ public class RabbitMQValidation implements Validation {
             client = new JMSClientManager(connection);
         }
         return client;
+    }
+
+    public String hostname() {
+        String prefix = "tcp://";
+        return serverUrl.substring(
+            prefix.length(),
+            serverUrl.lastIndexOf(':')
+        );
     }
 }
