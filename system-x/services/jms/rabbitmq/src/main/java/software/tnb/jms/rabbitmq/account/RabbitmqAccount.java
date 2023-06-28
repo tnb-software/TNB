@@ -3,8 +3,8 @@ package software.tnb.jms.rabbitmq.account;
 import software.tnb.common.account.Account;
 
 public class RabbitmqAccount implements Account {
-    private String username = "guest";
-    private String password = "guest";
+    private String username = "admin";
+    private String password = "admin123.admin123.admin123.";
 
     public void setUsername(String username) {
         this.username = username;
