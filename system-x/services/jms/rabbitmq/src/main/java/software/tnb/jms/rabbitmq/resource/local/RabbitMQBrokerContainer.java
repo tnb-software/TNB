@@ -1,4 +1,4 @@
-package software.tnb.jms.rabbitmq.resource;
+package software.tnb.jms.rabbitmq.resource.local;
 
 import org.testcontainers.containers.GenericContainer;
 

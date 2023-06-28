@@ -1,22 +1,34 @@
 package software.tnb.jms.rabbitmq.service;
 
-import javax.jms.Connection;
-
 import software.tnb.common.service.Service;
 import software.tnb.jms.rabbitmq.account.RabbitmqAccount;
 import software.tnb.jms.rabbitmq.validation.RabbitMQValidation;
 
-public abstract class RabbitMQ extends Service<RabbitmqAccount, Connection, RabbitMQValidation> {
-    public abstract String brokerUrl();
+import javax.jms.Connection;
 
-    protected abstract String mqttUrl();
+import java.util.HashMap;
+import java.util.Map;
+
+public abstract class RabbitMQ extends Service<RabbitmqAccount, Connection, RabbitMQValidation> {
+    public static final int PORT = 5672;
+    public static final int MANAGEMENT_PORT = 15672;
+    public static final String IMAGE = "quay.io/rh_integration/rabbitmq:3-management";
+
+    protected abstract String getServerUrl();
+
+    public abstract int getPortMapping();
 
     public RabbitMQValidation validation() {
         if (validation == null) {
-            validation = new RabbitMQValidation(client(), account(), mqttUrl());
+            validation = new RabbitMQValidation(client(), account(), getServerUrl());
         }
         return validation;
     }
 
-    public abstract int getPortMapping(int port);
+    protected Map<String, String> containerEnvironment() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("RABBITMQ_DEFAULT_USER", account().username());
+        env.put("RABBITMQ_DEFAULT_PASS", account().password());
+        return env;
+    }
 }
