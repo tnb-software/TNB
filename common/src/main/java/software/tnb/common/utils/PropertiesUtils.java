@@ -1,8 +1,11 @@
 package software.tnb.common.utils;
 
+import org.apache.commons.io.FileUtils;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -62,5 +65,18 @@ public final class PropertiesUtils {
             throw new RuntimeException("Unable to load properties from " + filePath, e);
         }
         return properties;
+    }
+
+    public static void setProperties(Path filePath, Map<String, String> props) {
+        final Properties properties = new Properties();
+        try (InputStream is = new FileInputStream(filePath.toFile())) {
+            properties.load(is);
+            props.entrySet().forEach(e -> properties.setProperty(e.getKey(), e.getValue()));
+            //recreate file
+            FileUtils.deleteQuietly(filePath.toFile());
+            IOUtils.writeFile(filePath, toString(properties));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to load properties from " + filePath, e);
+        }
     }
 }
