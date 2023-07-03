@@ -2,6 +2,7 @@
     <images>
         <image>
             <name>${project.build.finalName}</name>
+            <alias>${project.build.finalName}</alias>
             <build>
                 <from>${jkube.generator.from}</from>
                 <assembly>
