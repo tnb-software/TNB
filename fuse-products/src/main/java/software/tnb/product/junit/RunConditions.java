@@ -2,8 +2,6 @@ package software.tnb.product.junit;
 
 import static software.tnb.common.config.TestConfiguration.jiraAccessToken;
 
-import org.apache.commons.lang3.StringUtils;
-
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.HTTPUtils;
@@ -19,6 +17,7 @@ import org.junit.jupiter.engine.descriptor.ClassTestDescriptor;
 import org.junit.platform.commons.support.AnnotationSupport;
 import org.junit.platform.commons.util.ReflectionUtils;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
