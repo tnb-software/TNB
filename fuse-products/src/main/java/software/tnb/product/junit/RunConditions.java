@@ -1,5 +1,9 @@
 package software.tnb.product.junit;
 
+import static software.tnb.common.config.TestConfiguration.jiraAccessToken;
+
+import org.apache.commons.lang3.StringUtils;
+
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.HTTPUtils;
@@ -24,6 +28,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class RunConditions implements ExecutionCondition {
@@ -102,7 +107,10 @@ public class RunConditions implements ExecutionCondition {
         }
         for (String jiraKey : jira.keys()) {
             LOG.trace("Checking JIRA {}, allowed resolutions: {}", jiraKey, TestConfiguration.jiraAllowedResolutions());
-            final HTTPUtils.Response response = HTTPUtils.getInstance().get(JIRA_URL_PREFIX + jiraKey);
+            final Map<String, String> headers = StringUtils.isNotBlank(jiraAccessToken()) ? Map.of(
+                "Authorization", String.format("Bearer %s", jiraAccessToken())
+            ) : Map.of();
+            final HTTPUtils.Response response = HTTPUtils.getInstance().get(JIRA_URL_PREFIX + jiraKey, headers);
             if (response.getResponseCode() == 200) {
                 final String status = new JSONObject(response.getBody()).getJSONObject("fields").getJSONObject("status").get("name")
                     .toString().toLowerCase();
