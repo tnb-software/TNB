@@ -43,7 +43,9 @@ public abstract class AbstractMavenGitIntegrationBuilder<SELF extends AbstractMa
     }
 
     public SELF withMavenProperties(Map<String, String> props) {
-        mavenProperties.putAll(props);
+        if (props != null) {
+            mavenProperties.putAll(props);
+        }
         return self();
     }
 
@@ -53,7 +55,9 @@ public abstract class AbstractMavenGitIntegrationBuilder<SELF extends AbstractMa
     }
 
     public SELF withJavaProperties(Map<String, String> props) {
-        javaProperties.putAll(props);
+        if (props != null) {
+            javaProperties.putAll(props);
+        }
         return self();
     }
 

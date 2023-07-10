@@ -63,12 +63,17 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
     }
 
     @Override
+    public String amqpUrl() {
+        return String.format("amqp://%s:%d", brokerUrl(), getPortMapping(5672));
+    }
+
+    @Override
     public int getPortMapping(int port) {
         return container.getMappedPort(port);
     }
 
     private int[] containerPorts() {
-        return new int[] {8161, 61616, 1883};
+        return new int[] {8161, 61616, 1883, 5672};
     }
 
     private Map<String, String> containerEnvironment() {
