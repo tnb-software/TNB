@@ -133,6 +133,11 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     }
 
     @Override
+    public String amqpUrl() {
+        return "amqp://" + brokerUrl() + ":61626";
+    }
+
+    @Override
     public int getPortMapping(int port) {
         //redirect all to the internal acceptor
         return 61626;

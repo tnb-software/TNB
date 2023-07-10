@@ -11,6 +11,8 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
 
     protected abstract String mqttUrl();
 
+    public abstract String amqpUrl();
+
     public AMQValidation validation() {
         if (validation == null) {
             validation = new AMQValidation(client(), account(), mqttUrl());
