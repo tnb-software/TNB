@@ -4,10 +4,10 @@ import software.tnb.common.service.Service;
 import software.tnb.jms.rabbitmq.account.RabbitmqAccount;
 import software.tnb.jms.rabbitmq.validation.RabbitMQValidation;
 
-import javax.jms.Connection;
-
 import java.util.HashMap;
 import java.util.Map;
+
+import jakarta.jms.Connection;
 
 public abstract class RabbitMQ extends Service<RabbitmqAccount, Connection, RabbitMQValidation> {
     public static final int PORT = 5672;
