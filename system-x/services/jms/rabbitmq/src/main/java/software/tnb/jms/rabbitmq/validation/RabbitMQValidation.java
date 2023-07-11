@@ -4,7 +4,7 @@ import software.tnb.common.validation.Validation;
 import software.tnb.jms.client.JMSClientManager;
 import software.tnb.jms.rabbitmq.account.RabbitmqAccount;
 
-import javax.jms.Connection;
+import jakarta.jms.Connection;
 
 public class RabbitMQValidation implements Validation {
     private final Connection connection;
