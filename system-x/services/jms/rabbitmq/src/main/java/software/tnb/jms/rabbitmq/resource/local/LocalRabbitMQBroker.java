@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
 
-import javax.jms.Connection;
+import jakarta.jms.Connection;
 
 @AutoService(RabbitMQ.class)
 public class LocalRabbitMQBroker extends RabbitMQ implements Deployable, WithDockerImage {
