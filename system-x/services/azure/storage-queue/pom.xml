@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Storage Queue</name>
 
     <properties>
-        <azure.storage.queue.version>12.17.0</azure.storage.queue.version>
+        <azure.storage.queue.version>12.18.0</azure.storage.queue.version>
     </properties>
 
     <dependencies>
