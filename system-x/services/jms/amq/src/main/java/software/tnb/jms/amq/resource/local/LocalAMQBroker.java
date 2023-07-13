@@ -58,8 +58,13 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
     }
 
     @Override
-    protected String mqttUrl() {
+    public String mqttUrl() {
         return String.format("tcp://%s:%d", brokerUrl(), getPortMapping(1883));
+    }
+
+    @Override
+    protected String mqttClientUrl() {
+        return mqttUrl();
     }
 
     @Override

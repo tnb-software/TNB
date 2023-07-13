@@ -9,13 +9,15 @@ import javax.jms.Connection;
 public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AMQValidation> {
     public abstract String brokerUrl();
 
-    protected abstract String mqttUrl();
+    public abstract String mqttUrl();
+
+    protected abstract String mqttClientUrl();
 
     public abstract String amqpUrl();
 
     public AMQValidation validation() {
         if (validation == null) {
-            validation = new AMQValidation(client(), account(), mqttUrl());
+            validation = new AMQValidation(client(), account(), mqttClientUrl());
         }
         return validation;
     }
