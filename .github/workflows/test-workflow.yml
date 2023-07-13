@@ -1,6 +1,8 @@
 on:
   pull_request_target
 
+name: "my workflow"
+
 jobs:
   job-1:
     runs-on: ubuntu-latest
