@@ -18,3 +18,5 @@ jobs:
     steps:
       - name: asdf
         run: echo ${{ secrets.TEST_SECRET }}
+      - name: another step
+        run: exit 1
