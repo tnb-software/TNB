@@ -31,6 +31,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-apicurio-registry</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-cloudwatch</artifactId>
         </dependency>
         <dependency>
