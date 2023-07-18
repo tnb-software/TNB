@@ -32,11 +32,13 @@ jobs:
         uses: peter-evans/create-pull-request@v4
         with:
           token: ${{ steps.generate-token.outputs.token }}
-          add-paths: 'bom/pom.xml'
-          commit-message: '[BOM] Sync BOM'
-          branch: 'action-sync-bom'
+          add-paths: |
+              bom/pom.xml
+              system-x/services/all/pom.xml
+          commit-message: '[Sync] Sync BOM / System-X ALL'
+          branch: 'action-sync'
           delete-branch: true
-          title: 'Sync BOM'
+          title: 'Sync'
           assignees: 'avano'
           author: 'GitHub Actions <actions@workflow.github.com>'
 
