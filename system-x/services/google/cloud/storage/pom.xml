@@ -13,7 +13,7 @@
     <name>TNB :: System-X :: Services :: Google :: Storage</name>
 
     <properties>
-        <google.storage.version>2.23.0</google.storage.version>
+        <google.storage.version>2.24.0</google.storage.version>
     </properties>
 
     <dependencies>
