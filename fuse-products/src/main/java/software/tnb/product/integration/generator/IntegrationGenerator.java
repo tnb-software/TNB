@@ -172,7 +172,9 @@ public final class IntegrationGenerator {
             new DependenciesToModelineCustomizer(),
             new InlineCustomizer(),
             new ComponentCustomizer(),
-            new CamelMainCustomizer()
+            new CamelMainCustomizer(),
+            // for camel-k expose the configured port using trait, so that app.getEndpoint() can be used
+            new TraitCustomizer("container", Map.of("port", integrationBuilder.getPort(), "servicePort", integrationBuilder.getPort()))
         );
 
         if (TestConfiguration.streamLogs()) {
