@@ -31,7 +31,11 @@ import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.openshift.api.model.RouteBuilder;
+import io.fabric8.openshift.api.model.RoutePort;
 
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
@@ -56,8 +60,45 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         }
         Maven.invoke(builder.build());
 
-        endpoint = new Endpoint(() -> OpenshiftClient.get().routes().withName(name).get() != null ? "http://" + OpenshiftClient.get().routes()
-            .withName(name).get().getSpec().getHost() : null);
+        // @formatter:off
+        if (OpenshiftClient.get().services().withName(name).get() == null) {
+            // create the service and route manually if it is not created by quarkus
+            OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+                .withNewMetadata()
+                    .withName(name)
+                    .addToLabels("app.kubernetes.io/name", name)
+                .endMetadata()
+                .withNewSpec()
+                    .addToSelector("app.kubernetes.io/name", name)
+                    .addNewPort()
+                        .withName("port")
+                        .withPort(integrationBuilder.getPort())
+                        .withProtocol("TCP")
+                    .endPort()
+                .endSpec()
+                .build()
+            );
+        }
+        if (OpenshiftClient.get().routes().withName(name).get() == null) {
+            OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+                .withNewMetadata()
+                    .withName(name)
+                    .addToLabels("app.kubernetes.io/name", name)
+                .endMetadata()
+                .withNewSpec()
+                    .withPort(new RoutePort(new IntOrString(integrationBuilder.getPort())))
+                    .withNewTo()
+                        .withKind("Service")
+                        .withName(name)
+                        .withWeight(100)
+                    .endTo()
+                .endSpec()
+                .build()
+            );
+        }
+        // @formatter:on
+
+        endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes().withName(name).get().getSpec().getHost());
 
         Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));
@@ -104,6 +145,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             ((OpenshiftLog) getLog()).save(started);
         }
         LOG.info("Undeploying integration resources");
+        OpenshiftClient.get().routes().withName(name).delete();
+        OpenshiftClient.get().services().withName(name).delete();
         Path openshiftResources = TestConfiguration.appLocation().resolve(name).resolve("target").resolve("kubernetes/openshift.yml");
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {

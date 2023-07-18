@@ -60,6 +60,7 @@ import io.fabric8.camelk.v1alpha1.KameletBinding;
 import io.fabric8.camelk.v1alpha1.KameletBindingList;
 import io.fabric8.knative.client.KnativeClient;
 import io.fabric8.knative.eventing.v1.Trigger;
+import io.fabric8.knative.serving.v1.Route;
 import io.fabric8.knative.serving.v1.Service;
 import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
@@ -117,8 +118,14 @@ public class CamelKApp extends App {
             createIntegrationResources((AbstractIntegrationBuilder<?>) integrationSource);
         }
 
-        endpoint = new Endpoint(() -> OpenshiftClient.get().adapt(KnativeClient.class).routes()
-            .withName(name).get().getStatus().getUrl());
+        endpoint = new Endpoint(() -> {
+            Route knativeRoute = OpenshiftClient.get().adapt(KnativeClient.class).routes().withName(name).get();
+            if (knativeRoute != null) {
+                return knativeRoute.getStatus().getUrl();
+            } else {
+                return "http://" + OpenshiftClient.get().routes().withName(name).get().getSpec().getHost();
+            }
+        });
 
         Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"));
