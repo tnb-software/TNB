@@ -9,6 +9,8 @@ import io.lettuce.core.RedisClient;
 
 public abstract class Redis extends Service<NoAccount, RedisClient, RedisValidation> implements WithDockerImage {
 
+    protected static final int PORT = 6379;
+
     public abstract String host();
 
     public abstract int port();
