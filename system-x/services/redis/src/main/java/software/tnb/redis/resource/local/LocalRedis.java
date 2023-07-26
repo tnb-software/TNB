@@ -15,7 +15,6 @@ import io.lettuce.core.RedisURI;
 public class LocalRedis extends Redis implements Deployable {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalRedis.class);
-    private static final int PORT = 6379;
     private RedisContainer redisContainer;
 
     @Override
