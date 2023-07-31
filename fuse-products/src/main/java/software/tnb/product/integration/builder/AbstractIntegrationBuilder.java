@@ -57,7 +57,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntegrationBuilder.class);
-    private static final Set<String> IGNORED_PACKAGES = Set.of("software.tnb", "org.junit", "io.fabric8");
+    private static final Set<String> DEFAULT_IGNORED_PACKAGES = Set.of("software.tnb", "org.junit", "io.fabric8");
     private static final String BASE_PACKAGE = TestConfiguration.appGroupId();
 
     private final List<Dependency> dependencies = new ArrayList<>();
@@ -100,14 +100,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     /**
      * Processes imports - right now any tnb related import has to be removed as the classes are not present in the generated application.
      */
-    private static void processImports(CompilationUnit cu) {
+    private static void processImports(CompilationUnit cu, final Set<String> ignoredPackages) {
         cu.accept(new ModifierVisitor<>() {
             @Override
             public Node visit(ImportDeclaration importDecl, Object arg) {
                 super.visit(importDecl, arg);
                 final String importClass = importDecl.getName().asString();
                 //Remove internal classes
-                if (IGNORED_PACKAGES.stream().anyMatch(importClass::startsWith)) {
+                if (ignoredPackages.stream().anyMatch(importClass::startsWith)) {
                     return null;
                 }
                 return importDecl;
@@ -116,6 +116,10 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     public SELF fromRouteBuilder(RouteBuilder routeBuilder) {
+        return fromRouteBuilder(routeBuilder, DEFAULT_IGNORED_PACKAGES);
+    }
+
+    public SELF fromRouteBuilder(RouteBuilder routeBuilder, Set<String> ignoredPackages) {
         Class<?> clazz = routeBuilder.getClass();
         //If class is nested we need to find the top-most parent
         while (clazz.getEnclosingClass() != null) {
@@ -146,7 +150,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
                 className = getClassName(routeBuilder.getClass());
             }
         }
-        processRouteBuilder(routeBuilder, className, cu);
+        processRouteBuilder(routeBuilder, className, cu, ignoredPackages);
         cu.setPackageDeclaration(BASE_PACKAGE);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
         this.routeBuilder = cu;
@@ -227,7 +231,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
                         Collectors.toList()))));
     }
 
-    private void processRouteBuilder(RouteBuilder routeBuilder, String className, CompilationUnit cu) {
+    private void processRouteBuilder(RouteBuilder routeBuilder, String className, CompilationUnit cu, Set<String> ignoredPackages) {
         cu.getClassByName(className).ifPresent(decl -> {
             //Remove all constructors with parameters
             decl.getConstructors().forEach(cdecl -> {
@@ -258,7 +262,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
             }
             //Rewrite the original MyRouteBuilder class from the archetypes
             decl.setName(ROUTE_BUILDER_NAME);
-            processImports(cu);
+            processImports(cu, ignoredPackages);
         });
     }
 
