@@ -13,6 +13,7 @@ import com.microsoft.graph.models.Message;
 import com.microsoft.graph.models.Recipient;
 import com.microsoft.graph.models.UserSendMailParameterSet;
 import com.microsoft.graph.requests.GraphServiceClient;
+import com.microsoft.graph.requests.MessageCollectionPage;
 
 import java.util.LinkedList;
 
@@ -55,6 +56,28 @@ public class GraphValidation implements Validation {
                 .post();
         } catch (ClientException e) {
             throw new RuntimeException("Failed to send email " + e);
+        }
+    }
+
+    public void deleteEmail(String subject, String content, String from) {
+        try {
+            String idToDelete;
+
+            MessageCollectionPage messagesPage = client.users(from).messages()
+                .buildRequest()
+                .top(1).get();
+
+            final Message message = messagesPage.getCurrentPage().get(0);
+            idToDelete = message.id;
+
+            if (message.sender.emailAddress.address.equals(from) && message.subject.equals(subject) && message.bodyPreview.equals(content)) {
+                LOG.debug(String.format("Deleting email from %s, with subject %s", from, subject));
+                client.users(from).messages(idToDelete)
+                    .buildRequest()
+                    .delete();
+            }
+        } catch (ClientException e) {
+            throw new RuntimeException("Failed to delete email " + e);
         }
     }
 }
