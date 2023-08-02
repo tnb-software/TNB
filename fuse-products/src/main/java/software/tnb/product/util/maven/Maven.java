@@ -25,6 +25,7 @@ import org.apache.maven.shared.invoker.InvocationRequest;
 import org.apache.maven.shared.invoker.InvocationResult;
 import org.apache.maven.shared.invoker.Invoker;
 import org.apache.maven.shared.invoker.MavenInvocationException;
+import org.codehaus.plexus.util.xml.Xpp3Dom;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +42,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
@@ -385,5 +387,33 @@ public class Maven {
         plugin.setExtensions(extensions);
 
         return plugin;
+    }
+
+    /**
+     * Converts the map to the hierarchy of Xpp3Dom objects.
+     *
+     * @param name element name
+     * @param map configuration
+     * @return Xpp3Dom object
+     */
+    public static Xpp3Dom mapToXpp3Dom(String name, Map<String, Object> map) {
+        Xpp3Dom xpp3Dom = new Xpp3Dom(name);
+
+        for (Map.Entry<String, Object> entry : map.entrySet()) {
+            String key = entry.getKey();
+            Object value = entry.getValue();
+
+            Xpp3Dom child = new Xpp3Dom(key);
+
+            if (value instanceof Map) {
+                child = mapToXpp3Dom(key, (Map<String, Object>) value);
+            } else {
+                child.setValue(String.valueOf(value));
+            }
+
+            xpp3Dom.addChild(child);
+        }
+
+        return xpp3Dom;
     }
 }
