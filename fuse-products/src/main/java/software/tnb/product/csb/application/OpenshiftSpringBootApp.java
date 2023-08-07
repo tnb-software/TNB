@@ -1,6 +1,5 @@
 package software.tnb.product.csb.application;
 
-import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategyFactory;
@@ -16,7 +15,7 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
@@ -67,7 +66,8 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isReady() {
         try {
-            final List<Pod> pods = OpenshiftClient.get().getLabeledPods(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), finalName));
+            final List<Pod> pods = OpenshiftClient.get().getPods().stream()
+                .filter(deploymentStrategy.podSelector()).collect(Collectors.toList());
             return !pods.isEmpty() && pods.stream()
                 .filter(pod -> !pod.isMarkedForDeletion())
                 .filter(pod -> !"Evicted".equals(pod.getStatus().getReason()))
