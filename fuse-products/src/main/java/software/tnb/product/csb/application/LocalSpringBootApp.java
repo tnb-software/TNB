@@ -34,16 +34,18 @@ public class LocalSpringBootApp extends SpringBootApp {
         String jarName;
 
         final Path projectPath;
+        final Path existingJarPath = getExistingJar(integrationBuilder);
         if (mavenGitApp != null) {
             args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
-            jarName = mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
-            projectPath = mavenGitApp.getProjectLocation();
+            jarName = existingJarPath != null ? existingJarPath.getFileName().toString()
+                    : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
+            projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : mavenGitApp.getProjectLocation();
         } else {
             args = integrationBuilder.getProperties() != null ? integrationBuilder.getProperties().entrySet().stream()
                 .map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList()) : Collections.emptyList();
-            jarName = name + "-1.0.0-SNAPSHOT.jar";
-            projectPath = TestConfiguration.appLocation().resolve(name);
+            jarName = existingJarPath != null ? existingJarPath.getFileName().toString() : name + "-1.0.0-SNAPSHOT.jar";
+            projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : TestConfiguration.appLocation().resolve(name);
         }
 
         Path integrationTarget = projectPath.resolve("target");
@@ -65,19 +67,21 @@ public class LocalSpringBootApp extends SpringBootApp {
 
     @Override
     public void start() {
-        Path logFile = getLogPath();
-        ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
+        if (shouldRun()) {
+            Path logFile = getLogPath();
+            ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
-        LOG.info("Starting integration {}", name);
-        try {
-            appProcess = processBuilder.start();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to start integration process: ", e);
+            LOG.info("Starting integration {}", name);
+            try {
+                appProcess = processBuilder.start();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to start integration process: ", e);
+            }
+            WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
+
+            log = new FileLog(logFile);
+            logStream = new FileLogStream(logFile, LogStream.marker(name));
         }
-        WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
-
-        log = new FileLog(logFile);
-        logStream = new FileLogStream(logFile, LogStream.marker(name));
     }
 
     @Override
@@ -96,12 +100,12 @@ public class LocalSpringBootApp extends SpringBootApp {
 
     @Override
     public boolean isReady() {
-        return appProcess.isAlive();
+        return appProcess != null && appProcess.isAlive();
     }
 
     @Override
     public boolean isFailed() {
-        return !appProcess.isAlive();
+        return appProcess != null && !appProcess.isAlive();
     }
 
     private List<String> getCommand() {

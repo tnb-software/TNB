@@ -49,6 +49,10 @@ public abstract class App {
         }
     }
 
+    protected boolean shouldRun() {
+        return true;
+    }
+
     public abstract void start();
 
     public abstract void stop();
@@ -78,8 +82,10 @@ public abstract class App {
     }
 
     public void waitUntilReady() {
-        WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
-        started = true;
+        if (shouldRun()) {
+            WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
+            started = true;
+        }
     }
 
     private boolean isCamelStarted() {

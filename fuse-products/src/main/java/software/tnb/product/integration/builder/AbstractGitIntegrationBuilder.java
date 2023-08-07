@@ -8,6 +8,8 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
     private String branch = "main";
 
     private boolean cleanBeforeBuild = true;
+    private boolean buildProject = true;
+    private boolean runApplication = true;
 
     public AbstractGitIntegrationBuilder(String integrationName) {
         super(integrationName);
@@ -38,6 +40,16 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
         return self();
     }
 
+    /**
+     * If the project is just checked out
+     * @param buildProject boolean, true if the project has been built, false otherwise, default true
+     * @return self instance
+     */
+    public SELF buildProject(boolean buildProject) {
+        this.buildProject = buildProject;
+        return self();
+    }
+
     public String getRepositoryUrl() {
         return repositoryUrl;
     }
@@ -52,5 +64,23 @@ public abstract class AbstractGitIntegrationBuilder<SELF extends AbstractGitInte
 
     public boolean cleanBeforeBuild() {
         return this.cleanBeforeBuild;
+    }
+
+    public boolean buildProject() {
+        return buildProject;
+    }
+
+    /**
+     * If the application should run after build
+     * @param runApplication
+     * @return self instance
+     */
+    public SELF runApplication(boolean runApplication) {
+        this.runApplication = runApplication;
+        return self();
+    }
+
+    public boolean runApplication() {
+        return runApplication;
     }
 }
