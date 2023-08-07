@@ -22,7 +22,7 @@ public class MavenGitRepository extends GitRepository {
     protected Path projectLocation;
     protected Optional<String> finalName;
 
-    public MavenGitRepository(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name, Path logFile) {
+    public MavenGitRepository(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name, Path logFile, boolean buildProject) {
         super(gitIntegrationBuilder);
 
         projectLocation = gitIntegrationBuilder.getSubDirectory().map(project -> getPath().resolve(project)).orElse(getPath());
@@ -40,10 +40,19 @@ public class MavenGitRepository extends GitRepository {
         finalName.ifPresent(fName -> {
             final File pom = projectLocation.resolve("pom.xml").toFile();
             final Model model = Maven.loadPom(pom);
-            model.getBuild().setFinalName(finalName.get());
-            Maven.writePom(pom, model);
+            if (model.getBuild() != null) {
+                model.getBuild().setFinalName(finalName.get());
+                Maven.writePom(pom, model);
+            }
         });
 
+        if (buildProject) {
+            buildProject(gitIntegrationBuilder, name, logFile, mavenBuildProperties);
+        }
+    }
+
+    private void buildProject(AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder, String name, Path logFile,
+        Map<String, String> mavenBuildProperties) {
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)
             .withGoals(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "", "package")
