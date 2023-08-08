@@ -30,7 +30,6 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
@@ -151,7 +150,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
             LOG.info("Deleting openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
-            OpenshiftClient.get().load(is).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+            OpenshiftClient.get().load(is).get().forEach(item -> OpenshiftClient.get().resource(item).delete());
         } catch (IOException e) {
             throw new RuntimeException("Unable to read openshift.yml resource: ", e);
         }
