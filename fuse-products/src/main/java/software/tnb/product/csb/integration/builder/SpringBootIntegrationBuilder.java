@@ -54,6 +54,6 @@ public final class SpringBootIntegrationBuilder extends AbstractMavenGitIntegrat
 
     public SpringBootIntegrationBuilder useExistingJar(Path existingJar) {
         this.existingJar = existingJar;
-        return buildProject(false); //avoid build if an existing file is used
+        return buildProject(existingJar == null); //avoid build if an existing file is used
     }
 }
