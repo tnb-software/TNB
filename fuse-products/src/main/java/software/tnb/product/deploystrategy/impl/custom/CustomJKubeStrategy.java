@@ -167,10 +167,11 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
                 .map(entry -> "    " + entry.getKey() + "=" + entry.getValue())
                 .collect(Collectors.joining(System.lineSeparator()));
         }
-        String jkubeFileContent = "data:" + System.lineSeparator()
-            + "  application.properties: |" + System.lineSeparator()
-            + properties;
-
+        String jkubeFileContent = "data:" + System.lineSeparator() + "  application.properties:";
+        if (StringUtils.isNotBlank(properties)) {
+            jkubeFileContent += " |" + System.lineSeparator()
+                + properties;
+        }
         software.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("configmap.yaml"), jkubeFileContent);
     }
 
