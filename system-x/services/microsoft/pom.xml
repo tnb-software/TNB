@@ -18,7 +18,7 @@
         <microsoft.graph.version>5.66.0</microsoft.graph.version>
         <microsoft.graph.core.version>2.0.16</microsoft.graph.core.version>
         <microsoft.graph.auth.version>0.3.0</microsoft.graph.auth.version>
-        <azure.identity.version>1.9.0</azure.identity.version>
+        <azure.identity.version>1.10.0</azure.identity.version>
     </properties>
 
     <dependencies>
