@@ -2,16 +2,10 @@ package software.tnb.ldap.account;
 
 import software.tnb.common.account.Account;
 
-public class LDAPAccount implements Account {
+public abstract class LDAPAccount implements Account {
+    public abstract String getUsername();
 
-    private String username = "cn=admin,dc=example,dc=org";
-    private String password = "admin";
+    public abstract String getPassword();
 
-    public String username() {
-        return username;
-    }
-
-    public String password() {
-        return password;
-    }
+    public abstract String getHost();
 }
