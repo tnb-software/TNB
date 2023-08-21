@@ -5,12 +5,12 @@
     <parent>
         <artifactId>system-x-jms</artifactId>
         <groupId>software.tnb</groupId>
-        <version>1.0-SNAPSHOT</version>
+        <version>0.0.13</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>system-x-ibm-mq</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.13</version>
     <name>TNB :: System-X :: Services :: JMS :: IBM-MQ</name>
 
     <properties>
