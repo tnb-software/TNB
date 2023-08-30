@@ -15,7 +15,7 @@
     <name>TNB :: System-X :: Services :: Microsoft</name>
 
     <properties>
-        <microsoft.graph.version>5.67.0</microsoft.graph.version>
+        <microsoft.graph.version>5.68.0</microsoft.graph.version>
         <microsoft.graph.core.version>2.0.16</microsoft.graph.core.version>
         <microsoft.graph.auth.version>0.3.0</microsoft.graph.auth.version>
         <azure.identity.version>1.10.0</azure.identity.version>
