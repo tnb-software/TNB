@@ -62,15 +62,25 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
             "apiVersion", "enterprise.splunk.com/" + CRD_API,
             "kind", "Standalone",
             "metadata", Map.of(
-                "name", "s1")
-        ));
+                "name", "s1"
+            ),
+            "spec", new HashMap<>(Map.of(
+                "varVolumeStorageConfig", Map.of(
+                    "ephemeralStorage", true
+                ),
+                "etcVolumeStorageConfig", Map.of(
+                    "ephemeralStorage", true
+                ))))
+        );
         if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
-            cr.put("spec", Map.of(
+            ((Map) cr.get("spec")).put(
                 "extraEnv", List.of(
                     Map.of(
                         "name", "SPLUNKD_SSL_ENABLE",
-                        "value", "false")
-                )));
+                        "value", "false"
+                    )
+                )
+            );
         }
         return cr;
     }
@@ -149,8 +159,6 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
                 .endSpec()
                 .build());
             // @formatter:on
-            WaitUtils.waitFor(() -> HTTPUtils.getInstance().get("https://" + apiRoute.getSpec().getHost()).isSuccessful(),
-                "Waiting until the Splunk API route is ready");
         } else if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
             // @formatter:off
             apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
@@ -163,13 +171,11 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable {
                 .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
                 .endSpec()
                 .build());
-            // @formatter:on
-            WaitUtils.waitFor(() -> HTTPUtils.getInstance().get("http://" + apiRoute.getSpec().getHost()).isSuccessful(),
-                "Waiting until the Splunk API route is ready");
         }
+        WaitUtils.waitFor(() -> HTTPUtils.getInstance().get(getConfiguration().getProtocol().toString() + "://"
+                + apiRoute.getSpec().getHost(), false).isSuccessful(), "Waiting until the Splunk API route is ready");
     }
 
-    // TODO(anyone): If you need this, then the related PV must be cleaned
     @Override
     public void restart() {
         OpenshiftDeployable.super.restart();

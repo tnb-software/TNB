@@ -490,21 +490,6 @@ spec:
     control-plane: controller-manager
     name: splunk-operator
 ---
-apiVersion: v1
-kind: PersistentVolumeClaim
-metadata:
-  labels:
-    name: splunk-operator
-  name: splunk-operator-app-download
-  namespace: DESIRED_NAMESPACE
-spec:
-  accessModes:
-  - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
-  volumeMode: Filesystem
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -617,5 +602,4 @@ spec:
           name: splunk-operator-config
         name: splunk-operator-config
       - name: app-staging
-        persistentVolumeClaim:
-          claimName: splunk-operator-app-download
+        emptyDir: { }
