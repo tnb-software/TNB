@@ -24,7 +24,6 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -129,10 +128,13 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     private String getJavaCommand() {
         final String defaultCmd = "java %s -Dquarkus.http.host=0.0.0.0 -Djava.util.logging.manager=org.jboss.logmanager.LogManager "
             + "-jar /deployments/quarkus-run.jar";
-        return String.join(",", String.format(defaultCmd, Optional.ofNullable(this.integrationBuilder.getProperties())
-                .orElse(new Properties()).entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue())
-                .collect(Collectors.joining(" ")))
-            .split(" "));
+        Properties properties = integrationBuilder.getProperties();
+        // getJavaCommand is not called in case of native and this property could cause problems when there is more than 1 native resource to include
+        // as it would split the java command
+        // see issue #614
+        properties.remove("quarkus.native.resources.includes");
+        return String.join(",", String.format(defaultCmd, properties.entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue())
+            .collect(Collectors.joining(" "))).split(" "));
     }
 
     @Override
