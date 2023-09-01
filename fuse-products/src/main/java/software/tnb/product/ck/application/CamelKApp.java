@@ -17,6 +17,7 @@ import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.ck.utils.OwnerReferenceSetter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.integration.builder.IntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
@@ -84,7 +85,7 @@ public class CamelKApp extends App {
     private Object integrationSource;
     private MavenBuildLogHandler buildLogHandler;
 
-    private CamelKApp(String name) {
+    public CamelKApp(String name) {
         super(name);
 
         if (name.length() > 63) {
@@ -114,7 +115,7 @@ public class CamelKApp extends App {
         if (integrationSource instanceof KameletBinding) {
             LOG.info("Creating KameletBinding {}", name);
             kameletBindingClient.createOrReplace((KameletBinding) integrationSource);
-        } else {
+        } else if (integrationSource instanceof AbstractIntegrationBuilder) {
             createIntegrationResources((AbstractIntegrationBuilder<?>) integrationSource);
         }
 

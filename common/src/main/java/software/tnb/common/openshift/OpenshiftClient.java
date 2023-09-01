@@ -10,6 +10,9 @@ import software.tnb.common.utils.WaitUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -116,7 +119,7 @@ public class OpenshiftClient extends OpenShift {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
             return OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
         } else {
-            return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(), 
+            return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(),
                 OpenshiftConfiguration.openshiftPassword(), OpenshiftConfiguration.openshiftUrl());
         }
     }
@@ -152,13 +155,26 @@ public class OpenshiftClient extends OpenShift {
      * @return result of the function
      */
     public synchronized <T> T inNamespace(String ns, Function<OpenshiftClient, T> function) {
-        String currentNs = get().config.getNamespace();
-        get().config.setNamespace(ns);
+        OpenshiftClientWrapper wr = clientWrapper;
+        if (!OpenshiftClient.get().getNamespace().equals(ns)) {
+            // create new client for this namespaced operation
+            try {
+                // create deep copy of the client
+                ObjectMapper objectMapper = new ObjectMapper();
+                OpenShiftConfig cf = objectMapper
+                    .readValue(objectMapper.writeValueAsString(get().config), OpenShiftConfig.class);
+                cf.setNamespace(ns);
+                clientWrapper = new OpenshiftClientWrapper(() -> new OpenshiftClient(cf));
+            } catch (JsonProcessingException e) {
+                throw new RuntimeException(String.format("Can't create OpenShift client in namespace %s", ns), e);
+            }
+        }
         T result;
         try {
-           result = function.apply(get());
+            LOG.debug("Executing function in {} namespace", OpenshiftClient.get().getNamespace());
+            result = function.apply(get());
         } finally {
-            get().config.setNamespace(currentNs);
+            clientWrapper = wr;
         }
         return result;
     }
