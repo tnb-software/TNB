@@ -48,6 +48,7 @@
         <module>splunk</module>
         <module>microsoft</module>
         <module>apicurio-registry</module>
+        <module>snmp</module>
         <module>all</module>
     </modules>
 
