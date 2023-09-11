@@ -56,8 +56,8 @@ public class LocalSpringBootApp extends SpringBootApp {
            command.add("-javaagent:" + projectPath.resolve("src/main/resources/").resolve(integrationBuilder.getJvmAgentPath()).toAbsolutePath());
         }
 
-        command.addAll(args);
         command.add("-jar");
+        command.addAll(args);
         fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
         command.add(fileName);
