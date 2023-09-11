@@ -2,6 +2,7 @@ package software.tnb.ldap.validation;
 
 import software.tnb.common.validation.Validation;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -11,6 +12,7 @@ import com.unboundid.ldap.sdk.SearchRequest;
 import com.unboundid.ldap.sdk.SearchResult;
 import com.unboundid.ldap.sdk.SearchResultEntry;
 import com.unboundid.ldap.sdk.SearchScope;
+import com.unboundid.ldap.sdk.SimpleBindRequest;
 
 import java.util.List;
 
@@ -25,7 +27,9 @@ public class LDAPValidation implements Validation {
 
     public List<SearchResultEntry> getEntries(String filter) {
         try {
-            SearchRequest searchRequest = new SearchRequest("dc=example,dc=org", SearchScope.SUB, filter);
+            final String baseDN = StringUtils.substringAfter(((SimpleBindRequest) ldapConnectionPool.getConnection().getLastBindRequest())
+                .getBindDN(), ",");
+            SearchRequest searchRequest = new SearchRequest(baseDN, SearchScope.SUB, filter);
             SearchResult searchResult = ldapConnectionPool.search(searchRequest);
             return searchResult.getSearchEntries();
         } catch (LDAPException e) {

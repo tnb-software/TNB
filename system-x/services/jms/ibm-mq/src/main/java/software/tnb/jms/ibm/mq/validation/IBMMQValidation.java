@@ -13,11 +13,11 @@ import com.ibm.mq.headers.MQDataException;
 import com.ibm.mq.headers.pcf.PCFMessage;
 import com.ibm.mq.headers.pcf.PCFMessageAgent;
 
-import javax.jms.Connection;
-
 import java.util.HashSet;
 import java.util.Hashtable;
 import java.util.Set;
+
+import jakarta.jms.Connection;
 
 public class IBMMQValidation implements Validation {
     private final IBMMQAccount account;

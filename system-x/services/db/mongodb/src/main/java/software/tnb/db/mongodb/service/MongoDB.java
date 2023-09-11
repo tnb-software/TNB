@@ -43,7 +43,7 @@ public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, Mongo
     }
 
     public String defaultImage() {
-        return "quay.io/fuse_qe/mongodb:4.4.5";
+        return "quay.io/fuse_qe/mongodb:4.4.15";
     }
 
     public abstract String hostname();

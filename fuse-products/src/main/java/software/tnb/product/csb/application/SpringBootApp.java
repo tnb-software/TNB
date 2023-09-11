@@ -36,13 +36,23 @@ public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
     protected MavenGitRepository mavenGitApp = null;
 
+    private boolean shouldRun = true;
+
+    @Override
+    public boolean shouldRun() {
+        return shouldRun;
+    }
+
     public SpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
 
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
             && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
-            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder, getName(), getLogPath(Phase.BUILD));
-        } else {
+            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
+                , getName(), getLogPath(Phase.BUILD)
+                , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
+            shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
+        } else if (getExistingJar(integrationBuilder) == null) {
             LOG.info("Creating Camel Spring Boot application project for integration {}", name);
 
             Map<String, String> properties = new HashMap<>(13);
@@ -93,6 +103,11 @@ public abstract class SpringBootApp extends App {
             LOG.info("Building {} application project", name);
             Maven.invoke(requestBuilder.build());
         }
+    }
+
+    protected Path getExistingJar(AbstractIntegrationBuilder<?> integrationBuilder) {
+        return integrationBuilder instanceof SpringBootIntegrationBuilder
+            ? ((SpringBootIntegrationBuilder) integrationBuilder).getExistingJar() : null;
     }
 
     private void customizeDependencies(List<Dependency> mavenDependencies) {

@@ -1,7 +1,7 @@
 package software.tnb.jms.listener;
 
-import javax.jms.Message;
-import javax.jms.MessageListener;
+import jakarta.jms.Message;
+import jakarta.jms.MessageListener;
 
 public class JMSMessageListener extends software.tnb.jms.listener.MessageListener<Message> implements MessageListener {
 

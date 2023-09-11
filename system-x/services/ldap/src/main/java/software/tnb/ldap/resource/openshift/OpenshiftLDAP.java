@@ -8,7 +8,7 @@ import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
-import software.tnb.ldap.service.LDAP;
+import software.tnb.ldap.service.LDAPLocalStack;
 
 import com.google.auto.service.AutoService;
 import com.unboundid.ldap.sdk.LDAPConnection;
@@ -27,8 +27,8 @@ import io.fabric8.kubernetes.api.model.TCPSocketActionBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
-@AutoService(LDAP.class)
-public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, WithName {
+@AutoService(LDAPLocalStack.class)
+public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDeployable, WithName {
 
     private PortForward portForward;
     private int localPort;
@@ -50,7 +50,7 @@ public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, 
         final LDAPConnection ldapConnection = new LDAPConnection();
         try {
             ldapConnection.connect("localhost", localPort, 20000);
-            ldapConnection.bind(account().username(), account().password());
+            ldapConnection.bind(account().getUsername(), account().getPassword());
             client = new LDAPConnectionPool(ldapConnection, 1);
         } catch (LDAPException e) {
             throw new RuntimeException("Error when connecting to LDAP server: " + e.getMessage());
@@ -61,7 +61,7 @@ public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, 
     public void closeResources() {
 
         if (client != null) {
-            client.close();
+            ((LDAPConnectionPool) client).close();
         }
 
         if (portForward != null && portForward.isAlive()) {

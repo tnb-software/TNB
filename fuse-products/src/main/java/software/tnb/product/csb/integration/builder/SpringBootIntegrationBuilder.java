@@ -9,6 +9,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -20,6 +21,7 @@ import java.util.List;
  */
 public final class SpringBootIntegrationBuilder extends AbstractMavenGitIntegrationBuilder<SpringBootIntegrationBuilder> {
     private final List<Resource> xmlCamelContext = new ArrayList<>();
+    private Path existingJar;
 
     public SpringBootIntegrationBuilder(String integrationName) {
         super(integrationName);
@@ -44,5 +46,14 @@ public final class SpringBootIntegrationBuilder extends AbstractMavenGitIntegrat
 
     public List<Resource> getXmlCamelContext() {
         return xmlCamelContext;
+    }
+
+    public Path getExistingJar() {
+        return existingJar;
+    }
+
+    public SpringBootIntegrationBuilder useExistingJar(Path existingJar) {
+        this.existingJar = existingJar;
+        return buildProject(existingJar == null); //avoid build if an existing file is used
     }
 }

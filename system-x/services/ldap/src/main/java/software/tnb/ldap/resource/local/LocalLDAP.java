@@ -1,7 +1,7 @@
 package software.tnb.ldap.resource.local;
 
 import software.tnb.common.deployment.Deployable;
-import software.tnb.ldap.service.LDAP;
+import software.tnb.ldap.service.LDAPLocalStack;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,8 +11,8 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 
-@AutoService(LDAP.class)
-public class LocalLDAP extends LDAP implements Deployable {
+@AutoService(LDAPLocalStack.class)
+public class LocalLDAP extends LDAPLocalStack implements Deployable {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalLDAP.class);
     private LDAPContainer ldapContainer;
@@ -43,7 +43,7 @@ public class LocalLDAP extends LDAP implements Deployable {
         final LDAPConnection ldapConnection = new LDAPConnection();
         try {
             ldapConnection.connect(ldapContainer.getHost(), ldapContainer.getMappedPort(PORT), 20000);
-            ldapConnection.bind(account().username(), account().password());
+            ldapConnection.bind(account().getUsername(), account().getPassword());
             client = new LDAPConnectionPool(ldapConnection, 1);
         } catch (LDAPException e) {
             LOG.error("Error when connecting to LDAP server: " + e.getMessage());
