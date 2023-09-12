@@ -134,6 +134,7 @@ public class Maven {
             .setBatchMode(true)
             .setGoals(goals)
             .setProperties(properties)
+            .setNoTransferProgress(true)
             .setOutputHandler(buildRequest.getOutputHandler())
             .setErrorHandler(buildRequest.getOutputHandler());
 
