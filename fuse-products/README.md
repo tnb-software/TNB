@@ -54,7 +54,7 @@ inside the product's package.
 The integrations are created differently for each product:
 
 - `camel on springboot`:
-    - an application skeleton is generated from the [archetype](https://github.com/tnb-software/camel3-archetype-spring-boot)
+    - an application skeleton is generated from the [archetype](https://github.com/apache/camel-spring-boot/tree/main/archetypes/camel-archetype-spring-boot)
     - the `integration code` is dumped as a `java file` in the app skeleton
 - `camel quarkus`:
     - an application skeleton is generated from the `io.quarkus:quarkus-maven-plugin:<version>:create` maven plugin

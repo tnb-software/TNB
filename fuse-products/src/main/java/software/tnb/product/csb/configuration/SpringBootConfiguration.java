@@ -34,7 +34,7 @@ public class SpringBootConfiguration extends CamelConfiguration {
     }
 
     public static String camelSpringBootVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_VERSION, "3.14.0");
+        return getProperty(CAMEL_SPRINGBOOT_VERSION, "4.0.0");
     }
 
     public static String getCamelSpringbootExamplesRepo() {
@@ -62,15 +62,15 @@ public class SpringBootConfiguration extends CamelConfiguration {
     }
 
     public static String camelSpringBootArchetypeGroupId() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_GROUP_ID, "software.tnb");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_GROUP_ID, "org.apache.camel.archetypes");
     }
 
     public static String camelSpringBootArchetypeArtifactId() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_ARTIFACT_ID, "camel3-archetype-spring-boot");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_ARTIFACT_ID, "camel-archetype-spring-boot");
     }
 
     public static String camelSpringBootArchetypeVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, "0.1.9");
+        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, camelSpringBootVersion());
     }
 
     public static String openshiftMavenPluginGroupId() {
@@ -79,7 +79,7 @@ public class SpringBootConfiguration extends CamelConfiguration {
 
     public static String openshiftMavenPluginVersion() {
         return getProperty(OPENSHIFT_MAVEN_PLUGIN_VERSION, () -> StringUtils.removeStart(VersionUtils.getInstance()
-            .getLatestGitHubReleaseTag("eclipse/jkube", "1.9.1"), "v"));
+            .getLatestGitHubReleaseTag("eclipse/jkube", "1.13.1"), "v"));
     }
 
     public static String mavenCompilerPluginVersion() {
