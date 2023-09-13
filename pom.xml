@@ -82,8 +82,8 @@
         <kubernetes.client.version>5.12.2</kubernetes.client.version>
         <javaparser.version>3.25.0</javaparser.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>17</maven.compiler.source>
+        <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>1.19.0</testcontainers.version>
         <xtf.version>0.30</xtf.version>
