@@ -108,7 +108,7 @@ public class LocalDependencyCustomizer extends CamelKCustomizer {
             .withProperties(Map.of(
                 "skipTests", "true",
                 "quarkus.version", QuarkusConfiguration.quarkusVersion(),
-                "camel.quarkus.version", QuarkusConfiguration.camelQuarkusVersion()
+                "camel-quarkus.version", QuarkusConfiguration.camelQuarkusVersion()
             ))
             .withLogMarker(LogStream.marker(folder.toFile().getName(), Phase.BUILD))
             .build());
