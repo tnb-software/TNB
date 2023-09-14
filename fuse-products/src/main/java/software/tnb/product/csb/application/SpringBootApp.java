@@ -1,5 +1,6 @@
 package software.tnb.product.csb.application;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.application.App;
@@ -15,6 +16,7 @@ import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 
+import org.apache.commons.io.FileUtils;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import org.slf4j.Logger;
@@ -63,16 +65,7 @@ public abstract class SpringBootApp extends App {
                 "groupId", TestConfiguration.appGroupId(),
                 "artifactId", name,
                 "version", "1.0.0-SNAPSHOT",
-                "package", TestConfiguration.appGroupId(),
-                "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-                "default-spring-boot-version", SpringBootConfiguration.springBootVersion(),
-                "default-camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion()));
-            if (SpringBootConfiguration.camelSpringBootVersion().contains("redhat")) {
-                properties.put("dependencies-resolution", "redhat-platform");
-            }
-            if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 17) {
-                properties.put("java-version", "17");
-            }
+                "package", TestConfiguration.appGroupId()));
             properties.put("archetypeCatalog", "internal");
 
             Maven.invoke(new BuildRequest.Builder()
@@ -83,16 +76,22 @@ public abstract class SpringBootApp extends App {
                 .withLogMarker(LogStream.marker(name, Phase.GENERATE))
                 .build());
 
-            IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
+            final Path basePath = TestConfiguration.appLocation().resolve(name);
 
-            customizeMain(integrationBuilder, TestConfiguration.appLocation().resolve(name));
+            removeExistingTests(basePath);
+
+            keepWebLayerOnlyForOcp(OpenshiftConfiguration.isOpenshift(), basePath);
+
+            IntegrationGenerator.toFile(integrationBuilder, basePath);
+
+            customizeMain(integrationBuilder, basePath);
 
             customizeDependencies(integrationBuilder.getDependencies());
 
             customizePlugins(integrationBuilder.getPlugins());
 
             BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
-                .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
+                .withBaseDirectory(basePath)
                 .withGoals("clean", "package")
                 .withProperties(Map.of(
                     "skipTests", "true"
@@ -103,6 +102,41 @@ public abstract class SpringBootApp extends App {
             LOG.info("Building {} application project", name);
             Maven.invoke(requestBuilder.build());
         }
+    }
+
+    private void keepWebLayerOnlyForOcp(boolean isOpenShift, Path location) {
+        final List<String> artifactsToRemove = new ArrayList<>(List.of("camel-stream-starter"));
+
+        if (!isOpenShift) {
+            artifactsToRemove.addAll(List.of("spring-boot-starter-web", "spring-boot-starter-undertow"
+                , "spring-boot-starter-actuator"));
+        }
+        File pom = location.resolve("pom.xml").toFile();
+        Model model = Maven.loadPom(pom);
+
+        artifactsToRemove.stream().forEach(artifact -> {
+            model.getDependencies().stream()
+                .filter(dependency -> artifact.equals(dependency.getArtifactId()))
+                .findFirst().ifPresent(dependency -> model.removeDependency(dependency));
+        });
+
+        Maven.writePom(pom, model);
+
+    }
+
+    private void removeExistingTests(final Path location) {
+        FileUtils.deleteQuietly(location.resolve(Path.of("src", "test")).toFile());
+        final String[] packages = TestConfiguration.appGroupId().split("\\.");
+        Path basePackagePath = location.resolve(Path.of("src", "main", "java"));
+        for (String aPackage : packages) {
+            basePackagePath = basePackagePath.resolve(aPackage);
+        }
+        final Path finalBasePackagePath = basePackagePath;
+        List.of("MySpringBean.java", "MySpringBootRouter.java")
+            .stream()
+            .map(f -> finalBasePackagePath.resolve(f).toFile())
+            .filter(File::exists)
+            .forEach(File::delete);
     }
 
     protected Path getExistingJar(AbstractIntegrationBuilder<?> integrationBuilder) {

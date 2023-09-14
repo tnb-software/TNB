@@ -55,16 +55,7 @@ public class SpringBootAppTest extends LocalAppTestParent {
             "groupId", TestConfiguration.appGroupId(),
             "artifactId", name(),
             "version", "1.0.0-SNAPSHOT",
-            "package", TestConfiguration.appGroupId(),
-            "maven-compiler-plugin-version", SpringBootConfiguration.mavenCompilerPluginVersion(),
-            "default-spring-boot-version", SpringBootConfiguration.springBootVersion(),
-            "default-camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion()));
-        if (SpringBootConfiguration.camelSpringBootVersion().contains("redhat")) {
-            properties.put("dependencies-resolution", "redhat-platform");
-        }
-        if (Integer.parseInt(System.getProperty("java.version").split("\\.")[0]) >= 17) {
-            properties.put("java-version", "17");
-        }
+            "package", TestConfiguration.appGroupId()));
         properties.put("archetypeCatalog", "internal");
 
         SoftAssertions sa = new SoftAssertions();
