@@ -52,4 +52,9 @@ public class LocalMySQL extends MySQL implements Deployable {
     public String name() {
         return "MySQL";
     }
+
+    @Override
+    public void restart(Runnable onContainerStopped) {
+        localDb.restart(onContainerStopped);
+    }
 }

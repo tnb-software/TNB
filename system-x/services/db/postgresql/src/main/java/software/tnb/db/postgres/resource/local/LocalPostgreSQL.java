@@ -47,4 +47,9 @@ public class LocalPostgreSQL extends PostgreSQL implements Deployable {
     public String name() {
         return "PostgreSQL";
     }
+
+    @Override
+    public void restart(Runnable onContainerStopped) {
+        localDb.restart(onContainerStopped);
+    }
 }

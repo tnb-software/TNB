@@ -47,4 +47,9 @@ public class LocalMariaDB extends MariaDB implements Deployable {
     public String name() {
         return "MariaDB";
     }
+
+    @Override
+    public void restart(Runnable onContainerStopped) {
+        localDb.restart(onContainerStopped);
+    }
 }

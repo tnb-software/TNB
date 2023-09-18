@@ -7,13 +7,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.wait.strategy.WaitStrategy;
 
+import java.util.List;
+
 public class LocalDB implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalDB.class);
     private final SQL sqlService;
     private final DBContainer container;
+    private final int port;
 
     public LocalDB(SQL sqlService, int port, WaitStrategy waitStrategy) {
         this.sqlService = sqlService;
+        this.port = port;
         this.container = new DBContainer(sqlService, port, waitStrategy);
     }
 
@@ -27,6 +31,21 @@ public class LocalDB implements Deployable {
     @Override
     public void undeploy() {
         container.stop();
+    }
+
+    public void restart(Runnable onContainerStopped) {
+        container.getDockerClient().commitCmd(container.getContainerId())
+            .withRepository("tempimg")
+            .withTag("localdb").exec();
+        int mappedPort = getPort();
+
+        container.stop();
+
+        onContainerStopped.run();
+
+        container.setDockerImageName("tempimg:localdb");
+        container.setPortBindings(List.of(mappedPort + ":" + port));
+        container.start();
     }
 
     @Override

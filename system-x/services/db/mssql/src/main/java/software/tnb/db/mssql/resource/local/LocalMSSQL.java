@@ -47,4 +47,9 @@ public class LocalMSSQL extends MSSQL implements Deployable {
     public String name() {
         return "MSSQL";
     }
+
+    @Override
+    public void restart(Runnable onContainerStopped) {
+        localDb.restart(onContainerStopped);
+    }
 }
