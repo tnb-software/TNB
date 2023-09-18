@@ -98,7 +98,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
         endpoint = new Endpoint(() -> "http://" + OpenshiftClient.get().routes().withName(name).get().getSpec().getHost());
 
-        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
+        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels() != null && p.getMetadata().getLabels().containsKey("app.kubernetes.io/name")
             && name.equals(p.getMetadata().getLabels().get("app.kubernetes.io/name"));
         log = new OpenshiftLog(podSelector, getLogPath());
         logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));

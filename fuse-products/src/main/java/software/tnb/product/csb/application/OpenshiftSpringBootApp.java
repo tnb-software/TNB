@@ -15,7 +15,6 @@ import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.internal.readiness.Readiness;
@@ -30,8 +29,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
         deploymentStrategy = OpenshiftDeployStrategyFactory.getDeployStrategy(integrationBuilder);
 
         Path baseDirectory;
-        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
-            AbstractMavenGitIntegrationBuilder<?> mavenGitIntegrationBuilder = (AbstractMavenGitIntegrationBuilder<?>) integrationBuilder;
+        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder<?> mavenGitIntegrationBuilder) {
             baseDirectory = mavenGitApp != null ? mavenGitApp.getProjectLocation() : TestConfiguration.appLocation().resolve(name);
             finalName = mavenGitIntegrationBuilder.getFinalName().orElse(getName());
         } else {
@@ -66,8 +64,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     @Override
     public boolean isReady() {
         try {
-            final List<Pod> pods = OpenshiftClient.get().getPods().stream()
-                .filter(deploymentStrategy.podSelector()).collect(Collectors.toList());
+            final List<Pod> pods = OpenshiftClient.get().getPods().stream().filter(deploymentStrategy.podSelector()).toList();
             return !pods.isEmpty() && pods.stream()
                 .filter(pod -> !pod.isMarkedForDeletion())
                 .filter(pod -> !"Evicted".equals(pod.getStatus().getReason()))
