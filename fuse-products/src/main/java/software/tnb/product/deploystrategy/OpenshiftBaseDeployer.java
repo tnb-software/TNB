@@ -58,7 +58,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
     @Override
     public Predicate<Pod> podSelector() {
         final String openshiftDeploymentLabel = OpenshiftConfiguration.openshiftDeploymentLabel();
-        return p -> p.getMetadata().getLabels().containsKey(openshiftDeploymentLabel)
+        return p -> p.getMetadata().getLabels() != null && p.getMetadata().getLabels().containsKey(openshiftDeploymentLabel)
             && name.equals(p.getMetadata().getLabels().get(openshiftDeploymentLabel));
     }
 

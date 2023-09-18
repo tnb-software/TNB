@@ -17,7 +17,6 @@ import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.ck.utils.OwnerReferenceSetter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-import software.tnb.product.integration.builder.IntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
@@ -128,7 +127,8 @@ public class CamelKApp extends App {
             }
         });
 
-        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
+        Predicate<Pod> podSelector = p -> p.getMetadata().getLabels() != null
+            && p.getMetadata().getLabels().containsKey("camel.apache.org/integration")
             && name.equals(p.getMetadata().getLabels().get("camel.apache.org/integration"));
         log = new OpenshiftLog(podSelector, getLogPath());
 
