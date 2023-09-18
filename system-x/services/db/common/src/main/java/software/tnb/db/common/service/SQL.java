@@ -65,4 +65,8 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
     public String externalHostname() {
         return "localhost";
     }
+
+    public void restart(Runnable onContainerStopped) {
+        throw new IllegalArgumentException("Not implemented");
+    }
 }
