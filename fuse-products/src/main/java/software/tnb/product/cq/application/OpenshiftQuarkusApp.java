@@ -117,6 +117,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         if (!QuarkusConfiguration.isQuarkusNative()) {
             properties.put("quarkus.openshift.command", getJavaCommand());
         }
+        properties.putAll(QuarkusConfiguration.fromSystemProperties());
         return properties;
     }
 
@@ -181,7 +182,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     private boolean integrationPodFailed() {
         final List<Pod> pods = OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name);
-        if (pods.size() == 0) {
+        if (pods.isEmpty()) {
             return false;
         } else {
             return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));

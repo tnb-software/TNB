@@ -17,6 +17,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -31,17 +32,21 @@ public abstract class QuarkusApp extends App {
         String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
             QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
 
+        Map<String, String> properties = new HashMap<>(Map.of(
+            "projectGroupId", TestConfiguration.appGroupId(),
+            "projectArtifactId", name,
+            "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
+            "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
+            "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
+            "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
+        ));
+
+        properties.putAll(QuarkusConfiguration.fromSystemProperties());
+
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
             .withGoals(quarkusMavenPluginCreate)
-            .withProperties(Map.of(
-                "projectGroupId", TestConfiguration.appGroupId(),
-                "projectArtifactId", name,
-                "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
-                "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
-                "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
-                "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
-            ))
+            .withProperties(properties)
             .withLogFile(getLogPath(Phase.GENERATE))
             .withLogMarker(LogStream.marker(name, Phase.GENERATE))
             .build()
@@ -52,13 +57,16 @@ public abstract class QuarkusApp extends App {
         customizeProject(integrationBuilder.getDependencies());
         customizePlugins(integrationBuilder.getPlugins());
 
+        properties = new HashMap<>(Map.of(
+            "skipTests", "true",
+            "quarkus.native.container-build", "true"
+        ));
+        properties.putAll(QuarkusConfiguration.fromSystemProperties());
+
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(name))
             .withGoals("clean", "package")
-            .withProperties(Map.of(
-                "skipTests", "true",
-                "quarkus.native.container-build", "true"
-            ))
+            .withProperties(properties)
             .withLogFile(getLogPath(Phase.BUILD))
             .withLogMarker(LogStream.marker(name, Phase.BUILD));
         if (QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration.isOpenshift()) {
