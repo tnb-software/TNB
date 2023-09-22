@@ -25,10 +25,6 @@ public class ServiceBusValidation implements Validation {
         this.adminClient = adminClient;
     }
 
-    public ServiceBusAccount getAzureServiceBusAccount() {
-        return serviceBusAccount;
-    }
-
     public void createQueue(String queue) {
         adminClient.createQueue(queue);
         WaitUtils.waitFor(() -> adminClient.getQueueExists(queue), 10
@@ -42,13 +38,13 @@ public class ServiceBusValidation implements Validation {
     }
 
     public void sendMessage(String queue, String message) {
-        ServiceBusSenderClient client = new ServiceBusClientBuilder()
+        try (ServiceBusSenderClient client = new ServiceBusClientBuilder()
             .connectionString(serviceBusAccount.connectionString())
             .sender()
             .queueName(queue)
-            .buildClient();
-
-        client.sendMessage(new ServiceBusMessage(message));
+            .buildClient()) {
+            client.sendMessage(new ServiceBusMessage(message));
+        }
     }
 
     public List<String> receiveMessages(String queue) {

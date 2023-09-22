@@ -14,10 +14,6 @@ public class MessageProcessor implements Consumer<ServiceBusReceivedMessageConte
         this.messages = new ConcurrentLinkedQueue<>();
     }
 
-    public void reset() {
-        messages.clear();
-    }
-
     @Override
     public void accept(ServiceBusReceivedMessageContext context) {
         messages.add(context.getMessage());
