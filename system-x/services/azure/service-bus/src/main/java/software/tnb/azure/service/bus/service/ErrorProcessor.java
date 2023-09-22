@@ -1,5 +1,7 @@
 package software.tnb.azure.service.bus.service;
 
+import software.tnb.common.utils.WaitUtils;
+
 import com.azure.messaging.servicebus.ServiceBusErrorContext;
 import com.azure.messaging.servicebus.ServiceBusException;
 import com.azure.messaging.servicebus.ServiceBusFailureReason;
@@ -7,7 +9,6 @@ import com.azure.messaging.servicebus.ServiceBusFailureReason;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 public class ErrorProcessor implements Consumer<ServiceBusErrorContext> {
@@ -24,12 +25,11 @@ public class ErrorProcessor implements Consumer<ServiceBusErrorContext> {
         errors.add(String.format("Error when receiving messages from namespace: '%s'. Entity: '%s'%n",
             context.getFullyQualifiedNamespace(), context.getEntityPath()));
 
-        if (!(context.getException() instanceof ServiceBusException)) {
+        if (!(context.getException() instanceof ServiceBusException exception)) {
             errors.add(String.format("Non-ServiceBusException occurred: %s%n", context.getException()));
             return;
         }
 
-        ServiceBusException exception = (ServiceBusException) context.getException();
         ServiceBusFailureReason reason = exception.getReason();
 
         if (reason == ServiceBusFailureReason.MESSAGING_ENTITY_DISABLED
@@ -41,22 +41,13 @@ public class ErrorProcessor implements Consumer<ServiceBusErrorContext> {
         } else if (reason == ServiceBusFailureReason.MESSAGE_LOCK_LOST) {
             errors.add(String.format("Message lock lost for message: %s%n", context.getException()));
         } else if (reason == ServiceBusFailureReason.SERVICE_BUSY) {
-            try {
-                TimeUnit.SECONDS.sleep(1L);
-            } catch (InterruptedException e) {
-                throw new RuntimeException("Unable to sleep for period of time", e);
-            }
+            WaitUtils.sleep(1000L);
         } else {
-            errors.add(String.format("Error source %s, reason %s, message: %s%n", context.getErrorSource(),
-                reason, context.getException()));
+            errors.add(String.format("Error source %s, reason %s, message: %s%n", context.getErrorSource(), reason, context.getException()));
         }
     }
 
     public List<String> getErrors() {
         return errors;
-    }
-
-    public void reset() {
-        errors.clear();
     }
 }
