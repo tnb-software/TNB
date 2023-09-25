@@ -112,6 +112,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             "quarkus.kubernetes-client.trust-certs", "true",
             "quarkus.kubernetes.deploy", "true",
             "quarkus.native.container-build", "true",
+            "quarkus.openshift.build-strategy", "docker",
             "skipTests", "true"
         ));
         if (!QuarkusConfiguration.isQuarkusNative()) {
