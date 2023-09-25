@@ -49,6 +49,7 @@
         <module>microsoft</module>
         <module>apicurio-registry</module>
         <module>snmp</module>
+        <module>tekton</module>
         <module>all</module>
     </modules>
 
