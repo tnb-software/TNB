@@ -8,6 +8,8 @@ import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 import software.tnb.product.rp.Attachments;
 
+import org.apache.camel.v1.Integration;
+import org.apache.camel.v1.IntegrationKit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -16,7 +18,6 @@ import java.util.Optional;
 import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
-import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.kubernetes.api.model.Pod;
 
 /**
@@ -36,19 +37,19 @@ public class IntegrationKitBuildLogHandler implements Runnable {
 
     @Override
     public void run() {
-        CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
         String kitName = null;
         // Wait until the kit name is generated
         while (kitName == null) {
             WaitUtils.sleep(1000L);
             try {
-                kitName = client.v1().integrations().withName(integrationName).get().getStatus().getIntegrationKit().getName();
+                kitName = OpenshiftClient.get().resources(Integration.class).withName(integrationName).get().getStatus().getIntegrationKit()
+                    .getName();
             } catch (Exception ignored) {
             }
         }
 
         try {
-            if ("Ready".equals(client.v1().integrationKits().withName(kitName).get().getStatus().getPhase())) {
+            if ("Ready".equals(OpenshiftClient.get().resources(IntegrationKit.class).withName(kitName).get().getStatus().getPhase())) {
                 // Kit already exists
                 return;
             }

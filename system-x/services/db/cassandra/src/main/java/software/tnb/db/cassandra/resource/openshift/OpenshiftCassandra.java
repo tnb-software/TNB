@@ -157,7 +157,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         if (pod != null && pod.isReady()) {
             return OpenshiftClient.get().getLogs(pod.get()).contains("Startup complete");
         }

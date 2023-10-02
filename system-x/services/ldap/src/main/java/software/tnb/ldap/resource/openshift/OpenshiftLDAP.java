@@ -61,7 +61,7 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
     public void closeResources() {
 
         if (client != null) {
-            ((LDAPConnectionPool) client).close();
+            client.close();
         }
 
         if (portForward != null && portForward.isAlive()) {
@@ -117,7 +117,7 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
                                 .endPort()
                                 .editOrNewSecurityContext()
                                     .editOrNewCapabilities()
-                                        .addNewAdd("SYS_CHROOT")
+                                        .addToAdd("SYS_CHROOT")
                                     .endCapabilities()
                                 .endSecurityContext()
                                 .withEnv(MapUtils.toEnvVars(environmentVariables()))
@@ -151,8 +151,8 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+                .getItems().isEmpty();
     }
 
     @Override

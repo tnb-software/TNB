@@ -65,7 +65,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
         final Probe probe = new ProbeBuilder()
             .withHttpGet(new HTTPGetActionBuilder()
                 .withPort(new IntOrString(HTTP_PORT))
-                .withNewPath("/live")
+                .withPath("/live")
                 .build()
             ).build();
 
@@ -134,8 +134,8 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+                .getItems().isEmpty();
     }
 
     @Override

@@ -1,8 +1,8 @@
 package software.tnb.product.openshift;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.product.parent.TestParent;
 import software.tnb.util.openshift.TestOpenshiftClient;
-import software.tnb.common.config.OpenshiftConfiguration;
 
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
@@ -12,8 +12,8 @@ import java.util.Collections;
 import java.util.HashMap;
 
 import io.fabric8.kubernetes.client.server.mock.KubernetesCrudDispatcher;
+import io.fabric8.kubernetes.client.server.mock.KubernetesMockServer;
 import io.fabric8.mockwebserver.Context;
-import io.fabric8.openshift.client.server.mock.OpenShiftMockServer;
 import okhttp3.mockwebserver.MockWebServer;
 
 /**
@@ -23,14 +23,14 @@ import okhttp3.mockwebserver.MockWebServer;
  */
 public class OpenshiftTestParent extends TestParent {
     private static final KubernetesCrudDispatcher DISPATCHER = new KubernetesCrudDispatcher(Collections.emptyList());
-    protected static OpenShiftMockServer crudServer;
-    protected static OpenShiftMockServer expectServer;
+    protected static KubernetesMockServer crudServer;
+    protected static KubernetesMockServer expectServer;
     protected int requestCount = 0;
 
     @BeforeAll
     public static void init() {
-        crudServer = new OpenShiftMockServer(new Context(), new MockWebServer(), new HashMap<>(), DISPATCHER, false);
-        expectServer = new OpenShiftMockServer(false);
+        crudServer = new KubernetesMockServer(new Context(), new MockWebServer(), new HashMap<>(), DISPATCHER, false);
+        expectServer = new KubernetesMockServer(false);
         crudServer.init();
         expectServer.init();
 

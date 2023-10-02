@@ -99,7 +99,7 @@ public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeploy
                                 .endPort()
                                 .editOrNewSecurityContext()
                                     .editOrNewCapabilities()
-                                        .addNewAdd("SYS_CHROOT")
+                                        .addToAdd("SYS_CHROOT")
                                     .endCapabilities()
                                 .endSecurityContext()
                             .endContainer()

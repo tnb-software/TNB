@@ -9,11 +9,11 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
-import software.tnb.jms.amq.resource.openshift.generated.Acceptor;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemis;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemisList;
 import software.tnb.jms.amq.resource.openshift.generated.ActiveMQArtemisSpec;
-import software.tnb.jms.amq.resource.openshift.generated.DeploymentPlan;
+import software.tnb.jms.amq.resource.openshift.generated.activemqartemisspec.Acceptors;
+import software.tnb.jms.amq.resource.openshift.generated.activemqartemisspec.DeploymentPlan;
 import software.tnb.jms.amq.service.AMQBroker;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -41,7 +41,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.Route;
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
@@ -52,27 +51,19 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQBroker.class);
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
 
-    private static final CustomResourceDefinitionContext ARTEMIS_CTX = new CustomResourceDefinitionContext.Builder()
-        .withName("ActiveMQArtemis")
-        .withGroup("broker.amq.io")
-        .withVersion("v1beta1")
-        .withPlural("activemqartemises")
-        .withScope("Namespaced")
-        .build();
-
     @Override
     public void create() {
         LOG.debug("Creating AMQ broker");
         // Create subscription for amq broker operator
         createSubscription();
         // Create amq-broker custom resource
-        amqBrokerClient().createOrReplace(createBrokerCR());
+        OpenshiftClient.get().resources(ActiveMQArtemis.class, ActiveMQArtemisList.class).resource(createBrokerCR()).create();
     }
 
     @Override
     public boolean isDeployed() {
         List<Pod> pods = OpenshiftClient.get().getLabeledPods("name", "amq-broker-operator");
-        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0)) && amqBrokerClient().list().getItems().size() > 0;
+        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0)) && !amqBrokerClient().list().getItems().isEmpty();
     }
 
     @Override
@@ -207,7 +198,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         broker.getSpec().setAdminPassword(account().password());
 
         // exposed acceptor with ssl
-        final Acceptor acceptor = new Acceptor();
+        final Acceptors acceptor = new Acceptors();
         acceptor.setName("all-ssl");
         acceptor.setProtocols("all");
         acceptor.setPort(61636);
@@ -216,14 +207,14 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         acceptor.setSslSecret(SSL_SECRET_NAME);
 
         //expose internal service
-        final Acceptor internal = new Acceptor();
+        final Acceptors internal = new Acceptors();
         internal.setName("all-internal");
         internal.setProtocols("all");
         internal.setPort(61626);
         internal.setExpose(false);
         internal.setSslEnabled(false);
 
-        final List<Acceptor> acceptors = new ArrayList<>();
+        final List<Acceptors> acceptors = new ArrayList<>();
         acceptors.add(acceptor);
         acceptors.add(internal);
 
@@ -260,8 +251,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
      * @return
      */
     private NonNamespaceOperation<ActiveMQArtemis, ActiveMQArtemisList, Resource<ActiveMQArtemis>> amqBrokerClient() {
-        return OpenshiftClient.get().customResources(ARTEMIS_CTX, ActiveMQArtemis.class, ActiveMQArtemisList.class)
-            .inNamespace(OpenshiftClient.get().getNamespace());
+        return OpenshiftClient.get().resources(ActiveMQArtemis.class, ActiveMQArtemisList.class).inNamespace(OpenshiftClient.get().getNamespace());
     }
 
     @Override

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.function.Predicate;
 
@@ -60,17 +59,12 @@ public class Tekton extends Service<NoAccount, TektonClient, TektonValidation> i
             .withScope("Cluster")
             .build();
 
-        try {
-            OpenshiftClient.get().customResource(crd).delete("openshift-pipelines", "config", true);
-            WaitUtils.waitFor(() ->
-                    OpenshiftClient.get().namespaces().withName("openshift-pipelines").get() == null,
-                "Waiting until the openshift-pipelines namespace is removed");
-            deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("name", "openshift-pipelines-operator")
-                .stream().noneMatch(p -> p.getMetadata().getName().contains("openshift-pipelines-operator")));
-        } catch (IOException e) {
-            LOG.error("Error on Tekton deletetion", e);
-            throw new RuntimeException(e);
-        }
+        OpenshiftClient.get().genericKubernetesResources(crd).inNamespace("openshift-pipelines").delete();
+        WaitUtils.waitFor(() ->
+                OpenshiftClient.get().namespaces().withName("openshift-pipelines").get() == null,
+            "Waiting until the openshift-pipelines namespace is removed");
+        deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("name", "openshift-pipelines-operator")
+            .stream().noneMatch(p -> p.getMetadata().getName().contains("openshift-pipelines-operator")));
     }
 
     @Override

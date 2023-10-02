@@ -104,7 +104,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
                     , entry.getValue(), null)).collect(Collectors.toList()))
                 .editOrNewSecurityContext()
                 .editOrNewCapabilities()
-                .addNewAdd("SYS_CHROOT")
+                .addToAdd("SYS_CHROOT")
                 .endCapabilities()
                 .endSecurityContext()
                 .endContainer()

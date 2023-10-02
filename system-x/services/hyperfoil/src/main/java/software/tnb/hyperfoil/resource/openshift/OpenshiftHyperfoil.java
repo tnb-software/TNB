@@ -1,6 +1,7 @@
 package software.tnb.hyperfoil.resource.openshift;
 
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.WithCustomResource;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
@@ -21,39 +22,26 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Hyperfoil.class)
-public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperatorHub {
+public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDeployable, WithExternalHostname, WithOperatorHub, WithCustomResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftHyperfoil.class);
 
     private static final String APP_NAME = "hyperfoil-" + OpenshiftClient.get().getNamespace();
 
-    private static final CustomResourceDefinitionContext HYPERFOIL_CTX = new CustomResourceDefinitionContext.Builder()
-            .withName("Hyperfoil")
-            .withGroup("hyperfoil.io")
-            .withVersion("v1alpha2")
-            .withPlural("hyperfoils")
-            .withScope("Namespaced")
-            .build();
-
     @Override
     public void undeploy() {
         if (!HyperfoilConfiguration.keepRunning()) {
-            try {
-                OpenshiftClient.get().customResource(HYPERFOIL_CTX).delete(OpenshiftClient.get().getNamespace(), APP_NAME, true);
-                WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-                deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
-                    .stream().noneMatch(p -> p.getMetadata().getName().contains("hyperfoil")));
-            } catch (IOException e) {
-                LOG.error("Error on Hyperfoil deletetion", e);
-                throw new RuntimeException(e);
-            }
+            OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).delete();
+            WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+            deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
+                .stream().noneMatch(p -> p.getMetadata().getName().contains("hyperfoil")));
         }
     }
 
@@ -76,27 +64,19 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     public void create() {
         LOG.debug("Creating Hyperfoil instance");
         createSubscription();
-
-        try {
-            if (HyperfoilConfiguration.agentLogConf().isPresent()) {
-                createAgentLogConfigMap(HyperfoilConfiguration.agentLogConf().get());
-                OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition(true));
-            } else {
-                OpenshiftClient.get().customResource(HYPERFOIL_CTX).createOrReplace(getHyperfoilDefinition(false));
-            }
-        } catch (IOException e) {
-            LOG.error("Error on Hyperfoil creation", e);
-            throw new RuntimeException(e);
+        if (HyperfoilConfiguration.agentLogConf().isPresent()) {
+            createAgentLogConfigMap(HyperfoilConfiguration.agentLogConf().get());
         }
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
     }
 
     @Override
     public boolean isDeployed() {
         List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems()
             .stream()
-            .filter(p -> p.getMetadata().getName().contains("hyperfoil")).collect(Collectors.toList());
+            .filter(p -> p.getMetadata().getName().contains("hyperfoil")).toList();
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-            && ((List) OpenshiftClient.get().customResource(HYPERFOIL_CTX).list().get("items")).size() == 1;
+            && OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).list().getItems().size() == 1;
     }
 
     @Override
@@ -119,26 +99,10 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         return port;
     }
 
-    private Map<String, Object> getHyperfoilDefinition(boolean includesAgentLog) {
-        LOG.info("Hyperfoil version is set to: " + HyperfoilConfiguration.getHyperfoilVersion());
-        Map<String, Object> metadata = Map.of("name", APP_NAME, "namespace", OpenshiftClient.get().getNamespace());
-        Map<String, Object> spec = Map.of("agentDeployTimeout", 120000, "version", HyperfoilConfiguration.getHyperfoilVersion(), "route",
-                Map.of("host", OpenshiftClient.get().generateHostname("hyperfoil")) // "hyperfoil.apps.mycloud.example.com"
-        );
-        if (includesAgentLog) {
-            spec = new HashMap<>(spec);
-            spec.put("log", HyperfoilConfiguration.agentLogMapConfig() + "/" + HyperfoilConfiguration.agentLogFileName());
-        }
-
-        return Map.of("kind", HYPERFOIL_CTX.getName(), "apiVersion",
-                String.format("%s/%s", HYPERFOIL_CTX.getGroup(), HYPERFOIL_CTX.getVersion()), "metadata", metadata,
-                "spec", spec);
-    }
-
     private void createAgentLogConfigMap(String agentLogConfPath) {
         try {
             OpenshiftClient.get().createConfigMap(HyperfoilConfiguration.agentLogMapConfig(),
-                    Map.of(HyperfoilConfiguration.agentLogFileName(), Files.readString(Path.of(agentLogConfPath))));
+                Map.of(HyperfoilConfiguration.agentLogFileName(), Files.readString(Path.of(agentLogConfPath))));
         } catch (IOException e) {
             LOG.error("Error on Hyperfoil creation", e);
             throw new RuntimeException(e);
@@ -168,5 +132,33 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
     @Override
     public String operatorName() {
         return "hyperfoil-bundle";
+    }
+
+    @Override
+    public String kind() {
+        return "Hyperfoil";
+    }
+
+    @Override
+    public String apiVersion() {
+        return "hyperfoil.io/v1alpha2";
+    }
+
+    @Override
+    public GenericKubernetesResource customResource() {
+        LOG.info("Hyperfoil version is set to: " + HyperfoilConfiguration.getHyperfoilVersion());
+        Map<String, Object> spec = Map.of("agentDeployTimeout", 120000, "version", HyperfoilConfiguration.getHyperfoilVersion(), "route",
+            Map.of("host", OpenshiftClient.get().generateHostname("hyperfoil")) // "hyperfoil.apps.mycloud.example.com"
+        );
+        if (HyperfoilConfiguration.agentLogConf().isPresent()) {
+            spec = new HashMap<>(spec);
+            spec.put("log", HyperfoilConfiguration.agentLogMapConfig() + "/" + HyperfoilConfiguration.agentLogFileName());
+        }
+        return new GenericKubernetesResourceBuilder()
+            .withNewMetadata()
+            .withName(APP_NAME)
+            .withNamespace(OpenshiftClient.get().getNamespace())
+            .endMetadata()
+            .withAdditionalProperties(Map.of("spec", spec)).build();
     }
 }

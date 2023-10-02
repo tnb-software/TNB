@@ -30,7 +30,7 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     @Override
     public void deploy() {
-        if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
+        if (SplunkProtocol.HTTPS == getConfiguration().getProtocol()) {
             throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
         }
         LOG.info("Starting Splunk container");

@@ -77,16 +77,16 @@
         <auto-service.version>1.1.0</auto-service.version>
         <!--
           Careful when upgrading this version, as it also defines the camel-k-client version in fuse-products,
-          that brings model classes aligned to a specific camel-k-release version
+          that brings model classes aligned to a specific camel-k-release version, also this version must be compatible with the version in xtf
          -->
-        <kubernetes.client.version>5.12.2</kubernetes.client.version>
+        <kubernetes.client.version>6.8.1</kubernetes.client.version>
         <javaparser.version>3.25.0</javaparser.version>
         <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>1.19.0</testcontainers.version>
-        <xtf.version>0.30</xtf.version>
+        <xtf.version>0.31</xtf.version>
         <maven.surefire.plugin.version>3.2.1</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.8</jacoco.maven.plugin.version>

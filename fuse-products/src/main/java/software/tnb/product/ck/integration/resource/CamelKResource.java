@@ -5,6 +5,11 @@ import software.tnb.product.integration.Resource;
 public class CamelKResource extends Resource {
     private ResourceType type;
 
+    public CamelKResource(ResourceType type, String name) {
+        setName(name);
+        this.type = type;
+    }
+
     public CamelKResource(ResourceType type, String name, String content) {
         super(name, content);
         this.type = type;

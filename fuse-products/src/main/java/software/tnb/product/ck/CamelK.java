@@ -23,6 +23,14 @@ import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
 
+import org.apache.camel.v1.IntegrationPlatform;
+import org.apache.camel.v1.IntegrationPlatformSpec;
+import org.apache.camel.v1.Kamelet;
+import org.apache.camel.v1.Pipe;
+import org.apache.camel.v1.integrationplatformspec.Build;
+import org.apache.camel.v1.integrationplatformspec.build.maven.Settings;
+import org.apache.camel.v1.integrationplatformspec.build.maven.settings.ConfigMapKeyRef;
+import org.apache.camel.v1alpha1.KameletBinding;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.core.Filter;
 import org.apache.logging.log4j.core.LoggerContext;
@@ -51,13 +59,8 @@ import java.util.concurrent.CountDownLatch;
 
 import cz.xtf.core.openshift.PodShellOutput;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.IntegrationPlatform;
-import io.fabric8.camelk.v1.IntegrationPlatformBuilder;
-import io.fabric8.camelk.v1.IntegrationPlatformSpecBuilder;
-import io.fabric8.camelk.v1alpha1.Kamelet;
-import io.fabric8.camelk.v1alpha1.KameletBinding;
-import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.client.dsl.LogWatch;
@@ -76,8 +79,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
     // Count of all kamelets from camel-k operator
     private int operatorKameletCount = -1;
 
-    protected CamelKClient camelKClient;
-
     private boolean useGlobalInstallation() {
         return CamelKConfiguration.getConfiguration().useGlobalInstallation();
     }
@@ -88,10 +89,6 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
     @Override
     public void setupProduct() {
-        // Avoid creating static clients in case the camel-k should not be running (all product instances are created in ProductFactory.create()
-        // and then the desired one is returned
-        camelKClient = OpenshiftClient.get().adapt(CamelKClient.class);
-
         CamelKConfiguration config = CamelKConfiguration.getConfiguration();
 
         if (!isReady()) {
@@ -101,8 +98,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
                     LOG.warn(
                         "You are going to deploy upstream version of Camel-K. "
                             + "Be aware that upstream Camel-K APIs does not have to be compatible with the PROD ones and this installation can "
-                            + "break the "
-                            + "cluster for other tests."
+                            + "break the cluster for other tests."
                     );
                 }
                 if (OpenshiftClient.get().operatorHub().catalogSources().inNamespace(config.subscriptionSourceNamespace())
@@ -122,24 +118,34 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
             }
         }
 
-        // @formatter:off
-        IntegrationPlatform ip = new IntegrationPlatformBuilder()
-            .withNewMetadata()
-                .withLabels(Map.of("app", "camel-k"))
-                .withName(config.integrationPlatformName())
-            .endMetadata()
+        ObjectMeta metadata = new ObjectMetaBuilder()
+            .withName(config.integrationPlatformName())
+            .withLabels(Map.of("app", "camel-k"))
             .build();
 
-        IntegrationPlatformSpecBuilder specBuilder = new IntegrationPlatformSpecBuilder()
-            .withNewBuild()
-                .withTimeout(config.mavenBuildTimeout())
-            .endBuild();
+        IntegrationPlatformSpec spec = new IntegrationPlatformSpec();
 
+        Build build = new Build();
+        build.setTimeout(config.mavenBuildTimeout() + "m");
+        spec.setBuild(build);
         if (config.baseImage() != null) {
-            specBuilder.editBuild()
-                .withBaseImage(config.baseImage())
-            .endBuild();
+            build.setBaseImage(config.baseImage());
         }
+
+        org.apache.camel.v1.integrationplatformspec.build.Maven maven = new org.apache.camel.v1.integrationplatformspec.build.Maven();
+        Settings settings = new Settings();
+        ConfigMapKeyRef cm = new ConfigMapKeyRef();
+        cm.setKey("settings.xml");
+        cm.setName(config.mavenSettingsConfigMapName());
+        cm.setOptional(false);
+        settings.setConfigMapKeyRef(cm);
+        maven.setSettings(settings);
+
+        build.setMaven(maven);
+
+        IntegrationPlatform ip = new IntegrationPlatform();
+        ip.setMetadata(metadata);
+        ip.setSpec(spec);
 
         if (TestConfiguration.mavenSettings() == null) {
             OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(), Map.of("settings.xml", Maven.createSettingsXmlFile()));
@@ -148,21 +154,8 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
                 Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
         }
 
-        specBuilder
-            .editBuild()
-                .withNewMaven()
-                    .withNewSettings()
-                        .withConfigMapKeyRef(new ConfigMapKeySelector("settings.xml", config.mavenSettingsConfigMapName(), false))
-                    .endSettings()
-                .endMaven()
-            .endBuild()
-            .build();
-        // @formatter:on
-
-        ip.setSpec(specBuilder.build());
-
-        camelKClient.v1().integrationPlatforms().delete();
-        camelKClient.v1().integrationPlatforms().create(ip);
+        OpenshiftClient.get().resources(IntegrationPlatform.class).delete();
+        OpenshiftClient.get().resources(IntegrationPlatform.class).resource(ip).create();
 
         if (TestConfiguration.streamLogs()) {
             setupLogger();
@@ -203,11 +196,11 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
 
         // https://github.com/fabric8io/kubernetes-client/issues/3852
         Serialization.jsonMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-        return camelKClient.v1alpha1().kamelets().list().getItems().size() >= operatorKameletCount;
+        return OpenshiftClient.get().resources(Kamelet.class).list().getItems().size() >= operatorKameletCount;
     }
 
     private boolean kameletsReady() {
-        return camelKClient.v1alpha1().kamelets().list().getItems().stream().allMatch(k -> {
+        return OpenshiftClient.get().resources(Kamelet.class).list().getItems().stream().allMatch(k -> {
             if (k.getStatus() == null) {
                 return false;
             }
@@ -216,7 +209,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
     }
 
     private boolean platformReady() {
-        List<IntegrationPlatform> ip = camelKClient.v1().integrationPlatforms().list().getItems();
+        List<IntegrationPlatform> ip = OpenshiftClient.get().resources(IntegrationPlatform.class).list().getItems();
         return ip.size() == 1 && ip.get(0).getStatus() != null && ip.get(0).getStatus().getPhase().equals("Ready");
     }
 
@@ -272,12 +265,22 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
         return createKameletBindings(new KameletBinding[] {kameletBinding}).get(kameletBinding.getMetadata().getName());
     }
 
+    public App createPipe(Pipe pipe) {
+        return createPipes(new Pipe[] {pipe}).get(pipe.getMetadata().getName());
+    }
+
+    public Map<String, App> createPipes(Pipe... pipes) {
+        return createIntegration((Object[]) pipes);
+    }
+
     private App createApp(Object integrationSource) {
         App app;
         if (integrationSource instanceof AbstractIntegrationBuilder) {
             app = new CamelKApp((AbstractIntegrationBuilder<?>) integrationSource);
         } else if (integrationSource instanceof KameletBinding) {
             app = new CamelKApp((KameletBinding) integrationSource);
+        } else if (integrationSource instanceof Pipe) {
+            app = new CamelKApp((Pipe) integrationSource);
         } else {
             throw new IllegalArgumentException("Creating Camel-K integrations is possible only with IntegrationBuilders and KameletBindings (was "
                 + integrationSource.getClass().getSimpleName() + ")");
@@ -299,7 +302,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
             throw new RuntimeException("Null kamelet");
         }
         LOG.info("Creating Kamelet " + kamelet.getMetadata().getName());
-        camelKClient.v1alpha1().kamelets().createOrReplace(kamelet);
+        OpenshiftClient.get().resources(Kamelet.class).resource(kamelet).create();
         kamelets.add(kamelet.getMetadata().getName());
         WaitUtils.waitFor(() -> isKameletReady(kamelet), "Waiting for Kamelet to be ready");
     }
@@ -328,7 +331,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
      * @return null if Kamelet wasn't found, otherwise Kamelet with given name
      */
     public Kamelet getKameletByName(String name) {
-        return camelKClient.v1alpha1().kamelets().withName(name).get();
+        return OpenshiftClient.get().resources(Kamelet.class).withName(name).get();
     }
 
     /**
@@ -359,12 +362,12 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
     @Override
     public void removeKamelet(String kameletName) {
         LOG.info("Deleting Kamelet " + kameletName);
-        camelKClient.v1alpha1().kamelets().withName(kameletName).delete();
+        OpenshiftClient.get().resources(Kamelet.class).withName(kameletName).delete();
         kamelets.remove(kameletName);
     }
 
     public void removeKamelets() {
-        kamelets.forEach(kamelet -> camelKClient.v1alpha1().kamelets().withName(kamelet).delete());
+        kamelets.forEach(kamelet -> OpenshiftClient.get().resources(Kamelet.class).withName(kamelet).delete());
         kamelets.clear();
     }
 

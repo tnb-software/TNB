@@ -16,6 +16,8 @@ import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.util.InlineCustomizer;
 import software.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
+import org.apache.camel.v1.integrationspec.traits.Container;
+import org.apache.camel.v1.integrationspec.traits.Logging;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,7 +31,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
@@ -174,12 +175,20 @@ public final class IntegrationGenerator {
             new ComponentCustomizer(),
             new CamelMainCustomizer(),
             // for camel-k expose the configured port using trait, so that app.getEndpoint() can be used
-            new TraitCustomizer("container", Map.of("port", integrationBuilder.getPort(), "servicePort", integrationBuilder.getPort()))
+            new TraitCustomizer(traits -> {
+                Container container = traits.getContainer() == null ? new Container() : traits.getContainer();
+                container.setServicePort((long) integrationBuilder.getPort());
+                traits.setContainer(container);
+            })
         );
 
         if (TestConfiguration.streamLogs()) {
             // Disable color for camel-k integration, as it breaks the log4j color configuration
-            integrationBuilder.addCustomizer(new TraitCustomizer("logging", Map.of("color", false)));
+            integrationBuilder.addCustomizer(new TraitCustomizer(traits -> {
+                Logging logging = traits.getLogging() == null ? new Logging() : traits.getLogging();
+                logging.setColor(false);
+                traits.setLogging(logging);
+            }));
         }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {

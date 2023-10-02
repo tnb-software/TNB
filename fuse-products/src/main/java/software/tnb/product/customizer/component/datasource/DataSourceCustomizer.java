@@ -3,17 +3,19 @@ package software.tnb.product.customizer.component.datasource;
 import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.ProductsCustomizer;
 
+import org.apache.camel.v1.IntegrationSpec;
+import org.apache.camel.v1.integrationspec.Traits;
+import org.apache.camel.v1.integrationspec.traits.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
 
 public class DataSourceCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
 
@@ -103,9 +105,14 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
     }
 
     @Override
-    public void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder) {
-        Map<String, Object> configuration = Map.of("properties", List.of("quarkus.datasource.db-kind=" + type));
-        mergeTraitConfiguration(integrationSpecBuilder, "builder", configuration);
+    public void customizeIntegration(IntegrationSpec integrationSpec) {
+        final Traits traits = integrationSpec.getTraits() == null ? new Traits() : integrationSpec.getTraits();
+        final Builder builder = traits.getBuilder() == null ? new Builder() : traits.getBuilder();
+        final List<String> properties = builder.getProperties() == null ? new ArrayList<>() : builder.getProperties();
+        properties.add("quarkus.datasource.db-kind=" + type);
+        builder.setProperties(properties);
+        traits.setBuilder(builder);
+        integrationSpec.setTraits(traits);
     }
 
     private String[] getDbAllocatorDependencies() {

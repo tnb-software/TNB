@@ -3,13 +3,12 @@ package software.tnb.product.ck.utils;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 
+import org.apache.camel.v1.Integration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Collections;
 
-import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.Integration;
 import io.fabric8.kubernetes.api.model.HasMetadata;
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.OwnerReferenceBuilder;
@@ -29,15 +28,13 @@ public class OwnerReferenceSetter implements Runnable {
 
     @Override
     public void run() {
-        CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
-
         Integration i = null;
         int maxRetries = 30;
         int retries = 0;
         while (i == null) {
             WaitUtils.sleep(1000);
-            i = client.v1().integrations().list().getItems().stream().filter(integration -> integration.getMetadata().getName()
-                .contains(integrationNameSubstring)).findFirst().orElse(null);
+            i = OpenshiftClient.get().resources(Integration.class).list().getItems().stream()
+                .filter(integration -> integration.getMetadata().getName().contains(integrationNameSubstring)).findFirst().orElse(null);
             retries++;
             if (retries > maxRetries) {
                 LOG.warn(

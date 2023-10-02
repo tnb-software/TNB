@@ -1,21 +1,22 @@
 package software.tnb.product.ck.customizer;
 
-import java.util.Map;
+import org.apache.camel.v1.IntegrationSpec;
+import org.apache.camel.v1.integrationspec.Traits;
 
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
+import java.util.function.Consumer;
 
 public class TraitCustomizer extends CamelKCustomizer implements IntegrationSpecCustomizer {
-    private final String trait;
-    private final Map<String, Object> configuration;
+    private final Consumer<Traits> config;
 
-    public TraitCustomizer(String trait, Map<String, Object> configuration) {
-        this.trait = trait;
-        this.configuration = configuration;
+    public TraitCustomizer(Consumer<Traits> config) {
+        this.config = config;
     }
 
     @Override
-    public void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder) {
-        mergeTraitConfiguration(integrationSpecBuilder, trait, configuration);
+    public void customizeIntegration(IntegrationSpec integrationSpec) {
+        Traits traits = integrationSpec.getTraits() == null ? new Traits() : integrationSpec.getTraits();
+        config.accept(traits);
+        integrationSpec.setTraits(traits);
     }
 
     @Override

@@ -13,14 +13,14 @@ import java.util.stream.Collectors;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClientException;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.kubernetes.client.dsl.Readiable;
+import io.fabric8.kubernetes.client.dsl.Resource;
 
 public interface OpenshiftDeployable extends Deployable {
     void create();
 
     default boolean isReady() {
-        final List<PodResource<Pod>> servicePods = servicePods();
-        return servicePods != null && servicePods.size() > 0 && servicePods.stream().allMatch(Readiable::isReady);
+        final List<PodResource> servicePods = servicePods();
+        return servicePods != null && !servicePods.isEmpty() && servicePods.stream().allMatch(Resource::isReady);
     }
 
     boolean isDeployed();
@@ -29,12 +29,12 @@ public interface OpenshiftDeployable extends Deployable {
         return 300_000;
     }
 
-    default PodResource<Pod> servicePod() {
+    default PodResource servicePod() {
         var pods = servicePods();
-        return pods.size() > 0 ? pods.get(0) : null;
+        return pods.isEmpty() ? null : pods.get(0);
     }
 
-    default List<PodResource<Pod>> servicePods() {
+    default List<PodResource> servicePods() {
         try {
             return OpenshiftClient.get().pods().list().getItems().stream()
                 .filter(podSelector())

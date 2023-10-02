@@ -126,7 +126,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("1 Online, 0 Offline.");
     }
 

@@ -6,9 +6,11 @@ import software.tnb.product.application.Phase;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 
+import org.apache.camel.v1.Integration;
+import org.apache.camel.v1.IntegrationKit;
+
 import java.util.function.Predicate;
 
-import io.fabric8.camelk.client.CamelKClient;
 import io.fabric8.kubernetes.api.model.Pod;
 
 /**
@@ -31,13 +33,13 @@ public class MavenBuildLogHandler implements Runnable {
             && p.getMetadata().getLabels().get("camel.apache.org/component").equals("operator");
 
         logStream = new OpenshiftLogStream(operatorPod, LogStream.marker(integrationName, Phase.GENERATE));
-        CamelKClient client = OpenshiftClient.get().adapt(CamelKClient.class);
         String kitName = null;
         // Wait until the kit name is generated
         while (kitName == null) {
             WaitUtils.sleep(1000L);
             try {
-                kitName = client.v1().integrations().withName(integrationName).get().getStatus().getIntegrationKit().getName();
+                kitName = OpenshiftClient.get().resources(Integration.class).withName(integrationName).get()
+                    .getStatus().getIntegrationKit().getName();
             } catch (Exception ignored) {
             }
         }
@@ -48,7 +50,7 @@ public class MavenBuildLogHandler implements Runnable {
         // Stop streaming the logs when the kit build pod appears
         // or when the kit is in Ready phase (it was already built and it is reused)
         while (OpenshiftClient.get().pods().list().getItems().stream().noneMatch(kitPodSelector)
-            && !"Ready".equals(client.v1().integrationKits().withName(kitName).get().getStatus().getPhase())
+            && !"Ready".equals(OpenshiftClient.get().resources(IntegrationKit.class).withName(kitName).get().getStatus().getPhase())
         ) {
             WaitUtils.sleep(1000);
         }

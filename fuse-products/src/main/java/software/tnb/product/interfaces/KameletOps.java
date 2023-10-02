@@ -1,8 +1,8 @@
 package software.tnb.product.interfaces;
 
-import java.util.Properties;
+import org.apache.camel.v1.Kamelet;
 
-import io.fabric8.camelk.v1alpha1.Kamelet;
+import java.util.Properties;
 
 public interface KameletOps {
     void createKamelet(Kamelet kamelet);

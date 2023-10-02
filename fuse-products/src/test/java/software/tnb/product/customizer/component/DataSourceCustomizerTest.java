@@ -8,15 +8,9 @@ import software.tnb.product.customizer.component.datasource.DataSourceCustomizer
 
 import org.junit.jupiter.api.Tag;
 
-import org.assertj.core.api.Assertions;
+import org.apache.camel.v1.IntegrationSpec;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
 import java.util.Map;
-
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
 
 @Tag("unit")
 public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
@@ -29,45 +23,40 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
     @Override
     public void validateQuarkus() {
         customizer.doCustomize();
-        Assertions.assertThat(ib.getProperties()).isEqualTo(Map.of(
+        assertThat(ib.getProperties()).isEqualTo(Map.of(
             "quarkus.datasource.db-kind", type,
             "quarkus.datasource.jdbc.url", url,
             "quarkus.datasource.username", username,
             "quarkus.datasource.password", password
         ));
-        Assertions.assertThat(ib.getDependencies()).hasSize(1);
-        Assertions.assertThat(ib.getDependencies().get(0).getGroupId()).isEqualTo("io.quarkus");
-        Assertions.assertThat(ib.getDependencies().get(0).getArtifactId()).isEqualTo("quarkus-jdbc-" + type);
+        assertThat(ib.getDependencies()).hasSize(1);
+        assertThat(ib.getDependencies().get(0).getGroupId()).isEqualTo("io.quarkus");
+        assertThat(ib.getDependencies().get(0).getArtifactId()).isEqualTo("quarkus-jdbc-" + type);
     }
 
     @Override
     public void validateCamelK() {
         validateQuarkus();
 
-        IntegrationSpecBuilder builder = new IntegrationSpecBuilder();
-        ((IntegrationSpecCustomizer) customizer).customizeIntegration(builder);
+        IntegrationSpec spec = new IntegrationSpec();
+        ((IntegrationSpecCustomizer) customizer).customizeIntegration(spec);
 
-        assertThat(builder.getTraits()).hasSize(1);
-        assertThat(builder.getTraits()).containsKey("builder");
-        Map<String, Object> cfg = new ObjectMapper().convertValue(builder.getTraits().get("builder").getConfiguration(), new TypeReference<>() {
-        });
-        assertThat(cfg).hasSize(1);
-        assertThat(cfg).containsEntry("properties", List.of("quarkus.datasource.db-kind=" + type));
+        assertThat(spec.getTraits().getBuilder().getProperties()).isNotNull().hasSize(1).contains("quarkus.datasource.db-kind=" + type);
     }
 
     @Override
     public void validateSpringBoot() {
         customizer.doCustomize();
-        Assertions.assertThat(ib.getProperties()).isEqualTo(Map.of(
+        assertThat(ib.getProperties()).isEqualTo(Map.of(
             "spring.datasource.url", url,
             "spring.datasource.username", username,
             "spring.datasource.password", password,
             "spring.datasource.driver-class-name", driver
         ));
 
-        Assertions.assertThat(ib.getDependencies()).hasSize(1);
-        Assertions.assertThat(ib.getDependencies().get(0).getGroupId()).isEqualTo("org.springframework.boot");
-        Assertions.assertThat(ib.getDependencies().get(0).getArtifactId()).isEqualTo("spring-boot-starter-jdbc");
+        assertThat(ib.getDependencies()).hasSize(1);
+        assertThat(ib.getDependencies().get(0).getGroupId()).isEqualTo("org.springframework.boot");
+        assertThat(ib.getDependencies().get(0).getArtifactId()).isEqualTo("spring-boot-starter-jdbc");
     }
 
     @Override

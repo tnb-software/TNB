@@ -1,11 +1,10 @@
 package software.tnb.product.ck.integration.builder;
 
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
-
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.ck.customizer.ModelineCustomizer;
 import software.tnb.product.ck.integration.resource.CamelKResource;
 import software.tnb.product.ck.integration.resource.ResourceType;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -70,12 +69,31 @@ public final class CamelKIntegrationBuilder extends AbstractIntegrationBuilder<C
         return addResource(new CamelKResource(type, resource, resourceData));
     }
 
-    public CamelKIntegrationBuilder addResource(ResourceType type, String resource, String content) {
-        return super.addResource(new CamelKResource(type, resource, content));
+    /**
+     * Adds a new resource with type FILE to the integration.
+     * @param resource file name
+     * @param content content
+     * @return this
+     */
+    public CamelKIntegrationBuilder addResource(String resource, String content) {
+        return super.addResource(new CamelKResource(ResourceType.FILE, resource, content));
+    }
+
+    /**
+     * Adds the cm/secret resource to the integration. This resource must be created beforehand.
+     * @param type type (configmap or secret)
+     * @param resourceName name of the resource
+     * @return this
+     */
+    public CamelKIntegrationBuilder addResource(ResourceType type, String resourceName) {
+        if (type == ResourceType.FILE) {
+            throw new IllegalArgumentException("Use addResource(resource, content) method for adding file resources");
+        }
+        return super.addResource(new CamelKResource(type, resourceName));
     }
 
     public CamelKIntegrationBuilder addClasspathResource(String resource) {
-        addClasspathResource(ResourceType.DATA, resource);
+        addClasspathResource(ResourceType.FILE, resource);
         return self();
     }
 

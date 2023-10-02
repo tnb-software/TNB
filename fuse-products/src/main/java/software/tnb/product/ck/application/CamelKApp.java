@@ -12,8 +12,6 @@ import software.tnb.product.ck.integration.resource.CamelKResource;
 import software.tnb.product.ck.integration.resource.ResourceType;
 import software.tnb.product.ck.log.IntegrationKitBuildLogHandler;
 import software.tnb.product.ck.log.MavenBuildLogHandler;
-import software.tnb.product.ck.utils.CamelKSettings;
-import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.ck.utils.OwnerReferenceSetter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
@@ -23,6 +21,15 @@ import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 import software.tnb.product.util.executor.Executor;
 
+import org.apache.camel.v1.Integration;
+import org.apache.camel.v1.IntegrationSpec;
+import org.apache.camel.v1.Pipe;
+import org.apache.camel.v1.integrationspec.Configuration;
+import org.apache.camel.v1.integrationspec.Sources;
+import org.apache.camel.v1.integrationspec.Traits;
+import org.apache.camel.v1.integrationspec.traits.Builder;
+import org.apache.camel.v1.integrationspec.traits.Mount;
+import org.apache.camel.v1alpha1.KameletBinding;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -30,11 +37,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -49,15 +55,6 @@ import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
-import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.ConfigurationSpecBuilder;
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
-import io.fabric8.camelk.v1.ResourceSpec;
-import io.fabric8.camelk.v1.ResourceSpecBuilder;
-import io.fabric8.camelk.v1.SourceSpecBuilder;
-import io.fabric8.camelk.v1.TraitSpec;
-import io.fabric8.camelk.v1alpha1.KameletBinding;
-import io.fabric8.camelk.v1alpha1.KameletBindingList;
 import io.fabric8.knative.client.KnativeClient;
 import io.fabric8.knative.eventing.v1.Trigger;
 import io.fabric8.knative.serving.v1.Route;
@@ -66,20 +63,14 @@ import io.fabric8.kubernetes.api.model.Condition;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.HasMetadata;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClientException;
-import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
-import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.utils.Serialization;
 
 public class CamelKApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(CamelKApp.class);
-
-    private static final CustomResourceDefinitionContext kameletBindingCtx =
-        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-    private final NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
-    private final CamelKClient camelKClient;
 
     private Object integrationSource;
     private MavenBuildLogHandler buildLogHandler;
@@ -90,12 +81,6 @@ public class CamelKApp extends App {
         if (name.length() > 63) {
             throw new RuntimeException("Camel-K integration name " + name + " must be shorter than 63 characters");
         }
-
-        // https://github.com/fabric8io/kubernetes-client/issues/3854
-        OpenshiftClient client = OpenshiftClient.get();
-        kameletBindingClient = client.customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class)
-            .inNamespace(client.getNamespace());
-        camelKClient = client.adapt(CamelKClient.class);
     }
 
     public CamelKApp(AbstractIntegrationBuilder<?> integrationBuilder) {
@@ -109,13 +94,21 @@ public class CamelKApp extends App {
         this.integrationSource = kameletBinding;
     }
 
+    public CamelKApp(Pipe pipe) {
+        this(pipe.getMetadata().getName());
+        this.integrationSource = pipe;
+    }
+
     @Override
     public void start() {
         if (integrationSource instanceof KameletBinding) {
             LOG.info("Creating KameletBinding {}", name);
-            kameletBindingClient.createOrReplace((KameletBinding) integrationSource);
+            OpenshiftClient.get().resources(KameletBinding.class).resource((KameletBinding) integrationSource).create();
         } else if (integrationSource instanceof AbstractIntegrationBuilder) {
             createIntegrationResources((AbstractIntegrationBuilder<?>) integrationSource);
+        } else if (integrationSource instanceof Pipe) {
+            LOG.info("Creating Pipe {}", name);
+            OpenshiftClient.get().resources(Pipe.class).resource((Pipe) integrationSource).create();
         }
 
         endpoint = new Endpoint(() -> {
@@ -155,9 +148,12 @@ public class CamelKApp extends App {
         LOG.info("Removing integration {}", name);
         if (integrationSource instanceof KameletBinding) {
             LOG.info("Deleting KameletBinding {}", name);
-            kameletBindingClient.withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+            OpenshiftClient.get().resources(KameletBinding.class).withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+        } else if (integrationSource instanceof Pipe) {
+            LOG.info("Deleting Pipe {}", name);
+            OpenshiftClient.get().resources(Pipe.class).withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         } else {
-            camelKClient.v1().integrations().withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+            OpenshiftClient.get().resources(Integration.class).withName(name).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
         }
         WaitUtils.waitFor(() -> ResourceFunctions.areExactlyNPodsRunning(0)
                 .apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name)),
@@ -167,7 +163,7 @@ public class CamelKApp extends App {
     @Override
     public boolean isReady() {
         try {
-            return "running".equalsIgnoreCase(camelKClient.v1().integrations().withName(name).get().getStatus().getPhase())
+            return "running".equalsIgnoreCase(OpenshiftClient.get().resources(Integration.class).withName(name).get().getStatus().getPhase())
                 && ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("camel.apache.org/integration", name));
         } catch (Exception ignored) {
             return false;
@@ -177,7 +173,7 @@ public class CamelKApp extends App {
     @Override
     public boolean isFailed() {
         try {
-            return "error".equalsIgnoreCase(camelKClient.v1().integrations().withName(name).get().getStatus().getPhase());
+            return "error".equalsIgnoreCase(OpenshiftClient.get().resources(Integration.class).withName(name).get().getStatus().getPhase());
         } catch (Exception ignored) {
             return false;
         }
@@ -208,7 +204,7 @@ public class CamelKApp extends App {
                 throw ex;
             }
         }
-        if (triggers.size() > 0) {
+        if (!triggers.isEmpty()) {
             Trigger trigger = knClient.triggers().withName(triggers.get(0).getMetadata().getName()).get();
             waitForKnativeResource(() -> knClient.triggers().withName(trigger.getMetadata().getName()).get());
             waitForKnativeResource(() -> knClient.subscriptions().withLabel("eventing.knative.dev/trigger", trigger.getMetadata().getName())
@@ -224,28 +220,26 @@ public class CamelKApp extends App {
     private void createIntegrationResources(AbstractIntegrationBuilder<?> integrationBuilder) {
         ObjectMapper jsonMapper = new ObjectMapper();
 
-        io.fabric8.camelk.v1.IntegrationBuilder integration = new io.fabric8.camelk.v1.IntegrationBuilder()
-            .withNewMetadata()
+        ObjectMeta metadata = new ObjectMetaBuilder()
             .withName(integrationBuilder.getIntegrationName())
-            .endMetadata();
+            .build();
 
-        IntegrationSpecBuilder specBuilder = new IntegrationSpecBuilder();
+        IntegrationSpec spec = new IntegrationSpec();
 
         String integrationSourceCode = IntegrationGenerator.toString(integrationBuilder);
 
         if (integrationBuilder.getFileName().endsWith(".yaml")) {
             ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
             try {
-                specBuilder.withFlows(mapper.readValue(integrationSourceCode, JsonNode[].class));
+                spec.setFlows(mapper.readValue(integrationSourceCode, new TypeReference<>() { }));
             } catch (JsonProcessingException e) {
                 throw new RuntimeException("Can't parse yaml flow from source file.");
             }
         } else {
-            specBuilder.addToSources(new SourceSpecBuilder()
-                .withName(integrationBuilder.getFileName())
-                .withContent(integrationSourceCode)
-                .build()
-            );
+            Sources sources = new Sources();
+            sources.setContent(integrationSourceCode);
+            sources.setName(integrationBuilder.getFileName());
+            spec.setSources(List.of(sources));
         }
 
         String modelinePrefixPattern = integrationBuilder.getFileName().endsWith(".yaml") ? "^# *camel-k:" : "^// *camel-k:";
@@ -253,9 +247,9 @@ public class CamelKApp extends App {
             .filter(l -> l.trim().matches(modelinePrefixPattern + ".*"))
             .map(l -> l.replaceAll(modelinePrefixPattern, ""))
             .flatMap(l -> Stream.of(l.split("\\s")))
-            .collect(Collectors.toList());
+            .toList();
 
-        specBuilder.withDependencies(modelines.stream()
+        spec.setDependencies(modelines.stream()
             .filter(modeline -> modeline.contains("dependency"))
             .map(modeline -> modeline.split("=")[1])
             // unify dependency format
@@ -265,10 +259,7 @@ public class CamelKApp extends App {
         List<String> buildProperties = modelines.stream()
             .filter(modeline -> modeline.contains("build-property"))
             .map(modeline -> modeline.split("=", 2)[1])
-            .collect(Collectors.toList());
-
-        Map<String, TraitSpec> traits = new HashMap<>();
-        traits.put("builder", new TraitSpec(jsonMapper.valueToTree(Map.of("properties", buildProperties))));
+            .toList();
 
         Set<String> traitDefinitions = modelines.stream()
             .filter(modeline -> modeline.contains("trait"))
@@ -276,56 +267,68 @@ public class CamelKApp extends App {
             .collect(Collectors.toSet());
 
         Map<String, Map<String, Object>> td = processTraits(traitDefinitions);
-        for (Map.Entry<String, Map<String, Object>> entry : td.entrySet()) {
-            traits.put(entry.getKey(), new TraitSpec(jsonMapper.valueToTree(entry.getValue())));
-        }
+        spec.setTraits(jsonMapper.convertValue(td, Traits.class));
 
-        specBuilder.withTraits(traits);
+        Builder builder = spec.getTraits().getBuilder() == null ? new Builder() : spec.getTraits().getBuilder();
+        List<String> properties = builder.getProperties() == null ? new ArrayList<>() : builder.getProperties();
+        properties.addAll(buildProperties);
+        builder.setProperties(properties);
+        spec.getTraits().setBuilder(builder);
 
+        List<Configuration> specConfiguration = new ArrayList<>();
         // if there are any properties set, use the configmap in the integration's configuration
         if (!integrationBuilder.getProperties().isEmpty()) {
-            specBuilder.withConfiguration(new ConfigurationSpecBuilder()
-                .withType("configmap")
-                .withValue(name)
-                .build()
-            );
+            Configuration props = new Configuration();
+            props.setType("configmap");
+            props.setValue(name);
+            specConfiguration.add(props);
         }
 
         if (integrationBuilder instanceof CamelKIntegrationBuilder) {
             CamelKIntegrationBuilder ckib = (CamelKIntegrationBuilder) integrationBuilder;
             // add the named secret to configuration
             if (ckib.getSecret() != null) {
-                specBuilder.withConfiguration(new ConfigurationSpecBuilder()
-                    .withType("secret")
-                    .withValue(ckib.getSecret())
-                    .build()
-                );
+                Configuration secret = new Configuration();
+                secret.setType("secret");
+                secret.setValue(ckib.getSecret());
+                specConfiguration.add(secret);
             }
         }
 
         // add resources
-        List<ResourceSpec> resources = new ArrayList<>();
+        List<String> resources = new ArrayList<>();
         for (software.tnb.product.integration.Resource resource : integrationBuilder.getResources()) {
-            ResourceSpecBuilder rsb = new ResourceSpecBuilder()
-                .withName(new File(resource.getName()).getName())
-                .withContent(resource.getContent());
-            ResourceType type = resource instanceof CamelKResource ? ((CamelKResource) resource).getType() : ResourceType.DATA;
-            rsb.withType(type.getValue());
-            rsb.withMountPath(type == ResourceType.DATA ? "/etc/camel/resources/" + resource.getName() : null);
-            resources.add(rsb.build());
+            ResourceType type = resource instanceof CamelKResource ? ((CamelKResource) resource).getType() : ResourceType.FILE;
+            if (type == ResourceType.FILE) {
+                // Create a configmap with the file and use the configmap mount
+                String cmName = resource.getName().replaceAll("\\.", "-");
+                ConfigMap cm = OpenshiftClient.get().createConfigMap(cmName, Map.of(resource.getName(), resource.getContent()));
+                Executor.get().submit(new OwnerReferenceSetter(cm, name));
+                type = ResourceType.CONFIG_MAP;
+                resource.setName(cmName);
+            }
+
+            resources.add(type.getValue() + ":" + resource.getName());
         }
-        specBuilder.withResources(resources);
+        final Mount mount = spec.getTraits().getMount() == null ? new Mount() : spec.getTraits().getMount();
+        List<String> mountResources = mount.getResources() == null ? new ArrayList<>() : mount.getResources();
+        mountResources.addAll(resources);
+        mount.setResources(mountResources);
+        spec.getTraits().setMount(mount);
 
         // Process all integration spec customizers
         integrationBuilder.getCustomizers().stream()
             .filter(IntegrationSpecCustomizer.class::isInstance)
             .map(IntegrationSpecCustomizer.class::cast)
-            .forEach(i -> i.customizeIntegration(specBuilder));
+            .forEach(i -> i.customizeIntegration(spec));
 
-        integration.withSpec(specBuilder.build());
+        spec.setConfiguration(specConfiguration);
 
         // Create the Integration object
-        camelKClient.v1().integrations().createOrReplace(integration.build());
+        Integration i = new Integration();
+        i.setMetadata(metadata);
+        i.setSpec(spec);
+        OpenshiftClient.get().resources(Integration.class).resource(i).create();
 
         // If there are any properties set, create a config map with the same map as the integration
         // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
@@ -382,13 +385,13 @@ public class CamelKApp extends App {
             } catch (JSONException e) {
                 return false;
             }
-            if (conditions.length() == 0) {
+            if (conditions.isEmpty()) {
                 return false;
             }
 
             final List<Condition> conditionsList = StreamSupport.stream(conditions.spliterator(), false)
                 .map(c -> Serialization.unmarshal(c.toString(), Condition.class))
-                .collect(Collectors.toList());
+                .toList();
             LOG.debug("Knative {} {}: {}", i.getKind(), i.getMetadata().getName(), conditionsList.stream()
                 .map(c -> c.getType() + ": " + c.getStatus()).collect(Collectors.joining(", ")));
             return conditionsList.stream().allMatch(c -> "True".equals(c.getStatus()));

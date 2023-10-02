@@ -136,14 +136,14 @@ public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployab
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Ready.");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+                .getItems().isEmpty();
     }
 
     @Override

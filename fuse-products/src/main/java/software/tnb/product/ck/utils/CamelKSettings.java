@@ -25,7 +25,7 @@ public final class CamelKSettings {
 
     public static final String API_VERSION_DEFAULT = "v1";
 
-    public static final String KAMELET_API_VERSION_DEFAULT = "v1alpha1";
+    public static final String KAMELET_API_VERSION_DEFAULT = "v1";
 
     private CamelKSettings() {
         // prevent instantiation of utility class

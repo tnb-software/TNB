@@ -25,12 +25,12 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.http.HttpClient;
 import io.fabric8.kubernetes.client.http.HttpRequest;
 import io.fabric8.kubernetes.client.http.HttpResponse;
-import io.fabric8.kubernetes.client.okhttp.OkHttpClientImpl;
 
 public class OpenshiftCryostatClient extends BaseCryostatClient {
 
@@ -47,13 +47,13 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
 
     @Override
     public void authenticate(String apiContextUrl) throws IOException {
-        post(apiContextUrl, OkHttpClientImpl.JSON.toString(), new byte[0], Void.class);
+        post(apiContextUrl, "application/json", new byte[0], Void.class);
     }
 
     @Override
     public List<Target> targets(String apiContextUrl) throws IOException {
-        return mapper.readValue(get(apiContextUrl, "unable to retrieve targets: %s %s").body()
-            , new TypeReference<List<Target>>() { });
+        return mapper.readValue(get(apiContextUrl, "unable to retrieve targets: %s %s").body(), new TypeReference<>() {
+        });
     }
 
     @Override
@@ -67,20 +67,20 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
             , "annotations.cryostat.PORT", port
             , "annotations.cryostat.NAMESPACE", OpenshiftClient.get().getNamespace()
             , "annotations.cryostat.POD_NAME", podName
-            ), Map.class);
+        ), Map.class);
     }
 
     @Override
     public List<Recording> recordings(String apiContextUrl) throws IOException {
-        return mapper.readValue(get(apiContextUrl, "unable to retrieve recordings: %s %s").body()
-            , new TypeReference<List<Recording>>() { });
+        return mapper.readValue(get(apiContextUrl, "unable to retrieve recordings: %s %s").body(), new TypeReference<>() {
+        });
     }
 
     @Override
     public void startRecording(String apiContextUrl, String name, Map<String, String> labels) throws IOException {
         final HttpResponse<Reader> result = post(apiContextUrl, Map.of("recordingName", name
-            , "events", "template=" + getJfrTemplate()
-            , "metadata", "{\"labels\":" + mapper.writeValueAsString(labels) + "}")
+                , "events", "template=" + getJfrTemplate()
+                , "metadata", "{\"labels\":" + mapper.writeValueAsString(labels) + "}")
             , Reader.class);
         if (result.code() != 201) {
             throw new IOException("Unable to start recording :" + result.code());
@@ -90,7 +90,7 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     @Override
     public void stopRecording(String apiContextUrl) throws IOException {
         final HttpRequest req = getRequestForUrl(apiContextUrl).patch("text/plain", "STOP").build();
-        final HttpResponse<Void> resp = apiClient.send(req, Void.class);
+        final HttpResponse<Void> resp = sendRequest(req, Void.class);
         if (!resp.isSuccessful()) {
             throw new RuntimeException(String.format("error on stopping recording on %s: %s %s", apiContextUrl, resp.code(), resp.message()));
         }
@@ -99,7 +99,7 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     @Override
     public void downloadRecording(String apiContextUrl, String destinationPath) throws IOException {
         final HttpRequest req = getRequestForUrl(apiContextUrl).build();
-        final HttpResponse<InputStream> resp = apiClient.send(req, InputStream.class);
+        final HttpResponse<InputStream> resp = sendRequest(req, InputStream.class);
         if (!resp.isSuccessful()) {
             throw new RuntimeException(String.format("error on downloading recording at %s: %s %s", apiContextUrl, resp.code(), resp.message()));
         }
@@ -131,7 +131,7 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
 
     private HttpResponse<Reader> get(String apiContextUrl, String format) throws IOException {
         final HttpRequest req = getRequestForUrl(apiContextUrl).build();
-        final HttpResponse<Reader> resp = apiClient.send(req, Reader.class);
+        final HttpResponse<Reader> resp = sendRequest(req, Reader.class);
         if (!resp.isSuccessful()) {
             LOG.error("error sending GET to {}: {}", apiContextUrl, resp.bodyString());
             throw new RuntimeException(String.format(format, resp.code(), resp.message()));
@@ -150,7 +150,8 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
     }
 
     private <T> HttpResponse<T> postRequest(String apiContextUrl, Class<T> returnType, HttpRequest req) throws IOException {
-        final HttpResponse<T> resp = apiClient.send(req, returnType);
+        final HttpResponse<T> resp;
+        resp = sendRequest(req, returnType);
         if (!resp.isSuccessful()) {
             LOG.error("error sending POST to {}: {}", apiContextUrl, resp.bodyString());
             throw new RuntimeException(String.format("error on posting on %s: %s %s", apiContextUrl, resp.code(), resp.message()));
@@ -174,9 +175,19 @@ public class OpenshiftCryostatClient extends BaseCryostatClient {
 
     private void delete(String apiContextUrl) throws IOException {
         final HttpRequest req = getRequestForUrl(apiContextUrl).delete("text/plain", "").build();
-        final HttpResponse<Void> resp = apiClient.send(req, Void.class);
+        final HttpResponse<Void> resp = sendRequest(req, Void.class);
         if (!resp.isSuccessful()) {
             throw new RuntimeException(String.format("error deleting %s: %s %s", apiContextUrl, resp.code(), resp.message()));
         }
+    }
+
+    private <T> HttpResponse<T> sendRequest(HttpRequest request, Class<T> responseClass) {
+        final HttpResponse<T> resp;
+        try {
+            resp = apiClient.sendAsync(request, responseClass).get();
+        } catch (InterruptedException | ExecutionException e) {
+            throw new RuntimeException("Unable to invoke request", e);
+        }
+        return resp;
     }
 }

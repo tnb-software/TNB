@@ -33,6 +33,14 @@
             <version>${kubernetes.client.version}</version>
         </dependency>
         <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>okhttp</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>logging-interceptor</artifactId>
+        </dependency>
+        <dependency>
             <groupId>org.apache.geronimo.config</groupId>
             <artifactId>geronimo-config-impl</artifactId>
             <version>${geronimo.config.version}</version>

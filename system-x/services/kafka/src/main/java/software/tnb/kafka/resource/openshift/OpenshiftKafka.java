@@ -32,7 +32,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.strimzi.api.kafka.KafkaList;
 import io.strimzi.api.kafka.KafkaTopicList;
 import io.strimzi.api.kafka.model.KafkaBuilder;
@@ -45,30 +44,8 @@ import io.strimzi.api.kafka.model.status.Condition;
 public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKafka.class);
 
-    private static final String CRD_GROUP = "kafka.strimzi.io";
-    private static final String CRD_VERSION = "v1beta2";
-
-    private static final CustomResourceDefinitionContext KAFKA_CONTEXT = new CustomResourceDefinitionContext.Builder()
-        .withName("Kafka")
-        .withGroup(CRD_GROUP)
-        .withVersion(CRD_VERSION)
-        .withPlural("kafkas")
-        .withScope("Namespaced")
-        .build();
-
     private static final MixedOperation<io.strimzi.api.kafka.model.Kafka, KafkaList, Resource<io.strimzi.api.kafka.model.Kafka>> KAFKA_CRD_CLIENT =
-        OpenshiftClient.get().customResources(KAFKA_CONTEXT, io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
-
-    private static final CustomResourceDefinitionContext KAFKA_TOPIC_CONTEXT = new CustomResourceDefinitionContext.Builder()
-        .withName("KafkaTopic")
-        .withGroup(CRD_GROUP)
-        .withVersion(CRD_VERSION)
-        .withPlural("kafkatopics")
-        .withScope("Namespaced")
-        .build();
-
-    private static final MixedOperation<KafkaTopic, KafkaTopicList, Resource<KafkaTopic>> KAFKA_TOPIC_CRD_CLIENT =
-        OpenshiftClient.get().customResources(KAFKA_TOPIC_CONTEXT, KafkaTopic.class, KafkaTopicList.class);
+        OpenshiftClient.get().resources(io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
 
     @Override
     public long waitTime() {
@@ -140,7 +117,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().inNamespace(targetNamespace(), c -> c.getLabeledPods("name", "amq-streams-cluster-operator").size() != 0
+        return OpenshiftClient.get().inNamespace(targetNamespace(), c -> !c.getLabeledPods("name", "amq-streams-cluster-operator").isEmpty()
             && KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).withName(name()).get() != null);
     }
 
@@ -222,7 +199,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             .endSpec()
             .build();
         //@formatter:on
-        KAFKA_TOPIC_CRD_CLIENT.inNamespace(targetNamespace()).createOrReplace(kafkaTopic);
+        OpenshiftClient.get().resources(KafkaTopic.class, KafkaTopicList.class).inNamespace(targetNamespace()).createOrReplace(kafkaTopic);
     }
 
     private void createBasicUser() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
