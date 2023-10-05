@@ -94,6 +94,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
+                WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
             }
         }
     }

@@ -59,6 +59,7 @@ public class LocalQuarkusApp extends QuarkusApp {
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
+                WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
             }
         }
     }
