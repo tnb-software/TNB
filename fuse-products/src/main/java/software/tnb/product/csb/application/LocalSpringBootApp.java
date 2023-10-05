@@ -89,11 +89,17 @@ public class LocalSpringBootApp extends SpringBootApp {
         if (logStream != null) {
             logStream.stop();
         }
+
+        if (log != null) {
+            log.save();
+        }
+
         if (appProcess != null) {
             LOG.info("Stopping integration {}", name);
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
+                WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
             }
         }
     }
