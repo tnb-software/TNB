@@ -83,7 +83,7 @@ public class IBMMQValidation implements Validation {
         }
     }
 
-    public void createTopic(String topicName) {
+    private void createTopic(String topicName) {
         if (!createdTopics.contains(topicName)) {
             PCFMessage request = new PCFMessage(MQConstants.MQCMD_CREATE_TOPIC);
             request.addParameter(MQConstants.MQCA_TOPIC_NAME, topicName);
