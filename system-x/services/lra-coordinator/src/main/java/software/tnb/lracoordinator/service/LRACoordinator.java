@@ -14,7 +14,7 @@ public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoVali
 
     public Map<String, String> containerEnvironment() {
         return Map.of("QUARKUS_HTTP_PORT", String.valueOf(DEFAULT_PORT)
-            , "LOG_LEVEL", "DEBUG"
+            , "LOG_LEVEL", "DEBUG", "quarkus.log.level", "DEBUG"
         );
     }
 
@@ -23,7 +23,7 @@ public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoVali
     public abstract int port();
 
     public String defaultImage() {
-        return "quay.io/rh_integration/lra-coordinator:5.12.4.Final";
+        return "quay.io/jbosstm/lra-coordinator:latest";
     }
 
     public void openResources() {
