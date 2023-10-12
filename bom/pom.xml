@@ -396,17 +396,17 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-tekton</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-telegram</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-webhook</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
-                <artifactId>system-x-tekton</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
