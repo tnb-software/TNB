@@ -30,6 +30,7 @@ import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
@@ -43,6 +44,8 @@ import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
 @AutoService(LRACoordinator.class)
 public class OpenshiftLRACoordinator extends LRACoordinator implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLRACoordinator.class);
+    protected static final String MOUNT_POINT_DEFAULT_STORE = "/home/jboss/ObjectStore/ShadowNoFileLockStore/defaultStore";
+    protected static final String VOLUME_NAME = "data";
 
     private long uid;
 
@@ -123,6 +126,10 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                                 .addAllToPorts(containerPorts)
                                 .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                                     .collect(Collectors.toList()))
+                                .withVolumeMounts(new VolumeMountBuilder()
+                                    .withName(VOLUME_NAME)
+                                    .withMountPath(MOUNT_POINT_DEFAULT_STORE)
+                                    .build())
                                 .withLivenessProbe(new ProbeBuilder()
                                     .editOrNewHttpGet()
                                         .withPath("/lra-coordinator")
@@ -140,6 +147,10 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                                     .withInitialDelaySeconds(10)
                                     .build())
                             .endContainer()
+                            .addNewVolume()
+                                .withName(VOLUME_NAME)
+                                .withNewEmptyDir().endEmptyDir()
+                            .endVolume()
                         .endSpec()
                     .endTemplate()
                     .addNewTrigger()
