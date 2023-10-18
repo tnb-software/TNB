@@ -15,7 +15,7 @@ public abstract class SnmpServer extends Service<NoAccount, NoClient, NoValidati
 
     @Override
     public String defaultImage() {
-        return "images.paas.redhat.com/fuseqe/snmp-ocp:latest";
+        return "quay.io/fuse_qe/snmp-ocp:latest";
     }
 
     public abstract String host();
