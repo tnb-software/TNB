@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Hyperfoil</name>
 
     <properties>
-        <commons-io-version>2.14.0</commons-io-version>
+        <commons-io-version>2.15.0</commons-io-version>
         <okio-jvm-version>3.3.0</okio-jvm-version>
         <gson-fire-version>1.8.5</gson-fire-version>
     </properties>
