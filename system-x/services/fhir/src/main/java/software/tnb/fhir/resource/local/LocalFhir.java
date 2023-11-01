@@ -14,11 +14,6 @@ public class LocalFhir extends Fhir implements Deployable {
     private FhirContainer container;
 
     @Override
-    public String defaultImage() {
-        return FHIR_IMAGE;
-    }
-
-    @Override
     public void deploy() {
         LOG.info("Starting FHIR container");
         container = new FhirContainer(defaultImage(), PORT, containerEnvironment());

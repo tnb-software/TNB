@@ -9,7 +9,6 @@ import software.tnb.common.validation.NoValidation;
 import java.util.Map;
 
 public abstract class Fhir extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
-    public static final String FHIR_IMAGE = "quay.io/fuse_qe/hapi:v4.2.0";
     public static final int PORT = 8080;
 
     public abstract int getPortMapping();
@@ -20,5 +19,10 @@ public abstract class Fhir extends Service<NoAccount, NoClient, NoValidation> im
         return Map.of(
             "HAPI_FHIR_VERSION", "DSTU3",
             "HAPI_REUSE_CACHED_SEARCH_RESULTS_MILLIS", "-1");
+    }
+
+    @Override
+    public String defaultImage() {
+        return "quay.io/fuse_qe/hapi:v4.2.0";
     }
 }

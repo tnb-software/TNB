@@ -18,11 +18,6 @@ public class LocalRabbitMQBroker extends RabbitMQ implements Deployable, WithDoc
     private RabbitMQBrokerContainer container;
 
     @Override
-    public String defaultImage() {
-        return IMAGE;
-    }
-
-    @Override
     public void deploy() {
         LOG.info("Starting RabbitMQ container");
         container = new RabbitMQBrokerContainer(image(), containerEnvironment(), containerPorts());

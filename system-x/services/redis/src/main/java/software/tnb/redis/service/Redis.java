@@ -24,6 +24,6 @@ public abstract class Redis extends Service<NoAccount, RedisClient, RedisValidat
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/redis-image:6.0.20-alpine";
+        return "quay.io/fuse_qe/redis-image:6.0.20";
     }
 }
