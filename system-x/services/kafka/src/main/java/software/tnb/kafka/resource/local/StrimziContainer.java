@@ -29,7 +29,7 @@ public class StrimziContainer extends GenericContainer<StrimziContainer> {
 
         String listenerAddress = "localhost";
         String dockerHost = TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST");
-        if (dockerHost != null) {
+        if (dockerHost != null && dockerHost.contains("tcp://")) {
             listenerAddress = StringUtils.substringBetween(dockerHost, "tcp://", ":");
         }
         addFixedExposedPort(KAFKA_PORT, KAFKA_PORT);
