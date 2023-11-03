@@ -23,11 +23,6 @@ import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname {
 
     @Override
-    public String defaultImage() {
-        return FHIR_IMAGE;
-    }
-
-    @Override
     public void undeploy() {
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();

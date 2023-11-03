@@ -16,6 +16,6 @@ public abstract class LocalStack extends Service<AWSAccount, SdkClient, Validati
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/localstack:1.4.0";
+        return "quay.io/fuse_qe/localstack:2.3";
     }
 }
