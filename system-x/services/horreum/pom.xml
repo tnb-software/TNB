@@ -17,7 +17,7 @@
         <threetenbp-version>1.6.0</threetenbp-version>
         <google-code-findbugs-jsr305>3.0.2</google-code-findbugs-jsr305>
         <okio-jvm-version>3.3.0</okio-jvm-version>
-        <gson-fire-version>1.8.5</gson-fire-version>
+        <gson-fire-version>1.9.0</gson-fire-version>
     </properties>
 
     <dependencies>
