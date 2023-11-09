@@ -16,7 +16,7 @@
 
     <properties>
         <swagger-core-version>1.6.5</swagger-core-version>
-        <gson-fire-version>1.8.5</gson-fire-version>
+        <gson-fire-version>1.9.0</gson-fire-version>
         <apache-oltu-oauth2-version>1.0.2</apache-oltu-oauth2-version>
         <jakarta-annotation-version>2.1.1</jakarta-annotation-version>
         <jakarta.ws.rs-api-version>3.1.0</jakarta.ws.rs-api-version>
