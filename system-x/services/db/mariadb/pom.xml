@@ -15,7 +15,7 @@
     <name>TNB :: System-X :: Services :: DB :: MariaDB</name>
 
     <properties>
-        <mariadb.driver.version>3.2.0</mariadb.driver.version>
+        <mariadb.driver.version>3.3.0</mariadb.driver.version>
     </properties>
 
     <dependencies>
