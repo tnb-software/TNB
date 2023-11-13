@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Apicurio Registry</name>
 
     <properties>
-        <apicurio.version>2.4.3.Final</apicurio.version>
+        <apicurio.version>2.5.0.Final</apicurio.version>
     </properties>
 
     <dependencies>
