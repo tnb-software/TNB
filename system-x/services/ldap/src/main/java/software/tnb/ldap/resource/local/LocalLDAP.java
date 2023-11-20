@@ -20,7 +20,7 @@ public class LocalLDAP extends LDAPLocalStack implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting LDAP container");
-        ldapContainer = new LDAPContainer(defaultImage(), PORT, environmentVariables());
+        ldapContainer = new LDAPContainer(image(), PORT, environmentVariables());
         ldapContainer.start();
         LOG.info("LDAP container started");
     }

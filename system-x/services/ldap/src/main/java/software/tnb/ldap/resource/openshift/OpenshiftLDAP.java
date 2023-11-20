@@ -110,7 +110,7 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
                             .withServiceAccount(serviceAccountName)
                             .addNewContainer()
                                 .withName(name())
-                                .withImage(defaultImage())
+                                .withImage(image())
                                 .addNewPort()
                                     .withContainerPort(PORT)
                                     .withName(name())
