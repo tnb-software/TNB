@@ -67,6 +67,8 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         if (HyperfoilConfiguration.agentLogConf().isPresent()) {
             createAgentLogConfigMap(HyperfoilConfiguration.agentLogConf().get());
         }
+        /*kind is not propagated further in the chain for some reason (from MixedOperation to GenericKubernetesResource).
+        It needs to be specified in customResource again.*/
         OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
     }
 
@@ -155,6 +157,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
             spec.put("log", HyperfoilConfiguration.agentLogMapConfig() + "/" + HyperfoilConfiguration.agentLogFileName());
         }
         return new GenericKubernetesResourceBuilder()
+            .withKind(kind())
             .withNewMetadata()
             .withName(APP_NAME)
             .withNamespace(OpenshiftClient.get().getNamespace())

@@ -24,6 +24,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -107,7 +108,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     private Map<String, String> getProperties() {
         final Map<String, String> properties = new HashMap<>(Map.of(
             "quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
-            "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getOauthToken(),
+            "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getAutoOAuthToken(),
             "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
             "quarkus.kubernetes-client.trust-certs", "true",
             "quarkus.kubernetes.deploy", "true",
@@ -154,7 +155,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
             LOG.info("Deleting openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
-            OpenshiftClient.get().load(is).get().forEach(item -> OpenshiftClient.get().resource(item).delete());
+            OpenshiftClient.get().load(is).get().stream().filter(Objects::nonNull).forEach(item -> OpenshiftClient.get().resource(item).delete());
         } catch (IOException e) {
             throw new RuntimeException("Unable to read openshift.yml resource: ", e);
         }
