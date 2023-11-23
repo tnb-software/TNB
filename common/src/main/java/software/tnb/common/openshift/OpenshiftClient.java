@@ -73,7 +73,7 @@ public class OpenshiftClient extends OpenShift {
                 new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig()))));
         } else {
             LOG.info("Auto-configuring openshift client");
-            configBuilder = new OpenShiftConfigBuilder(new OpenShiftConfig(Config.autoConfigure(null)));
+            configBuilder = new OpenShiftConfigBuilder(new OpenShiftConfig(OpenShiftConfig.autoConfigure(null)));
         }
 
         String namespace = OpenshiftConfiguration.openshiftNamespace();
@@ -162,7 +162,7 @@ public class OpenshiftClient extends OpenShift {
                 // create deep copy of the client
                 ObjectMapper objectMapper = new ObjectMapper();
                 OpenShiftConfig cf = objectMapper
-                    .readValue(objectMapper.writeValueAsString(get().config), OpenShiftConfig.class);
+                    .readValue(objectMapper.writeValueAsString(get().config().getConfiguration()), OpenShiftConfig.class);
                 cf.setNamespace(ns);
                 clientWrapper = new OpenshiftClientWrapper(() -> new OpenshiftClient(cf));
             } catch (JsonProcessingException e) {
@@ -171,7 +171,6 @@ public class OpenshiftClient extends OpenShift {
         }
         T result;
         try {
-            LOG.debug("Executing function in {} namespace", OpenshiftClient.get().getNamespace());
             result = function.apply(get());
         } finally {
             clientWrapper = wr;

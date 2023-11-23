@@ -215,7 +215,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Profile prod activated");
     }
 

@@ -193,7 +193,7 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get())
             .contains("Create tcp listener [address:0.0.0.0][port:" + getPort() + "]");
     }

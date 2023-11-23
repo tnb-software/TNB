@@ -15,7 +15,6 @@ import software.tnb.product.ck.configuration.CamelKProdConfiguration;
 import software.tnb.product.ck.configuration.CamelKUpstreamConfiguration;
 import software.tnb.product.openshift.OpenshiftTestParent;
 import software.tnb.product.parent.TestParent;
-import software.tnb.util.ck.TestCamelK;
 import software.tnb.util.openshift.TestOpenshiftClient;
 
 import org.junit.jupiter.api.AfterEach;
@@ -23,6 +22,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import org.apache.camel.v1.Integration;
+import org.apache.camel.v1.IntegrationPlatform;
+import org.apache.camel.v1.Kamelet;
+import org.apache.camel.v1.KameletStatus;
+import org.apache.camel.v1.integrationplatformspec.build.maven.settings.ConfigMapKeyRef;
+import org.apache.camel.v1alpha1.KameletBinding;
 import org.awaitility.Awaitility;
 
 import java.nio.file.Path;
@@ -32,12 +37,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.IntegrationPlatform;
-import io.fabric8.camelk.v1alpha1.KameletBindingBuilder;
-import io.fabric8.camelk.v1alpha1.KameletBuilder;
-import io.fabric8.camelk.v1alpha1.KameletListBuilder;
-import io.fabric8.kubernetes.api.model.ConfigMapKeySelector;
+import io.fabric8.kubernetes.api.model.DefaultKubernetesResourceList;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.server.mock.OutputStreamMessage;
 import io.fabric8.kubernetes.client.utils.Utils;
@@ -51,11 +53,11 @@ import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionStatusBui
 @Tag("unit")
 public class CamelKTest extends CamelKTestParent {
     private final CamelKConfiguration config = CamelKConfiguration.getConfiguration();
-    private TestCamelK camelK;
+    private CamelK camelK;
 
     @BeforeEach
     public void createCamelK() {
-        camelK = new TestCamelK();
+        camelK = new CamelK();
     }
 
     @AfterEach
@@ -73,7 +75,7 @@ public class CamelKTest extends CamelKTestParent {
                 .build()
         );
 
-        executor.submit(() -> camelK.setupProduct());
+        executor.submit(() -> new CamelK().setupProduct());
     }
 
     private void deployAndWait() {
@@ -95,8 +97,7 @@ public class CamelKTest extends CamelKTestParent {
         );
 
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
-            assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms().withName(config.integrationPlatformName()).get())
-                .isNotNull());
+            assertThat(OpenshiftClient.get().resources(IntegrationPlatform.class).withName(config.integrationPlatformName()).get()).isNotNull());
     }
 
     @Test
@@ -118,14 +119,11 @@ public class CamelKTest extends CamelKTestParent {
         deployAndWait();
 
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
-            assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms().withName(config.integrationPlatformName()).get())
-                .isNotNull());
-        IntegrationPlatform ip =
-            OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms().withName(config.integrationPlatformName())
-                .get();
+            assertThat(OpenshiftClient.get().resources(IntegrationPlatform.class).withName(config.integrationPlatformName()).get()).isNotNull());
+        IntegrationPlatform ip = OpenshiftClient.get().resources(IntegrationPlatform.class).withName(config.integrationPlatformName()).get();
 
         assertThat(ip.getSpec().getBuild().getTimeout()).isNotNull();
-        assertThat(ip.getSpec().getBuild().getTimeout()).isEqualTo(config.mavenBuildTimeout());
+        assertThat(ip.getSpec().getBuild().getTimeout()).isEqualTo(config.mavenBuildTimeout() + "m");
     }
 
     @Test
@@ -139,10 +137,9 @@ public class CamelKTest extends CamelKTestParent {
 
             deployAndWait();
 
-            IntegrationPlatform ip = OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms()
-                .withName(config.integrationPlatformName()).get();
-            assertThat(ip.getSpec().getBuild().getMaven().getSettings().getConfigMapKeyRef()).isNotNull();
-            final ConfigMapKeySelector configMapKeyRef = ip.getSpec().getBuild().getMaven().getSettings().getConfigMapKeyRef();
+            IntegrationPlatform ip = OpenshiftClient.get().resources(IntegrationPlatform.class).withName(config.integrationPlatformName()).get();
+            final ConfigMapKeyRef configMapKeyRef = ip.getSpec().getBuild().getMaven().getSettings().getConfigMapKeyRef();
+            assertThat(configMapKeyRef).isNotNull();
             assertThat(configMapKeyRef.getKey()).isEqualTo("settings.xml");
             assertThat(configMapKeyRef.getName()).isEqualTo(config.mavenSettingsConfigMapName());
 
@@ -160,8 +157,7 @@ public class CamelKTest extends CamelKTestParent {
 
         deployAndWait();
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
-            assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrationPlatforms()
-                .withName(config.integrationPlatformName()).get()).isNotNull());
+            assertThat(OpenshiftClient.get().resources(IntegrationPlatform.class).withName(config.integrationPlatformName()).get()).isNotNull());
         assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName())).isNotNull();
         assertThat(OpenshiftClient.get().getConfigMap(config.mavenSettingsConfigMapName()).getData().get("settings.xml")).contains("my-repo");
     }
@@ -170,7 +166,7 @@ public class CamelKTest extends CamelKTestParent {
     public void isReadyShouldReturnFalseWhenPodIsntReadyTest() {
         Pod operator = operatorPod(false);
         operator.getStatus().getContainerStatuses().get(0).setReady(false);
-        OpenshiftClient.get().pods().create(operator);
+        OpenshiftClient.get().pods().resource(operator).create();
 
         assertThat(ProductFactory.create(CamelK.class).isReady()).isFalse();
     }
@@ -184,7 +180,6 @@ public class CamelKTest extends CamelKTestParent {
         expectKamelets(null);
         expectIntegrationPlatform();
 
-        camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isFalse();
     }
 
@@ -197,7 +192,6 @@ public class CamelKTest extends CamelKTestParent {
         expectKamelets(false);
         expectIntegrationPlatform();
 
-        camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isFalse();
     }
 
@@ -210,7 +204,6 @@ public class CamelKTest extends CamelKTestParent {
         expectKamelets(true);
         expectIntegrationPlatform();
 
-        camelK.setClient(OpenshiftClient.get().adapt(CamelKClient.class));
         assertThat(camelK.isReady()).isTrue();
     }
 
@@ -220,15 +213,20 @@ public class CamelKTest extends CamelKTestParent {
 
         executor.submit(() -> camelK.createIntegration(dummyIb()));
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1()
-            .integrations().withName(TestParent.name())).isNotNull());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(OpenshiftClient.get().resources(Integration.class)
+            .withName(TestParent.name())).isNotNull());
     }
 
     @Test
     public void shouldCreateAppFromKameletBindingTest() {
         deployAndWait();
 
-        executor.submit(() -> camelK.createKameletBinding(new KameletBindingBuilder().withNewMetadata().withName("kb").endMetadata().build()));
+        executor.submit(() -> {
+            ObjectMeta metadata = new ObjectMetaBuilder().withName("kb").build();
+            KameletBinding kb = new KameletBinding();
+            kb.setMetadata(metadata);
+            camelK.createKameletBinding(kb);
+        });
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
             assertThat(kameletBindingClient.withName("kb").get()).isNotNull());
     }
@@ -299,18 +297,21 @@ public class CamelKTest extends CamelKTestParent {
     }
 
     private void expectKamelets(Object config) {
-        final KameletListBuilder builder = new KameletListBuilder();
+        final DefaultKubernetesResourceList<Kamelet> list = new DefaultKubernetesResourceList<>();
         if (config != null) {
             String phase = Boolean.parseBoolean(config.toString()) ? "Ready" : "Error";
-            builder.addToItems(new KameletBuilder()
-                .withNewMetadata()
-                .withName(phase)
-                .endMetadata()
-                .withNewStatus()
-                .withPhase(phase)
-                .endStatus().build());
+            Kamelet k = new Kamelet();
+
+            ObjectMeta metadata = new ObjectMetaBuilder().withName(phase).build();
+            k.setMetadata(metadata);
+
+            KameletStatus status = new KameletStatus();
+            status.setPhase(phase);
+            k.setStatus(status);
+
+            list.setItems(List.of(k));
         }
-        OpenshiftTestParent.expectServer.expect().get().withPath("/apis/camel.apache.org/v1alpha1/namespaces/test/kamelets")
-            .andReturn(200, builder.build()).always();
+        OpenshiftTestParent.expectServer.expect().get().withPath("/apis/camel.apache.org/v1/namespaces/test/kamelets")
+            .andReturn(200, list).always();
     }
 }

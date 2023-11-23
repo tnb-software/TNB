@@ -114,7 +114,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
                             .addAllToPorts(ports)
                             .editOrNewSecurityContext()
                                 .editOrNewCapabilities()
-                                    .addNewAdd("SYS_CHROOT")
+                                    .addToAdd("SYS_CHROOT")
                                 .endCapabilities()
                             .endSecurityContext()
                         .endContainer()
@@ -165,14 +165,14 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("AddUser command executed sucessfully in");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().deploymentConfigs().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().deploymentConfigs().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+                .getItems().isEmpty();
     }
 
     @Override

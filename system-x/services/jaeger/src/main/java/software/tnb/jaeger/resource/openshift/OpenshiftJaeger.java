@@ -1,8 +1,7 @@
 package software.tnb.jaeger.resource.openshift;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.deployment.WithCustomResource;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
@@ -16,27 +15,18 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 @AutoService(Jaeger.class)
-public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, WithExternalHostname, WithOperatorHub {
+public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, WithExternalHostname, WithOperatorHub, WithCustomResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftJaeger.class);
-    private static final String CRD_GROUP = "jaegertracing.io";
-    private static final String CRD_VERSION = "v1";
-    private static final CustomResourceDefinitionContext JAEGER_CTX = new CustomResourceDefinitionContext.Builder()
-        .withName("Jaeger")
-        .withGroup(CRD_GROUP)
-        .withVersion(CRD_VERSION)
-        .withPlural("jaegers")
-        .withScope("Namespaced")
-        .build();
     private static final String JAEGER_INSTANCE_NAME = "jaeger-all-in-one-inmemory";
 
     @Override
@@ -59,12 +49,8 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         LOG.debug("Creating Jaeger subscription");
         // Create subscription if needed
         createSubscription();
-        try {
-            OpenshiftClient.get().customResource(JAEGER_CTX).inNamespace(targetNamespace())
-                .createOrReplace(createCr(JAEGER_INSTANCE_NAME));
-        } catch (IOException e) {
-            fail("Unable to create Jaeger instance", e);
-        }
+
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
     }
 
     @Override
@@ -119,14 +105,18 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         return true;
     }
 
-    private Map<String, Object> createCr(String name) {
-        Map<String, Object> cr = new HashMap<>();
-        cr.put("apiVersion", CRD_GROUP + "/" + CRD_VERSION);
-        cr.put("kind", "Jaeger");
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("name", name);
-        metadata.put("namespace", targetNamespace());
-        cr.put("metadata", metadata);
+    @Override
+    public String kind() {
+        return "Jaeger";
+    }
+
+    @Override
+    public String apiVersion() {
+        return "jaegertracing.io/v1";
+    }
+
+    @Override
+    public GenericKubernetesResource customResource() {
         Map<String, Object> spec = new HashMap<>();
         spec.put("strategy", "allInOne");
         if (env().containsKey("PROMETHEUS_SERVER_URL")) {
@@ -138,8 +128,13 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
             spec.put("allInOne", allInOneConfig);
         }
         spec.put("ingress", Map.of("security", "none")); //to avoid authentication
-        cr.put("spec", spec);
-        return cr;
-    }
 
+        return new GenericKubernetesResourceBuilder()
+            .withKind(kind())
+            .withApiVersion(apiVersion())
+            .withNewMetadata()
+            .withName(JAEGER_INSTANCE_NAME)
+            .endMetadata()
+            .withAdditionalProperties(Map.of("spec", spec)).build();
+    }
 }

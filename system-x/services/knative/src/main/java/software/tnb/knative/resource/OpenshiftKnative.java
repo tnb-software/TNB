@@ -14,15 +14,14 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
 import dev.failsafe.Failsafe;
 import dev.failsafe.FailsafeException;
 import dev.failsafe.RetryPolicy;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.client.KubernetesClientTimeoutException;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
@@ -93,10 +92,20 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
                 .withDelay(Duration.ofSeconds(5))
                 .withMaxRetries(3)
                 .build();
-            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().customResource(EVENTING_CTX).inNamespace(EVENTING_NAMESPACE)
-                .createOrReplace(createCr("KnativeEventing", EVENTING_CR_NAME, EVENTING_NAMESPACE)));
-            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().customResource(SERVING_CTX).inNamespace(SERVING_NAMESPACE)
-                .createOrReplace(createCr("KnativeServing", SERVING_CR_NAME, SERVING_NAMESPACE)));
+            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().genericKubernetesResources(EVENTING_CTX).inNamespace(EVENTING_NAMESPACE)
+                .resource(new GenericKubernetesResourceBuilder()
+                    .withNewMetadata()
+                    .withName(EVENTING_CR_NAME)
+                    .endMetadata()
+                    .build()
+                ).create());
+            Failsafe.with(retryPolicy).run(() -> OpenshiftClient.get().genericKubernetesResources(SERVING_CTX).inNamespace(SERVING_NAMESPACE)
+                .resource(new GenericKubernetesResourceBuilder()
+                    .withNewMetadata()
+                    .withName(SERVING_CR_NAME)
+                    .endMetadata()
+                    .build()
+                ).create());
         } catch (FailsafeException e) {
             fail("Unable to create custom resources: ", e.getCause());
         }
@@ -116,8 +125,8 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
     public boolean isDeployed() {
         List<Pod> pods = OpenshiftClient.get().pods().inNamespace(targetNamespace()).withLabel("name", "knative-operator").list().getItems();
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-            && ((List) OpenshiftClient.get().customResource(EVENTING_CTX).list(EVENTING_NAMESPACE).get("items")).size() == 1
-            && ((List) OpenshiftClient.get().customResource(SERVING_CTX).list(SERVING_NAMESPACE).get("items")).size() == 1;
+            && OpenshiftClient.get().genericKubernetesResources(EVENTING_CTX).inNamespace(EVENTING_NAMESPACE).list().getItems().size() == 1
+            && OpenshiftClient.get().genericKubernetesResources(SERVING_CTX).inNamespace(SERVING_NAMESPACE).list().getItems().size() == 1;
     }
 
     @Override
@@ -129,18 +138,6 @@ public class OpenshiftKnative extends Knative implements OpenshiftDeployable, Wi
     @Override
     public void restart() {
         // not applicable for knative
-    }
-
-    private Map<String, Object> createCr(String kind, String name, String namespace) {
-        // Too short to bother with CR classes
-        Map<String, Object> cr = new HashMap<>();
-        cr.put("apiVersion", CRD_GROUP + "/" + CRD_VERSION);
-        cr.put("kind", kind);
-        Map<String, Object> metadata = new HashMap<>();
-        metadata.put("name", name);
-        metadata.put("namespace", namespace);
-        cr.put("metadata", metadata);
-        return cr;
     }
 
     @Override

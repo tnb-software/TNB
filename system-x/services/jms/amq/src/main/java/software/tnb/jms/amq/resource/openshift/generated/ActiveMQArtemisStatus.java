@@ -1,114 +1,106 @@
 package software.tnb.jms.amq.resource.openshift.generated;
 
-import com.fasterxml.jackson.annotation.JsonAnyGetter;
-import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-
-import javax.annotation.processing.Generated;
-
-import java.util.HashMap;
-import java.util.Map;
-
-import io.fabric8.kubernetes.api.model.KubernetesResource;
-
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonPropertyOrder({
-    "podStatus"
-})
-@Generated("jsonschema2pojo")
-@JsonDeserialize(
-    using = JsonDeserializer.None.class
-)
-public class ActiveMQArtemisStatus implements KubernetesResource {
+@com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+@com.fasterxml.jackson.annotation.JsonPropertyOrder({"conditions","deploymentPlanSize","externalConfigs","podStatus","scaleLabelSelector","upgrade","version"})
+@com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = com.fasterxml.jackson.databind.JsonDeserializer.None.class)
+@javax.annotation.processing.Generated("io.fabric8.java.generator.CRGeneratorRunner")
+public class ActiveMQArtemisStatus implements io.fabric8.kubernetes.api.model.KubernetesResource {
 
     /**
-     * (Required)
+     * Current state of the resource Conditions represent the latest available observations of an object's state
      */
-    @JsonProperty("podStatus")
-    private PodStatus podStatus;
-    @JsonIgnore
-    private Map<String, Object> additionalProperties = new HashMap<String, Object>();
+    @com.fasterxml.jackson.annotation.JsonProperty("conditions")
+    @com.fasterxml.jackson.annotation.JsonPropertyDescription("Current state of the resource Conditions represent the latest available observations of an object's state")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Conditions> conditions;
+
+    public java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Conditions> getConditions() {
+        return conditions;
+    }
+
+    public void setConditions(java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Conditions> conditions) {
+        this.conditions = conditions;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("deploymentPlanSize")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private Integer deploymentPlanSize;
+
+    public Integer getDeploymentPlanSize() {
+        return deploymentPlanSize;
+    }
+
+    public void setDeploymentPlanSize(Integer deploymentPlanSize) {
+        this.deploymentPlanSize = deploymentPlanSize;
+    }
 
     /**
-     * (Required)
+     * Current state of external referenced resources
      */
-    @JsonProperty("podStatus")
-    public PodStatus getPodStatus() {
+    @com.fasterxml.jackson.annotation.JsonProperty("externalConfigs")
+    @com.fasterxml.jackson.annotation.JsonPropertyDescription("Current state of external referenced resources")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.ExternalConfigs> externalConfigs;
+
+    public java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.ExternalConfigs> getExternalConfigs() {
+        return externalConfigs;
+    }
+
+    public void setExternalConfigs(java.util.List<software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.ExternalConfigs> externalConfigs) {
+        this.externalConfigs = externalConfigs;
+    }
+
+    /**
+     * The current pods
+     */
+    @com.fasterxml.jackson.annotation.JsonProperty("podStatus")
+    
+    @com.fasterxml.jackson.annotation.JsonPropertyDescription("The current pods")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.PodStatus podStatus;
+
+    public software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.PodStatus getPodStatus() {
         return podStatus;
     }
 
-    /**
-     * (Required)
-     */
-    @JsonProperty("podStatus")
-    public void setPodStatus(PodStatus podStatus) {
+    public void setPodStatus(software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.PodStatus podStatus) {
         this.podStatus = podStatus;
     }
 
-    public ActiveMQArtemisStatus withPodStatus(PodStatus podStatus) {
-        this.podStatus = podStatus;
-        return this;
+    @com.fasterxml.jackson.annotation.JsonProperty("scaleLabelSelector")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private String scaleLabelSelector;
+
+    public String getScaleLabelSelector() {
+        return scaleLabelSelector;
     }
 
-    @JsonAnyGetter
-    public Map<String, Object> getAdditionalProperties() {
-        return this.additionalProperties;
+    public void setScaleLabelSelector(String scaleLabelSelector) {
+        this.scaleLabelSelector = scaleLabelSelector;
     }
 
-    @JsonAnySetter
-    public void setAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
+    @com.fasterxml.jackson.annotation.JsonProperty("upgrade")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Upgrade upgrade;
+
+    public software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Upgrade getUpgrade() {
+        return upgrade;
     }
 
-    public ActiveMQArtemisStatus withAdditionalProperty(String name, Object value) {
-        this.additionalProperties.put(name, value);
-        return this;
+    public void setUpgrade(software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Upgrade upgrade) {
+        this.upgrade = upgrade;
     }
 
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append(ActiveMQArtemisStatus.class.getName()).append('@').append(Integer.toHexString(System.identityHashCode(this))).append('[');
-        sb.append("podStatus");
-        sb.append('=');
-        sb.append(((this.podStatus == null) ? "<null>" : this.podStatus));
-        sb.append(',');
-        sb.append("additionalProperties");
-        sb.append('=');
-        sb.append(((this.additionalProperties == null) ? "<null>" : this.additionalProperties));
-        sb.append(',');
-        if (sb.charAt((sb.length() - 1)) == ',') {
-            sb.setCharAt((sb.length() - 1), ']');
-        } else {
-            sb.append(']');
-        }
-        return sb.toString();
+    @com.fasterxml.jackson.annotation.JsonProperty("version")
+    @com.fasterxml.jackson.annotation.JsonSetter(nulls = com.fasterxml.jackson.annotation.Nulls.SKIP)
+    private software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Version version;
+
+    public software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Version getVersion() {
+        return version;
     }
 
-    @Override
-    public int hashCode() {
-        int result = 1;
-        result = ((result * 31) + ((this.podStatus == null) ? 0 : this.podStatus.hashCode()));
-        result = ((result * 31) + ((this.additionalProperties == null) ? 0 : this.additionalProperties.hashCode()));
-        return result;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (other == this) {
-            return true;
-        }
-        if ((other instanceof ActiveMQArtemisStatus) == false) {
-            return false;
-        }
-        ActiveMQArtemisStatus rhs = ((ActiveMQArtemisStatus) other);
-        return (((this.podStatus == rhs.podStatus) || ((this.podStatus != null) && this.podStatus.equals(rhs.podStatus))) && (
-            (this.additionalProperties == rhs.additionalProperties) || ((this.additionalProperties != null) && this.additionalProperties
-                .equals(rhs.additionalProperties))));
+    public void setVersion(software.tnb.jms.amq.resource.openshift.generated.activemqartemisstatus.Version version) {
+        this.version = version;
     }
 }
+

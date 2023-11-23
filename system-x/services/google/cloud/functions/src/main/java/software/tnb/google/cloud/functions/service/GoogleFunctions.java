@@ -16,7 +16,7 @@ import com.google.auto.service.AutoService;
 import com.google.cloud.functions.v1.CloudFunctionsServiceClient;
 import com.google.cloud.functions.v1.CloudFunctionsServiceSettings;
 
-import io.fabric8.kubernetes.client.utils.Base64;
+import java.util.Base64;
 
 @AutoService(GoogleFunctions.class)
 public class GoogleFunctions extends Service<GoogleFunctionsAccount, CloudFunctionsServiceClient, GoogleFunctionsValidation> {
@@ -25,7 +25,7 @@ public class GoogleFunctions extends Service<GoogleFunctionsAccount, CloudFuncti
     protected CloudFunctionsServiceClient client() {
         if (client == null) {
             try {
-                String decodedJson = new String(Base64.decode(account().serviceAccountKey()));
+                String decodedJson = new String(Base64.getDecoder().decode(account().serviceAccountKey()));
                 return CloudFunctionsServiceClient.create(CloudFunctionsServiceSettings.newBuilder()
                     .setCredentialsProvider(FixedCredentialsProvider.create(ServiceAccountCredentials
                         .fromStream(IOUtils.toInputStream(decodedJson, "UTF-8")))).build());

@@ -2,30 +2,29 @@ package software.tnb.product.openshift.ck;
 
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.ck.utils.CamelKSettings;
-import software.tnb.product.ck.utils.CamelKSupport;
 import software.tnb.product.openshift.OpenshiftTestParent;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 
+import org.apache.camel.v1.IntegrationPlatform;
+import org.apache.camel.v1.IntegrationPlatformStatus;
+import org.apache.camel.v1alpha1.KameletBinding;
+
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import io.fabric8.camelk.v1.IntegrationPlatformBuilder;
-import io.fabric8.camelk.v1.IntegrationPlatformListBuilder;
-import io.fabric8.camelk.v1.IntegrationPlatformStatusBuilder;
-import io.fabric8.camelk.v1alpha1.KameletBinding;
-import io.fabric8.camelk.v1alpha1.KameletBindingList;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.DefaultKubernetesResourceList;
+import io.fabric8.kubernetes.api.model.KubernetesResourceList;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 import io.fabric8.kubernetes.api.model.PodListBuilder;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.kubernetes.client.utils.Utils;
 
 /**
@@ -37,9 +36,7 @@ import io.fabric8.kubernetes.client.utils.Utils;
  *   * useful shared methods
  */
 public class CamelKTestParent extends OpenshiftTestParent {
-    private static final CustomResourceDefinitionContext kameletBindingCtx =
-        CamelKSupport.kameletBindingCRDContext(CamelKSettings.KAMELET_API_VERSION_DEFAULT);
-    protected NonNamespaceOperation<KameletBinding, KameletBindingList, Resource<KameletBinding>> kameletBindingClient;
+    protected NonNamespaceOperation<KameletBinding, KubernetesResourceList<KameletBinding>, Resource<KameletBinding>> kameletBindingClient;
     protected ExecutorService executor;
 
     @BeforeAll
@@ -51,8 +48,7 @@ public class CamelKTestParent extends OpenshiftTestParent {
     public void prepare() {
         super.clear();
         executor = Executors.newSingleThreadExecutor();
-        kameletBindingClient = OpenshiftClient.get().customResources(kameletBindingCtx, KameletBinding.class, KameletBindingList.class)
-            .inNamespace(OpenshiftClient.get().getNamespace());
+        kameletBindingClient = OpenshiftClient.get().resources(KameletBinding.class).inNamespace(OpenshiftClient.get().getNamespace());
     }
 
     @AfterEach
@@ -78,6 +74,8 @@ public class CamelKTestParent extends OpenshiftTestParent {
     }
 
     protected void expectOperatorGet() {
+        expectServer.expect().get().withPath("/api/v1/namespaces/test/pods/camel-k")
+            .andReturn(200, operatorPod(true)).always();
         expectServer.expect().get().withPath("/api/v1/namespaces/test/pods?labelSelector=" + Utils.toUrlEncoded("name=camel-k-operator"))
             .andReturn(200,
                 new PodListBuilder()
@@ -87,13 +85,12 @@ public class CamelKTestParent extends OpenshiftTestParent {
     }
 
     protected void expectIntegrationPlatform() {
-        expectServer.expect().get().withPath("/apis/camel.apache.org/v1/namespaces/test/integrationplatforms")
-            .andReturn(200,
-                new IntegrationPlatformListBuilder()
-                    .addNewItemLike(new IntegrationPlatformBuilder()
-                        .withStatus(new IntegrationPlatformStatusBuilder().withPhase("Ready").build())
-                        .build())
-                    .endItem().build()
-            ).always();
+        final DefaultKubernetesResourceList<IntegrationPlatform> list = new DefaultKubernetesResourceList<>();
+        IntegrationPlatform ip = new IntegrationPlatform();
+        IntegrationPlatformStatus status = new IntegrationPlatformStatus();
+        status.setPhase("Ready");
+        ip.setStatus(status);
+        list.setItems(List.of(ip));
+        expectServer.expect().get().withPath("/apis/camel.apache.org/v1/namespaces/test/integrationplatforms").andReturn(200, list).always();
     }
 }

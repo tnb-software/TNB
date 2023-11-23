@@ -5,10 +5,12 @@ import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.ProductsCustomizer;
 import software.tnb.product.util.maven.Maven;
 
-import java.util.List;
-import java.util.Map;
+import org.apache.camel.v1.IntegrationSpec;
+import org.apache.camel.v1.integrationspec.Traits;
+import org.apache.camel.v1.integrationspec.traits.Builder;
 
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
+import java.util.ArrayList;
+import java.util.List;
 
 public class RestCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
 
@@ -37,8 +39,13 @@ public class RestCustomizer extends ProductsCustomizer implements IntegrationSpe
     }
 
     @Override
-    public void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder) {
-        Map<String, Object> configuration = Map.of("properties", List.of("quarkus.camel.servlet.url-patterns=/camel/*"));
-        mergeTraitConfiguration(integrationSpecBuilder, "builder", configuration);
+    public void customizeIntegration(IntegrationSpec integrationSpec) {
+        final Traits traits = integrationSpec.getTraits() == null ? new Traits() : integrationSpec.getTraits();
+        final Builder builder = traits.getBuilder() == null ? new Builder() : traits.getBuilder();
+        final List<String> properties = builder.getProperties() == null ? new ArrayList<>() : builder.getProperties();
+        properties.add("quarkus.camel.servlet.url-patterns=/camel/*");
+        builder.setProperties(properties);
+        traits.setBuilder(builder);
+        integrationSpec.setTraits(traits);
     }
 }

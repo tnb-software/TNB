@@ -13,11 +13,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
@@ -75,8 +76,8 @@ public class OpenshiftMllpServer extends MllpServer implements OpenshiftDeployab
                 .endMetadata()
                 .editOrNewSpec()
                 .addNewContainer()
-                .withName(name()).withImage(image()).addAllToPorts(Arrays.asList(port))
-                //.withEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
+                .withName(name()).withImage(image()).addAllToPorts(Collections.singletonList(port))
+                .addToEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
                 .endContainer()
                 .endSpec()
                 .endTemplate()
@@ -107,7 +108,7 @@ public class OpenshiftMllpServer extends MllpServer implements OpenshiftDeployab
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Accepting connections on port");
     }
 

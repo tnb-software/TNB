@@ -22,24 +22,21 @@ import generated.io.argoproj.v1alpha1.AppProject;
 import generated.io.argoproj.v1alpha1.AppProjectSpec;
 import generated.io.argoproj.v1alpha1.appprojectspec.ClusterResourceWhitelist;
 import generated.io.argoproj.v1alpha1.appprojectspec.Destinations;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
 
-@AutoService({GitOps.class})
+@AutoService(GitOps.class)
 public class GitOps extends Service<NoAccount, ArgoClient, GitOpsValidation> implements OpenshiftDeployable, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(GitOps.class);
     public static final String ARGO_PROJECT_NAME = "tnb-" + UUID.randomUUID();
     public static final String GITOPS_NAMESPACE = "openshift-gitops";
     private final ArgoClient client = new ArgoClient();
-    private static final CustomResourceDefinitionContext ARGOCD_CTX =
-        new Builder().withName("ArgoCD").withGroup("argoproj.io").withVersion("v1alpha1").withPlural("argocds").withScope("Namespaced").build();
 
     public GitOps() {
     }
 
     private AppProject createProject(String projectName) {
-        LOG.debug("Create Argo project", ARGO_PROJECT_NAME);
+        LOG.debug("Create Argo project {}", ARGO_PROJECT_NAME);
         AppProject project = new AppProject();
         project.getMetadata().setName(projectName);
         project.setSpec(new AppProjectSpec());
@@ -52,7 +49,7 @@ public class GitOps extends Service<NoAccount, ArgoClient, GitOpsValidation> imp
         project.getSpec().setClusterResourceWhitelist(List.of(whitelist));
         project.getSpec().setDestinations(List.of(dest));
         project.getSpec().setSourceRepos(List.of("*"));
-        return OpenshiftClient.get().customResources(AppProject.class).inNamespace(GITOPS_NAMESPACE).create(project);
+        return OpenshiftClient.get().resources(AppProject.class).inNamespace(GITOPS_NAMESPACE).resource(project).create();
     }
 
     public GitOpsValidation validation() {
@@ -82,7 +79,8 @@ public class GitOps extends Service<NoAccount, ArgoClient, GitOpsValidation> imp
     public void create() {
         LOG.debug("Creating GitOps operator");
         createSubscription();
-        WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(GITOPS_NAMESPACE).get() != null, "Waiting until the gitops namespace is created");
+        WaitUtils.waitFor(() -> OpenshiftClient.get().namespaces().withName(GITOPS_NAMESPACE).get() != null,
+            "Waiting until the gitops namespace is created");
         createProject(ARGO_PROJECT_NAME);
 
         // edit namespace since the project resource is immutable
@@ -93,9 +91,11 @@ public class GitOps extends Service<NoAccount, ArgoClient, GitOpsValidation> imp
     }
 
     public boolean isReady() {
-        Map<String, Object> argoCd =
-            OpenshiftClient.get().customResource(ARGOCD_CTX).withName("openshift-gitops").inNamespace(GITOPS_NAMESPACE).get();
-        return argoCd != null && argoCd.get("status") != null && ((String) ((Map) argoCd.get("status")).get("phase")).equals("Available");
+        final GenericKubernetesResource argoCD =
+            OpenshiftClient.get().genericKubernetesResources("argoproj.io/v1alpha1", "ArgoCD").inNamespace(GITOPS_NAMESPACE)
+                .withName("openshift-gitops").get();
+        return argoCD != null && argoCD.getAdditionalProperties().get("status") != null
+            && ((Map) argoCD.get("status")).get("phase").equals("Available");
     }
 
     public boolean isDeployed() {

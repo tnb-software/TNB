@@ -2,10 +2,6 @@ package software.tnb.product.ck.configuration;
 
 import software.tnb.product.camel.CamelConfiguration;
 
-import java.time.temporal.ChronoUnit;
-
-import io.fabric8.kubernetes.api.model.Duration;
-
 public abstract class CamelKConfiguration extends CamelConfiguration {
     public static final String FORCE_UPSTREAM = "force.upstream";
     public static final String USE_GLOBAL_INSTALLATION = "camelk.operator.global";
@@ -28,8 +24,8 @@ public abstract class CamelKConfiguration extends CamelConfiguration {
         return getProperty(MAVEN_SETTINGS_CONFIG_MAP_NAME, "tnb-maven-settings");
     }
 
-    public Duration mavenBuildTimeout() {
-        return new Duration(java.time.Duration.of(getInteger(MAVEN_BUILD_TIMEOUT, 30), ChronoUnit.MINUTES));
+    public int mavenBuildTimeout() {
+        return getInteger(MAVEN_BUILD_TIMEOUT, 30);
     }
 
     public String integrationPlatformName() {
@@ -56,7 +52,7 @@ public abstract class CamelKConfiguration extends CamelConfiguration {
         return getBoolean(FORCE_UPSTREAM, false);
     }
 
-    public static boolean useGlobalInstallation() {
+    public boolean useGlobalInstallation() {
         return getBoolean(USE_GLOBAL_INSTALLATION, false);
     }
 

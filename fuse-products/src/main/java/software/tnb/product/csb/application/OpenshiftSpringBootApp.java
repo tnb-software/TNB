@@ -17,7 +17,7 @@ import java.nio.file.Path;
 import java.util.List;
 
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.internal.readiness.Readiness;
+import io.fabric8.kubernetes.client.readiness.Readiness;
 
 public class OpenshiftSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSpringBootApp.class);

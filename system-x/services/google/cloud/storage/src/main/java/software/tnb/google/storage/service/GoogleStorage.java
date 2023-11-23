@@ -15,7 +15,7 @@ import com.google.auto.service.AutoService;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
 
-import io.fabric8.kubernetes.client.utils.Base64;
+import java.util.Base64;
 
 @AutoService(GoogleStorage.class)
 public class GoogleStorage extends Service<GoogleCloudAccount, Storage, GoogleStorageValidation> {
@@ -25,7 +25,7 @@ public class GoogleStorage extends Service<GoogleCloudAccount, Storage, GoogleSt
         if (client == null) {
             LOG.debug("Creating new Google Storage client");
             try {
-                String decodedJson = new String(Base64.decode(account().serviceAccountKey()));
+                String decodedJson = new String(Base64.getDecoder().decode(account().serviceAccountKey()));
                 client = StorageOptions.newBuilder().setCredentials(
                     ServiceAccountCredentials.fromStream(IOUtils.toInputStream(decodedJson, "UTF-8"))).build().getService();
             } catch (Exception e) {

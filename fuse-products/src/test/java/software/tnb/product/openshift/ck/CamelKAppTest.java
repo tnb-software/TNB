@@ -1,12 +1,11 @@
 package software.tnb.product.openshift.ck;
 
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import software.tnb.product.parent.TestParent;
 import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.IOUtils;
 import software.tnb.product.ck.application.CamelKApp;
 import software.tnb.product.ck.customizer.CamelKCustomizer;
 import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
@@ -14,17 +13,17 @@ import software.tnb.product.ck.integration.builder.CamelKIntegrationBuilder;
 import software.tnb.product.ck.integration.resource.ResourceType;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.parent.TestParent;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import org.apache.camel.v1.Integration;
+import org.apache.camel.v1.IntegrationSpec;
+import org.apache.camel.v1.IntegrationStatus;
+import org.apache.camel.v1.integrationspec.Configuration;
+import org.apache.camel.v1alpha1.KameletBinding;
 import org.awaitility.Awaitility;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -33,16 +32,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
-import io.fabric8.camelk.client.CamelKClient;
-import io.fabric8.camelk.v1.ConfigurationSpec;
-import io.fabric8.camelk.v1.Integration;
-import io.fabric8.camelk.v1.IntegrationBuilder;
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
-import io.fabric8.camelk.v1.ResourceSpec;
-import io.fabric8.camelk.v1.ResourceSpecBuilder;
-import io.fabric8.camelk.v1alpha1.KameletBinding;
-import io.fabric8.camelk.v1alpha1.KameletBindingBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMap;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
+import io.fabric8.kubernetes.api.model.ObjectMetaBuilder;
 import io.fabric8.kubernetes.api.model.PodBuilder;
 
 @Tag("unit")
@@ -52,9 +44,9 @@ public class CamelKAppTest extends CamelKTestParent {
         executor.submit(app::start);
 
         Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() ->
-            assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrations().withName(integrationBuilder.getIntegrationName()).get())
+            assertThat(OpenshiftClient.get().resources(Integration.class).withName(integrationBuilder.getIntegrationName()).get())
                 .isNotNull());
-        return OpenshiftClient.get().adapt(CamelKClient.class).v1().integrations().withName(integrationBuilder.getIntegrationName()).get();
+        return OpenshiftClient.get().resources(Integration.class).withName(integrationBuilder.getIntegrationName()).get();
     }
 
     private CamelKIntegrationBuilder ckib() {
@@ -86,12 +78,6 @@ public class CamelKAppTest extends CamelKTestParent {
 
         Integration i = createAndGetIntegration(ckib().fromFile(filePath));
         assertThat(i.getSpec().getFlows()).hasSize(1);
-        try {
-            assertThat(i.getSpec().getFlows().toString())
-                .isEqualTo(new ObjectMapper(new YAMLFactory()).readValue(IOUtils.readFile(filePath), JsonNode.class).toString());
-        } catch (JsonProcessingException e) {
-            fail("Unable to process yaml string", e);
-        }
     }
 
     @Test
@@ -112,19 +98,15 @@ public class CamelKAppTest extends CamelKTestParent {
     @Test
     public void shouldAddBuildPropertiesToIntegrationObjectTest() {
         Integration i = createAndGetIntegration(ckib().fromString("// camel-k: jvm=k1=v1 build-property=k2=v2 build-property=k3=v3"));
-        assertThat(i.getSpec().getTraits()).containsKey("builder");
-        Map<String, Object> config = new ObjectMapper().convertValue(i.getSpec().getTraits().get("builder").getConfiguration(),
-            new TypeReference<>() { });
-        assertThat(config.get("properties")).isEqualTo(List.of("k2=v2", "k3=v3"));
+        assertThat(i.getSpec().getTraits().getBuilder()).isNotNull();
+        assertThat(i.getSpec().getTraits().getBuilder().getProperties()).isEqualTo(List.of("k2=v2", "k3=v3"));
     }
 
     @Test
     public void shouldAddTraitsToIntegrationObjectTest() {
         Integration i = createAndGetIntegration(ckib().fromString("// camel-k: trait=prometheus.enabled=true"));
-        assertThat(i.getSpec().getTraits()).containsKey("prometheus");
-        Map<String, Object> config = new ObjectMapper().convertValue(i.getSpec().getTraits().get("prometheus").getConfiguration(),
-            new TypeReference<>() { });
-        assertThat(config).isEqualTo(Map.of("enabled", true));
+        assertThat(i.getSpec().getTraits().getPrometheus()).isNotNull();
+        assertThat(i.getSpec().getTraits().getPrometheus().getEnabled()).isTrue();
     }
 
     @Test
@@ -134,7 +116,7 @@ public class CamelKAppTest extends CamelKTestParent {
         Integration i = createAndGetIntegration(dummyIb().addToProperties(key, value));
 
         assertThat(i.getSpec().getConfiguration()).isNotNull().isNotEmpty().hasSize(1);
-        final ConfigurationSpec config = i.getSpec().getConfiguration().get(0);
+        final Configuration config = i.getSpec().getConfiguration().get(0);
         assertThat(config.getType()).isEqualTo("configmap");
         assertThat(config.getValue()).isEqualTo(TestParent.name());
 
@@ -150,35 +132,50 @@ public class CamelKAppTest extends CamelKTestParent {
         final String content = "resourceContent";
         Integration i = createAndGetIntegration(dummyIb().addResource(new Resource(name, content)));
 
-        assertThat(i.getSpec().getResources()).isNotNull().hasSize(1);
-        ResourceSpec resource = i.getSpec().getResources().get(0);
-        assertThat(resource.getName()).isEqualTo(name);
-        assertThat(resource.getContent()).isEqualTo(content);
-        assertThat(resource.getType()).isEqualTo("data");
-        assertThat(resource.getMountPath()).isEqualTo("/etc/camel/resources/" + name);
+        assertThat(i.getSpec().getTraits().getMount().getResources()).isNotNull().hasSize(1).contains("configmap:resourceName");
+        ConfigMap cm = OpenshiftClient.get().getConfigMap(name);
+        assertThat(cm).isNotNull();
+        assertThat(cm.getData()).containsKey(name);
+        assertThat(cm.getData().get(name)).isEqualTo(content);
     }
 
     @Test
     public void shouldAddCamelKResourcesToIntegrationObjectTest() {
         final String name = "resourceName";
         final String content = "resourceContent";
-        Integration i = createAndGetIntegration(ckib().fromString("").addResource(ResourceType.OPENAPI, name, content));
+        Integration i = createAndGetIntegration(ckib().fromString("").addResource(name, content));
 
-        assertThat(i.getSpec().getResources()).isNotNull().hasSize(1);
-        ResourceSpec resource = i.getSpec().getResources().get(0);
-        assertThat(resource.getName()).isEqualTo(name);
-        assertThat(resource.getContent()).isEqualTo(content);
-        assertThat(resource.getType()).isEqualTo("openapi");
-        assertThat(resource.getMountPath()).isNull();
+        assertThat(i.getSpec().getTraits().getMount().getResources()).isNotNull().hasSize(1).contains("configmap:resourceName");
+        ConfigMap cm = OpenshiftClient.get().getConfigMap(name);
+        assertThat(cm).isNotNull();
+        assertThat(cm.getData()).containsKey(name);
+        assertThat(cm.getData().get(name)).isEqualTo(content);
+    }
+
+    @Test
+    public void shouldMountConfigMapToIntegrationTest() {
+        final String name = "resourceName";
+        Integration i = createAndGetIntegration(ckib().fromString("").addResource(ResourceType.CONFIG_MAP, name));
+        assertThat(i.getSpec().getTraits().getMount().getResources()).isNotNull().hasSize(1).contains("configmap:resourceName");
+    }
+
+    @Test
+    public void shouldMountSecretToIntegrationTest() {
+        final String name = "resourceName";
+        Integration i = createAndGetIntegration(ckib().fromString("").addResource(ResourceType.SECRET, name));
+        assertThat(i.getSpec().getTraits().getMount().getResources()).isNotNull().hasSize(1).contains("secret:resourceName");
+    }
+
+    @Test
+    public void shouldThrowExceptionForFileResourceWithoutContentTest() {
+        assertThrows(IllegalArgumentException.class, () -> createAndGetIntegration(ckib().fromString("").addResource(ResourceType.FILE, "test")));
     }
 
     @Test
     public void shouldProcessIntegrationSpecCustomizersTest() {
         Integration i = createAndGetIntegration(dummyIb().addCustomizer(new TestIntegrationSpecCustomizer()));
 
-        assertThat(i.getSpec().getResources()).isNotNull().hasSize(1);
-        ResourceSpec resource = i.getSpec().getResources().get(0);
-        assertThat(resource.getName()).isEqualTo("integrationspeccustomizer");
+        assertThat(i.getSpec().getDependencies()).isNotNull().hasSize(1).contains("testdep");
     }
 
     @Test
@@ -187,7 +184,7 @@ public class CamelKAppTest extends CamelKTestParent {
         Integration i = createAndGetIntegration(ckib().fromString("").secret(secretName));
 
         assertThat(i.getSpec().getConfiguration()).hasSize(1);
-        final ConfigurationSpec config = i.getSpec().getConfiguration().get(0);
+        final Configuration config = i.getSpec().getConfiguration().get(0);
         assertThat(config.getType()).isEqualTo("secret");
         assertThat(config.getValue()).isEqualTo(secretName);
     }
@@ -260,20 +257,26 @@ public class CamelKAppTest extends CamelKTestParent {
 
     @Test
     public void shouldCreateKameletBindingTest() {
-        CamelKApp app = new CamelKApp(new KameletBindingBuilder().withNewMetadata().withName(TestParent.name()).endMetadata().build());
+        KameletBinding kb = new KameletBinding();
+        ObjectMeta metadata = new ObjectMetaBuilder().withName(TestParent.name()).build();
+        kb.setMetadata(metadata);
+        CamelKApp app = new CamelKApp(kb);
         executor.submit(app::start);
 
-        Awaitility.await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> assertThat(kameletBindingClient.withName(TestParent.name()).get()).isNotNull());
+        Awaitility.await().atMost(10, TimeUnit.SECONDS)
+            .untilAsserted(() -> assertThat(kameletBindingClient.withName(TestParent.name()).get()).isNotNull());
     }
 
     @Test
     public void shouldRemoveKameletBindingTest() {
-        KameletBinding kb = new KameletBindingBuilder().withNewMetadata().withName(TestParent.name()).endMetadata().build();
-        kameletBindingClient.create(kb);
+        KameletBinding kb = new KameletBinding();
+        ObjectMeta metadata = new ObjectMetaBuilder().withName(TestParent.name()).build();
+        kb.setMetadata(metadata);
+        kameletBindingClient.resource(kb).create();
         CamelKApp app = new CamelKApp(kb);
 
         app.stop();
-        assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrations().withName(TestParent.name()).get()).isNull();
+        assertThat(OpenshiftClient.get().resources(Integration.class).withName(TestParent.name()).get()).isNull();
     }
 
     @Test
@@ -282,26 +285,23 @@ public class CamelKAppTest extends CamelKTestParent {
         createIntegrationObject(true);
 
         app.stop();
-        assertThat(OpenshiftClient.get().adapt(CamelKClient.class).v1().integrations().withName(TestParent.name()).get()).isNull();
+        assertThat(OpenshiftClient.get().resources(Integration.class).withName(TestParent.name()).get()).isNull();
     }
 
     private void createIntegrationObject(boolean success) {
-        OpenshiftClient.get().adapt(CamelKClient.class).v1().integrations().create(new IntegrationBuilder()
-            .withNewMetadata()
-            .withName(TestParent.name())
-            .endMetadata()
-            .withNewStatus()
-            .withPhase(success ? "running" : "error")
-            .endStatus()
-            .build()
-        );
-
+        Integration i = new Integration();
+        ObjectMeta metadata = new ObjectMetaBuilder().withName(TestParent.name()).build();
+        i.setMetadata(metadata);
+        IntegrationStatus status = new IntegrationStatus();
+        status.setPhase(success ? "running" : "error");
+        i.setStatus(status);
+        OpenshiftClient.get().resources(Integration.class).resource(i).create();
     }
 
     private class TestIntegrationSpecCustomizer extends CamelKCustomizer implements IntegrationSpecCustomizer {
         @Override
-        public void customizeIntegration(IntegrationSpecBuilder integrationSpecBuilder) {
-            integrationSpecBuilder.addToResources(new ResourceSpecBuilder().withName("integrationspeccustomizer").build());
+        public void customizeIntegration(IntegrationSpec integrationSpec) {
+            integrationSpec.setDependencies(List.of("testdep"));
         }
 
         @Override

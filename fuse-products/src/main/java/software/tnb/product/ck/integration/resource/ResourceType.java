@@ -1,9 +1,9 @@
 package software.tnb.product.ck.integration.resource;
 
 public enum ResourceType {
-    DATA("data"),
-    CONFIG("config"),
-    OPENAPI("openapi");
+    FILE("file"),
+    CONFIG_MAP("configmap"),
+    SECRET("secret");
 
     private final String value;
 

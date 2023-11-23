@@ -5,9 +5,7 @@ import software.tnb.common.account.WithId;
 
 import org.json.JSONObject;
 
-import java.io.IOException;
-
-import io.fabric8.kubernetes.client.utils.Base64;
+import java.util.Base64;
 
 public class GoogleCloudAccount implements Account, WithId {
 
@@ -21,8 +19,8 @@ public class GoogleCloudAccount implements Account, WithId {
 
     private String fromJson(String key) {
         try {
-            return new JSONObject(new String(Base64.decode(service_account_key))).get(key).toString();
-        } catch (IOException e) {
+            return new JSONObject(new String(Base64.getDecoder().decode(service_account_key))).get(key).toString();
+        } catch (Exception e) {
             throw new RuntimeException("Unable to decode base64 service account json", e);
         }
     }

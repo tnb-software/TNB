@@ -1,9 +1,8 @@
 package software.tnb.elasticsearch.resource.openshift;
 
-import static org.junit.jupiter.api.Assertions.fail;
-
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.WithCustomResource;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithOperatorHub;
@@ -12,36 +11,23 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.elasticsearch.account.ElasticsearchAccount;
 import software.tnb.elasticsearch.service.Elasticsearch;
 
-import org.apache.commons.io.IOUtils;
-
 import com.google.auto.service.AutoService;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Elasticsearch.class)
 public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpenshiftDeployable, WithInClusterHostname, WithExternalHostname
-    , WithOperatorHub {
-
-    private static final CustomResourceDefinitionContext ELASTICSEARCH_CTX = new CustomResourceDefinitionContext.Builder()
-        .withGroup("elasticsearch.k8s.elastic.co")
-        .withVersion("v1")
-        .withKind("Elasticsearch")
-        .withScope("Namespaced")
-        .withPlural("elasticsearches")
-        .build();
-
+    , WithOperatorHub, WithCustomResource {
     private final String serviceName = clusterName() + "-es-http";
     private final String routeName = clusterName() + "-route";
 
@@ -49,37 +35,33 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     public void create() {
         createSubscription();
 
-        try (InputStream is = this.getClass().getResourceAsStream("/cr.yaml")) {
-            String content = IOUtils.toString(is, StandardCharsets.UTF_8)
-                .replace("$VERSION$", version()).replace("$NAME$", clusterName());
-            OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(content);
-        } catch (IOException e) {
-            fail("Unable to read elasticsearch CR: ", e);
-        }
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
 
-        // @formatter:off
-        OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
-            .editOrNewMetadata()
-                .withName(routeName)
-            .endMetadata()
-            .editOrNewSpec()
-                .withNewTo()
-                    .withKind("Service")
-                    .withName(serviceName)
-                    .withWeight(100)
-                .endTo()
-                .editOrNewPort()
-                    .withTargetPort(new IntOrString("http"))
-                .endPort()
-            .endSpec()
-            .build());
-        // @formatter:on
+        if (OpenshiftClient.get().routes().withName(routeName).get() == null) {
+            // @formatter:off
+            OpenshiftClient.get().routes().resource(new RouteBuilder()
+                .editOrNewMetadata()
+                    .withName(routeName)
+                .endMetadata()
+                .editOrNewSpec()
+                    .withNewTo()
+                        .withKind("Service")
+                        .withName(serviceName)
+                        .withWeight(100)
+                    .endTo()
+                    .editOrNewPort()
+                        .withTargetPort(new IntOrString("http"))
+                    .endPort()
+                .endSpec()
+                .build()).create();
+            // @formatter:on
+        }
     }
 
     @Override
     public void undeploy() {
         OpenshiftClient.get().routes().withName(routeName).delete();
-        OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).inNamespace(OpenshiftClient.get().getNamespace()).delete();
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).withName(clusterName()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
         deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "elastic-operator").isEmpty());
     }
@@ -93,7 +75,7 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     public boolean isDeployed() {
         List<Pod> pods = OpenshiftClient.get().getLabeledPods("control-plane", "elastic-operator");
         return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-            && ((List) OpenshiftClient.get().customResource(ELASTICSEARCH_CTX).list().get("items")).size() == 1;
+            && OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).list().getItems().size() == 1;
     }
 
     @Override
@@ -145,5 +127,62 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     @Override
     public String operatorName() {
         return "elasticsearch-eck-operator-certified";
+    }
+
+    @Override
+    public String kind() {
+        return "Elasticsearch";
+    }
+
+    @Override
+    public String apiVersion() {
+        return "elasticsearch.k8s.elastic.co/v1";
+    }
+
+    @Override
+    public GenericKubernetesResource customResource() {
+        return new GenericKubernetesResourceBuilder()
+            .withApiVersion(apiVersion())
+            .withKind(kind())
+            .withNewMetadata()
+            .withName(clusterName())
+            .endMetadata()
+            .addToAdditionalProperties("spec", Map.of(
+                "version", version(),
+                "http", Map.of(
+                    "tls", Map.of(
+                        "selfSignedCertificate", Map.of(
+                            "disabled", true
+                        )
+                    )
+                ),
+                "nodeSets", List.of(Map.of(
+                        "name", "default",
+                        "config", Map.of(
+                            "node.roles", List.of("master", "data"),
+                            "node.attr.attr_name", "attr_value",
+                            "node.store.allow_mmap", false
+                        ),
+                        "podTemplate", Map.of(
+                            "spec", Map.of(
+                                "containers", List.of(Map.of(
+                                    "name", "elasticsearch",
+                                    "resources", Map.of(
+                                        "requests", Map.of(
+                                            "memory", "4Gi",
+                                            "cpu", 1
+                                        ),
+                                        "limits", Map.of(
+                                            "memory", "4Gi",
+                                            "cpu", 2
+                                        )
+                                    )
+                                ))
+                            )
+                        ),
+                        "count", 1
+                    )
+                )
+            )).build();
     }
 }

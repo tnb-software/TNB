@@ -19,6 +19,7 @@
         <maven.invoker.version>3.2.0</maven.invoker.version>
         <maven.model.version>3.9.0</maven.model.version>
         <junit-launcher.version>1.10.0</junit-launcher.version>
+        <camel-k-crds.version>2.0.1</camel-k-crds.version>
     </properties>
 
     <dependencies>
@@ -68,9 +69,15 @@
             <version>${javaparser.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>camel-k-client</artifactId>
-            <version>${kubernetes.client.version}</version>
+            <groupId>org.apache.camel.k</groupId>
+            <artifactId>camel-k-crds</artifactId>
+            <version>${camel-k-crds.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>kubernetes-client</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.eclipse.jgit</groupId>

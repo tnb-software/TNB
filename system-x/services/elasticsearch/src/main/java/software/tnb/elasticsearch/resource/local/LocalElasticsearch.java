@@ -13,7 +13,6 @@ import com.google.auto.service.AutoService;
 @AutoService(Elasticsearch.class)
 public class LocalElasticsearch extends Elasticsearch implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalElasticsearch.class);
-    private static final String PASSWORD = "password";
 
     private ElasticsearchContainer container;
 

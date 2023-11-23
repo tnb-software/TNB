@@ -3,7 +3,10 @@ package software.tnb.product.integration;
 public class Resource {
     private String name;
     private String content;
-    private final boolean isContentPath;
+    private boolean isContentPath;
+
+    protected Resource() {
+    }
 
     public Resource(String name, String content) {
         this(name, content, false);

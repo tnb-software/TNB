@@ -3,7 +3,6 @@ package software.tnb.gitops.service;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -12,11 +11,9 @@ import generated.io.argoproj.v1alpha1.ApplicationSpec;
 import generated.io.argoproj.v1alpha1.applicationspec.Destination;
 import generated.io.argoproj.v1alpha1.applicationspec.Source;
 import generated.io.argoproj.v1alpha1.applicationspec.source.Kustomize;
+import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
-import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext.Builder;
-import io.fabric8.kubernetes.client.dsl.internal.RawCustomResourceOperationsImpl;
 
 public class ArgoClient {
     public ArgoClient() {
@@ -47,26 +44,22 @@ public class ArgoClient {
         dest.setServer("https://kubernetes.default.svc");
         dest.setNamespace(namespace);
         spec.setDestination(dest);
-        return OpenshiftClient.get().customResources(Application.class)
-            .inNamespace("openshift-gitops").create(app);
+        return OpenshiftClient.get().resources(Application.class).inNamespace("openshift-gitops").resource(app).create();
     }
 
     public void deleteApp(String name) {
-        OpenshiftClient.get().customResources(Application.class).inNamespace(GitOps.GITOPS_NAMESPACE).withName(name).delete();
+        OpenshiftClient.get().resources(Application.class).inNamespace(GitOps.GITOPS_NAMESPACE).withName(name).delete();
         WaitUtils.waitFor(
-            () -> OpenshiftClient.get().customResources(Application.class).inNamespace(GitOps.GITOPS_NAMESPACE).withName(name).get() == null,
+            () -> OpenshiftClient.get().resources(Application.class).inNamespace(GitOps.GITOPS_NAMESPACE).withName(name).get() == null,
             "Wait for Argo app deletion.");
     }
 
-    public void syncApp(String name, String revision) throws IOException {
-        // the Application#operation field is missing in model class - lets use map modification
-        CustomResourceDefinitionContext context =
-            new Builder().withName("Application").withGroup("argoproj.io").withVersion("v1alpha1").withPlural("applications")
-                .withScope("Namespaced").build();
-        RawCustomResourceOperationsImpl cli = OpenshiftClient.get().customResource(context).inNamespace("openshift-gitops");
-        Map<String, Object> app = cli.withName(name).get();
-        Map<String, String> sync = Map.of("revision", revision);
-        app.put("operation", Map.of("sync", sync));
-        cli.createOrReplace(app);
+    public void syncApp(String name, String revision) {
+        final GenericKubernetesResource app =
+            OpenshiftClient.get().genericKubernetesResources("argoproj.io/v1alpha1", "Application").inNamespace("openshift-gitops")
+                .withName(name).get();
+        app.getAdditionalProperties().put("revision", revision);
+        OpenshiftClient.get().genericKubernetesResources("argoproj.io/v1alpha1", "Application").inNamespace("openshift-gitops")
+            .resource(app).createOrReplace();
     }
 }

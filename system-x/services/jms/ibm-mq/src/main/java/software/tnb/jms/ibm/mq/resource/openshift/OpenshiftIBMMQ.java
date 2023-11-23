@@ -99,7 +99,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
          */
         final List<Long> uidRange =
             Arrays.stream(OpenshiftClient.get().namespaces().withName(OpenshiftClient.get().getNamespace()).get().getMetadata()
-                .getAnnotations().get("openshift.io/sa.scc.uid-range").split("/")).map(Long::parseLong).collect(Collectors.toList());
+                .getAnnotations().get("openshift.io/sa.scc.uid-range").split("/")).map(Long::parseLong).toList();
         uid = ThreadLocalRandom.current().nextLong(uidRange.get(0), uidRange.get(0) + uidRange.get(1));
 
         createMqscConfigMap();
@@ -203,14 +203,14 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public boolean isReady() {
-        final PodResource<Pod> pod = servicePod();
+        final PodResource pod = servicePod();
         return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("Started web server");
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+                .getItems().isEmpty();
     }
 
     @Override

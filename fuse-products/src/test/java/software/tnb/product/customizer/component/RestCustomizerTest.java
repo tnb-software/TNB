@@ -11,15 +11,10 @@ import software.tnb.product.customizer.component.rest.RestCustomizer;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
+import org.apache.camel.v1.IntegrationSpec;
 import org.apache.maven.model.Dependency;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.util.List;
 import java.util.Map;
-
-import io.fabric8.camelk.v1.IntegrationSpecBuilder;
 
 @Tag("unit")
 public class RestCustomizerTest extends ProductCustomizerTestParent {
@@ -42,14 +37,10 @@ public class RestCustomizerTest extends ProductCustomizerTestParent {
         assertThat(ib.getDependencies()).hasSize(1);
         assertThat(ib.getDependencies().get(0).getArtifactId()).contains("rest");
 
-        IntegrationSpecBuilder builder = new IntegrationSpecBuilder();
-        ((IntegrationSpecCustomizer) customizer).customizeIntegration(builder);
+        IntegrationSpec spec = new IntegrationSpec();
+        ((IntegrationSpecCustomizer) customizer).customizeIntegration(spec);
 
-        assertThat(builder.getTraits()).hasSize(1);
-        assertThat(builder.getTraits()).containsKey("builder");
-        Map<String, Object> cfg = new ObjectMapper().convertValue(builder.getTraits().get("builder").getConfiguration(), new TypeReference<>() { });
-        assertThat(cfg).hasSize(1);
-        assertThat(cfg).containsEntry("properties", List.of("quarkus.camel.servlet.url-patterns=/camel/*"));
+        assertThat(spec.getTraits().getBuilder().getProperties()).isNotNull().hasSize(1).contains("quarkus.camel.servlet.url-patterns=/camel/*");
     }
 
     @Override
