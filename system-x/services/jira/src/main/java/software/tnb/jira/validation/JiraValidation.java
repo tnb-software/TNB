@@ -11,6 +11,8 @@ import software.tnb.jira.validation.generated.api.ProjectsApi;
 import software.tnb.jira.validation.generated.model.Comment;
 import software.tnb.jira.validation.generated.model.CreatedIssue;
 import software.tnb.jira.validation.generated.model.IssueBean;
+import software.tnb.jira.validation.generated.model.IssueTransition;
+import software.tnb.jira.validation.generated.model.IssueUpdateDetails;
 import software.tnb.jira.validation.model.Issue;
 
 import org.apache.commons.lang3.StringUtils;
@@ -56,15 +58,16 @@ public class JiraValidation implements Validation {
             String issueTypeId = new IssueTypesApi(client).getIssueTypesForProject(Long.valueOf(projectId), null).stream()
                 .filter(it -> "Bug".equals(it.getName())).findFirst().get().getId();
 
-            JSONObject requestBody = new JSONObject()
-                .put("fields", new JSONObject()
-                    .put("summary", issueSummary)
-                    .put("issuetype", new JSONObject()
-                        .put("id", issueTypeId))
-                    .put("project", new JSONObject()
-                        .put("id", projectId))
-                );
-            CreatedIssue response = issuesApi.createIssue(requestBody.toMap(), null);
+            Map<String, Object> fields = Map.of(
+                "summary", issueSummary,
+                "issuetype", Map.of(
+                    "id", issueTypeId
+                ),
+                "project", Map.of(
+                    "id", projectId
+                )
+            );
+            CreatedIssue response = issuesApi.createIssue(new IssueUpdateDetails().fields(fields), null);
             return response.getKey();
         } catch (ApiException e) {
             throw new RuntimeException(e);
@@ -104,22 +107,21 @@ public class JiraValidation implements Validation {
         }
     }
 
-    public void addComment(String issueKey, String comment) {
+    public void addComment(String issueKey, String content) {
         LOG.debug("Adding comment on issue " + issueKey);
         try {
-            JSONObject requestBody = new JSONObject()
-                .put("body", new JSONObject()
-                    .put("type", "doc")
-                    .put("version", 1)
-                    .put("content", new JSONArray().put(
-                            new JSONObject().put("type", "paragraph").put("content",
-                                new JSONArray().put(
-                                    new JSONObject().put("type", "text").put("text", comment)
-                                )
-                            )
+            Map<String, Object> body = new JSONObject()
+                .put("type", "doc")
+                .put("version", 1)
+                .put("content", new JSONArray().put(
+                    new JSONObject().put("type", "paragraph").put("content",
+                        new JSONArray().put(
+                            new JSONObject().put("type", "text").put("text", content)
                         )
-                    ));
-            issueCommentsApi.addComment(issueKey, requestBody.toMap(), null);
+                    )
+                )
+                ).toMap();
+            issueCommentsApi.addComment(issueKey, new Comment().body(body), null);
         } catch (Exception e) {
             throw new RuntimeException("Failed to add comment on issue " + issueKey, e);
         }
@@ -155,7 +157,7 @@ public class JiraValidation implements Validation {
         LOG.debug("Transit issue " + issueKey + " - transition id: " + transitionId);
         try {
             JSONObject requestBody = new JSONObject().put("transition", new JSONObject().put("id", transitionId));
-            issuesApi.doTransition(issueKey, requestBody.toMap());
+            issuesApi.doTransition(issueKey, new IssueUpdateDetails().transition(new IssueTransition().id(transitionId + "")));
         } catch (Exception e) {
             throw new RuntimeException("Failed to transit issue " + issueKey, e);
         }
