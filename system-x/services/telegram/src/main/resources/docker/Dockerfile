@@ -1,4 +1,4 @@
-FROM python:3.9.16-slim-buster
+FROM python:3.9.16-slim-bullseye
 
 ADD *.py /app/
 RUN python3 -m pip install telethon && \
