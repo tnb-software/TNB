@@ -12,7 +12,7 @@ public class TelegramBotAPIContainer extends GenericContainer<TelegramBotAPICont
         withNetworkMode("host");
         withEnv(env);
         setCommandParts(startupParameters);
-        waitingFor(Wait.forLogMessage(".*Create tcp listener \\[address:0.0.0.0\\]\\[port:" + port + "\\].*", 1));
+        waitingFor(Wait.forLogMessage(".*Create.*listener \\[address:0.0.0.0\\]\\[port:" + port + "\\].*", 1));
     }
 
 }
