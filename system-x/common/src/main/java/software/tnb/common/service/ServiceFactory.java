@@ -2,7 +2,6 @@ package software.tnb.common.service;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.Deployable;
-import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.service.configuration.ServiceConfiguration;
 
 import org.junit.platform.commons.function.Try;
@@ -50,15 +49,10 @@ public final class ServiceFactory {
                 return loader.findFirst().get();
             }
 
-            // If there are multiple, decide which one should be returned
-            final Optional<S> service = StreamSupport.stream(loader.spliterator(), false)
-                .filter(s -> {
-                    if (OpenshiftConfiguration.isOpenshift()) {
-                        return s instanceof OpenshiftDeployable || s.getClass().getSimpleName().toLowerCase().contains("openshift");
-                    } else {
-                        return s instanceof Deployable || s.getClass().getSimpleName().toLowerCase().contains("local");
-                    }
-                })
+            // Sort the services based on the priority and then return the first one that is enabled
+            Optional<S> service = StreamSupport.stream(loader.spliterator(), false)
+                .sorted((s1, s2) -> ((Deployable) s2).priority() - ((Deployable) s1).priority())
+                .filter(s -> ((Deployable) s).enabled())
                 .findFirst();
 
             if (service.isEmpty()) {

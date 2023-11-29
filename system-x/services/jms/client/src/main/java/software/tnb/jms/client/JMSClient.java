@@ -63,7 +63,7 @@ public abstract class JMSClient implements BasicJMSOperations<Message> {
                     }
                 });
             }
-            LOG.debug(logMsg.substring(0, logMsg.length() - 2));
+            LOG.debug(logMsg.substring(0, logMsg.length() - 1));
             producer.send(textMessage);
         } catch (JMSException e) {
             throw new RuntimeException("Unable to produce message:", e);

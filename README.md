@@ -24,9 +24,13 @@ Each System-X service comprises three parts:
 - `client` - a Java client used to access the service
 - `validation` - a Java object that wraps around the `client` and `account` and offers convenient methods to interact with the service.
 
-Self-hosted services can be deployed locally using [TestContainers](https://github.com/testcontainers/testcontainers-java) or as deployments
-on [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift). The only change required to deploy a service on OpenShift is to
-specify one system property.
+Self-hosted services can be deployed:
+- locally using [TestContainers](https://github.com/testcontainers/testcontainers-java)
+  - using `test.use.openshift=false` property
+- as deployments on [OpenShift](https://www.redhat.com/en/technologies/cloud-computing/openshift)
+    - using `test.use.openshift=true` property
+- externally and use System-X service to connect to the external service (only available for a subset of services)
+    - using `tnb.<serviceName>.host` property
 
 ---
 

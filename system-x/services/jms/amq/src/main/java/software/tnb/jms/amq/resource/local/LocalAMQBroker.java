@@ -4,7 +4,6 @@ import software.tnb.common.deployment.Deployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.jms.amq.service.AMQBroker;
 
-import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,9 +11,6 @@ import com.google.auto.service.AutoService;
 
 import java.util.HashMap;
 import java.util.Map;
-
-import jakarta.jms.Connection;
-import jakarta.jms.JMSException;
 
 @AutoService(AMQBroker.class)
 public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerImage {
@@ -38,38 +34,8 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
     }
 
     @Override
-    public void openResources() {
-        client = createConnection();
-    }
-
-    @Override
-    public void closeResources() {
-        validation = null;
-        try {
-            client.close();
-        } catch (JMSException e) {
-            throw new RuntimeException("Can't close JMS connection", e);
-        }
-    }
-
-    @Override
-    public String brokerUrl() {
+    public String host() {
         return container.getHost();
-    }
-
-    @Override
-    public String mqttUrl() {
-        return String.format("tcp://%s:%d", brokerUrl(), getPortMapping(1883));
-    }
-
-    @Override
-    protected String mqttClientUrl() {
-        return mqttUrl();
-    }
-
-    @Override
-    public String amqpUrl() {
-        return String.format("amqp://%s:%d", brokerUrl(), getPortMapping(5672));
     }
 
     @Override
@@ -90,22 +56,6 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
         env.put("AMQ_TRANSPORTS", "openwire,amqp,stomp,mqtt,hornetq");
         env.put("AMQ_REQUIRE_LOGIN", "true");
         return env;
-    }
-
-    private Connection createConnection() {
-        try {
-
-            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(String
-                .format("tcp://%s:%s", brokerUrl(), getPortMapping(61616)), account().username(), account().password());
-
-            // Create a Connection
-            Connection connection = connectionFactory.createConnection();
-            connection.start();
-
-            return connection;
-        } catch (JMSException e) {
-            throw new RuntimeException("Can't create jms connection", e);
-        }
     }
 
     @Override
