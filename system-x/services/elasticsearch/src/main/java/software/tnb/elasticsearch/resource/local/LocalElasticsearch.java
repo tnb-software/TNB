@@ -35,14 +35,14 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable, Wit
     }
 
     @Override
-    protected String clientHost() {
-        return host();
+    public String host() {
+        return container.getHost();
     }
 
     @Override
-    public String host() {
-        return container.getHost() + ":" + (TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST") == null
-            ? container.getMappedPort(PORT) : PORT);
+    public int port() {
+        return TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST") == null
+            ? container.getMappedPort(PORT) : PORT;
     }
 
     public String defaultImage() {

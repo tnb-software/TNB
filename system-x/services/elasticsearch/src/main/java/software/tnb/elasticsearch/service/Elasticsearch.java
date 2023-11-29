@@ -19,7 +19,6 @@ import java.io.IOException;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
-import co.elastic.clients.transport.ElasticsearchTransport;
 import co.elastic.clients.transport.rest_client.RestClientTransport;
 
 public abstract class Elasticsearch extends Service<ElasticsearchAccount, ElasticsearchClient, ElasticsearchValidation> {
@@ -30,23 +29,18 @@ public abstract class Elasticsearch extends Service<ElasticsearchAccount, Elasti
     protected static final int PORT = 9200;
 
     protected ElasticsearchClient client() {
-
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
         credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(account().user(), account().password()));
 
         RestClient httpClient = RestClient
-            .builder(HttpHost.create(clientHost()))
+            .builder(HttpHost.create(clientUrl()))
             .setHttpClientConfigCallback(config -> config
                 .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
                 .setSSLContext(HTTPUtils.getSslContext())
                 .setDefaultCredentialsProvider(credentialsProvider))
                 .build();
 
-        ElasticsearchTransport transport = new RestClientTransport(
-                httpClient,
-                new JacksonJsonpMapper());
-
-        return new ElasticsearchClient(transport);
+        return new ElasticsearchClient(new RestClientTransport(httpClient, new JacksonJsonpMapper()));
     }
 
     public ElasticsearchValidation validation() {
@@ -79,7 +73,17 @@ public abstract class Elasticsearch extends Service<ElasticsearchAccount, Elasti
         return CLUSTER_NAME;
     }
 
-    protected abstract String clientHost();
+    protected String clientUrl() {
+        return url();
+    }
 
     public abstract String host();
+
+    public int port() {
+        return PORT;
+    }
+
+    public String url() {
+        return host() + ":" + port();
+    }
 }
