@@ -16,6 +16,7 @@ import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,9 +36,9 @@ import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 @AutoService(OpenshiftDeployStrategy.class)
 public class BinaryStrategy extends OpenshiftBaseDeployer {
 
-    private static final Logger LOG = LoggerFactory.getLogger(BinaryStrategy.class);
+    protected final Logger log = LoggerFactory.getLogger(getClass());
 
-    private OpenShiftBinary binary;
+    protected OpenShiftBinary binary;
 
     @Override
     public ProductType[] products() {
@@ -52,11 +53,11 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
     @Override
     public void preDeploy() {
 
-        LOG.debug("copy resources to deploy from {}", baseDirectory);
+        log.debug("copy resources to deploy from {}", baseDirectory);
         //copy resources
         copyResources(baseDirectory, "ocp/deployments/data");
 
-        LOG.debug("build {} for OpenShift", baseDirectory);
+        log.debug("build {} for OpenShift", baseDirectory);
         final Map<String, String> ompProperties = Map.of(
             "skipTests", "true"
         );
@@ -68,7 +69,7 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
             .withLogMarker(LogStream.marker(name, Phase.BUILD));
         Maven.invoke(requestBuilder.build());
 
-        LOG.debug("copy generated jar");
+        log.debug("copy generated jar");
         Arrays.stream(Objects.requireNonNull(baseDirectory.resolve("target").toFile().list(FileFilterUtils.suffixFileFilter(".jar"))))
             .findFirst().ifPresent(jarPath -> {
                 try {
@@ -87,45 +88,51 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
         final File logFile = TestConfiguration.appLocation().resolve(name + "-deploy.log").toFile();
         try (FileWriter fileWriter = new FileWriter(logFile)) {
             LogStream logStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, Phase.DEPLOY));
-            LOG.debug("create new build {}", name);
+            log.debug("create new build {}", name);
             fileWriter.append(binary.execute("new-build", "--binary=true"
                 , String.format("--name=%s", name)
                 , String.format("--image=%s", SpringBootConfiguration.openshiftBaseImage())
                 , String.format("--labels=%s=%s", OpenshiftConfiguration.openshiftDeploymentLabel(), name)
             ));
 
-            LOG.debug("start build {}", name);
+            log.debug("start build {}", name);
             fileWriter.append(binary.execute("start-build", name
                 , String.format("--from-dir=%s", baseDirectory.resolve("ocp").toAbsolutePath().toString())
                 , "--follow"
             ));
 
-            LOG.debug("generate new deployment {}", name);
+            log.debug("generate new deployment {}", name);
             fileWriter.append(binary.execute("new-app", name, String.format("--labels=%s=%s"
                     , OpenshiftConfiguration.openshiftDeploymentLabel(), name)
                 , String.format("--env=JAVA_OPTS_APPEND=%s", getPropertiesForJVM(integrationBuilder))
                 , "--allow-missing-imagestream-tags=true"
             ));
 
-            if (integrationBuilder.getPort() != 8080) {
-                LOG.debug("patch service with port {}", integrationBuilder.getPort());
-                fileWriter.append(binary.execute("patch", "service", name, "--type=json"
-                    , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/port\", \"value\":" + integrationBuilder.getPort() + "}]"
-                ));
-                fileWriter.append(binary.execute("patch", "service", name, "--type=json"
-                    , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/targetPort\", \"value\":" + integrationBuilder.getPort() + "}]"
-                ));
-                fileWriter.append(binary.execute("patch", "service", name, "--type=json"
-                    , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/name\", \"value\":\"" + integrationBuilder.getPort() + "-tcp\"}]"
-                ));
-            }
-            LOG.debug("generate route {}", name);
+            patchNetwork(fileWriter);
+
+            log.debug("generate route {}", name);
             fileWriter.append(binary.execute("expose", String.format("svc/%s", name)
                 , String.format("--labels=%s=%s", OpenshiftConfiguration.openshiftDeploymentLabel(), name)
             ));
+
             logStream.stop();
         } catch (IOException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    protected void patchNetwork(FileWriter fileWriter) throws IOException {
+        if (integrationBuilder.getPort() != 8080) {
+            log.debug("patch service with port {}", integrationBuilder.getPort());
+            fileWriter.append(binary.execute("patch", "service", name, "--type=json"
+                , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/port\", \"value\":" + integrationBuilder.getPort() + "}]"
+            ));
+            fileWriter.append(binary.execute("patch", "service", name, "--type=json"
+                , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/targetPort\", \"value\":" + integrationBuilder.getPort() + "}]"
+            ));
+            fileWriter.append(binary.execute("patch", "service", name, "--type=json"
+                , "-p", "[{\"op\": \"replace\", \"path\": \"/spec/ports/0/name\", \"value\":\"" + integrationBuilder.getPort() + "-tcp\"}]"
+            ));
         }
     }
 
@@ -135,6 +142,8 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
         try (FileWriter fileWriter = new FileWriter(logFile)) {
             LogStream logStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, Phase.UNDEPLOY));
             fileWriter.append(binary.execute("delete", "all", "--selector", String.format("%s=%s"
+                , OpenshiftConfiguration.openshiftDeploymentLabel(), name)));
+            fileWriter.append(binary.execute("delete", "configmap", "--selector", String.format("%s=%s"
                 , OpenshiftConfiguration.openshiftDeploymentLabel(), name)));
             logStream.stop();
         } catch (IOException e) {
@@ -148,8 +157,21 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
     }
 
     private void initBinary() {
+
+        if (OpenshiftConfiguration.openshiftKubeconfig() != null
+                && System.getProperty("xtf.openshift.master.kubeconfig") == null) {
+            System.setProperty("xtf.openshift.master.kubeconfig", OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString());
+        }
+
         final OpenShiftConfigAPIGroupDSL config = OpenshiftClient.get().config();
+
+        if (System.getProperty("xtf.openshift.url") == null) {
+            System.setProperty("xtf.openshift.url", StringUtils.removeEnd(config.getMasterUrl().toExternalForm(), "/"));
+        }
+
         binary = OpenShifts.masterBinary(config.getNamespace());
+        //for microshift that is unable to manage projects kind
+        binary.execute("config", "set-context", "--current", "--namespace=" + config.getNamespace());
     }
 
 }

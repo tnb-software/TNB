@@ -1,7 +1,5 @@
 package software.tnb.jms.ibm.mq.service;
 
-import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.deployment.RemoteService;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
@@ -81,17 +79,9 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
         }
     }
 
-    private String clientHostname() {
-        // For openshift, return localhost, as the client is connected via port-forward
-        // For local, return "hostname()", as that may be different than "localhost" when running testcontainers on a different host
-        if (this instanceof RemoteService) {
-            return ((RemoteService) this).host();
-        } else if (OpenshiftConfiguration.isOpenshift()) {
-            return "localhost";
-        } else {
-           return host();
-        }
-    }
+    // For openshift, return localhost, as the client is connected via port-forward
+    // For local, return "hostname()", as that may be different than "localhost" when running testcontainers on a different host
+    protected abstract String clientHostname();
 
     public void closeResources() {
         validation = null;

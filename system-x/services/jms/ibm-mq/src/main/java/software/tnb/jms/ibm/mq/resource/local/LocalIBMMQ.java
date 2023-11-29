@@ -37,4 +37,9 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
     public int port() {
         return container.getMappedPort(DEFAULT_PORT);
     }
+
+    @Override
+    protected String clientHostname() {
+        return host();
+    }
 }

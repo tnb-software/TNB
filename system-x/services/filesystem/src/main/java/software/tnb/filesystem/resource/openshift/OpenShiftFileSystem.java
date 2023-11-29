@@ -1,5 +1,6 @@
 package software.tnb.filesystem.resource.openshift;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.filesystem.service.FileSystem;
@@ -29,7 +30,7 @@ public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployab
 
     @Override
     public String getFileContent(Path path) {
-        final String podLabelKey = "deploymentconfig";
+        final String podLabelKey = OpenshiftConfiguration.isMicroshift() ? OpenshiftConfiguration.openshiftDeploymentLabel() : "deploymentconfig";
         podIsReady(podLabelKey, podLabelValue);
         final String podName = getPodName(podLabelKey, podLabelValue);
         final Pod pod = OpenshiftClient.get().getPod(podName);

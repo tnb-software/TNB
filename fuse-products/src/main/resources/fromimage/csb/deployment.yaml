@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    APP_LABEL: APP_NAME
+  name: APP_NAME
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: APP_NAME
+  template:
+    metadata:
+      labels:
+        app: APP_NAME
+    spec:
+      volumes:
+        - name: config
+          configMap:
+            name: APP_CONFIG
+      containers:
+        - name: spring-boot
+          image: APP_IMAGE
+          imagePullPolicy: Always
+          env:
+           - name: JAVA_OPTS_APPEND
+             value: "XX_JAVA_OPTS_APPEND"
+          volumeMounts:
+            - name: config
+              mountPath: /deployments/config

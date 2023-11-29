@@ -4,5 +4,6 @@ public enum OpenshiftDeployStrategyType {
     JKUBE,
     DEVFILE,
     BINARY,
-    CUSTOM
+    CUSTOM,
+    JKUBE_EXT_REPO
 }

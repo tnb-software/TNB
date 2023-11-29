@@ -11,4 +11,9 @@ public class RemoteIBMMQ extends IBMMQ implements RemoteService {
     public String host() {
         return RemoteService.super.host();
     }
+
+    @Override
+    protected String clientHostname() {
+        return host();
+    }
 }

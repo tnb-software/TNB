@@ -1,0 +1,23 @@
+<configuration>
+    <resources>
+        <configMap>
+            <name>${project.artifactId}</name>
+            <entries>
+                <entry>
+                    <file>src/main/resources/application.properties</file>
+                </entry>
+            </entries>
+        </configMap>
+        <env>
+            <JAVA_OPTS_APPEND>XX_JAVA_OPTS_APPEND</JAVA_OPTS_APPEND>
+        </env>
+    </resources>
+    <enricher>
+        <config>
+            <jkube-service>
+                <name>${project.artifactId}</name>
+                <type>NodePort</type>
+            </jkube-service>
+        </config>
+    </enricher>
+</configuration>

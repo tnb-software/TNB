@@ -14,6 +14,7 @@ import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.SecurityContext;
 import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
@@ -63,7 +64,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
                             .addNewContainer()
                                 .withName(name())
                                 .withImage(sqlService.image())
-                                .withSecurityContext(new SecurityContextBuilder().withAllowPrivilegeEscalation(true).build())
+                                .withSecurityContext(getSecurityContext())
                                 .addNewPort()
                                     .withContainerPort(port)
                                     .withName(name())
@@ -103,6 +104,22 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
                 .endSpec()
             .build()
         );
+        //@formatter:on
+    }
+
+    private static SecurityContext getSecurityContext() {
+        //@formatter:off
+        return OpenshiftConfiguration.isMicroshift()
+            ? new SecurityContextBuilder().withAllowPrivilegeEscalation(false)
+            .withNewCapabilities()
+                .addToDrop("ALL")
+            .endCapabilities()
+            .withRunAsNonRoot(true)
+            .withNewSeccompProfile()
+                .withType("RuntimeDefault")
+            .endSeccompProfile()
+            .build()
+            : new SecurityContextBuilder().withAllowPrivilegeEscalation(true).build();
         //@formatter:on
     }
 

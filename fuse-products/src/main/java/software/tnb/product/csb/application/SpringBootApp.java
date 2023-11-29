@@ -64,7 +64,7 @@ public abstract class SpringBootApp extends App {
                 "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
                 "groupId", TestConfiguration.appGroupId(),
                 "artifactId", name,
-                "version", "1.0.0-SNAPSHOT",
+                "version", SpringBootConfiguration.camelSpringBootArchetypeGeneratedVersion(),
                 "package", TestConfiguration.appGroupId()));
             properties.put("archetypeCatalog", "internal");
 

@@ -78,16 +78,20 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
         LOG.info("Undeploy integration resources");
         final Map<String, String> labelMap = Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), name);
         //builds
-        //delete build's pod
-        OpenshiftClient.get().builds().withLabels(labelMap).list()
-            .getItems().forEach(build -> OpenshiftClient.get().pods()
-                .withLabels(Map.of("openshift.io/build.name", build.getMetadata().getName())).delete()
-            );
-        OpenshiftClient.get().builds().withLabels(labelMap).delete();
-        OpenshiftClient.get().buildConfigs().withLabels(labelMap).delete();
-        OpenshiftClient.get().imageStreams().withLabels(labelMap).delete();
+        //delete build, image streams and deployment config
+        if (!OpenshiftConfiguration.isMicroshift()) {
+            OpenshiftClient.get().builds().withLabels(labelMap).list()
+                .getItems().forEach(build -> OpenshiftClient.get().pods()
+                    .withLabels(Map.of("openshift.io/build.name", build.getMetadata().getName())).delete()
+                );
+            OpenshiftClient.get().builds().withLabels(labelMap).delete();
+            OpenshiftClient.get().buildConfigs().withLabels(labelMap).delete();
+            OpenshiftClient.get().imageStreams().withLabels(labelMap).delete();
+            OpenshiftClient.get().deploymentConfigs().withLabels(labelMap).delete();
+        }
+
         //app
-        OpenshiftClient.get().deploymentConfigs().withLabels(labelMap).delete();
+        OpenshiftClient.get().apps().deployments().withLabels(labelMap).delete();
         //network
         OpenshiftClient.get().services().withLabels(labelMap).delete();
         OpenshiftClient.get().routes().withLabels(labelMap).delete();
