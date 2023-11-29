@@ -31,8 +31,6 @@ import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(Cassandra.class)
 public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
-
-    private CqlSession session;
     private LocalPortForward portForward;
     private int localPort;
 
@@ -40,7 +38,6 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
     public void create() {
         //@formatter:off
         OpenshiftClient.get().apps().deployments().createOrReplace(
-
             new DeploymentBuilder()
                 .withNewMetadata()
                     .withName(name())
@@ -104,16 +101,6 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
     }
 
     @Override
-    protected CqlSession client() {
-        return session;
-    }
-
-    @Override
-    public int port() {
-        return CASSANDRA_PORT;
-    }
-
-    @Override
     public String host() {
         return name();
     }
@@ -136,7 +123,7 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
                 .withDuration(DefaultDriverOption.REQUEST_TIMEOUT, Duration.ofSeconds(30))
                 .build();
 
-        session = CqlSession.builder()
+        client = CqlSession.builder()
             .withConfigLoader(loader)
             .addContactPoint(new InetSocketAddress(externalHostname(), localPort))
             .withAuthCredentials(account().username(), account().password())
@@ -147,9 +134,9 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
     @Override
     public void closeResources() {
         validation = null;
-        if (session != null) {
-            session.close();
-            session = null;
+        if (client != null) {
+            client.close();
+            client = null;
         }
         IOUtils.closeQuietly(portForward);
         NetworkUtils.releasePort(localPort);
@@ -166,8 +153,8 @@ public class OpenshiftCassandra extends Cassandra implements OpenshiftDeployable
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list().getItems()
+            .isEmpty();
     }
 
     @Override
