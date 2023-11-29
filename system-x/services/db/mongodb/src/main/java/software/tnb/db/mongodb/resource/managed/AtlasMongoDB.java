@@ -12,7 +12,6 @@ import com.mongodb.client.MongoClients;
 import java.util.stream.Collectors;
 
 public class AtlasMongoDB extends MongoDB {
-
     private AtlasAccount account;
 
     @Override
@@ -43,7 +42,7 @@ public class AtlasMongoDB extends MongoDB {
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         // camel accepts a comma-separated list of host:port of all replicas so that's what we return here
         return client().getClusterDescription().getServerDescriptions().stream()
             .map(s -> s.getAddress().getHost() + ":" + s.getAddress().getPort())

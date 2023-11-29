@@ -7,7 +7,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
-import com.mongodb.client.MongoClients;
 
 @AutoService(MongoDB.class)
 public class LocalMongoDB extends MongoDB implements Deployable {
@@ -17,7 +16,7 @@ public class LocalMongoDB extends MongoDB implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting MongoDB container");
-        container = new MongoContainer(image(), port(), containerEnvironment());
+        container = new MongoContainer(image(), DEFAULT_PORT, containerEnvironment());
         container.start();
         LOG.info("MongoDB container started");
     }
@@ -31,28 +30,12 @@ public class LocalMongoDB extends MongoDB implements Deployable {
     }
 
     @Override
-    public void openResources() {
-        LOG.debug("Creating new MongoClient instance");
-        client = MongoClients.create(replicaSetUrl());
+    public String host() {
+        return container.getHost();
     }
 
     @Override
-    public void closeResources() {
-        if (client != null) {
-            LOG.debug("Closing MongoDB client");
-            client.close();
-        }
-        validation = null;
-    }
-
-    @Override
-    public String replicaSetUrl() {
-        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), hostname(),
-            container.getPort(), account().database());
-    }
-
-    @Override
-    public String hostname() {
-        return container.getContainerIpAddress();
+    public int port() {
+        return container.getMappedPort(DEFAULT_PORT);
     }
 }
