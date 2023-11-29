@@ -121,7 +121,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
         portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         LOG.debug("Creating new MongoClient instance");
-        client = MongoClients.create(replicaSetUrl().replace("@" + hostname(), "@" + externalHostname()).replace(DEFAULT_PORT + "", localPort + ""));
+        client = MongoClients.create(replicaSetUrl().replace("@" + host(), "@" + externalHostname()).replace(DEFAULT_PORT + "", localPort + ""));
     }
 
     @Override
@@ -148,12 +148,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
     }
 
     @Override
-    public String replicaSetUrl() {
-        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), hostname(), DEFAULT_PORT, account().database());
-    }
-
-    @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
     }
 

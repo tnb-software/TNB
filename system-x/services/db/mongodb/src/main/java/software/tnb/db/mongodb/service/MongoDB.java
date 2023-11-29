@@ -9,12 +9,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
 
 import java.util.Map;
 
 public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, MongoDBValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
-    public static final int DEFAULT_PORT = 27017;
+    protected static final int DEFAULT_PORT = 27017;
+
+    public abstract String host();
 
     public MongoDBValidation validation() {
         if (validation == null) {
@@ -36,7 +39,9 @@ public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, Mongo
         );
     }
 
-    public abstract String replicaSetUrl();
+    public String replicaSetUrl() {
+        return String.format("mongodb://%s:%s@%s:%d/%s", account().username(), account().password(), host(), port(), account().database());
+    }
 
     public int port() {
         return DEFAULT_PORT;
@@ -46,5 +51,16 @@ public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, Mongo
         return "quay.io/fuse_qe/mongodb:4.4.15";
     }
 
-    public abstract String hostname();
+    public void openResources() {
+        LOG.debug("Creating new MongoClient instance");
+        client = MongoClients.create(replicaSetUrl());
+    }
+
+    public void closeResources() {
+        if (client != null) {
+            LOG.debug("Closing MongoDB client");
+            client.close();
+        }
+        validation = null;
+    }
 }
