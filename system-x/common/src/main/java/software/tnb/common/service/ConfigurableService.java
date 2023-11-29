@@ -1,6 +1,7 @@
 package software.tnb.common.service;
 
 import software.tnb.common.account.Account;
+import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.configuration.ServiceConfiguration;
 import software.tnb.common.util.ReflectionUtil;
 import software.tnb.common.validation.Validation;
@@ -23,6 +24,15 @@ public abstract class ConfigurableService<A extends Account, C, V extends Valida
     public ConfigurableService() {
         Class<S> serviceConfigurationClass = (Class<S>) ReflectionUtil.getGenericTypesOf(ConfigurableService.class, this.getClass())[3];
         configuration = ReflectionUtils.newInstance(serviceConfigurationClass);
+    }
+
+    @Override
+    public A account() {
+        if (account == null) {
+            Class<A> accountClass = (Class<A>) ReflectionUtil.getGenericTypesOf(ConfigurableService.class, this.getClass())[0];
+            account = AccountFactory.create(accountClass);
+        }
+        return account;
     }
 
     public S getConfiguration() {

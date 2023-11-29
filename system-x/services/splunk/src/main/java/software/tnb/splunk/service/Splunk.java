@@ -1,7 +1,6 @@
 package software.tnb.splunk.service;
 
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.service.ConfigurableService;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.configuration.SplunkConfiguration;
@@ -11,13 +10,18 @@ import com.splunk.Service;
 import com.splunk.ServiceArgs;
 
 public abstract class Splunk extends ConfigurableService<SplunkAccount, Service, SplunkValidation, SplunkConfiguration>
-    implements WithExternalHostname, WithDockerImage {
+    implements WithDockerImage {
+    protected static final int PORT = 8089;
 
     protected SplunkAccount account;
     protected com.splunk.Service client;
     protected SplunkValidation validation;
 
-    public abstract int apiPort();
+    public abstract String host();
+
+    public int port() {
+        return PORT;
+    }
 
     /**
      * Due to self sign certificate, the client is not able to communicate via localhost and port-forward.
@@ -28,9 +32,9 @@ public abstract class Splunk extends ConfigurableService<SplunkAccount, Service,
             ServiceArgs loginArgs = new ServiceArgs();
             loginArgs.setUsername(account().username());
             loginArgs.setPassword(account().password());
-            loginArgs.setHost(externalHostname());
-            loginArgs.setPort(apiPort());
-            loginArgs.setScheme(apiSchema());
+            loginArgs.setHost(host());
+            loginArgs.setPort(port());
+            loginArgs.setScheme(protocol());
             client = com.splunk.Service.connect(loginArgs);
         }
         return client;
@@ -48,7 +52,16 @@ public abstract class Splunk extends ConfigurableService<SplunkAccount, Service,
         return "quay.io/fuse_qe/splunk:9.0.3-a2";
     }
 
-    public String apiSchema() {
+    public String protocol() {
         return getConfiguration().getProtocol().toString();
+    }
+
+    public void openResources() {
+        // nothing to do
+    }
+
+    public void closeResources() {
+        validation = null;
+        client = null;
     }
 }

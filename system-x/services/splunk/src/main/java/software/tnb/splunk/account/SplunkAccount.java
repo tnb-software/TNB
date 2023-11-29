@@ -6,7 +6,7 @@ public class SplunkAccount implements Account {
 
     private String username = "admin";
 
-    private String password;
+    private String password = "password";
 
     public String username() {
         return username;

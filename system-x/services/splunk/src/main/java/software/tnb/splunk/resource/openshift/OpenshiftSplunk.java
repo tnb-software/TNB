@@ -3,6 +3,7 @@ package software.tnb.splunk.resource.openshift;
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithCustomResource;
+import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
@@ -44,7 +45,7 @@ import io.fabric8.openshift.api.model.Route;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Splunk.class)
-public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, WithCustomResource, WithName {
+public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, WithCustomResource, WithName, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSplunk.class);
     private static final String CRD_API = "v4";
     private static final String SERVICE_API_PORT = "https-splunkd";
@@ -196,7 +197,12 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     }
 
     @Override
-    public int apiPort() {
+    public String host() {
+        return externalHostname();
+    }
+
+    @Override
+    public int port() {
         return getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS) ? 443 : 80;
     }
 
