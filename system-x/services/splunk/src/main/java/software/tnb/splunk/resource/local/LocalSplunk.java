@@ -1,8 +1,6 @@
 package software.tnb.splunk.resource.local;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.Deployable;
-import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
 import software.tnb.splunk.service.configuration.SplunkProtocol;
 
@@ -20,9 +18,6 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     private SplunkContainer container;
 
-    private final int containerApiPort = 8089;
-    private static final String PASSWORD = "password";
-
     @Override
     public void defaultConfiguration() {
         getConfiguration().protocol(SplunkProtocol.HTTP);
@@ -34,7 +29,7 @@ public class LocalSplunk extends Splunk implements Deployable {
             throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
         }
         LOG.info("Starting Splunk container");
-        container = new SplunkContainer(image(), containerApiPort, containerEnvironment());
+        container = new SplunkContainer(image(), PORT, containerEnvironment());
         container.start();
         LOG.info("Splunk container started");
     }
@@ -48,40 +43,20 @@ public class LocalSplunk extends Splunk implements Deployable {
     }
 
     @Override
-    public void openResources() {
-        // nothing to do
-    }
-
-    @Override
-    public void closeResources() {
-        validation = null;
-        client = null;
-    }
-
-    @Override
-    public SplunkAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(SplunkAccount.class);
-            account.setPassword(PASSWORD);
-        }
-        return account;
-    }
-
-    @Override
-    public String externalHostname() {
+    public String host() {
         return container.getHost();
     }
 
     @Override
-    public int apiPort() {
-        return container.getMappedPort(containerApiPort);
+    public int port() {
+        return container.getMappedPort(PORT);
     }
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
             "SPLUNK_START_ARGS", "--accept-license",
             "SPLUNKD_SSL_ENABLE", "false",
-            "SPLUNK_PASSWORD", PASSWORD
+            "SPLUNK_PASSWORD", account().password()
         );
     }
 }
