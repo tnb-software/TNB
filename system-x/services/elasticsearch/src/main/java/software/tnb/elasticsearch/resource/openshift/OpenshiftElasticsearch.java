@@ -105,13 +105,13 @@ public class OpenshiftElasticsearch extends Elasticsearch implements ReusableOpe
     }
 
     @Override
-    protected String clientHost() {
+    protected String clientUrl() {
         return externalHostname();
     }
 
     @Override
     public String host() {
-        return inClusterHostname() + ":" + PORT;
+        return inClusterHostname();
     }
 
     @Override
