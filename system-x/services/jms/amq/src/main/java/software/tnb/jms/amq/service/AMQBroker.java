@@ -4,16 +4,31 @@ import software.tnb.common.service.Service;
 import software.tnb.jms.amq.account.AMQBrokerAccount;
 import software.tnb.jms.amq.validation.AMQValidation;
 
+import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
+
 import jakarta.jms.Connection;
+import jakarta.jms.JMSException;
 
 public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AMQValidation> {
-    public abstract String brokerUrl();
+    public abstract String host();
 
-    public abstract String mqttUrl();
+    public abstract int getPortMapping(int port);
 
-    protected abstract String mqttClientUrl();
+    public String openwireUrl() {
+        return String.format("tcp://%s:%d", host(), getPortMapping(61616));
+    }
 
-    public abstract String amqpUrl();
+    public String mqttUrl() {
+        return String.format("tcp://%s:%d", host(), getPortMapping(1883));
+    }
+
+    protected String mqttClientUrl() {
+        return mqttUrl();
+    }
+
+    public String amqpUrl() {
+        return String.format("amqp://%s:%d", host(), getPortMapping(5672));
+    }
 
     public AMQValidation validation() {
         if (validation == null) {
@@ -22,5 +37,30 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
         return validation;
     }
 
-    public abstract int getPortMapping(int port);
+    public void openResources() {
+        client = createConnection();
+    }
+
+    public void closeResources() {
+        validation = null;
+        try {
+            client.close();
+        } catch (JMSException e) {
+            throw new RuntimeException("Can't close JMS connection", e);
+        }
+    }
+
+    protected Connection createConnection() {
+        try {
+            ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory(openwireUrl(), account().username(), account().password());
+
+            // Create a Connection
+            Connection connection = connectionFactory.createConnection();
+            connection.start();
+
+            return connection;
+        } catch (JMSException e) {
+            throw new RuntimeException("Can't create jms connection", e);
+        }
+    }
 }

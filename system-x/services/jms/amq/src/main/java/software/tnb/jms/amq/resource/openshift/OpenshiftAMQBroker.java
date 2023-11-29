@@ -97,39 +97,13 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     }
 
     @Override
-    public void openResources() {
-        client = createConnection();
-    }
-
-    @Override
-    public void closeResources() {
-        validation = null;
-        try {
-            client.close();
-        } catch (JMSException e) {
-            throw new RuntimeException("Can't close JMS connection");
-        }
-    }
-
-    @Override
-    //return in-cluster broker URL
-    public String brokerUrl() {
-        return inClusterHostname();
-    }
-
-    @Override
-    public String mqttUrl() {
-        return "tcp://" + brokerUrl() + ":61626";
-    }
-
-    @Override
     protected String mqttClientUrl() {
         return String.format("ssl://%s:443", externalHostname());
     }
 
     @Override
-    public String amqpUrl() {
-        return "amqp://" + brokerUrl() + ":61626";
+    public String host() {
+        return inClusterHostname();
     }
 
     @Override
@@ -138,8 +112,8 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         return 61626;
     }
 
-    // create connection for external client
-    private Connection createConnection() {
+    @Override
+    protected Connection createConnection() {
         try {
             final String tsPath = materializeTrustStore().toAbsolutePath().toString();
             // Set the amq related properties for truststore and don't use truststore as part of the broker url

@@ -1,5 +1,6 @@
 package software.tnb.common.deployment;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
@@ -74,5 +75,15 @@ public interface OpenshiftDeployable extends Deployable {
         WaitUtils.waitFor(() -> servicePods().stream().allMatch(p -> p.isReady() && !p.get().isMarkedForDeletion()),
             "Restart: Waiting until the service is restarted");
         openResources();
+    }
+
+    @Override
+    default boolean enabled() {
+        return OpenshiftConfiguration.isOpenshift();
+    }
+
+    @Override
+    default int priority() {
+        return 1;
     }
 }

@@ -41,4 +41,12 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
         deploy();
         openResources();
     }
+
+    default boolean enabled() {
+        return true;
+    }
+
+    default int priority() {
+        return 0;
+    }
 }
