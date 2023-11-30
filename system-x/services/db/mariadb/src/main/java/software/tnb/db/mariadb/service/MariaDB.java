@@ -21,7 +21,7 @@ public abstract class MariaDB extends SQL {
 
     @Override
     public String jdbcConnectionUrl() {
-        return String.format("jdbc:mariadb://%s:%d/%s", hostname(), port(), account().database());
+        return String.format("jdbc:mariadb://%s:%d/%s", host(), port(), account().database());
     }
 
     @Override

@@ -53,13 +53,8 @@ public class OpenshiftMSSQL extends MSSQL implements OpenshiftDeployable, WithNa
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
-    }
-
-    @Override
-    public int port() {
-        return PORT;
     }
 
     @Override

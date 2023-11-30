@@ -21,7 +21,7 @@ public abstract class MSSQL extends SQL {
 
     @Override
     public String jdbcConnectionUrl() {
-        return String.format("jdbc:sqlserver://%s:%d;databaseName=%s;TrustServerCertificate=True", hostname(), port(), account().database());
+        return String.format("jdbc:sqlserver://%s:%d;databaseName=%s;TrustServerCertificate=True", host(), port(), account().database());
     }
 
     @Override
@@ -30,5 +30,10 @@ public abstract class MSSQL extends SQL {
             "ACCEPT_EULA", "Y",
             "SA_PASSWORD", account().password()
         );
+    }
+
+    @Override
+    public int port() {
+        return PORT;
     }
 }

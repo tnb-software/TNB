@@ -13,7 +13,7 @@ public class LocalPostgreSQL extends PostgreSQL implements Deployable {
     private final LocalDB localDb = new LocalDB(this, PORT, Wait.forLogMessage(".*Future log output will appear in directory.*", 2));
 
     @Override
-    public String hostname() {
+    public String host() {
         return localDb.getHost();
     }
 

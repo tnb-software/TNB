@@ -30,7 +30,7 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
 
     public abstract String jdbcConnectionUrl();
 
-    public abstract String hostname();
+    public abstract String host();
 
     public abstract int port();
 
@@ -55,7 +55,7 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
     protected String localConnectionUrl() {
         return OpenshiftConfiguration.isOpenshift()
             ? jdbcConnectionUrl()
-            .replace("://" + hostname(), "://" + externalHostname())
+            .replace("://" + host(), "://" + externalHostname())
             .replace(":" + port(), ":" + localPort())
             : jdbcConnectionUrl();
     }
