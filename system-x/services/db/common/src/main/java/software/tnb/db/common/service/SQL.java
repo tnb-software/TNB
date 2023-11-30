@@ -7,6 +7,7 @@ import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.service.Service;
+import software.tnb.common.util.ReflectionUtil;
 import software.tnb.db.common.account.SQLAccount;
 import software.tnb.db.common.validation.SQLValidation;
 
@@ -68,5 +69,9 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
 
     public void restart(Runnable onContainerStopped) {
         throw new IllegalArgumentException("Not implemented");
+    }
+
+    public String name() {
+        return ReflectionUtil.getSuperClassName(this.getClass());
     }
 }

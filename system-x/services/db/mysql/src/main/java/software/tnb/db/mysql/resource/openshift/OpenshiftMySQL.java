@@ -66,9 +66,4 @@ public class OpenshiftMySQL extends MySQL implements OpenshiftDeployable, WithNa
     public int localPort() {
         return openshiftDb.localPort();
     }
-
-    @Override
-    public String name() {
-        return "mysql-tnb";
-    }
 }

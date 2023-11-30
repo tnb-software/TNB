@@ -49,11 +49,6 @@ public class LocalMySQL extends MySQL implements Deployable {
     }
 
     @Override
-    public String name() {
-        return "MySQL";
-    }
-
-    @Override
     public void restart(Runnable onContainerStopped) {
         localDb.restart(onContainerStopped);
     }

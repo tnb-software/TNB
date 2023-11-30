@@ -137,7 +137,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public String name() {
-        return sqlService.name();
+        return sqlService.name().toLowerCase();
     }
 
     public int localPort() {

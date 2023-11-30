@@ -1,5 +1,7 @@
 package software.tnb.common.deployment;
 
+import software.tnb.common.util.ReflectionUtil;
+
 public interface RemoteService extends Deployable {
     @Override
     default boolean enabled() {
@@ -24,13 +26,7 @@ public interface RemoteService extends Deployable {
     }
 
     default String propertyValue(String prop, String def) {
-        final Class<?> superclass = this.getClass().getSuperclass();
-        if (Object.class.equals(superclass)) {
-            throw new IllegalStateException("Current class " + this.getClass().getSimpleName() + " does not extend any other class"
-                + " and default method from RemoteDeployable was called, either override this method or check what's wrong as this shouldn't happen");
-        }
-
-        return System.getProperty(String.format("tnb.%s.%s", superclass.getSimpleName().toLowerCase(), prop), def);
+        return System.getProperty(String.format("tnb.%s.%s", ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase(), prop), def);
     }
 
     default String host() {
