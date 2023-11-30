@@ -53,7 +53,7 @@ public class OpenshiftMariaDB extends MariaDB implements OpenshiftDeployable, Wi
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
     }
 

@@ -53,7 +53,7 @@ public class OpenshiftMySQL extends MySQL implements OpenshiftDeployable, WithNa
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
     }
 

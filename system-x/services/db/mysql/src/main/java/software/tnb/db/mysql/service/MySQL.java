@@ -24,7 +24,7 @@ public abstract class MySQL extends SQL {
 
     @Override
     public String jdbcConnectionUrl() {
-        return String.format("jdbc:mysql://%s:%d/%s", hostname(), port(), account().database());
+        return String.format("jdbc:mysql://%s:%d/%s", host(), port(), account().database());
     }
 
     @Override

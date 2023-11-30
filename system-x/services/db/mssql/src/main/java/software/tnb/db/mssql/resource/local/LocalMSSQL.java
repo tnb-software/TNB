@@ -13,7 +13,7 @@ public class LocalMSSQL extends MSSQL implements Deployable {
     private final LocalDB localDb = new LocalDB(this, PORT, Wait.forLogMessage(".*Recovery is complete.*", 1));
 
     @Override
-    public String hostname() {
+    public String host() {
         return localDb.getHost();
     }
 

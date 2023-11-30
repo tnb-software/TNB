@@ -13,7 +13,7 @@ public class LocalMariaDB extends MariaDB implements Deployable {
     private final LocalDB localDb = new LocalDB(this, PORT, Wait.forLogMessage(".*ready for connections.*", 2));
 
     @Override
-    public String hostname() {
+    public String host() {
         return localDb.getHost();
     }
 

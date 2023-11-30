@@ -53,7 +53,7 @@ public class OpenshiftPostgreSQL extends PostgreSQL implements OpenshiftDeployab
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
     }
 

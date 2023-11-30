@@ -14,11 +14,11 @@ public class LocalMySQL extends MySQL implements Deployable {
 
     @Override
     public String jdbcConnectionUrl() {
-        return String.format("jdbc:mysql://%s:%d/%s", hostname(), port(), account().database());
+        return String.format("jdbc:mysql://%s:%d/%s", host(), port(), account().database());
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return localDb.getHost();
     }
 
