@@ -1,6 +1,7 @@
 package software.tnb.common.deployment;
 
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.util.ReflectionUtil;
 import software.tnb.common.utils.WaitUtils;
 
 import java.util.List;
@@ -26,7 +27,7 @@ public interface WithOperatorHub {
     }
 
     default String subscriptionName() {
-        return "tnb-" + getSuperClassName();
+        return "tnb-" + ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase();
     }
 
     default String targetNamespace() {
@@ -83,16 +84,7 @@ public interface WithOperatorHub {
      * @return value from system property or default value
      */
     private String getValue(final String property, final String defaultValue) {
-        return Optional.ofNullable(System.getProperty(getSuperClassName() + "." + property)).orElse(defaultValue);
-    }
-
-    private String getSuperClassName() {
-        final Class<?> superclass = this.getClass().getSuperclass();
-        if (Object.class.equals(superclass)) {
-            throw new IllegalStateException("Current class " + this.getClass().getSimpleName() + " does not extend any other class"
-                + " and default method from WithOperatorHub was called, either override this method or "
-                + "check what's wrong as this shouldn't happen");
-        }
-        return superclass.getSimpleName().toLowerCase();
+        return Optional.ofNullable(System.getProperty("tnb." + ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase() + "." + property))
+            .orElse(defaultValue);
     }
 }
