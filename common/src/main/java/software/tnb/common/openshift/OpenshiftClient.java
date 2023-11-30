@@ -117,7 +117,12 @@ public class OpenshiftClient extends OpenShift {
 
     public String getOauthToken() {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
-            return OpenshiftClient.get().authorization().getConfiguration().getOauthToken();
+            String token = OpenshiftClient.get().authorization().getConfiguration().getAutoOAuthToken();
+            if (!token.isBlank()) {
+                return token;
+            } else {
+                throw new IllegalStateException("Oauth token not found");
+            }
         } else {
             return getTokenByUsernameAndPassword(OpenshiftConfiguration.openshiftUsername(),
                 OpenshiftConfiguration.openshiftPassword(), OpenshiftConfiguration.openshiftUrl());
