@@ -1,9 +1,8 @@
 package software.tnb.filesystem.resource.openshift;
 
+import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.filesystem.service.FileSystem;
-
-import org.junit.jupiter.api.extension.ExtensionContext;
 
 import com.google.auto.service.AutoService;
 
@@ -13,13 +12,14 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.Pod;
 
 @AutoService(FileSystem.class)
-public class OpenShiftFileSystem extends FileSystem {
+public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployable {
     private static final String NAMESPACE = OpenshiftClient.get().getNamespace();
     private String podLabelValue;
 
@@ -47,11 +47,17 @@ public class OpenShiftFileSystem extends FileSystem {
     }
 
     @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
+    public void create() {
     }
 
     @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
+    public boolean isDeployed() {
+        return true;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return null;
     }
 
     private String getPodName(String key, String value) {

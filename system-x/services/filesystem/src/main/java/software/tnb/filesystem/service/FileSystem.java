@@ -11,4 +11,16 @@ public abstract class FileSystem extends Service<NoAccount, NoClient, NoValidati
     public abstract void setAppName(String app);
 
     public abstract String getFileContent(Path path);
+
+    public void deploy() {
+    }
+
+    public void undeploy() {
+    }
+
+    public void openResources() {
+    }
+
+    public void closeResources() {
+    }
 }
