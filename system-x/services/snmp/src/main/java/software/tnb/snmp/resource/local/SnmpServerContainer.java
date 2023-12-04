@@ -13,6 +13,6 @@ public class SnmpServerContainer extends GenericContainer<SnmpServerContainer> {
         super(image);
         withEnv(env);
         withExposedPorts(SnmpServer.SNMPD_LISTENING_PORT, SnmpServer.SNMPTRAPD_LISTENING_PORT);
-        waitingFor(Wait.forLogMessage(".*NET-SNMP version 5.9.*", 1));
+        waitingFor(Wait.forLogMessage(".*NET-SNMP version.*", 1));
     }
 }
