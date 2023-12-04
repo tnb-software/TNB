@@ -16,7 +16,7 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting IBM MQ container");
-        container = new IBMMQContainer(image(), containerEnvironment(), mqscConfig());
+        container = new IBMMQContainer(image(), DEFAULT_PORT, containerEnvironment(), mqscConfig());
         container.start();
         LOG.info("IBM MQ container started");
     }
@@ -29,12 +29,12 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return container.getHost();
     }
 
     @Override
     public int port() {
-        return container.getPort();
+        return container.getMappedPort(DEFAULT_PORT);
     }
 }
