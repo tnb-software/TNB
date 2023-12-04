@@ -1,6 +1,7 @@
 package software.tnb.jms.ibm.mq.service;
 
 import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.deployment.RemoteService;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
@@ -21,7 +22,7 @@ import jakarta.jms.JMSException;
 public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQ.class);
 
-    public static final int DEFAULT_PORT = 1414;
+    protected static final int DEFAULT_PORT = 1414;
     public static final String MQSC_COMMAND_FILES_LOCATION = "/etc/mqm";
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
 
@@ -41,9 +42,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
         );
     }
 
-    public abstract String hostname();
-
-    public abstract int port();
+    public abstract String host();
 
     protected int clientPort() {
         return port();
@@ -85,7 +84,13 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
     private String clientHostname() {
         // For openshift, return localhost, as the client is connected via port-forward
         // For local, return "hostname()", as that may be different than "localhost" when running testcontainers on a different host
-        return OpenshiftConfiguration.isOpenshift() ? "localhost" : hostname();
+        if (this instanceof RemoteService) {
+            return ((RemoteService) this).host();
+        } else if (OpenshiftConfiguration.isOpenshift()) {
+            return "localhost";
+        } else {
+           return host();
+        }
     }
 
     public void closeResources() {
@@ -99,8 +104,7 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
         }
     }
 
-    @Override
-    protected Connection client() {
-        return client;
+    public int port() {
+        return DEFAULT_PORT;
     }
 }

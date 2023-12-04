@@ -219,13 +219,8 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
     }
 
     @Override
-    public String hostname() {
+    public String host() {
         return inClusterHostname();
-    }
-
-    @Override
-    public int port() {
-        return DEFAULT_PORT;
     }
 
     @Override
