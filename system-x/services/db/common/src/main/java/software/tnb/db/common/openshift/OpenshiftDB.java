@@ -26,12 +26,17 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     private int localPort;
     private final SQL sqlService;
     private final int port;
-    private final String sccName;
+    private String sccName;
 
     public OpenshiftDB(SQL sqlService, int port) {
         this.sqlService = sqlService;
         this.port = port;
+    }
+
+    @Override
+    public void deploy() {
         sccName = "tnb-openshift-db-" + OpenshiftClient.get().getNamespace();
+        OpenshiftDeployable.super.deploy();
     }
 
     @Override
