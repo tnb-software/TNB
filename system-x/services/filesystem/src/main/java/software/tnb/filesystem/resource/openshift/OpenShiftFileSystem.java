@@ -20,7 +20,6 @@ import io.fabric8.kubernetes.api.model.Pod;
 
 @AutoService(FileSystem.class)
 public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployable {
-    private static final String NAMESPACE = OpenshiftClient.get().getNamespace();
     private String podLabelValue;
 
     @Override
@@ -37,7 +36,7 @@ public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployab
         final String integrationContainer = OpenshiftClient.get().getIntegrationContainer(pod);
 
         try (InputStream is = OpenshiftClient.get().pods()
-            .inNamespace(NAMESPACE)
+            .inNamespace(OpenshiftClient.get().getNamespace())
             .withName(podName)
             .inContainer(integrationContainer).file(path.toString()).read()) {
             return new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining("\n"));
