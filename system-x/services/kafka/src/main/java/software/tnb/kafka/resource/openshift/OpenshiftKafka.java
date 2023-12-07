@@ -44,8 +44,14 @@ import io.strimzi.api.kafka.model.status.Condition;
 public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKafka.class);
 
-    private static final MixedOperation<io.strimzi.api.kafka.model.Kafka, KafkaList, Resource<io.strimzi.api.kafka.model.Kafka>> KAFKA_CRD_CLIENT =
-        OpenshiftClient.get().resources(io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
+    private static MixedOperation<io.strimzi.api.kafka.model.Kafka, KafkaList, Resource<io.strimzi.api.kafka.model.Kafka>> kafkaCrdClient;
+
+    @Override
+    public void deploy() {
+        kafkaCrdClient =
+            OpenshiftClient.get().resources(io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
+        ReusableOpenshiftDeployable.super.deploy();
+    }
 
     @Override
     public long waitTime() {
@@ -62,7 +68,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
         if (!usePreparedGlobalInstallation()) {
             if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
-                KAFKA_CRD_CLIENT.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+                kafkaCrdClient.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
                 OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
                     .timeout(120_000).waitFor();
                 deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
@@ -100,7 +106,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public boolean isReady() {
         try {
-            return KAFKA_CRD_CLIENT
+            return kafkaCrdClient
                 .inNamespace(targetNamespace())
                 .withName(name())
                 .get()
@@ -118,7 +124,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public boolean isDeployed() {
         return OpenshiftClient.get().inNamespace(targetNamespace(), c -> !c.getLabeledPods("name", "amq-streams-cluster-operator").isEmpty()
-            && KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).withName(name()).get() != null);
+            && kafkaCrdClient.inNamespace(targetNamespace()).withName(name()).get() != null);
     }
 
     @Override
@@ -165,7 +171,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             .build();
         //@formatter:on
 
-        KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).createOrReplace(kafka);
+        kafkaCrdClient.inNamespace(targetNamespace()).createOrReplace(kafka);
     }
 
     @Override
@@ -179,7 +185,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     }
 
     private String findBootstrapServers(String listnerType) {
-        return KAFKA_CRD_CLIENT.inNamespace(targetNamespace()).withName(name()).get().getStatus().getListeners()
+        return kafkaCrdClient.inNamespace(targetNamespace()).withName(name()).get().getStatus().getListeners()
             .stream()
             .filter(l -> listnerType.equals(l.getType()))
             .findFirst().get().getBootstrapServers();
