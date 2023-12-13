@@ -98,7 +98,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
             .withNewSpec()
                 .addNewTag()
                     .withName("latest")
-                    .withFrom(new ObjectReferenceBuilder().withKind("DockerImage").withName(defaultImage()).build())
+                    .withFrom(new ObjectReferenceBuilder().withKind("DockerImage").withName(image()).build())
                 .endTag()
             .endSpec()
             .build();
