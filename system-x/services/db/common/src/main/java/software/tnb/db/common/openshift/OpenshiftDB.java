@@ -26,23 +26,20 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     private int localPort;
     private final SQL sqlService;
     private final int port;
-    private String sccName;
 
     public OpenshiftDB(SQL sqlService, int port) {
         this.sqlService = sqlService;
         this.port = port;
     }
 
-    @Override
-    public void deploy() {
-        sccName = "tnb-openshift-db-" + OpenshiftClient.get().getNamespace();
-        OpenshiftDeployable.super.deploy();
+    protected String getSccName() {
+        return "tnb-openshift-db-" + OpenshiftClient.get().getNamespace();
     }
 
     @Override
     public void create() {
         OpenshiftClient.get().addGroupsToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(sccName, "restricted"),
+            OpenshiftClient.get().createSecurityContext(getSccName(), "restricted"),
             "system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
 
         //@formatter:off
@@ -111,7 +108,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().securityContextConstraints().withName(getSccName()).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
