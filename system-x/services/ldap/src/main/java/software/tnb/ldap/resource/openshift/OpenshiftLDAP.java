@@ -10,6 +10,9 @@ import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.ldap.service.LDAPLocalStack;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.google.auto.service.AutoService;
 import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
@@ -30,6 +33,7 @@ import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 @AutoService(LDAPLocalStack.class)
 public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDeployable, WithName {
 
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLDAP.class);
     private PortForward portForward;
     private int localPort;
     private String sccName;
@@ -37,6 +41,9 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
 
     @Override
     public void undeploy() {
+        LOG.info("Undeploying OpenShift LDAP");
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");

@@ -34,6 +34,8 @@ public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeploy
     @Override
     public void undeploy() {
         LOG.info("Undeploying SNMP server");
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
