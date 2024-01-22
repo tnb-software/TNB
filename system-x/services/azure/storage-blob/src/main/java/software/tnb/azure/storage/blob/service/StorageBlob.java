@@ -35,6 +35,6 @@ public class StorageBlob extends Service<AzureAccount, BlobServiceClient, Storag
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         LOG.debug("Creating new Azure Storage Blob validation");
-        validation = new StorageBlobValidation(client());
+        validation = new StorageBlobValidation(client(), account());
     }
 }
