@@ -8,13 +8,14 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 public abstract class Product implements BeforeAllCallback, AfterAllCallback {
-    protected Map<String, App> integrations = new ConcurrentHashMap<>();
+    protected Map<String, App> integrations = Collections.synchronizedMap(new LinkedHashMap());
 
     public App createIntegration(AbstractIntegrationBuilder<?> integrationBuilder) {
         if (integrations.containsKey(integrationBuilder.getIntegrationName())) {
@@ -44,7 +45,9 @@ public abstract class Product implements BeforeAllCallback, AfterAllCallback {
     protected abstract App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder);
 
     public void removeIntegrations() {
-        integrations.values().forEach(App::stop);
+        List<App> integrationsList = new ArrayList<>(integrations.values());
+        Collections.reverse(integrationsList);
+        integrationsList.forEach(App::stop);
         integrations.clear();
     }
 
