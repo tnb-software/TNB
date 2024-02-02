@@ -1,40 +1,189 @@
-schemaVersion: 2.1.0
+schemaVersion: 2.2.0
 metadata:
   name: csb-ubi8
   version: 0.0.1
   displayName: CSB Java ubi8
   description: CSB and ubi8 image
-  icon: https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/java-maven.jpg
-  tags: ['Java', 'Spring', 'Camel']
-  projectType: 'spring'
-  language: 'java'
+  icon: >-
+    https://raw.githubusercontent.com/devfile-samples/devfile-stack-icons/main/java-maven.jpg
+  tags:
+    - Java
+    - Spring
+    - Camel
+  projectType: spring
+  language: java
+variables:
+  MAVEN_MIRROR_URL: mvnUrl
+  JAVA_OPTS_APPEND: opts
+  MAVEN_ARGS_APPEND: args
+  SUB_FOLDER: dir
+  APP: csb-ubi8
+  IMAGE_REGISTRY: quay.io/rh_integration/csb-ubi8:latest
 components:
   - name: tools
     container:
       image: registry.access.redhat.com/ubi8/openjdk-17
+      env:
+        - name: MAVEN_MIRROR_URL
+          value: "{{MAVEN_MIRROR_URL}}"
+        - name: JAVA_OPTS_APPEND
+          value: "{{JAVA_OPTS_APPEND}}"
+        - name: MAVEN_ARGS_APPEND
+          value: "{{MAVEN_ARGS_APPEND}}"
+        - name: SUB_FOLDER
+          value: "{{SUB_FOLDER}}"
+      sourceMapping: $PROJECT_SOURCE
       mountSources: true
       volumeMounts:
         - name: mvnrepo
           path: /home/jboss/.m2/repository
       endpoints:
-      - name: http-8778
-        targetPort: 8778
-      - name: http-8080
-        targetPort: 8080
-      - name: http-8443
-        targetPort: 8443
+        - name: http-8778
+          targetPort: 8778
+        - name: http-8080
+          targetPort: 8080
+        - name: http-8443
+          targetPort: 8443
+  - name: image
+    image:
+      imageName: "{{IMAGE_REGISTRY}}"
+      dockerfile:
+        uri: ./Dockerfile
+        buildContext: '${PROJECTS_ROOT}'
   - name: mvnrepo
     volume:
       size: 1Gi
+  - name: outerloop-deploy
+    kubernetes:
+      inlined: |
+        kind: Deployment
+        apiVersion: apps/v1
+        metadata:
+          name: "{{APP}}"
+          annotations:
+            image.openshift.io/triggers: '[{"from":{"kind":"ImageStreamTag","name":"csb-ubi8:latest"},"fieldPath":"spec.template.spec.containers[?(@.name==\"main\")].image"}]'
+          labels:
+            deployment: "{{APP}}"
+        spec:
+          strategy:
+            type: Recreate    
+          replicas: 1
+          selector:
+            matchLabels:
+              deployment: "{{APP}}"
+          template:
+            metadata:
+              labels:
+                application: "{{APP}}"
+                deployment: "{{APP}}"
+            spec:
+              volumes:
+                - name: odo-projects
+                  emptyDir: {}
+                - name: odo-shared-data
+                  emptyDir: {}
+                - name: mvnrepo-csb-ubi8-app-vol
+                  persistentVolumeClaim:
+                    claimName: mvnrepo-csb-ubi8-app             
+              containers:
+                - name: main
+                  image: {{IMAGE_REGISTRY}}
+                  env:
+                    - name: MAVEN_MIRROR_URL
+                      value: "{{MAVEN_MIRROR_URL}}"
+                    - name: JAVA_OPTS_APPEND
+                      value: "{{JAVA_OPTS_APPEND}}"
+                    - name: MAVEN_ARGS_APPEND
+                      value: "{{MAVEN_ARGS_APPEND}}"
+                    - name: SUB_FOLDER
+                      value: "{{SUB_FOLDER}}"
+                    - name: PROJECTS_ROOT
+                      value: /projects
+                    - name: PROJECT_SOURCE
+                      value: /projects 
+                  ports:
+                    - containerPort: 8778
+                      protocol: TCP
+                    - containerPort: 8080
+                      protocol: TCP
+                    - containerPort: 8443
+                      protocol: TCP
+                  volumeMounts:
+                    - name: odo-projects
+                      mountPath: /projects
+                    - name: odo-shared-data
+                      mountPath: /opt/odo/
+                    - name: mvnrepo-csb-ubi8-app-vol
+                      mountPath: /home/jboss/.m2/repository
+  - name: outerloop-service
+    kubernetes:
+      inlined: |
+        kind: Service
+        apiVersion: v1
+        metadata:
+          name: "{{APP}}"
+          labels:
+            deployment: "{{APP}}"
+            application: "{{APP}}"
+            group: com.test
+            provider: devfile
+            app.kubernetes.io/part-of: {{APP}}
+        spec:
+          ipFamilies:
+            - IPv4
+          ports:
+            - name: http
+              protocol: TCP
+              port: 8080
+              targetPort: 8080
+          internalTrafficPolicy: Cluster
+          type: ClusterIP
+          ipFamilyPolicy: SingleStack
+          sessionAffinity: None
+          selector:
+            deployment: "{{APP}}"
+            application: "{{APP}}"
+  - name: outerloop-expose
+    kubernetes:
+      inlined: |
+        kind: Route
+        apiVersion: route.openshift.io/v1
+        metadata:
+          name: "{{APP}}"
+          labels:
+            application: "{{APP}}"
+            deployment: "{{APP}}"
+            group: com.test
+            provider: devfile
+            app.kubernetes.io/part-of: {{APP}}
+        spec:
+          to:
+            kind: Service
+            name: "{{APP}}"
+            weight: 100
+          port:
+            targetPort: 8080
+          wildcardPolicy: None
+  - name: outerloop-claim
+    kubernetes:
+      inlined: |
+        kind: PersistentVolumeClaim
+        apiVersion: v1
+        metadata:
+          name: mvnrepo-csb-ubi8-app
+          labels:
+            deployment: "{{APP}}"
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 1Gi
+          volumeMode: Filesystem
 commands:
-  - id: init-compile
-    exec:
+  - id: build-image
+    apply:
       component: tools
-      commandLine: 'source /opt/jboss/container/maven/default/maven.sh && maven_init 
-        && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml 
-        && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments
-        && if [ -n "$(ls $PROJECT_SOURCE/devfile-resources || :)" ]; then cp $PROJECT_SOURCE/devfile-resources/* /deployments/data; fi'
-      workingDir: $PROJECT_SOURCE
   - id: dev-run
     exec:
       component: tools
@@ -44,20 +193,26 @@ commands:
         kind: run
         isDefault: true
       workingDir: $PROJECTS_ROOT
-  - id: dev-debug
-    exec:
-      component: tools
-      commandLine: '/usr/local/s2i/run'
-      hotReloadCapable: true
-      env:
-        - name: JAVA_DEBUG
-          value: 'true'
-        - name: JAVA_DEBUG_PORT
-          value: ${DEBUG_PORT}
+  - id: deploy-pvc
+    apply:
+      component: outerloop-claim
+  - id: deployk8s
+    apply:
+      component: outerloop-deploy
+  - id: deploy-svc
+    apply:
+      component: outerloop-service
+  - id: deploy-route
+    apply:
+      component: outerloop-expose
+  - id: deploy
+    composite:
+      commands:
+        - build-image
+        - deploy-pvc
+        - deployk8s
+        - deploy-svc
+        - deploy-route
       group:
-        kind: debug
+        kind: deploy
         isDefault: true
-      workingDir: $PROJECTS_ROOT
-events:
-  postStart:
-    - init-compile
