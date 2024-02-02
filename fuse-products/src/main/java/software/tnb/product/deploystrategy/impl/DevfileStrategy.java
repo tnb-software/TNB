@@ -1,9 +1,11 @@
 package software.tnb.product.deploystrategy.impl;
 
-import software.tnb.common.config.OpenshiftConfiguration;
+import static software.tnb.common.config.OpenshiftConfiguration.OPENSHIFT_DEPLOYMENT_LABEL;
+
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.product.ProductType;
+import software.tnb.common.utils.IOUtils;
 import software.tnb.product.application.Phase;
 import software.tnb.product.deploystrategy.OpenshiftBaseDeployer;
 import software.tnb.product.deploystrategy.OpenshiftDeployStrategy;
@@ -24,10 +26,12 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.openshift.client.dsl.OpenShiftConfigAPIGroupDSL;
 
 @AutoService(OpenshiftDeployStrategy.class)
@@ -36,9 +40,9 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
     private static final Logger LOG = LoggerFactory.getLogger(DevfileStrategy.class);
 
     private AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder;
-
     private Path contextPath;
     private String folderName;
+    private final String deploymentLabel = "application";
 
     @Override
     public ProductType[] products() {
@@ -52,6 +56,7 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
     @Override
     public void preDeploy() {
+         System.setProperty(OPENSHIFT_DEPLOYMENT_LABEL, deploymentLabel);
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
             this.gitIntegrationBuilder = (AbstractMavenGitIntegrationBuilder<?>) integrationBuilder;
         }
@@ -64,27 +69,46 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         }
         //copy resources
         copyResources(contextPath, "devfile-resources");
+
+        try {
+            copyDevfile(Paths.get(getDevfile()));
+            copyDockerfile(Paths.get(getDockerfile()));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     @Override
     public void doDeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("create", "csb-ubi8", "--app", name, "--context", ".", "--devfile", getDevfile()), Phase.GENERATE);
+            List<String> envVars = new ArrayList<>();
+            runOdoCmd(Arrays.asList("preference", "set", "Ephemeral", "true", "--force"), Phase.GENERATE);
 
             if (TestConfiguration.isMavenMirror()) {
-                setEnvVar("MAVEN_MIRROR_URL", StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@mirrorOf"));
+                envVars.addAll(
+                    setEnvVar("MAVEN_MIRROR_URL", StringUtils.substringBefore(TestConfiguration.mavenRepository(), "@mirrorOf"))
+                );
             } else {
-                setEnvVar("MAVEN_MIRROR_URL", TestConfiguration.mavenRepository());
+                envVars.addAll(
+                    setEnvVar("MAVEN_MIRROR_URL", TestConfiguration.mavenRepository())
+                );
             }
 
-            setEnvVar("JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder));
+            envVars.addAll(setEnvVar("JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder)));
 
-            setEnvVar("MAVEN_ARGS_APPEND", getPropertiesForMaven(integrationBuilder));
+            envVars.addAll(setEnvVar("MAVEN_ARGS_APPEND", getPropertiesForMaven(integrationBuilder)));
 
-            setEnvVar("SUB_FOLDER", folderName);
+            envVars.addAll(setEnvVar("SUB_FOLDER", folderName));
 
-            runOdoCmd(Arrays.asList("push", "--show-log"), Phase.DEPLOY);
+            envVars.addAll(setEnvVar("APP", name));
+
+            envVars.addAll(setEnvVar("IMAGE_REGISTRY", imageURL()));
+
+            ArrayList<String> devCommand = new ArrayList<>(List.of("deploy"));
+            devCommand.addAll(envVars);
+
+            runOdoCmd(devCommand, Phase.DEPLOY);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -97,11 +121,18 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         return tempPath.toAbsolutePath().toString();
     }
 
+    private String getDockerfile() throws IOException {
+        Path tempPath = Files.createTempFile("Dockerfile", "");
+        FileUtils.copyInputStreamToFile(Thread.currentThread().getContextClassLoader()
+            .getResourceAsStream("devfiles/java-springboot-ubi8/Dockerfile"), tempPath.toFile());
+        return tempPath.toAbsolutePath().toString();
+    }
+
     @Override
     public void undeploy() {
         try {
             login();
-            runOdoCmd(Arrays.asList("delete", "--app", name, "-f", "--all"), Phase.UNDEPLOY);
+            runOdoCmd(Arrays.asList("delete", "component", "--name", "tools"), Phase.UNDEPLOY);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -113,9 +144,9 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
             .list().getItems()
             .stream()
             .filter(route -> route.getMetadata().getLabels() != null)
-            .filter(route -> route.getMetadata().getLabels().get("app") != null)
-            .filter(route -> route.getMetadata().getLabels().get("app").equals(name))
-            .filter(route -> route.getMetadata().getName().startsWith("http-8080"))
+            .filter(route -> route.getMetadata().getLabels().get(deploymentLabel) != null)
+            .filter(route -> route.getMetadata().getLabels().get(deploymentLabel).equals(name))
+            .filter(route -> route.getSpec().getPort().getTargetPort().equals(new IntOrString(8080)))
             .findFirst().orElseThrow(() -> new IllegalStateException("no route found"))
             .getSpec().getHost());
     }
@@ -125,8 +156,22 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         return isIntegrationPodFailed();
     }
 
-    private void setEnvVar(String envName, String envValue) throws IOException, InterruptedException {
-        runOdoCmd(Arrays.asList("config", "set", "--env", String.format("%s=%s", envName, envValue)));
+    private ArrayList<String> setEnvVar(String envName, String envValue) throws IOException, InterruptedException {
+        return new ArrayList<>(List.of("--var", String.format("%s=%s", envName, envValue)));
+    }
+
+    private void copyDevfile(Path devfilePath) {
+        Path resFolder = contextPath.resolve(".");
+        IOUtils.copyFile(devfilePath, resFolder.resolve("devfile.yaml"));
+    }
+
+    private void copyDockerfile(Path dockerfilePath) {
+        Path resFolder = contextPath.resolve(".");
+        IOUtils.copyFile(dockerfilePath, resFolder.resolve("Dockerfile"));
+    }
+
+    private String imageURL() {
+        return "quay.io/rh_integration/csb-ubi8:latest";
     }
 
     private void login() throws IOException, InterruptedException {
@@ -141,10 +186,10 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
             args.add(String.format("--username=%s", config.getConfiguration().getUsername()));
             args.add(String.format("--password=%s", pwd));
         } else {
-            args.add(String.format("--token=%s", config.getConfiguration().getOauthToken()));
+            args.add(String.format("--token=%s", config.getConfiguration().getAutoOAuthToken()));
         }
         runOdoCmd(args);
-        runOdoCmd(Arrays.asList("project", "set", OpenshiftClient.get().getNamespace()));
+        runOdoCmd(Arrays.asList("set", "namespace", OpenshiftClient.get().getNamespace()));
     }
 
     private void runOdoCmd(final List<String> args) throws IOException, InterruptedException {
@@ -158,8 +203,6 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
         LogStream logStream = null;
         cmd.add(odoBinaryPath);
         cmd.addAll(args);
-        cmd.add("--kubeconfig");
-        cmd.add(OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString());
 
         ProcessBuilder processBuilder = new ProcessBuilder(cmd)
             .directory(contextPath.toFile());
