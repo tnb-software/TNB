@@ -15,7 +15,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public abstract class Product implements BeforeAllCallback, AfterAllCallback {
-    protected Map<String, App> integrations = Collections.synchronizedMap(new LinkedHashMap());
+    // Use linkedhashmap so that we can stop the integration in reverse order
+    protected Map<String, App> integrations = Collections.synchronizedMap(new LinkedHashMap<>());
 
     public App createIntegration(AbstractIntegrationBuilder<?> integrationBuilder) {
         if (integrations.containsKey(integrationBuilder.getIntegrationName())) {
