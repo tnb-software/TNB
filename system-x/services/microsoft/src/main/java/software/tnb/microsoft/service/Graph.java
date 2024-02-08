@@ -12,25 +12,20 @@ import org.slf4j.LoggerFactory;
 import com.azure.identity.ClientSecretCredential;
 import com.azure.identity.ClientSecretCredentialBuilder;
 import com.google.auto.service.AutoService;
-import com.microsoft.graph.authentication.TokenCredentialAuthProvider;
-import com.microsoft.graph.requests.GraphServiceClient;
-
-import okhttp3.Request;
+import com.microsoft.graph.serviceclient.GraphServiceClient;
 
 @AutoService(Graph.class)
-public class Graph extends Service<MicrosoftAccount, GraphServiceClient<Request>, GraphValidation> {
+public class Graph extends Service<MicrosoftAccount, GraphServiceClient, GraphValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(Graph.class);
 
-    protected GraphServiceClient<Request> client() {
+    protected GraphServiceClient client() {
         final ClientSecretCredential clientSecretCredential = new ClientSecretCredentialBuilder()
             .clientId(account().clientId())
             .clientSecret(account().clientSecret())
             .tenantId(account().tenantId())
             .build();
 
-        final TokenCredentialAuthProvider tokenCredentialAuthProvider = new TokenCredentialAuthProvider(clientSecretCredential);
-
-        return GraphServiceClient.builder().authenticationProvider(tokenCredentialAuthProvider).buildClient();
+        return new GraphServiceClient(clientSecretCredential, "https://graph.microsoft.com/.default");
     }
 
     @Override
