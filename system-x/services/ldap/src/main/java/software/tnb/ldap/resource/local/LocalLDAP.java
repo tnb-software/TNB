@@ -39,6 +39,11 @@ public class LocalLDAP extends LDAPLocalStack implements Deployable {
     }
 
     @Override
+    public LDAPConnectionPool getConnection() {
+        return client;
+    }
+
+    @Override
     public void openResources() {
         final LDAPConnection ldapConnection = new LDAPConnection();
         try {

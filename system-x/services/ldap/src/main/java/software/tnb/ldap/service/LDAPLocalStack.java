@@ -17,6 +17,8 @@ public abstract class LDAPLocalStack extends Service<LocalLDAPAccount, LDAPConne
 
     public abstract String url();
 
+    public abstract LDAPConnectionPool getConnection();
+
     public Map<String, String> environmentVariables() {
         return Map.of("OPENLDAP_ROOT_DN_SUFFIX"
             , StringUtils.substringAfter(account().getUsername(), ",")
