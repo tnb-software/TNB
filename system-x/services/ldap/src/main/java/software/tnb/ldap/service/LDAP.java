@@ -11,11 +11,7 @@ import software.tnb.ldap.validation.LDAPValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import org.apache.commons.lang3.StringUtils;
-
-import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
-import com.unboundid.ldap.sdk.LDAPException;
 
 public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends LDAPValidation>
     extends ConfigurableService<A, C, V, LDAPConfiguration> {
@@ -30,23 +26,12 @@ public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends
             : localStack.url();
     }
 
-    public C client() {
-        final LDAPConnection ldapConnection = new LDAPConnection();
-        try {
-            String url = url();
-            int port = PORT;
-            if (!getConfiguration().isRemoteUrl()) {
-                url = "localhost";
-                port = Integer.parseInt(StringUtils.substringAfter(localStack.url(), "host:"));
-            }
-            ldapConnection.connect(url, port, 20000);
-            ldapConnection.bind(account().getUsername(), account().getPassword());
-            client = (C) new LDAPConnectionPool(ldapConnection, 1);
-        } catch (LDAPException e) {
-            throw new RuntimeException("Error when connecting to LDAP server: " + e.getMessage());
-        }
+    public LDAPConnectionPool getConnection() {
+        return localStack.getConnection();
+    }
 
-        return client;
+    public C client() {
+        return (C) getConnection();
     }
 
     public V validation() {

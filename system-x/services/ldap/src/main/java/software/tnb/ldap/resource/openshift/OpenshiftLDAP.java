@@ -179,6 +179,12 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
 
     @Override
     public String url() {
-        return String.format("ldap://%s:%d", name(), PORT);
+        String serviceHost = String.format("%s.%s.svc.cluster.local", name(), OpenshiftClient.get().getNamespace());
+        return String.format("ldap://%s:%d", serviceHost, PORT);
+    }
+
+    @Override
+    public LDAPConnectionPool getConnection() {
+        return client;
     }
 }
