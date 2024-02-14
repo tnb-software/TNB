@@ -50,6 +50,7 @@
         <module>apicurio-registry</module>
         <module>snmp</module>
         <module>tekton</module>
+        <module>flink</module>
         <!-- keep the "all" module last as it needs to collect all previous modules -->
         <module>all</module>
     </modules>
