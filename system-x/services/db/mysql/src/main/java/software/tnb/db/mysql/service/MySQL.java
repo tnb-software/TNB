@@ -37,10 +37,15 @@ public abstract class MySQL extends SQL {
         );
     }
 
-    public SQLValidation rootValidation() {
+    public synchronized SQLValidation rootValidation() {
         if (rootValidation == null) {
             rootValidation = new SQLValidation(localConnectionUrl(), new MySQLRootAccount());
         }
         return rootValidation;
+    }
+
+    public SQLValidation newRootValidation() {
+        rootValidation = null;
+        return rootValidation();
     }
 }
