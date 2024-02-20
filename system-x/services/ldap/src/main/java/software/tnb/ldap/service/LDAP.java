@@ -2,6 +2,7 @@ package software.tnb.ldap.service;
 
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.service.ConfigurableService;
+import software.tnb.common.service.Service;
 import software.tnb.common.service.ServiceFactory;
 import software.tnb.ldap.account.LDAPAccount;
 import software.tnb.ldap.account.LocalLDAPAccount;
@@ -16,18 +17,20 @@ import com.unboundid.ldap.sdk.LDAPConnectionPool;
 public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends LDAPValidation>
     extends ConfigurableService<A, C, V, LDAPConfiguration> {
 
-    protected static final int PORT = 389;
-
     protected LDAPLocalStack localStack;
+
+    protected LDAPRemoteStack remoteStack;
 
     public String url() {
         return getConfiguration().isRemoteUrl()
-            ? String.format("ldap://%s:%s", account().getHost(), PORT)
+            ? remoteStack.url()
             : localStack.url();
     }
 
     public LDAPConnectionPool getConnection() {
-        return localStack.getConnection();
+        return getConfiguration().isRemoteUrl()
+            ? remoteStack.getConnection()
+            : localStack.getConnection();
     }
 
     public C client() {
@@ -56,6 +59,13 @@ public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends
         getConfiguration().useRemoteUrl(false);
     }
 
+    public Service getCurrentStack() {
+        Service ldapService = getConfiguration().isRemoteUrl()
+            ? remoteStack
+            : localStack;
+        return ldapService;
+    }
+
     @Override
     public void afterAll(ExtensionContext extensionContext) throws Exception {
         if (client != null) {
@@ -63,8 +73,10 @@ public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends
             client = null;
         }
 
-        if (localStack != null) {
+        if (!getConfiguration().isRemoteUrl()) {
             localStack.afterAll(extensionContext);
+        } else {
+            remoteStack.afterAll(extensionContext);
         }
     }
 
@@ -73,6 +85,9 @@ public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends
         if (!getConfiguration().isRemoteUrl()) {
             localStack = ServiceFactory.create(LDAPLocalStack.class);
             localStack.beforeAll(extensionContext);
+        } else {
+            remoteStack = ServiceFactory.create(LDAPRemoteStack.class);
+            remoteStack.beforeAll(extensionContext);
         }
     }
 }
