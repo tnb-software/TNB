@@ -25,6 +25,7 @@ public class OpenshiftConfiguration extends Configuration {
     private static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
 
     private static final String NAMESPACE_PREFIX = "tnb-test-";
+    public static final String USE_MICROSHIFT = "test.use.microshift";
 
     public static boolean isOpenshift() {
         return getBoolean(USE_OPENSHIFT, false);
@@ -80,4 +81,9 @@ public class OpenshiftConfiguration extends Configuration {
     public static String getDeployStrategy() {
         return getProperty(OPENSHIFT_DEPLOY_STRATEGY, "jkube");
     }
+
+    public static boolean isMicroshift() {
+        return getBoolean(USE_MICROSHIFT, false);
+    }
+
 }

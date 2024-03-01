@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    APP_LABEL: APP_NAME
+  name: APP_NAME
+spec:
+  ports:
+    - name: web
+      port: 8080
+      protocol: TCP
+      targetPort: 8080
+      nodePort: NODE_PORT
+  selector:
+    APP_LABEL: APP_NAME
+  internalTrafficPolicy: Cluster
+  type: NodePort
+  ipFamilyPolicy: SingleStack
+  sessionAffinity: None
+

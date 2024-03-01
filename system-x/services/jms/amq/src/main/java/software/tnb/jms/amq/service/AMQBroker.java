@@ -6,6 +6,9 @@ import software.tnb.jms.amq.validation.AMQValidation;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
 
@@ -62,5 +65,16 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
         } catch (JMSException e) {
             throw new RuntimeException("Can't create jms connection", e);
         }
+    }
+
+    protected Map<String, String> containerEnvironment() {
+        final Map<String, String> env = new HashMap<>();
+        env.put("AMQ_USER", account().username());
+        env.put("AMQ_PASSWORD", account().password());
+        env.put("AMQ_ROLE", "admin");
+        env.put("AMQ_NAME", "broker");
+        env.put("AMQ_TRANSPORTS", "openwire,amqp,stomp,mqtt,hornetq");
+        env.put("AMQ_REQUIRE_LOGIN", "true");
+        return env;
     }
 }

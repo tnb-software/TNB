@@ -25,15 +25,18 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(Infinispan.class)
 public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshiftDeployable, WithName {
 
+    protected static final String CONFIG_MAP_NAME = "infinispan-config";
+
     @Override
     public void undeploy() {
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        OpenshiftClient.get().configMaps().withName(CONFIG_MAP_NAME).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
@@ -52,7 +55,7 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
 
         try {
             OpenshiftClient.get()
-                .createConfigMap("infinispan-config", Map.of("infinispan.xml", IOUtils.resourceToString("/infinispan.xml", StandardCharsets.UTF_8)));
+                .createConfigMap(CONFIG_MAP_NAME, Map.of("infinispan.xml", IOUtils.resourceToString("/infinispan.xml", StandardCharsets.UTF_8)));
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -64,13 +67,15 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
                 .build()
             ).build();
 
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
+        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
             .withNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
@@ -88,23 +93,20 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
                                 .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                                     .collect(Collectors.toList()))
                                 .addNewVolumeMount()
-                                    .withName("infinispan-config")
+                                    .withName(CONFIG_MAP_NAME)
                                     .withMountPath("/user-config")
                                 .endVolumeMount()
                                 .withReadinessProbe(probe)
                                 .withLivenessProbe(probe)
                             .endContainer()
                             .addNewVolume()
-                                .withName("infinispan-config")
+                                .withName(CONFIG_MAP_NAME)
                                 .withConfigMap(new ConfigMapVolumeSourceBuilder()
-                                    .withName("infinispan-config")
+                                    .withName(CONFIG_MAP_NAME)
                                     .build())
                             .endVolume()
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
                 .endSpec()
             .build());
 

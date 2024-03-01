@@ -36,9 +36,9 @@ import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
@@ -62,8 +62,10 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting routes");
         OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        LOG.debug("Deleting deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        LOG.debug("Deleting deployment {}", name());
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
+        LOG.debug("Deleting config map {}", name());
+        OpenshiftClient.get().configMaps().withName(CONFIG_MAP_NAME).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
@@ -83,6 +85,11 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
             IOUtils.closeQuietly(portForward);
         }
         NetworkUtils.releasePort(localPort);
+    }
+
+    @Override
+    protected String clientHostname() {
+        return externalHostname();
     }
 
     @Override
@@ -110,15 +117,16 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
             .collect(Collectors.toList());
 
         // @formatter:off
-        LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(
-            new DeploymentConfigBuilder()
+        LOG.debug("Creating deployment {}", name());
+        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
                 .editOrNewMetadata()
                     .withName(name())
                     .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
@@ -156,9 +164,6 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
                         )
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
                 .endSpec()
                 .build()
         );
@@ -180,6 +185,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
                         .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
                     .editOrNewSpecLike(serviceSpecBuilder.build())
+                    .withType("NodePort")
                     .endSpec()
                     .build()
             );
@@ -225,7 +231,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public int clientPort() {
-        return localPort;
+        return OpenshiftConfiguration.isMicroshift() ? microshiftClientPort() : localPort;
     }
 
     @Override
@@ -256,6 +262,12 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public String externalHostname() {
-        return "localhost";
+        return OpenshiftConfiguration.isMicroshift() ? OpenshiftClient.get().config().getMasterUrl().getHost() : "localhost";
+    }
+
+    private int microshiftClientPort() {
+        return OpenshiftClient.get().getService(name()).getSpec().getPorts().stream()
+            .filter(servicePort -> name().equals(servicePort.getName()))
+            .findFirst().get().getNodePort();
     }
 }

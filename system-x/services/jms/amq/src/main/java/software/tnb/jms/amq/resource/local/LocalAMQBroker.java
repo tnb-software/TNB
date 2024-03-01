@@ -9,9 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.HashMap;
-import java.util.Map;
-
 @AutoService(AMQBroker.class)
 public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalAMQBroker.class);
@@ -45,17 +42,6 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
 
     private int[] containerPorts() {
         return new int[] {8161, 61616, 1883, 5672};
-    }
-
-    private Map<String, String> containerEnvironment() {
-        final Map<String, String> env = new HashMap<>();
-        env.put("AMQ_USER", account().username());
-        env.put("AMQ_PASSWORD", account().password());
-        env.put("AMQ_ROLE", "admin");
-        env.put("AMQ_NAME", "broker");
-        env.put("AMQ_TRANSPORTS", "openwire,amqp,stomp,mqtt,hornetq");
-        env.put("AMQ_REQUIRE_LOGIN", "true");
-        return env;
     }
 
     @Override

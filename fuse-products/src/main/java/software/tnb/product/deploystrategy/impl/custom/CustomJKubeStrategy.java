@@ -52,14 +52,8 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
         return this;
     }
 
-    @Override
-    public void doDeploy() {
-        Map<String, String> mvnProps = new HashMap<>();
-        if (integrationBuilder instanceof  AbstractMavenGitIntegrationBuilder
-            && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
-            mvnProps = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties();
-        }
-        final Map<String, String> ompProperties = Map.of(
+    protected Map<String, String> getOmpProperties() {
+        return Map.of(
             "skipTests", "true"
             , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
             , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
@@ -71,9 +65,18 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
             , "jkube.enricher.jkube-service.port", String.format("%s:%s", integrationBuilder.getPort(), integrationBuilder.getPort())
             , "jkube.enricher.jkube-service.expose", "true"
         );
+    }
+
+    @Override
+    public void doDeploy() {
+        Map<String, String> mvnProps = new HashMap<>();
+        if (integrationBuilder instanceof  AbstractMavenGitIntegrationBuilder
+            && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
+            mvnProps = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties();
+        }
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
-            .withProperties(Stream.concat(ompProperties.entrySet().stream()
+            .withProperties(Stream.concat(getOmpProperties().entrySet().stream()
                     , mvnProps.entrySet().stream())
                 .collect(Collectors
                     .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
@@ -150,7 +153,7 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
         }
     }
 
-    private void createCustomDeployment(Path jkubeFolder) {
+    protected void createCustomDeployment(Path jkubeFolder) {
         try {
             final String deploymentContent = StringUtils.replace(IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8),
                 "XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder).replaceAll("\"", "\\\\\""));
