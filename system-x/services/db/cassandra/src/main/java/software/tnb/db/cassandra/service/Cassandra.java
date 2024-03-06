@@ -18,7 +18,7 @@ public abstract class Cassandra extends Service<CassandraAccount, CqlSession, Ca
 
     public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box
-        return "quay.io/fuse_qe/cassandra:4.0.7";
+        return "quay.io/fuse_qe/cassandra:4.1.4";
     }
 
     public CassandraValidation validation() {
