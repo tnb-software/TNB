@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Service Bus</name>
 
     <properties>
-        <azure.messaging.servicebus.version>7.15.0</azure.messaging.servicebus.version>
+        <azure.messaging.servicebus.version>7.15.1</azure.messaging.servicebus.version>
     </properties>
 
     <dependencies>
