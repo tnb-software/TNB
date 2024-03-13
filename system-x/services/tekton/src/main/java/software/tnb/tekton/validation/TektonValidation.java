@@ -33,7 +33,7 @@ public class TektonValidation implements Validation {
     }
 
     public Task createTektonTask(InputStream isTask) {
-        return createTektonTask(client.v1beta1().tasks().load(isTask).get());
+        return createTektonTask(client.v1beta1().tasks().load(isTask).item());
     }
 
     public Pipeline createTektonPipeline(Pipeline pipeline) {
@@ -42,7 +42,7 @@ public class TektonValidation implements Validation {
     }
 
     public Pipeline createTektonPipeline(InputStream isPipeline) {
-        return createTektonPipeline(client.v1beta1().pipelines().load(isPipeline).get());
+        return createTektonPipeline(client.v1beta1().pipelines().load(isPipeline).item());
     }
 
     public PipelineRun createTektonPipelineRun(PipelineRun pipelineRun) {
@@ -52,7 +52,7 @@ public class TektonValidation implements Validation {
     }
 
     public PipelineRun createTektonPipelineRun(InputStream isPipelineRun) {
-        return createTektonPipelineRun(client.v1beta1().pipelineRuns().load(isPipelineRun).get());
+        return createTektonPipelineRun(client.v1beta1().pipelineRuns().load(isPipelineRun).item());
     }
 
     public List<Task> getAllTasks() {
