@@ -118,7 +118,7 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
             }
         }
 
-        if (config.skipIPSetup()) {
+        if (!config.skipIPSetup()) {
             ObjectMeta metadata = new ObjectMetaBuilder()
                 .withName(config.integrationPlatformName())
                 .withLabels(Map.of("app", "camel-k"))
