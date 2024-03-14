@@ -16,6 +16,8 @@ public abstract class CamelKConfiguration extends CamelConfiguration {
     public static final String INTEGRATION_PLATFORM_NAME = "camelk.integration.platform.name";
     public static final String BASE_IMAGE = "camelk.base.image";
 
+    public static final String SKIP_IP_SETUP = "camelk.skip.ip.setup";
+
     public String subscriptionName() {
         return "tnb-camel-k";
     }
@@ -54,6 +56,10 @@ public abstract class CamelKConfiguration extends CamelConfiguration {
 
     public boolean useGlobalInstallation() {
         return getBoolean(USE_GLOBAL_INSTALLATION, false);
+    }
+
+    public boolean skipIPSetup() {
+        return getBoolean(SKIP_IP_SETUP, false);
     }
 
     public static CamelKConfiguration getConfiguration() {

@@ -118,44 +118,46 @@ public class CamelK extends OpenshiftProduct implements KameletOps, BeforeEachCa
             }
         }
 
-        ObjectMeta metadata = new ObjectMetaBuilder()
-            .withName(config.integrationPlatformName())
-            .withLabels(Map.of("app", "camel-k"))
-            .build();
+        if (!config.skipIPSetup()) {
+            ObjectMeta metadata = new ObjectMetaBuilder()
+                .withName(config.integrationPlatformName())
+                .withLabels(Map.of("app", "camel-k"))
+                .build();
 
-        IntegrationPlatformSpec spec = new IntegrationPlatformSpec();
+            IntegrationPlatformSpec spec = new IntegrationPlatformSpec();
 
-        Build build = new Build();
-        build.setTimeout(config.mavenBuildTimeout() + "m");
-        spec.setBuild(build);
-        if (config.baseImage() != null) {
-            build.setBaseImage(config.baseImage());
+            Build build = new Build();
+            build.setTimeout(config.mavenBuildTimeout() + "m");
+            spec.setBuild(build);
+            if (config.baseImage() != null) {
+                build.setBaseImage(config.baseImage());
+            }
+
+            org.apache.camel.v1.integrationplatformspec.build.Maven maven = new org.apache.camel.v1.integrationplatformspec.build.Maven();
+            Settings settings = new Settings();
+            ConfigMapKeyRef cm = new ConfigMapKeyRef();
+            cm.setKey("settings.xml");
+            cm.setName(config.mavenSettingsConfigMapName());
+            cm.setOptional(false);
+            settings.setConfigMapKeyRef(cm);
+            maven.setSettings(settings);
+
+            build.setMaven(maven);
+
+            IntegrationPlatform ip = new IntegrationPlatform();
+            ip.setMetadata(metadata);
+            ip.setSpec(spec);
+
+            if (TestConfiguration.mavenSettings() == null) {
+                OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(), Map.of("settings.xml", Maven.createSettingsXmlFile()));
+            } else {
+                OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(),
+                    Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
+            }
+
+            OpenshiftClient.get().resources(IntegrationPlatform.class).delete();
+            OpenshiftClient.get().resources(IntegrationPlatform.class).resource(ip).create();
         }
-
-        org.apache.camel.v1.integrationplatformspec.build.Maven maven = new org.apache.camel.v1.integrationplatformspec.build.Maven();
-        Settings settings = new Settings();
-        ConfigMapKeyRef cm = new ConfigMapKeyRef();
-        cm.setKey("settings.xml");
-        cm.setName(config.mavenSettingsConfigMapName());
-        cm.setOptional(false);
-        settings.setConfigMapKeyRef(cm);
-        maven.setSettings(settings);
-
-        build.setMaven(maven);
-
-        IntegrationPlatform ip = new IntegrationPlatform();
-        ip.setMetadata(metadata);
-        ip.setSpec(spec);
-
-        if (TestConfiguration.mavenSettings() == null) {
-            OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(), Map.of("settings.xml", Maven.createSettingsXmlFile()));
-        } else {
-            OpenshiftClient.get().createConfigMap(config.mavenSettingsConfigMapName(),
-                Map.of("settings.xml", IOUtils.readFile(Paths.get(TestConfiguration.mavenSettings()))));
-        }
-
-        OpenshiftClient.get().resources(IntegrationPlatform.class).delete();
-        OpenshiftClient.get().resources(IntegrationPlatform.class).resource(ip).create();
 
         if (TestConfiguration.streamLogs()) {
             setupLogger();
