@@ -58,7 +58,7 @@ public class ArgoClient {
         final GenericKubernetesResource app =
             OpenshiftClient.get().genericKubernetesResources("argoproj.io/v1alpha1", "Application").inNamespace("openshift-gitops")
                 .withName(name).get();
-        app.getAdditionalProperties().put("revision", revision);
+        app.getAdditionalProperties().put("operation", Map.of("sync", Map.of("revision", revision)));
         OpenshiftClient.get().genericKubernetesResources("argoproj.io/v1alpha1", "Application").inNamespace("openshift-gitops")
             .resource(app).createOrReplace();
     }
