@@ -15,6 +15,7 @@ import com.ibm.mq.headers.pcf.PCFMessageAgent;
 
 import java.util.HashSet;
 import java.util.Hashtable;
+import java.util.Objects;
 import java.util.Set;
 
 import jakarta.jms.Connection;
@@ -29,13 +30,13 @@ public class IBMMQValidation implements Validation {
     private final Set<String> createdQueues = new HashSet<>();
     private final Set<String> createdTopics = new HashSet<>();
 
-    public IBMMQValidation(IBMMQAccount account, String host, int port, Connection connection) {
+    public IBMMQValidation(IBMMQAccount account, String host, int port, Connection connection, String cipherSpec) {
         this.account = account;
         this.connection = connection;
-        agent = createPCFAgent(host, port);
+        agent = createPCFAgent(host, port, cipherSpec);
     }
 
-    private MQQueueManager createQueueManager(String host, int port) {
+    private MQQueueManager createQueueManager(String host, int port, String cipherSpec) {
         Hashtable<String, Object> properties = new Hashtable<>();
         properties.put(MQConstants.HOST_NAME_PROPERTY, host);
         properties.put(MQConstants.PORT_PROPERTY, port);
@@ -43,6 +44,9 @@ public class IBMMQValidation implements Validation {
         properties.put(MQConstants.USE_MQCSP_AUTHENTICATION_PROPERTY, true);
         properties.put(MQConstants.USER_ID_PROPERTY, account.adminUsername());
         properties.put(MQConstants.PASSWORD_PROPERTY, account.adminPassword());
+        if (Objects.nonNull(cipherSpec)) {
+            properties.put(MQConstants.SSL_CIPHER_SUITE_PROPERTY, cipherSpec);
+        }
         try {
             return new MQQueueManager(account.queueManager(), properties);
         } catch (MQException e) {
@@ -50,9 +54,9 @@ public class IBMMQValidation implements Validation {
         }
     }
 
-    private PCFMessageAgent createPCFAgent(String host, int port) {
+    private PCFMessageAgent createPCFAgent(String host, int port, String cipherSpec) {
         try {
-            return new PCFMessageAgent(createQueueManager(host, port));
+            return new PCFMessageAgent(createQueueManager(host, port, cipherSpec));
         } catch (MQDataException e) {
             throw new RuntimeException("Unable to create PCFMessageAgent:", e);
         }

@@ -1,8 +1,9 @@
 package software.tnb.jms.ibm.mq.service;
 
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
+import software.tnb.jms.ibm.mq.service.configuration.IBMMQConfiguration;
 import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
 
 import org.slf4j.Logger;
@@ -17,17 +18,21 @@ import java.util.Map;
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
 
-public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValidation> implements WithDockerImage {
+public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection, IBMMQValidation, IBMMQConfiguration> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(IBMMQ.class);
 
     protected static final int DEFAULT_PORT = 1414;
     public static final String MQSC_COMMAND_FILES_LOCATION = "/etc/mqm";
+    public static final String KEYS_FOLDER = "/etc/mqm/pki/keys/mykey";
+    public static final String SSL_FOLDER = "/mnt/mqm/data/qmgrs/%s/ssl";
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
+    public static final String SSLCIPHERSUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256";
 
     public IBMMQValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new IBM MQ validation");
-            validation = new IBMMQValidation(account(), clientHostname(), clientPort(), client());
+            validation = new IBMMQValidation(account(), clientHostname(), clientPort(), client()
+                , getConfiguration().useSSL() ? SSLCIPHERSUITE : null);
         }
         return validation;
     }
@@ -72,6 +77,9 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
             connectionFactory.setChannel(account().channel());
             connectionFactory.setQueueManager(account().queueManager());
             connectionFactory.setTransportType(WMQConstants.WMQ_CM_CLIENT);
+            if (getConfiguration().useSSL()) {
+                connectionFactory.setSSLCipherSuite(SSLCIPHERSUITE);
+            }
             client = connectionFactory.createConnection(account().username(), account().password());
             client.start();
         } catch (Exception e) {
@@ -96,5 +104,10 @@ public abstract class IBMMQ extends Service<IBMMQAccount, Connection, IBMMQValid
 
     public int port() {
         return DEFAULT_PORT;
+    }
+
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().useSSL(false);
     }
 }
