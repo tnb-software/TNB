@@ -50,6 +50,11 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     }
 
     @Override
+    public String targetNamespace() {
+        return "openshift-distributed-tracing";
+    }
+
+    @Override
     public void closeResources() {
         validation = null;
     }
@@ -57,6 +62,9 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     @Override
     public void create() {
         LOG.debug("Creating Jaeger subscription");
+        //create target namespace if not exists
+        OpenshiftClient.get().createNamespace(targetNamespace());
+
         // Create subscription if needed
         createSubscription();
         try {
