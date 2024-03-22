@@ -30,8 +30,10 @@ public class TestPropertiesConfigSourceProvider implements ConfigSourceProvider 
                     System.getProperty(TEST_PROPERTIES), TEST_PROPERTIES);
                 return Collections.emptyList();
             }
-            LOG.trace("Loading properties from " + testProperties.getAbsolutePath());
-            return Collections.singletonList(new PropertyFileConfigSource(testProperties.toURI().toURL()));
+            LOG.info("Loading properties from " + testProperties.getAbsolutePath());
+            PropertyFileConfigSource propertiesSource = new PropertyFileConfigSource(testProperties.toURI().toURL());
+            propertiesSource.getProperties().forEach((key, value) -> LOG.info(key + "=" + value));
+            return Collections.singletonList(propertiesSource);
         } catch (MalformedURLException e) {
             throw new RuntimeException(e);
         }

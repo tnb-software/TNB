@@ -16,6 +16,9 @@ import software.tnb.hyperfoil.validation.generated.auth.ApiKeyAuth;
 import software.tnb.hyperfoil.validation.generated.auth.Authentication;
 import software.tnb.hyperfoil.validation.generated.auth.HttpBasicAuth;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import javax.net.ssl.HostnameVerifier;
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.SSLContext;
@@ -98,6 +101,8 @@ public class ApiClient {
     private JSON json;
 
     private HttpLoggingInterceptor loggingInterceptor;
+
+    private static final Logger LOG = LoggerFactory.getLogger(ApiClient.class);
 
     /**
      * Basic constructor for ApiClient
@@ -1042,6 +1047,7 @@ public class ApiClient {
             if (response.body() != null) {
                 try {
                     respBody = response.body().string();
+                    LOG.error("Unsuccessful Hyperfoil call response: \n" + respBody);
                 } catch (IOException e) {
                     throw new ApiException(response.message(), e, response.code(), response.headers().toMultimap());
                 }

@@ -10,7 +10,6 @@ import software.tnb.hyperfoil.validation.generated.model.Agent;
 import software.tnb.hyperfoil.validation.generated.model.RequestStatisticsResponse;
 import software.tnb.hyperfoil.validation.generated.model.Run;
 
-import org.apache.commons.compress.utils.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -21,7 +20,6 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -202,13 +200,9 @@ public class HyperfoilValidation implements Validation {
             }
             benchmark = response.getBody();
         } else {
-            if (!benchmarkUri.startsWith("/")) {
-                benchmarkUri = "/" + benchmarkUri;
-            }
-            try (InputStream is = this.getClass().getResourceAsStream(benchmarkUri)) {
-                byte[] benchmarkByteArray = IOUtils.toByteArray(is);
-                benchmark = new String(benchmarkByteArray);
-            }
+            Path benchmarkPath = Paths.get("target", benchmarkUri);
+            benchmark = Files.readString(benchmarkPath);
+            LOG.info("Loading Hyperfoil benchmark at " + benchmarkPath);
         }
         if (benchmark == null) {
             throw new IllegalStateException("Benchmark file at " + benchmarkUri + " not found");
@@ -235,6 +229,7 @@ public class HyperfoilValidation implements Validation {
             LOG.info("Using benchmark with name: " + name);
             File tempBenchmarkFile = Files.createTempFile(name, ".yaml").toFile();
             Files.writeString(tempBenchmarkFile.toPath(), benchmark);
+            LOG.info("Resolved benchmark to upload: \n" + Files.readString(tempBenchmarkFile.toPath()));
             getDefaultApi().addBenchmark(null, null, tempBenchmarkFile);
             return name;
         } catch (ApiException | IOException e) {
