@@ -279,11 +279,11 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-ssh</artifactId>
+            <artifactId>system-x-splunk</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-splunk</artifactId>
+            <artifactId>system-x-ssh</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
