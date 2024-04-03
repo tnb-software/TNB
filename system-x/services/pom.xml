@@ -49,6 +49,7 @@
         <module>microsoft</module>
         <module>apicurio-registry</module>
         <module>snmp</module>
+        <module>samba</module>
         <module>tekton</module>
         <module>flink</module>
         <module>ssh</module>
