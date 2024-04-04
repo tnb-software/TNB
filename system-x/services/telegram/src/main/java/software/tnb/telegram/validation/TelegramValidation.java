@@ -22,10 +22,10 @@ public class TelegramValidation implements Validation {
         this.client = client;
     }
 
-    public void sendMessage(String text) {
+    public String sendMessage(String text) {
         LOG.debug("Sending message {} from telegram-client", text);
         try {
-            client.execInContainer("python3", "/app/send_message.py", text);
+            return client.execInContainer("python3", "/app/send_message.py", text);
         } catch (Exception e) {
             throw new RuntimeException("Failed to send message", e);
         }
