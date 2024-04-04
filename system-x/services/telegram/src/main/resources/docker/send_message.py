@@ -1,13 +1,14 @@
-import os, sys
+import os, sys, asyncio
 
 from telethon.sync import TelegramClient
 from telethon.sessions import StringSession
 
-def send(dc_id, dc_ip, api_id, api_hash, session_str, username, text):
+async def send(dc_id, dc_ip, api_id, api_hash, session_str, username, text):
     client = TelegramClient(StringSession(session_str), api_id, api_hash)
     client.session.set_dc(dc_id, dc_ip, 80)
-    with client:
-        client.send_message(username, text)
+    async with client:
+        msgObject = await client.send_message(username, text)
+        print(f'Message Sent: "{msgObject.message}"')
 
 if __name__ == '__main__':
     arg_dc_id = int(os.environ["TELEGRAM_DC_ID"])
@@ -20,4 +21,4 @@ if __name__ == '__main__':
     if (len(sys.argv) == 2):
         arg_text = sys.argv[1]
 
-    send(arg_dc_id, arg_dc_ip, arg_api_id, arg_api_hash, arg_session_str, arg_username, arg_text)
+    asyncio.run(send(arg_dc_id, arg_dc_ip, arg_api_id, arg_api_hash, arg_session_str, arg_username, arg_text))
