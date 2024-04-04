@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class RestCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
+    private static final String DEFAULT_PATH = "/camel";
 
     @Override
     public void customizeCamelK() {
@@ -21,7 +22,7 @@ public class RestCustomizer extends ProductsCustomizer implements IntegrationSpe
 
     @Override
     public void customizeQuarkus() {
-        getIntegrationBuilder().addToProperties("quarkus.camel.servlet.url-patterns", "/camel/*");
+        getIntegrationBuilder().addToProperties("quarkus.camel.servlet.url-patterns", DEFAULT_PATH + "/*");
         getIntegrationBuilder().addToProperties("quarkus.openshift.route.expose", "true");
         getIntegrationBuilder().dependencies("rest");
     }
@@ -47,5 +48,9 @@ public class RestCustomizer extends ProductsCustomizer implements IntegrationSpe
         builder.setProperties(properties);
         traits.setBuilder(builder);
         integrationSpec.setTraits(traits);
+    }
+
+    public String getReadinessCheckPath() {
+        return DEFAULT_PATH + "/";
     }
 }

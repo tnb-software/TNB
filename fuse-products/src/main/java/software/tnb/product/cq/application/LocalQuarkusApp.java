@@ -1,8 +1,11 @@
 package software.tnb.product.cq.application;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
+import software.tnb.product.customizer.Customizer;
+import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.FileLog;
@@ -18,18 +21,29 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class LocalQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalQuarkusApp.class);
     private Process appProcess;
-    private final AbstractIntegrationBuilder<?> integrationBuilder;
 
     public LocalQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
-        this.integrationBuilder = integrationBuilder;
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
+
+        Optional<Customizer> restCustomizer = integrationBuilder.getCustomizers().stream().filter(c -> c instanceof RestCustomizer).findFirst();
+        // For local quarkus app, the HTTP request will fail when the endpoint is not ready, so check if an exception was raised or not
+        restCustomizer.ifPresent(customizer ->
+            readinessCheck = () -> {
+                try {
+                    HTTPUtils.getInstance().get(getEndpoint() + ((RestCustomizer) customizer).getReadinessCheckPath());
+                    return true;
+                } catch (Exception e) {
+                    return false;
+                }
+            }
+        );
     }
 
     @Override
@@ -88,7 +102,7 @@ public class LocalQuarkusApp extends QuarkusApp {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
         } else {
             List<String> args = this.integrationBuilder.getProperties() != null ? this.integrationBuilder.getProperties().entrySet().stream()
-                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList()) : Collections.emptyList();
+                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList() : Collections.emptyList();
 
             cmd.add(System.getProperty("java.home") + "/bin/java");
             cmd.addAll(args);
