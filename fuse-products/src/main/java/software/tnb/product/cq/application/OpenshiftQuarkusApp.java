@@ -2,9 +2,12 @@ package software.tnb.product.cq.application;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.application.Phase;
 import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
+import software.tnb.product.customizer.Customizer;
+import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.OpenshiftLog;
@@ -25,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -39,11 +43,14 @@ import io.fabric8.openshift.api.model.RoutePort;
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
 
-    private final AbstractIntegrationBuilder<?> integrationBuilder;
-
     public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
-        this.integrationBuilder = integrationBuilder;
+
+        Optional<Customizer> restCustomizer = integrationBuilder.getCustomizers().stream().filter(c -> c instanceof RestCustomizer).findFirst();
+        // For openshift quarkus app, the HTTP request will return default openshift 503 when the endpoint is not ready
+        restCustomizer.ifPresent(customizer ->
+            readinessCheck = () -> HTTPUtils.getInstance().get(getEndpoint() + ((RestCustomizer) customizer).getReadinessCheckPath())
+                .getResponseCode() != 503);
     }
 
     @Override
@@ -163,7 +170,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public boolean isReady() {
-        return ResourceFunctions.areExactlyNPodsRunning(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name));
+        return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name));
     }
 
     @Override

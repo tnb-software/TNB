@@ -2,6 +2,7 @@ package software.tnb.product.cq.application;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.application.App;
 import software.tnb.product.application.Phase;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
@@ -22,13 +23,21 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
 public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
 
+    protected AbstractIntegrationBuilder<?> integrationBuilder;
+
+    protected BooleanSupplier readinessCheck;
+
     public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder.getIntegrationName());
+
+        this.integrationBuilder = integrationBuilder;
+
         LOG.info("Creating Camel Quarkus application project for integration {}", name);
 
         String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
@@ -129,5 +138,13 @@ public abstract class QuarkusApp extends App {
         dependencies.forEach(model.getDependencies()::add);
 
         Maven.writePom(pom, model);
+    }
+
+    @Override
+    public void waitUntilReady() {
+        super.waitUntilReady();
+        if (readinessCheck != null) {
+            WaitUtils.waitFor(readinessCheck, 10, 1000L, "Waiting for endpoint readiness");
+        }
     }
 }
