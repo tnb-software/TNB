@@ -14,7 +14,7 @@ public abstract class SambaServer extends Service<SambaAccount, NoClient, NoVali
 
     @Override
     public String defaultImage() {
-        return "images.paas.redhat.com/fuse_qe/samba:latest";
+        return "quay.io/fuse_qe/samba:latest";
     }
 
     public abstract String address();
