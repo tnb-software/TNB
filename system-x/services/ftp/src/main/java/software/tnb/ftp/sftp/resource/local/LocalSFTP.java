@@ -40,26 +40,12 @@ public class LocalSFTP extends SFTP implements Deployable {
 
     @Override
     public void openResources() {
-        try {
-            LOG.debug("Creating new SFTPClient instance");
-            SSHClient sshClient = new SSHClient();
-            sshClient.addHostKeyVerifier(new PromiscuousVerifier());
-            sshClient.connect(host(), port());
-            sshClient.authPassword(account().username(), account().password());
-            client = sshClient.newSFTPClient();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override
     public void closeResources() {
+        executor.shutdownNow();
         IOUtils.closeQuietly(client);
-    }
-
-    @Override
-    public SFTPClient client() {
-        return client;
     }
 
     @Override
@@ -75,5 +61,18 @@ public class LocalSFTP extends SFTP implements Deployable {
     @Override
     public String logs() {
         return container.getLogs();
+    }
+
+    @Override
+    protected SFTPClient makeClient() {
+        try {
+            SSHClient sshClient = new SSHClient();
+            sshClient.addHostKeyVerifier(new PromiscuousVerifier());
+            sshClient.connect(host(), port());
+            sshClient.authPassword(account().username(), account().password());
+            return sshClient.newSFTPClient();
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create new SFTPClient instance", e);
+        }
     }
 }

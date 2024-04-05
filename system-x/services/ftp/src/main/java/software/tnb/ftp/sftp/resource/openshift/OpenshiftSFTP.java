@@ -20,6 +20,8 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -44,9 +46,10 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSFTP.class);
 
+    private final ExecutorService executor = Executors.newFixedThreadPool(1);
+
     private String sccName;
 
-    private SFTPClient client;
     private PortForward portForward;
     private int localPort;
     private final String serviceAccountName = name() + "-sa";
@@ -148,12 +151,11 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     public void openResources() {
         localPort = NetworkUtils.getFreePort();
         portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
-        WaitUtils.sleep(1000);
-        makeClient();
     }
 
     @Override
     public void closeResources() {
+        executor.shutdownNow();
         IOUtils.closeQuietly(client);
         IOUtils.closeQuietly(portForward);
         NetworkUtils.releasePort(localPort);
@@ -184,18 +186,13 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     }
 
     @Override
-    public SFTPClient client() {
-        return client;
-    }
-
-    private void makeClient() {
+    protected SFTPClient makeClient() {
         try {
-            LOG.debug("Creating new SFTPClient instance");
             SSHClient sshClient = new SSHClient();
             sshClient.addHostKeyVerifier(new PromiscuousVerifier());
             sshClient.connect(externalHostname(), localPort);
             sshClient.authPassword(account().username(), account().password());
-            client = sshClient.newSFTPClient();
+            return sshClient.newSFTPClient();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
