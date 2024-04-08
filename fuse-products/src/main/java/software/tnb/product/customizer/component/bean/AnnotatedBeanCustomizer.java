@@ -17,6 +17,7 @@ public class AnnotatedBeanCustomizer extends ProductsCustomizer {
 
     @Override
     public void customizeCamelK() {
+        customizeQuarkus();
     }
 
     @Override
