@@ -19,8 +19,7 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 public class LocalSFTP extends SFTP implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSFTP.class);
     private SFTPContainer container;
-    private SFTPClient client;
-    
+
     @Override
 
     public void deploy() {
