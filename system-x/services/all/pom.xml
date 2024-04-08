@@ -267,6 +267,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-samba</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-servicenow</artifactId>
         </dependency>
         <dependency>
@@ -280,10 +284,6 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-splunk</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
-            <artifactId>system-x-samba</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
