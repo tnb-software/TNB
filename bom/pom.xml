@@ -376,6 +376,11 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-samba</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-servicenow</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -392,11 +397,6 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-snmp</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
-                <artifactId>system-x-samba</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
