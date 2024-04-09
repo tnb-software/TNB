@@ -2,4 +2,5 @@
   description = "Allowlist"
   paths = [
     '''system-x/services/http/src/main/resources/''',
+    '''system-x/services/samba/src/main/java/software/tnb/samba/account/SambaAccount.java'''
   ]
