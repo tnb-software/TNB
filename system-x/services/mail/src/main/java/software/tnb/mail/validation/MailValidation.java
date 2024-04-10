@@ -74,7 +74,7 @@ public class MailValidation implements Validation {
         HTTPUtils.Response response = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient())
             .get(String.format("http://%s/users/%s/mailboxes/INBOX/messageCount", httpHostname, username));
 
-        return Integer.parseInt(response.getBody());
+        return response.isSuccessful() ? Integer.parseInt(response.getBody()) : -1;
     }
 
     /**
