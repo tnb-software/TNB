@@ -57,6 +57,12 @@ public class LocalSpringBootApp extends SpringBootApp {
         }
 
         command.addAll(args);
+
+        if (TestConfiguration.appDebug()) {
+            command.add("-Xdebug");
+            command.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=0.0.0.0:" + TestConfiguration.appDebugPort());
+        }
+
         command.add("-jar");
         fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
@@ -81,6 +87,11 @@ public class LocalSpringBootApp extends SpringBootApp {
 
             log = new FileLog(logFile);
             logStream = new FileLogStream(logFile, LogStream.marker(name));
+
+            if (TestConfiguration.appDebug()) {
+                LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
+                    TestConfiguration.appDebugPort());
+            }
         }
     }
 
