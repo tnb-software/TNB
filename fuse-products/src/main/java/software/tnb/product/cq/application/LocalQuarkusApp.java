@@ -61,6 +61,11 @@ public class LocalQuarkusApp extends QuarkusApp {
 
         log = new FileLog(logFile);
         logStream = new FileLogStream(logFile, LogStream.marker(name));
+
+        if (TestConfiguration.appDebug()) {
+            LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
+                TestConfiguration.appDebugPort());
+        }
     }
 
     @Override
@@ -106,6 +111,11 @@ public class LocalQuarkusApp extends QuarkusApp {
 
             cmd.add(System.getProperty("java.home") + "/bin/java");
             cmd.addAll(args);
+
+            if (TestConfiguration.appDebug()) {
+                cmd.add("-Xdebug");
+                cmd.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=0.0.0.0:" + TestConfiguration.appDebugPort());
+            }
             cmd.add("-jar");
             fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
         }

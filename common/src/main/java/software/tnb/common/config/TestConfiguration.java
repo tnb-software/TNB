@@ -47,6 +47,10 @@ public class TestConfiguration extends Configuration {
 
     public static final String USER = "tnb.user";
 
+    public static final String APP_DEBUG = "tnb.app.debug";
+
+    public static final String APP_DEBUG_PORT = "tnb.app.debug.port";
+
     public static ProductType product() {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
             .orElseThrow(
@@ -170,5 +174,13 @@ public class TestConfiguration extends Configuration {
 
     public static boolean useGlobalOpenshiftKafka() {
         return getBoolean(TEST_USE_GLOBAL_OPENSHIFT_KAFKA, false);
+    }
+
+    public static boolean appDebug() {
+        return getBoolean(APP_DEBUG, false);
+    }
+
+    public static Integer appDebugPort() {
+        return getInteger(APP_DEBUG_PORT, 5005);
     }
 }
