@@ -16,6 +16,8 @@ public class RemoteLDAP extends LDAPRemoteStack implements Deployable {
 
     private static final Logger LOG = LoggerFactory.getLogger(RemoteLDAP.class);
 
+    private String firstReachableRemoteURL;
+
     @Override
     public void deploy() { }
 
@@ -24,7 +26,7 @@ public class RemoteLDAP extends LDAPRemoteStack implements Deployable {
 
     @Override
     public String url() {
-        return String.format("ldap://%s:%s", account().getHost(), PORT);
+        return firstReachableRemoteURL;
     }
 
     @Override
@@ -35,14 +37,18 @@ public class RemoteLDAP extends LDAPRemoteStack implements Deployable {
     @Override
     public void openResources() {
         final LDAPConnection ldapConnection = new LDAPConnection();
-        try {
-            ldapConnection.connect(account().getHost(), PORT, 20000);
-            ldapConnection.bind(account().getUsername(), account().getPassword());
-            client = new LDAPConnectionPool(ldapConnection, 1);
-            setReachable(true);
-        } catch (LDAPException e) {
-            LOG.error("Error when connecting to remote LDAP server: " + e.getMessage());
-            setReachable(false);
+        for (String remoteHost : account().getHost().split(",")) {
+            try {
+                ldapConnection.connect(remoteHost, PORT, 20000);
+                ldapConnection.bind(account().getUsername(), account().getPassword());
+                client = new LDAPConnectionPool(ldapConnection, 1);
+                firstReachableRemoteURL = String.format("ldap://%s:%s", remoteHost, PORT);
+                setReachable(true);
+                break;
+            } catch (LDAPException e) {
+                LOG.error("Error when connecting to remote LDAP server: " + e.getMessage());
+                setReachable(false);
+            }
         }
     }
 
