@@ -1,16 +1,16 @@
 FROM registry.access.redhat.com/ubi8/openjdk-17
 
 USER jboss
-ENV PROJECT_SOURCE=/projects
-ENV MAVEN_MIRROR_URL=
-ENV SUB_FOLDER=.
-ENV JAVA_OPTS_APPEND=-Dcamel.springboot.main-run-controller=true
-ENV MAVEN_ARGS_APPEND=
+ARG PROJECT_SOURCE=/projects
+ARG MAVEN_MIRROR_URL=
+ARG SUB_FOLDER=.
+ARG JAVA_OPTS_APPEND=-Dcamel.springboot.main-run-controller=true
+ARG MAVEN_ARGS_APPEND=
 
 COPY . /projects
 
 USER root
-RUN source /opt/jboss/container/maven/default/maven.sh && maven_init && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml \
+RUN source /opt/jboss/container/maven/default/maven.sh && maven_init && mvn -s /home/jboss/.m2/settings.xml package -f ${PROJECT_SOURCE}/${SUB_FOLDER}/pom.xml -Dmaven.repo.remote=${MAVEN_MIRROR_URL} \
     && cp ${PROJECT_SOURCE}/${SUB_FOLDER}/target/*.jar /deployments \
     && if [ -n "$(ls $PROJECT_SOURCE/devfile-resources || :)" ]; then cp $PROJECT_SOURCE/devfile-resources/* /deployments/data; fi;
 

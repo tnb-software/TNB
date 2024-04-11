@@ -206,6 +206,11 @@ public class DevfileStrategy extends OpenshiftBaseDeployer {
 
         ProcessBuilder processBuilder = new ProcessBuilder(cmd)
             .directory(contextPath.toFile());
+        if (Phase.DEPLOY.equals(phase)) {
+            processBuilder.environment().put("ODO_IMAGE_BUILD_ARGS",
+                "--build-arg=" + args.stream().filter(x -> x.contains("MAVEN_MIRROR_URL")).findFirst().get());
+        }
+
         if (phase != null) {
             processBuilder.redirectOutput(logFile).redirectError(logFile);
             logStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, phase));
