@@ -48,6 +48,13 @@ public class StorageBlobValidation implements Validation {
         client.getBlobContainerClient(blobContainer).getBlobClient(blob).upload(dataStream, message.length());
     }
 
+    public void createAppendBlob(String blobContainer, String blob, String message) {
+        LOG.debug("Creating append blob with name {} and content {}", blob, message);
+        ByteArrayInputStream dataStream = new ByteArrayInputStream(message.getBytes());
+        client.getBlobContainerClient(blobContainer).getBlobClient(blob).getAppendBlobClient().create(true);
+        client.getBlobContainerClient(blobContainer).getBlobClient(blob).getAppendBlobClient().appendBlock(dataStream, message.length());
+    }
+
     public String readBlockBlob(String blobContainer, String blob) {
         LOG.debug("Reading block blob content with name {}", blob);
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
