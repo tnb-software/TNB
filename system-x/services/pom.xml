@@ -29,6 +29,7 @@
         <module>jira</module>
         <module>http</module>
         <module>kafka</module>
+        <module>kudu</module>
         <module>infinispan</module>
         <module>db</module>
         <module>mail</module>
