@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Ldap</name>
 
     <properties>
-        <unboundid.ldapsdk.version>6.0.9</unboundid.ldapsdk.version>
+        <unboundid.ldapsdk.version>7.0.0</unboundid.ldapsdk.version>
     </properties>
 
     <dependencies>
