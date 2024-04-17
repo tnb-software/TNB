@@ -12,7 +12,7 @@ import java.util.Map;
 public abstract class Telegram extends Service<TelegramAccount, NoClient, TelegramValidation> implements WithDockerImage {
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/telegram-client:latest";
+        return "quay.io/fuse_qe/telegram-client-without-dc:latest";
     }
 
     public abstract String execInContainer(String... commands);
@@ -26,8 +26,6 @@ public abstract class Telegram extends Service<TelegramAccount, NoClient, Telegr
 
     public Map<String, String> getEnv() {
         Map<String, String> env = new HashMap<>();
-        env.put("TELEGRAM_DC_ID", account().getDcId());
-        env.put("TELEGRAM_DC_IP", account().getDcIp());
         env.put("TELEGRAM_API_ID", account().getAppId());
         env.put("TELEGRAM_API_HASH", account().getAppHash());
         env.put("TELEGRAM_SESSION", account().getSessionString());
