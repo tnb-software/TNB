@@ -6,8 +6,6 @@ import software.tnb.common.account.WithId;
 public class TelegramAccount implements Account, WithId {
     private String app_hash;
     private String appId;
-    private String dcId;
-    private String dcIp;
     private String sessionString;
     private String token;
     private String username;
@@ -23,14 +21,6 @@ public class TelegramAccount implements Account, WithId {
 
     public String getAppId() {
         return appId;
-    }
-
-    public String getDcId() {
-        return dcId;
-    }
-
-    public String getDcIp() {
-        return dcIp;
     }
 
     public String getSessionString() {
