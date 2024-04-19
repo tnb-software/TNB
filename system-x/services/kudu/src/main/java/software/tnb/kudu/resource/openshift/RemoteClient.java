@@ -107,9 +107,15 @@ public class RemoteClient implements KuduClient {
         final String[] com = new String[commands.length + 1];
         com[0] = "kudu";
         System.arraycopy(commands, 0, com, 1, com.length - 1);
-        final PodShellOutput outCmd = OpenshiftClient.get().podShell(OpenshiftClient.get().getPod(clientPodName)).execute(com);
-        if (StringUtils.isNotBlank(outCmd.getError())) {
-            throw new RuntimeException(outCmd.getError());
+        PodShellOutput outCmd = null;
+        int retries = 1;
+        for (int i = 0; i <= retries; i++) {
+            outCmd = OpenshiftClient.get().podShell(OpenshiftClient.get().getPod(clientPodName)).execute(com);
+            if (outCmd.getError().isEmpty()) {
+                break;
+            } else if (i == retries) {
+                throw new RuntimeException(outCmd.getError());
+            }
         }
         return outCmd.getOutput();
     }
