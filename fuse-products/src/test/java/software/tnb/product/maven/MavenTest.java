@@ -86,6 +86,9 @@ public class MavenTest extends TestParent {
             case CAMEL_K:
                 verifyDependency(d, "org.apache.camel.quarkus", "camel-quarkus-" + component, null);
                 break;
+            case CXF_QUARKUS:
+                //CXF_QUARKUS doesn't use Camel
+                break;
             default:
                 throw new IllegalArgumentException("Implement new switch case for " + type.name());
         }

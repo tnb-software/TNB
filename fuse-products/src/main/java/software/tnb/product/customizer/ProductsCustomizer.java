@@ -10,6 +10,7 @@ public abstract class ProductsCustomizer extends Customizer {
                 customizeCamelK();
                 break;
             case CAMEL_QUARKUS:
+            case CXF_QUARKUS:
                 customizeQuarkus();
                 break;
             case CAMEL_SPRINGBOOT:
