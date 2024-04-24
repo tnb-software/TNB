@@ -4,7 +4,6 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
@@ -41,7 +40,7 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePort;
 
 public class OpenshiftQuarkusApp extends QuarkusApp {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCamelQuarkus.class);
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftQuarkusApp.class);
 
     public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
