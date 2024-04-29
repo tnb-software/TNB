@@ -12,6 +12,7 @@ public class HorreumConfiguration extends Configuration {
     public static final String TEST_OWNER = "horreum.testowner";
     public static final String HTTP_LOG_ENABLED = "horreum.http.log.enabled";
     public static final String FINGERPRINT_NAME = "horreum.fingerprint.name";
+    public static final String TESTRUN_DESCRIPTION = "horreum.testrun.description";
 
     public static String getUrl() {
         return getProperty(URL);
@@ -27,6 +28,10 @@ public class HorreumConfiguration extends Configuration {
 
     public static String getTestOwner() {
         return getProperty(TEST_OWNER);
+    }
+
+    public static String getTestrunDescription() {
+        return getProperty(TESTRUN_DESCRIPTION, "not provided");
     }
 
     public static boolean isHttpLogEnabled() {
