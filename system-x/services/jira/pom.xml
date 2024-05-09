@@ -19,7 +19,7 @@
         <gson-fire-version>1.9.0</gson-fire-version>
         <apache-oltu-oauth2-version>1.0.2</apache-oltu-oauth2-version>
         <jakarta-annotation-version>3.0.0</jakarta-annotation-version>
-        <jakarta.ws.rs-api-version>3.1.0</jakarta.ws.rs-api-version>
+        <jakarta.ws.rs-api-version>4.0.0</jakarta.ws.rs-api-version>
         <openapi.maven.plugin.version>7.5.0</openapi.maven.plugin.version>
     </properties>
 
