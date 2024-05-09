@@ -5,6 +5,16 @@ spec:
   replicas: 1
   template:
     spec:
+      affinity:
+        nodeAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 1
+              preference:
+                matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: In
+                    values:
+                      - "XX_NODE_HOSTNAME"
       volumes:
         - name: config
           configMap:
