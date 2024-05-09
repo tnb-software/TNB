@@ -2,6 +2,8 @@ package software.tnb.product;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.product.csb.TomcatCamelSpringBoot;
+import software.tnb.product.csb.configuration.SpringBootConfiguration;
 
 import java.util.Optional;
 import java.util.ServiceLoader;
@@ -28,6 +30,7 @@ public final class ProductFactory {
     public static <P extends Product> P create(Class<P> clazz) {
         final Optional<Product> product = StreamSupport.stream(ServiceLoader.load(Product.class).spliterator(), false)
             .filter(p -> p.getClass().getSimpleName().toLowerCase().contains(TestConfiguration.product().getValue()))
+            .filter(p -> p instanceof TomcatCamelSpringBoot == SpringBootConfiguration.isTomcat())
             .filter(p -> p instanceof OpenshiftProduct == OpenshiftConfiguration.isOpenshift())
             .findFirst();
         if (product.isEmpty()) {
