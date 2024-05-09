@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class TomcatSpringBootApp extends App {
+public class TomcatSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(TomcatSpringBootApp.class);
 
     private AbstractIntegrationBuilder<?> integrationBuilder;
@@ -45,7 +45,7 @@ public class TomcatSpringBootApp extends App {
     }
 
     public TomcatSpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder.getIntegrationName());
+        super(integrationBuilder);
 
         downloadTomcat();
 
@@ -103,45 +103,6 @@ public class TomcatSpringBootApp extends App {
     @Override
     public void start() {
         startTomcat();
-
-        // Let's remove restcustomizer, since it exclude tomcat
-        List<Customizer> customizers = integrationBuilder.getCustomizers()
-                .stream().filter(customizer -> customizer instanceof RestCustomizer)
-                .collect(Collectors.toList());
-        integrationBuilder.getCustomizers().remove(customizers);
-
-        // spring web is needed and tomcat is provided
-        Dependency providedTomcatDependency = new Dependency();
-        providedTomcatDependency.setArtifactId("spring-boot-starter-tomcat");
-        providedTomcatDependency.setGroupId("org.springframework.boot");
-        providedTomcatDependency.setScope("provided");
-
-        integrationBuilder.dependencies(
-            Maven.createDependency("org.springframework.boot:spring-boot-starter-web"),
-            providedTomcatDependency);
-
-        // Create the integration
-        new SpringBootApp(integrationBuilder) {
-            @Override
-            public void start() {
-                // We just need the application to be generated, not run
-            }
-
-            @Override
-            public void stop() {
-                // do nothing
-            }
-
-            @Override
-            public boolean isReady() {
-                return true;
-            }
-
-            @Override
-            public boolean isFailed() {
-                return false;
-            }
-        }.start();
 
         // replace packaging and extend SpringBootServletInitializer
         try {
