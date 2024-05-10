@@ -155,12 +155,20 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
 
     protected void createCustomDeployment(Path jkubeFolder) {
         try {
-            final String deploymentContent = StringUtils.replace(IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8),
-                "XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder).replaceAll("\"", "\\\\\""));
+            final String deploymentContent = getDeploymentContent();
             software.tnb.common.utils.IOUtils.writeFile(jkubeFolder.resolve("deployment.yaml"), deploymentContent);
         } catch (IOException e) {
             throw new RuntimeException("Error creating custom deployment.yaml", e);
         }
+    }
+
+    private String getDeploymentContent() throws IOException {
+        String deploymentContent = IOUtils.resourceToString("/openshift/csb/deployment.yaml", StandardCharsets.UTF_8);
+        deploymentContent = StringUtils.replace(deploymentContent, "XX_JAVA_OPTS_APPEND",
+                getPropertiesForJVM(integrationBuilder).replaceAll("\"", "\\\\\""));
+        deploymentContent = StringUtils.replace(deploymentContent, "XX_NODE_HOSTNAME",
+                System.getProperty("node.hostname", ""));
+        return deploymentContent;
     }
 
     private void createConfigMap(Path jkubeFolder, final File pomFile) {
