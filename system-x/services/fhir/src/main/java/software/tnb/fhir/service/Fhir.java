@@ -3,12 +3,13 @@ package software.tnb.fhir.service;
 import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.common.validation.NoValidation;
+import software.tnb.fhir.service.configuration.FhirConfiguration;
 
 import java.util.Map;
 
-public abstract class Fhir extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
+public abstract class Fhir extends ConfigurableService<NoAccount, NoClient, NoValidation, FhirConfiguration> implements WithDockerImage {
     public static final int PORT = 8080;
 
     public abstract int getPortMapping();
@@ -17,12 +18,17 @@ public abstract class Fhir extends Service<NoAccount, NoClient, NoValidation> im
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
-            "HAPI_FHIR_VERSION", "DSTU3",
-            "HAPI_REUSE_CACHED_SEARCH_RESULTS_MILLIS", "-1");
+            "hapi.fhir.fhir_version", getConfiguration().fhirVersion(),
+            "hapi.fhir.reuse_cached_search_results_millis", "-1");
     }
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/hapi:v4.2.0";
+        return "quay.io/fuse_qe/hapi:v7.2.0";
+    }
+
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().withFhirVersion("R4");
     }
 }

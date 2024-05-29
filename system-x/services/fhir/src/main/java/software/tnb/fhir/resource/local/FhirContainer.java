@@ -11,6 +11,6 @@ public class FhirContainer extends GenericContainer<FhirContainer> {
         super(image);
         withExposedPorts(port);
         withEnv(env);
-        waitingFor(Wait.forHttp("/hapi-fhir-jpaserver/fhir/metadata"));
+        waitingFor(Wait.forHttp("/fhir/metadata"));
     }
 }

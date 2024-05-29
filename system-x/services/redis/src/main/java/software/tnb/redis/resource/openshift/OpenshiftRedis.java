@@ -16,8 +16,8 @@ import java.util.function.Predicate;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
 
@@ -29,7 +29,7 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
@@ -56,13 +56,15 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
     @Override
     public void create() {
 
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
+        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
             .withNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
@@ -79,9 +81,6 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
                             .endContainer()
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
                 .endSpec()
             .build());
 
