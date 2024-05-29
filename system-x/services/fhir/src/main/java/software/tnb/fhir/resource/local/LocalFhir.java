@@ -16,7 +16,7 @@ public class LocalFhir extends Fhir implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting FHIR container");
-        container = new FhirContainer(defaultImage(), PORT, containerEnvironment());
+        container = new FhirContainer(image(), PORT, containerEnvironment());
         container.start();
         LOG.info("FHIR container started");
     }
@@ -36,7 +36,7 @@ public class LocalFhir extends Fhir implements Deployable {
 
     @Override
     public String getServerUrl() {
-        return String.format("http://%s:%d/", container.getHost(), getPortMapping());
+        return String.format("http://%s:%d/fhir", container.getHost(), getPortMapping());
     }
 
     @Override

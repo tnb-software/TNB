@@ -16,49 +16,71 @@ import java.util.stream.Collectors;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(Fhir.class)
 public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname {
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
     public void create() {
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
+
+        final Probe probe = new ProbeBuilder()
+            .editOrNewHttpGet()
+                .withPort(new IntOrString(PORT))
+                .withPath("/fhir/metadata").withScheme("HTTP")
+            .endHttpGet()
+            .withInitialDelaySeconds(60)
+            .withTimeoutSeconds(5)
+            .withFailureThreshold(10)
+            .build();
+
+        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
             .withNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
                             .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                         .endMetadata()
                         .editOrNewSpec()
+                            .addNewVolume()
+                                .withName("data").withNewEmptyDir().endEmptyDir()
+                            .endVolume()
                             .addNewContainer()
                                 .withName(name())
-                                .withImage(defaultImage())
+                                .withImage(image())
                                 .addNewPort()
                                     .withContainerPort(PORT)
                                     .withName(name())
                                 .endPort()
                                 .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
                                     .collect(Collectors.toList()))
+                                .withVolumeMounts(new VolumeMountBuilder()
+                                    .withName("data")
+                                    .withMountPath("/app/target")
+                                    .build())
+                                .withReadinessProbe(probe)
+                                .withLivenessProbe(probe)
                             .endContainer()
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
                 .endSpec()
             .build());
 
@@ -102,7 +124,7 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
 
     @Override
     public String getServerUrl() {
-        return "http://" + inClusterHostname() + "/";
+        return String.format("http://%s:%s/fhir", inClusterHostname(), getPortMapping());
     }
 
     @Override

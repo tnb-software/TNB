@@ -14,7 +14,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -24,18 +23,14 @@ import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
-import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
-import io.fabric8.openshift.api.model.ImageStream;
-import io.fabric8.openshift.api.model.ImageStreamBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteSpecBuilder;
@@ -56,11 +51,9 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
         OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting service");
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        LOG.debug("Deleting deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        LOG.debug("Deleting deployment {}", name());
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-        LOG.debug("Deleting image stream");
-        OpenshiftClient.get().imageStreams().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
     }
 
     @Override
@@ -91,29 +84,17 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
 
         // @formatter:off
 
-        ImageStream imageStream = new ImageStreamBuilder()
-            .withNewMetadata()
-                .withName("lra-coordinator")
-            .endMetadata()
-            .withNewSpec()
-                .addNewTag()
-                    .withName("latest")
-                    .withFrom(new ObjectReferenceBuilder().withKind("DockerImage").withName(image()).build())
-                .endTag()
-            .endSpec()
-            .build();
-
-        OpenshiftClient.get().imageStreams().createOrReplace(imageStream);
-
-        LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(
-            new DeploymentConfigBuilder()
+        LOG.debug("Creating deployment {}", name());
+        OpenshiftClient.get().apps().deployments().createOrReplace(
+            new DeploymentBuilder()
                 .editOrNewMetadata()
                     .withName(name())
                     .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
@@ -122,6 +103,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                         .editOrNewSpec()
                             .addNewContainer()
                                 .withName(name())
+                                .withImage(image())
                                 .withImagePullPolicy("IfNotPresent")
                                 .addAllToPorts(containerPorts)
                                 .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
@@ -153,17 +135,6 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                             .endVolume()
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
-                    .addNewTrigger()
-                        .withType("ImageChange")
-                        .withImageChangeParams(
-                            new DeploymentTriggerImageChangeParams(true, Arrays.asList("lra-coordinator"),
-                                new ObjectReferenceBuilder().withKind("ImageStreamTag").withName("lra-coordinator:latest").build()
-                                , null)
-                        )
-                    .endTrigger()
                 .endSpec()
                 .build()
         );
@@ -221,7 +192,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().deploymentConfigs().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
+        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
             .getItems().size() > 0;
     }
 

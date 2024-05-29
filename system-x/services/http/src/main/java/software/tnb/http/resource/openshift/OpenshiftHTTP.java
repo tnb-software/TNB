@@ -22,7 +22,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(HTTP.class)
 public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, WithName {
@@ -32,7 +32,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
@@ -69,13 +69,15 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                 .build()
             ).build();
 
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
+        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
             .withNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
                 .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withNewSelector()
+                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .endSelector()
                     .withReplicas(1)
                     .editOrNewTemplate()
                         .editOrNewMetadata()
@@ -92,9 +94,6 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                             .endContainer()
                         .endSpec()
                     .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
                 .endSpec()
             .build());
 
