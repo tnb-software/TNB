@@ -13,13 +13,12 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class TestConfiguration extends Configuration {
-
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
     public static final String CREDENTIALS = "test.credentials";
     public static final String VAULT_TOKEN = "test.credentials.vault.token";
-    private static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
-    private static final String VAULT_ROLE_ID = "test.credentials.vault.role.id";
+    public static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
+    public static final String VAULT_ROLE_ID = "test.credentials.vault.role.id";
     public static final String VAULT_ADDRESS = "test.credentials.vault.address";
     public static final String VAULT_PATH_PATTERN = "test.credentials.vault.path.pattern";
     public static final String APP_GROUP_ID = "test.app.group.id";

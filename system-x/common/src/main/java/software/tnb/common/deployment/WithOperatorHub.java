@@ -1,5 +1,6 @@
 package software.tnb.common.deployment;
 
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.util.ReflectionUtil;
 import software.tnb.common.utils.WaitUtils;
@@ -84,7 +85,8 @@ public interface WithOperatorHub {
      * @return value from system property or default value
      */
     private String getValue(final String property, final String defaultValue) {
-        return Optional.ofNullable(System.getProperty("tnb." + ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase() + "." + property))
-            .orElse(defaultValue);
+        return Optional.ofNullable(
+            TestConfiguration.getProperty("tnb." + ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase() + "." + property)
+        ).orElse(defaultValue);
     }
 }

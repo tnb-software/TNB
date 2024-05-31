@@ -1,5 +1,6 @@
 package software.tnb.common.deployment;
 
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.util.ReflectionUtil;
 
 public interface RemoteService extends Deployable {
@@ -26,7 +27,7 @@ public interface RemoteService extends Deployable {
     }
 
     default String propertyValue(String prop, String def) {
-        return System.getProperty(String.format("tnb.%s.%s", ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase(), prop), def);
+        return TestConfiguration.getProperty(String.format("tnb.%s.%s", ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase(), prop), def);
     }
 
     default String host() {
