@@ -158,15 +158,15 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
 
     private void initBinary() {
 
-        if (OpenshiftConfiguration.openshiftKubeconfig() != null
-                && System.getProperty("xtf.openshift.master.kubeconfig") == null) {
-            System.setProperty("xtf.openshift.master.kubeconfig", OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString());
+        if (OpenshiftConfiguration.openshiftKubeconfig() != null && OpenshiftConfiguration.xtfOpenshiftKubeconfig() == null) {
+            System.setProperty(OpenshiftConfiguration.XTF_OPENSHIFT_KUBECONFIG,
+                OpenshiftConfiguration.openshiftKubeconfig().toAbsolutePath().toString());
         }
 
         final OpenShiftConfigAPIGroupDSL config = OpenshiftClient.get().config();
 
-        if (System.getProperty("xtf.openshift.url") == null) {
-            System.setProperty("xtf.openshift.url", StringUtils.removeEnd(config.getMasterUrl().toExternalForm(), "/"));
+        if (OpenshiftConfiguration.xtfOpenshiftUrl() == null) {
+            System.setProperty(OpenshiftConfiguration.XTF_OPENSHIFT_URL, StringUtils.removeEnd(config.getMasterUrl().toExternalForm(), "/"));
         }
 
         binary = OpenShifts.masterBinary(config.getNamespace());

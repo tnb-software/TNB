@@ -1,5 +1,7 @@
 package software.tnb.common.account;
 
+import software.tnb.common.config.TestConfiguration;
+
 /**
  * Represents an account with ID, with a default value that can be overriden via system properties.
  */
@@ -12,7 +14,7 @@ public interface WithId {
      * @return value of system property or default id
      */
     default String getId() {
-        return System.getProperty(String.format(SYSTEM_PROPERTY_FORMAT, this.getClass().getSimpleName().toLowerCase()), credentialsId());
+        return TestConfiguration.getProperty(String.format(SYSTEM_PROPERTY_FORMAT, this.getClass().getSimpleName().toLowerCase()), credentialsId());
     }
 
     /**

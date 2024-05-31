@@ -2,15 +2,10 @@ package software.tnb.common.config;
 
 import software.tnb.common.utils.StringUtils;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class OpenshiftConfiguration extends Configuration {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftConfiguration.class);
-
     public static final String USE_OPENSHIFT = "test.use.openshift";
     public static final String OPENSHIFT_URL = "openshift.url";
     public static final String OPENSHIFT_USERNAME = "openshift.username";
@@ -22,9 +17,12 @@ public class OpenshiftConfiguration extends Configuration {
     public static final String OPENSHIFT_HTTPS_PROXY = "openshift.https.proxy";
     public static final String OPENSHIFT_DEPLOYMENT_LABEL = "openshift.deployment.label";
 
-    private static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
+    public static final String XTF_OPENSHIFT_KUBECONFIG = "xtf.openshift.master.kubeconfig";
+    public static final String XTF_OPENSHIFT_URL = "xtf.openshift.url";
 
-    private static final String NAMESPACE_PREFIX = "tnb-test-";
+    public static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
+
+    public static final String NAMESPACE_PREFIX = "tnb-test-";
     public static final String USE_MICROSHIFT = "test.use.microshift";
 
     public static boolean isOpenshift() {
@@ -86,4 +84,11 @@ public class OpenshiftConfiguration extends Configuration {
         return getBoolean(USE_MICROSHIFT, false);
     }
 
+    public static String xtfOpenshiftKubeconfig() {
+        return getProperty(XTF_OPENSHIFT_KUBECONFIG);
+    }
+
+    public static String xtfOpenshiftUrl() {
+        return getProperty(XTF_OPENSHIFT_URL);
+    }
 }

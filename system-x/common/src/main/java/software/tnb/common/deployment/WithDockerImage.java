@@ -1,5 +1,6 @@
 package software.tnb.common.deployment;
 
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.util.ReflectionUtil;
 
 public interface WithDockerImage {
@@ -12,7 +13,7 @@ public interface WithDockerImage {
      * @return docker image to use
      */
     default String image() {
-        return System.getProperty(String.format(SYSTEM_PROPERTY_FORMAT, ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase()),
+        return TestConfiguration.getProperty(String.format(SYSTEM_PROPERTY_FORMAT, ReflectionUtil.getSuperClassName(this.getClass()).toLowerCase()),
             defaultImage());
     }
 
