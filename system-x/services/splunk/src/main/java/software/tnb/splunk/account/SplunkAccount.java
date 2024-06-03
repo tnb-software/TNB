@@ -8,6 +8,8 @@ public class SplunkAccount implements Account {
 
     private String password = "password";
 
+    private String hecToken = "TESTTEST-TEST-TEST-TEST-TESTTESTTEST";
+
     public String username() {
         return username;
     }
@@ -22,5 +24,13 @@ public class SplunkAccount implements Account {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public String hecToken() {
+        return hecToken;
+    }
+
+    public void setHecToken(String hecToken) {
+        this.hecToken = hecToken;
     }
 }

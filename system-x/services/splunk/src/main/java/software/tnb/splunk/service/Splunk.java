@@ -11,7 +11,9 @@ import com.splunk.ServiceArgs;
 
 public abstract class Splunk extends ConfigurableService<SplunkAccount, Service, SplunkValidation, SplunkConfiguration>
     implements WithDockerImage {
+    protected static final int UI_PORT = 8000;
     protected static final int PORT = 8089;
+    protected static final int HEC_PORT = 8088;
 
     protected SplunkAccount account;
     protected com.splunk.Service client;
@@ -19,8 +21,16 @@ public abstract class Splunk extends ConfigurableService<SplunkAccount, Service,
 
     public abstract String host();
 
+    public String hecHost() {
+        return host();
+    }
+
     public int port() {
         return PORT;
+    }
+
+    public int hecPort() {
+        return HEC_PORT;
     }
 
     /**
