@@ -49,15 +49,18 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSplunk.class);
     private static final String CRD_API = "v4";
     private static final String SERVICE_API_PORT = "https-splunkd";
+    private static final String SERVICE_HEC_PORT = "http-hec";
     private static final String ROUTE_NAME = "api";
+    private static final String ROUTE_HEC_NAME = "hec";
     private final String serviceName = "splunk-" + name() + "-standalone-service";
     private List<HasMetadata> createdResources;
     private Route apiRoute;
+    private Route hecRoute;
     private String sccName;
 
     @Override
     public void defaultConfiguration() {
-        getConfiguration().protocol(SplunkProtocol.HTTPS);
+        getConfiguration().protocol(SplunkProtocol.HTTPS).hecEnabled(false);
     }
 
     @Override
@@ -80,7 +83,7 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
             }
 
             String operatorResources = Resources.toString(this.getClass().getResource("/splunk-operator-namespace.yaml"), StandardCharsets.UTF_8)
-                    .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace()).replace("SPLUNK_IMAGE", image());
+                .replace("DESIRED_NAMESPACE", OpenshiftClient.get().getNamespace()).replace("SPLUNK_IMAGE", image());
             InputStream is = IOUtils.toInputStream(operatorResources, "UTF-8");
 
             LOG.info("Creating Splunk openshift resources from splunk-operator-namespace.yaml");
@@ -113,18 +116,11 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     public void openResources() {
         if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS)) {
             String splunkCert = OpenshiftClient.get().podShell(OpenshiftClient.get().getAnyPod("app.kubernetes.io/instance",
-                    "splunk-" + name() + "-standalone")).execute("cat", "/opt/splunk/etc/auth/cacert.pem").getOutput();
-            apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
-                .editOrNewMetadata()
-                .withName(ROUTE_NAME)
-                .endMetadata()
-                .editOrNewSpec()
-                .withNewTo().withKind("Service").withName(serviceName).withWeight(100)
-                .endTo()
-                .withNewPort().withTargetPort(new IntOrString(SERVICE_API_PORT)).endPort()
-                .withNewTls().withTermination("reencrypt").withDestinationCACertificate(splunkCert).endTls()
-                .endSpec()
-                .build());
+                "splunk-" + name() + "-standalone")).execute("cat", "/opt/splunk/etc/auth/cacert.pem").getOutput();
+            apiRoute = createReencryptedRoute(ROUTE_NAME, SERVICE_API_PORT, splunkCert);
+            if (getConfiguration().isHecEnabled()) {
+                hecRoute = createReencryptedRoute(ROUTE_HEC_NAME, SERVICE_HEC_PORT, splunkCert);
+            }
         } else if (getConfiguration().getProtocol().equals(SplunkProtocol.HTTP)) {
             apiRoute = OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
                 .editOrNewMetadata()
@@ -141,6 +137,20 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
             + apiRoute.getSpec().getHost(), false).isSuccessful(), "Waiting until the Splunk API route is ready");
     }
 
+    Route createReencryptedRoute(String routeName, String serviceTargetPort, String splunkCert) {
+        return OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+            .editOrNewMetadata()
+            .withName(routeName)
+            .endMetadata()
+            .editOrNewSpec()
+            .withNewTo().withKind("Service").withName(serviceName).withWeight(100)
+            .endTo()
+            .withNewPort().withTargetPort(new IntOrString(serviceTargetPort)).endPort()
+            .withNewTls().withTermination("reencrypt").withDestinationCACertificate(splunkCert).endTls()
+            .endSpec()
+            .build());
+    }
+
     @Override
     public void restart() {
         OpenshiftDeployable.super.restart();
@@ -150,6 +160,9 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     public void closeResources() {
         if (apiRoute != null) {
             OpenshiftClient.get().routes().resource(apiRoute).delete();
+        }
+        if (hecRoute != null) {
+            OpenshiftClient.get().routes().resource(hecRoute).delete();
         }
         validation = null;
         client = null;
@@ -186,10 +199,17 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     public SplunkAccount account() {
         if (account == null) {
             account = AccountFactory.create(SplunkAccount.class);
-            account.setPassword(new String(Base64.getDecoder().decode(
-                OpenshiftClient.get().getSecret("splunk-" + name() + "-standalone-secret-v1").getData().get("password"))));
+            account.setPassword(getDecodedSecretValue("password"));
+            if (getConfiguration().isHecEnabled()) {
+                account.setHecToken(getDecodedSecretValue("hec_token"));
+            }
         }
         return account;
+    }
+
+    private String getDecodedSecretValue(String key) {
+        return new String(Base64.getDecoder().decode(
+            OpenshiftClient.get().getSecret("splunk-" + name() + "-standalone-secret-v1").getData().get(key)));
     }
 
     private CustomResourceDefinition getSplunkCrd() {
@@ -202,8 +222,18 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     }
 
     @Override
+    public String hecHost() {
+        return hecRoute.getSpec().getHost();
+    }
+
+    @Override
     public int port() {
         return getConfiguration().getProtocol().equals(SplunkProtocol.HTTPS) ? 443 : 80;
+    }
+
+    @Override
+    public int hecPort() {
+        return port();
     }
 
     @Override

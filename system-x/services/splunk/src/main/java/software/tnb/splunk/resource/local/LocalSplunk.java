@@ -9,6 +9,9 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 @AutoService(Splunk.class)
@@ -20,7 +23,7 @@ public class LocalSplunk extends Splunk implements Deployable {
 
     @Override
     public void defaultConfiguration() {
-        getConfiguration().protocol(SplunkProtocol.HTTP);
+        getConfiguration().protocol(SplunkProtocol.HTTP).hecEnabled(false);
     }
 
     @Override
@@ -29,7 +32,15 @@ public class LocalSplunk extends Splunk implements Deployable {
             throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
         }
         LOG.info("Starting Splunk container");
-        container = new SplunkContainer(image(), PORT, containerEnvironment());
+        Map<String, String> envs = containerEnvironment();
+        List<Integer> ports = new ArrayList<>();
+        ports.add(UI_PORT);
+        ports.add(PORT);
+        if (getConfiguration().isHecEnabled()) {
+            envs.put("SPLUNK_HEC_TOKEN", account().hecToken());
+            ports.add(HEC_PORT);
+        }
+        container = new SplunkContainer(image(), ports, envs);
         container.start();
         LOG.info("Splunk container started");
     }
@@ -52,11 +63,16 @@ public class LocalSplunk extends Splunk implements Deployable {
         return container.getMappedPort(PORT);
     }
 
+    @Override
+    public int hecPort() {
+        return container.getMappedPort(HEC_PORT);
+    }
+
     public Map<String, String> containerEnvironment() {
-        return Map.of(
+        return new HashMap<>(Map.of(
             "SPLUNK_START_ARGS", "--accept-license",
             "SPLUNKD_SSL_ENABLE", "false",
             "SPLUNK_PASSWORD", account().password()
-        );
+        ));
     }
 }
