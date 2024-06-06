@@ -132,11 +132,11 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
                                     StandardCharsets.UTF_8);
                             }
                         } catch (IOException e) {
-                            LOG.error("unable to copy resource " + resource.getContent() + " to " + destinationFolder, e);
+                            LOG.error("unable to copy resource {} to {}", resource.getContent(), destinationFolder, e);
                         }
                     });
                 } catch (IOException e) {
-                    LOG.error("unable to create directory " + resFolder, e);
+                    LOG.error("unable to create directory {}", resFolder, e);
                 }
             });
     }
@@ -146,7 +146,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             return "";
         }
 
-        Map<Object, Object> entries = new HashMap<>(integrationBuilder.getProperties());
+        Map<Object, Object> entries = new HashMap<>(integrationBuilder.getSystemProperties());
 
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
             entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties());

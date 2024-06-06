@@ -19,7 +19,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -105,12 +104,11 @@ public class LocalQuarkusApp extends QuarkusApp {
 
         if (QuarkusConfiguration.isQuarkusNative()) {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
+            cmd.add(fileName);
+            cmd.addAll(systemProperties());
         } else {
-            List<String> args = this.integrationBuilder.getProperties() != null ? this.integrationBuilder.getProperties().entrySet().stream()
-                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList() : Collections.emptyList();
-
             cmd.add(System.getProperty("java.home") + "/bin/java");
-            cmd.addAll(args);
+            cmd.addAll(systemProperties());
 
             if (TestConfiguration.appDebug()) {
                 cmd.add("-Xdebug");
@@ -118,14 +116,14 @@ public class LocalQuarkusApp extends QuarkusApp {
             }
             cmd.add("-jar");
             fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
+            cmd.add(fileName);
         }
-        cmd.add(fileName);
 
         if (!new File(fileName).exists()) {
             throw new IllegalArgumentException("Expected file " + fileName + " does not exist, check if the maven build was successful");
         }
 
-        LOG.debug("ProcessBuilder command: " + String.join(" ", cmd));
+        LOG.debug("ProcessBuilder command: {}", String.join(" ", cmd));
         return cmd;
     }
 }

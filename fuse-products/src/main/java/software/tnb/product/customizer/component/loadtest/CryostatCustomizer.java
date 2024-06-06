@@ -26,6 +26,6 @@ public class CryostatCustomizer extends ProductsCustomizer {
     }
 
     private void addJmxArgs() {
-        getIntegrationBuilder().addToProperties(JMX_ARGS);
+        getIntegrationBuilder().addToSystemProperties(JMX_ARGS);
     }
 }

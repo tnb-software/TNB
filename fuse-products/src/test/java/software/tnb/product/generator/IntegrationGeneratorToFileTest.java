@@ -126,9 +126,9 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
 
         process(ib);
 
-        assertThat(ib.getProperties()).hasSize(1);
-        assertThat(ib.getProperties()).containsKey("quarkus.native.resources.includes");
-        assertThat(ib.getProperties().get("quarkus.native.resources.includes")).isEqualTo(resourceName);
+        assertThat(ib.getApplicationProperties()).hasSize(1);
+        assertThat(ib.getApplicationProperties()).containsKey("quarkus.native.resources.includes");
+        assertThat(ib.getApplicationProperties().get("quarkus.native.resources.includes")).isEqualTo(resourceName);
     }
 
     @Test

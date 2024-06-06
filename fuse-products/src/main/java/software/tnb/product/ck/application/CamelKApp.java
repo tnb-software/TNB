@@ -84,7 +84,7 @@ public class CamelKApp extends App {
     }
 
     public CamelKApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        this(integrationBuilder.getIntegrationName());
+        super(integrationBuilder);
         this.integrationSource = integrationBuilder;
     }
 
@@ -126,9 +126,9 @@ public class CamelKApp extends App {
         log = new OpenshiftLog(podSelector, getLogPath());
 
         if (TestConfiguration.streamLogs()) {
-            buildLogHandler = new MavenBuildLogHandler(getName());
+            buildLogHandler = new MavenBuildLogHandler(name);
             Executor.get().submit(buildLogHandler);
-            Executor.get().submit(new IntegrationKitBuildLogHandler(getName(), getLogPath(Phase.BUILD)));
+            Executor.get().submit(new IntegrationKitBuildLogHandler(name, getLogPath(Phase.BUILD)));
             logStream = new OpenshiftLogStream(podSelector, LogStream.marker(name));
         }
     }
@@ -277,7 +277,7 @@ public class CamelKApp extends App {
 
         List<Configuration> specConfiguration = new ArrayList<>();
         // if there are any properties set, use the configmap in the integration's configuration
-        if (!integrationBuilder.getProperties().isEmpty()) {
+        if (!integrationBuilder.getApplicationProperties().isEmpty()) {
             Configuration props = new Configuration();
             props.setType("configmap");
             props.setValue(name);
@@ -332,9 +332,9 @@ public class CamelKApp extends App {
 
         // If there are any properties set, create a config map with the same map as the integration
         // Set the later created integration object as the owner of the configmap, so that the configmap is deleted together with the integration
-        if (!integrationBuilder.getProperties().isEmpty()) {
+        if (!integrationBuilder.getApplicationProperties().isEmpty()) {
             ConfigMap integrationProperties = OpenshiftClient.get()
-                .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationBuilder.getProperties())));
+                .createConfigMap(name, Map.of("application.properties", PropertiesUtils.toString(integrationBuilder.getApplicationProperties())));
             Executor.get().submit(new OwnerReferenceSetter(integrationProperties, name));
         }
     }

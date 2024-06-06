@@ -93,7 +93,7 @@ public final class IntegrationGenerator {
         });
 
         Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
-        String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
+        String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getApplicationProperties());
         if (!applicationPropertiesContent.trim().isEmpty()) {
             LOG.debug("Application properties:\n{}", applicationPropertiesContent);
             try {
@@ -146,7 +146,7 @@ public final class IntegrationGenerator {
                     imp -> imp.getNameAsString().equals(cu.getPackageDeclaration().get().getNameAsString() + "." + sourceClass.getNameAsString()));
             });
 
-            String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getProperties());
+            String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getApplicationProperties());
             if (!applicationPropertiesContent.trim().isEmpty()) {
                 LOG.debug("Application properties:\n{}", applicationPropertiesContent);
             }
