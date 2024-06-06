@@ -39,9 +39,9 @@ public abstract class AbstractIntegrationGeneratorTest extends TestParent {
 
         process(ib);
 
-        assertThat(ib.getProperties()).hasSize(1);
-        assertThat(ib.getProperties()).containsKey(key);
-        assertThat(ib.getProperties().get(key)).isEqualTo(value);
+        assertThat(ib.getApplicationProperties()).hasSize(1);
+        assertThat(ib.getApplicationProperties()).containsKey(key);
+        assertThat(ib.getApplicationProperties().get(key)).isEqualTo(value);
     }
 
     @Test

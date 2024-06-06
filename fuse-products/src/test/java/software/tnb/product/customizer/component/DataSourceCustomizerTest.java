@@ -23,7 +23,7 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
     @Override
     public void validateQuarkus() {
         customizer.doCustomize();
-        assertThat(ib.getProperties()).isEqualTo(Map.of(
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of(
             "quarkus.datasource.db-kind", type,
             "quarkus.datasource.jdbc.url", url,
             "quarkus.datasource.username", username,
@@ -47,7 +47,7 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
     @Override
     public void validateSpringBoot() {
         customizer.doCustomize();
-        assertThat(ib.getProperties()).isEqualTo(Map.of(
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of(
             "spring.datasource.url", url,
             "spring.datasource.username", username,
             "spring.datasource.password", password,

@@ -36,7 +36,7 @@ public class CustomizerTest extends TestParent {
         Customizer c = cs.customize(i -> i.addToProperties("key", "value"));
         c.setIntegrationBuilder(ib);
         c.doCustomize();
-        assertThat(ib.getProperties()).isEmpty();
+        assertThat(ib.getApplicationProperties()).isEmpty();
     }
 
     @ParameterizedTest
@@ -60,7 +60,7 @@ public class CustomizerTest extends TestParent {
         Customizer c = cs.customize(i -> i.addToProperties("key", "value"));
         c.setIntegrationBuilder(ib);
         c.doCustomize();
-        assertThat(ib.getProperties()).isEqualTo(Map.of("key", "value"));
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("key", "value"));
     }
 
     @ParameterizedTest
@@ -87,6 +87,6 @@ public class CustomizerTest extends TestParent {
         c.setIntegrationBuilder(ib);
         c.doCustomize();
 
-        assertThat(ib.getProperties()).isEqualTo(Map.of("key", type.name()));
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("key", type.name()));
     }
 }

@@ -3,6 +3,7 @@ package software.tnb.product.application;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.Maven;
@@ -24,14 +25,21 @@ public abstract class App {
     private static final Pattern LOG_STARTED_REGEX = Pattern.compile("(?m)^.*Apache Camel.*started in.*$");
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
-    protected final String name;
+    protected AbstractIntegrationBuilder<?> integrationBuilder;
+    // Integrations for camel-k can be created without integration builder object, therefore keeping track also of "name" only
+    protected String name;
     protected final String logFilePrefix;
     protected Log log;
     protected LogStream logStream;
     protected Endpoint endpoint;
     protected boolean started = false;
 
-    public App(String name) {
+    public App(AbstractIntegrationBuilder<?> integrationBuilder) {
+        this(integrationBuilder.getIntegrationName());
+        this.integrationBuilder = integrationBuilder;
+    }
+
+    protected App(String name) {
         this.name = name;
         ensureDirNotPresent();
         logFilePrefix = name + "-" + new Date().getTime() + "-";
@@ -101,5 +109,9 @@ public abstract class App {
         }
 
         Maven.writePom(pom, model);
+    }
+
+    protected List<String> systemProperties() {
+        return integrationBuilder.getSystemProperties().entrySet().stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).toList();
     }
 }

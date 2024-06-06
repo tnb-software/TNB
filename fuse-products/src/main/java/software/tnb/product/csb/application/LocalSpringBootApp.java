@@ -17,7 +17,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -42,8 +41,7 @@ public class LocalSpringBootApp extends SpringBootApp {
                     : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
             projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : mavenGitApp.getProjectLocation();
         } else {
-            args = integrationBuilder.getProperties() != null ? integrationBuilder.getProperties().entrySet().stream()
-                .map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList()) : Collections.emptyList();
+            args = systemProperties();
             jarName = existingJarPath != null ? existingJarPath.getFileName().toString() : name + "-1.0.0-SNAPSHOT.jar";
             projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : TestConfiguration.appLocation().resolve(name);
         }
@@ -130,7 +128,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             throw new IllegalArgumentException("Expected file " + fileName + " does not exist, check if the maven build was successful");
         }
 
-        LOG.debug("ProcessBuilder command: " + String.join(" ", command));
+        LOG.debug("ProcessBuilder command: {}", String.join(" ", command));
         return command;
     }
 }

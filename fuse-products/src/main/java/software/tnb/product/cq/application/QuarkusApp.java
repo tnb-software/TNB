@@ -29,12 +29,10 @@ import java.util.stream.Collectors;
 public abstract class QuarkusApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(QuarkusApp.class);
 
-    protected AbstractIntegrationBuilder<?> integrationBuilder;
-
     protected BooleanSupplier readinessCheck;
 
     public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder.getIntegrationName());
+        super(integrationBuilder);
 
         this.integrationBuilder = integrationBuilder;
 
@@ -107,7 +105,7 @@ public abstract class QuarkusApp extends App {
         try {
             FileUtils.deleteDirectory(tests);
         } catch (IOException e) {
-            LOG.warn("Unable to delete " + tests.getAbsolutePath() + " directory", e);
+            LOG.warn("Unable to delete {} directory", tests.getAbsolutePath(), e);
         }
 
         File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();

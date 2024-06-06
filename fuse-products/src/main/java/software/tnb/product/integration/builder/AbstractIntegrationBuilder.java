@@ -29,8 +29,6 @@ import com.github.javaparser.utils.ProjectRoot;
 import com.github.javaparser.utils.SourceRoot;
 import com.github.javaparser.utils.StringEscapeUtils;
 
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
@@ -65,7 +63,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final List<Customizer> customizers = new ArrayList<>();
     private final List<CompilationUnit> classesToAdd = new ArrayList<>();
     private final List<Resource> resources = new ArrayList<>();
-    private final Properties properties = new Properties();
+    private final Properties applicationProperties = new Properties();
+    private final Properties systemProperties = new Properties();
 
     private CompilationUnit routeBuilder;
     private String integrationName;
@@ -179,36 +178,80 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return self();
     }
 
+    /**
+     * Deprecated.
+     * @deprecated use addToApplicationProperties
+     */
+    @Deprecated
     public SELF addToProperties(String key, String value) {
-        return addToProperties(MapUtils.toProperties(Map.of(key, value)));
+        return addToApplicationProperties(key, value);
     }
 
+    /**
+     * Deprecated.
+     * @deprecated use addToApplicationProperties
+     */
+    @Deprecated
     public SELF addToProperties(Map<String, String> properties) {
-        return addToProperties(MapUtils.toProperties(properties));
+        return addToApplicationProperties(properties);
     }
 
+    /**
+     * Deprecated.
+     * @deprecated use addToApplicationProperties
+     */
+    @Deprecated
     public SELF addToProperties(Properties properties) {
-        properties.forEach((key, value) -> this.properties.setProperty(key.toString(), value.toString()));
+        return addToApplicationProperties(properties);
+    }
+
+    /**
+     * Deprecated.
+     * @deprecated use addToApplicationProperties
+     */
+    @Deprecated
+    public SELF addToProperties(InputStream inputStream) {
+        return addToApplicationProperties(inputStream);
+    }
+
+    public SELF addToApplicationProperties(String key, String value) {
+        applicationProperties.put(key, value);
         return self();
     }
 
-    public SELF addToProperties(InputStream inputStream) {
-        try (inputStream) {
+    public SELF addToApplicationProperties(Map<String, String> properties) {
+        addToApplicationProperties(MapUtils.toProperties(properties));
+        return self();
+    }
+
+    public SELF addToApplicationProperties(Properties properties) {
+        applicationProperties.putAll(properties);
+        return self();
+    }
+
+    public SELF addToApplicationProperties(InputStream inputStream) {
+        try {
             final Properties p = new Properties();
             p.load(inputStream);
-            addToProperties(p);
+            addToApplicationProperties(p);
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new RuntimeException("Unable to load properties from input stream: ", e);
         }
         return self();
     }
 
-    public SELF addToProperties(File pFile) {
-        try (InputStream is = new FileInputStream(pFile)) {
-            addToProperties(is);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+    public SELF addToSystemProperties(String key, String value) {
+        systemProperties.put(key, value);
+        return self();
+    }
+
+    public SELF addToSystemProperties(Map<String, String> properties) {
+        systemProperties.putAll(properties);
+        return self();
+    }
+
+    public SELF addToSystemProperties(Properties properties) {
+        systemProperties.putAll(properties);
         return self();
     }
 
@@ -306,7 +349,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      * @return this
      */
     public SELF dependencies(String... dependencies) {
-        this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::createDependency).collect(Collectors.toList()));
+        this.dependencies.addAll(Arrays.stream(dependencies).map(Maven::createDependency).toList());
         return self();
     }
 
@@ -427,8 +470,12 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return Optional.ofNullable(routeBuilder);
     }
 
-    public Properties getProperties() {
-        return properties;
+    public Properties getApplicationProperties() {
+        return applicationProperties;
+    }
+
+    public Properties getSystemProperties() {
+        return systemProperties;
     }
 
     public List<Resource> getResources() {

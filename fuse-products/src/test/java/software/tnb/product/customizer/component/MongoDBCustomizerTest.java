@@ -24,14 +24,14 @@ public class MongoDBCustomizerTest extends ProductCustomizerTestParent {
     public void validateQuarkus() {
         customizer.doCustomize();
 
-        assertThat(ib.getProperties()).isEqualTo(Map.of("quarkus.mongodb.connection-string", REPLICA_SET_URL));
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("quarkus.mongodb.connection-string", REPLICA_SET_URL));
     }
 
     @Override
     public void validateCamelK() {
         customizer.doCustomize();
 
-        assertThat(ib.getProperties()).isEqualTo(Map.of("quarkus.mongodb.connection-string", REPLICA_SET_URL));
+        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("quarkus.mongodb.connection-string", REPLICA_SET_URL));
     }
 
     @Override

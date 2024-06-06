@@ -22,7 +22,7 @@ public class RestCustomizerTest extends ProductCustomizerTestParent {
     public void validateQuarkus() {
         customizer.doCustomize();
 
-        assertThat(ib.getProperties())
+        assertThat(ib.getApplicationProperties())
             .isEqualTo(Map.of("quarkus.camel.servlet.url-patterns", "/camel/*", "quarkus.openshift.route.expose", "true"));
         assertThat(ib.getDependencies()).hasSize(1);
         assertThat(ib.getDependencies().get(0).getArtifactId()).contains("rest");
@@ -32,7 +32,7 @@ public class RestCustomizerTest extends ProductCustomizerTestParent {
     public void validateCamelK() {
         customizer.doCustomize();
 
-        assertThat(ib.getProperties())
+        assertThat(ib.getApplicationProperties())
             .isEqualTo(Map.of("quarkus.camel.servlet.url-patterns", "/camel/*", "quarkus.openshift.route.expose", "true"));
         assertThat(ib.getDependencies()).hasSize(1);
         assertThat(ib.getDependencies().get(0).getArtifactId()).contains("rest");

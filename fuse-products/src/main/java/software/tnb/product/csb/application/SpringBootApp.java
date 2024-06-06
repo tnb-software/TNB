@@ -46,12 +46,12 @@ public abstract class SpringBootApp extends App {
     }
 
     public SpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder.getIntegrationName());
+        super(integrationBuilder);
 
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
             && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
             mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
-                , getName(), getLogPath(Phase.BUILD)
+                , name, getLogPath(Phase.BUILD)
                 , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
             shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
         } else if (getExistingJar(integrationBuilder) == null) {
