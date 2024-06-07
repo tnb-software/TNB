@@ -46,8 +46,11 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         Optional<Customizer> restCustomizer = integrationBuilder.getCustomizers().stream().filter(c -> c instanceof RestCustomizer).findFirst();
         // For openshift quarkus app, the HTTP request will return default openshift 503 when the endpoint is not ready
         restCustomizer.ifPresent(customizer ->
-            readinessCheck = () -> HTTPUtils.getInstance().get(getEndpoint() + ((RestCustomizer) customizer).getReadinessCheckPath())
-                .getResponseCode() != 503);
+            readinessCheck = () -> {
+                final HTTPUtils.Response response =
+                    HTTPUtils.getInstance().get(getEndpoint() + ((RestCustomizer) customizer).getReadinessCheckPath(), false);
+                return response.getResponseCode() != 503 && response.getResponseCode() != 0;
+            });
     }
 
     @Override
