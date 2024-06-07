@@ -76,6 +76,6 @@ public class LocalJaeger extends Jaeger implements Deployable, WithDockerImage {
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/rhosdt/jaeger-all-in-one-rhel8:latest";
+        return "registry.redhat.io/rhosdt/jaeger-all-in-one-rhel8:1.57.0";
     }
 }
