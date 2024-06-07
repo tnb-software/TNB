@@ -12,7 +12,6 @@ public class JaegerContainer extends GenericContainer<JaegerContainer> {
         super(image);
         withEnv(env);
         withNetworkMode("host");
-        waitingFor(Wait.forLogMessage(".*Channel Connectivity change to READY\",\"system\":\"grpc\".*", 1)
-            .withStartupTimeout(Duration.ofMinutes(2)));
+        waitingFor(Wait.forLogMessage(".*ListenSocket created.*", 1).withStartupTimeout(Duration.ofMinutes(2)));
     }
 }
