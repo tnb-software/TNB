@@ -96,7 +96,7 @@
         <awaitility.version>4.2.0</awaitility.version>
         <log4j.version>2.23.0</log4j.version>
         <vault.version>5.1.0</vault.version>
-        <nexus.staging.plugin.version>1.6.13</nexus.staging.plugin.version>
+        <nexus.staging.plugin.version>1.7.0</nexus.staging.plugin.version>
         <source.plugin.version>3.3.0</source.plugin.version>
         <javadoc.plugin.version>3.6.0</javadoc.plugin.version>
         <gpg.plugin.version>3.2.2</gpg.plugin.version>
