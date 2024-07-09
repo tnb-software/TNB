@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Storage Blob</name>
 
     <properties>
-        <azure.storage.blob.version>12.25.0</azure.storage.blob.version>
+        <azure.storage.blob.version>12.26.1</azure.storage.blob.version>
     </properties>
 
     <dependencies>
