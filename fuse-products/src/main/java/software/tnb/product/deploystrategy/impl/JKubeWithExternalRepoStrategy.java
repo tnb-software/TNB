@@ -97,6 +97,8 @@ public class JKubeWithExternalRepoStrategy extends CustomJKubeStrategy {
                 FileUtils.copyInputStreamToFile(getClass().getResourceAsStream("/openshift/csb/jkube-config.xml"), addConfigFile);
                 IOUtils.replaceInFile(addConfigFile.toPath(), Map.of("XX_JAVA_OPTS_APPEND", getPropertiesForJVM(integrationBuilder)
                     .replaceAll("\"", "\\\\\"")));
+                //remove empty env to avoid https://github.com/eclipse-jkube/jkube/issues/3220
+                IOUtils.replaceInFile(addConfigFile.toPath(), Map.of("<JAVA_OPTS_APPEND></JAVA_OPTS_APPEND>", ""));
             } catch (IOException e) {
                 throw new RuntimeException("unable to create temp file for env-config", e);
             }
