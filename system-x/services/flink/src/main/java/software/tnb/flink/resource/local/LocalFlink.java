@@ -55,4 +55,9 @@ public class LocalFlink extends Flink implements Deployable {
     @Override
     public void closeResources() {
     }
+
+    @Override
+    protected void defaultConfiguration() {
+
+    }
 }
