@@ -58,6 +58,14 @@ public final class HTTPUtils {
         return execute(new Request.Builder().put(body).url(url).build(), true);
     }
 
+    public Response patch(String url, RequestBody body, Map<String, String> headers) {
+        return execute(new Request.Builder().patch(body).url(url).headers(Headers.of(headers)).build(), true);
+    }
+
+    public Response patch(String url, RequestBody body) {
+        return execute(new Request.Builder().patch(body).url(url).build(), true);
+    }
+
     public void delete(String url) {
         execute(new Request.Builder().url(url).delete().build(), true);
     }
