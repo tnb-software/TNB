@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.cert.CertificateException;
+import java.util.List;
 import java.util.Map;
 
 import okhttp3.Headers;
@@ -25,6 +26,10 @@ public final class HTTPUtils {
     private static HTTPUtils instance;
 
     private final OkHttpClient client;
+
+    private boolean withRetry = false;
+    private List<Integer> retryCodes = List.of(503); //503 OCP route is not ready
+    private List<String> retryAllowedMethods = List.of("GET", "POST");
 
     private HTTPUtils(OkHttpClient client) {
         this.client = client;
@@ -74,13 +79,18 @@ public final class HTTPUtils {
         execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build(), true);
     }
 
-    private Response execute(Request request, boolean throwError) {
+    private Response execute(Request request, boolean throwError, int attempts) {
         try {
             okhttp3.Response response = client.newCall(request).execute();
             String responseBody = null;
             if (response.body() != null) {
                 responseBody = response.body().string();
                 response.body().close();
+            }
+            if (withRetry && attempts > 0 && retryAllowedMethods.contains(request.method()) && this.retryCodes.contains(response.code())) {
+                LOG.warn("retrying the http call in 1 second");
+                WaitUtils.sleep(1000);
+                return execute(request, throwError, attempts - 1);
             }
             return new Response(response.code(), responseBody);
         } catch (IOException e) {
@@ -93,6 +103,10 @@ public final class HTTPUtils {
         }
     }
 
+    private Response execute(Request request, boolean throwError) {
+        return execute(request, throwError, 5);
+    }
+
     public static HTTPUtils getInstance() {
         if (instance == null) {
             instance = new HTTPUtils(new OkHttpClient());
@@ -102,6 +116,17 @@ public final class HTTPUtils {
 
     public static HTTPUtils getInstance(OkHttpClient client) {
         return new HTTPUtils(client);
+    }
+
+    public HTTPUtils withRetry(List<Integer> codes, List<String> allowedMethods) {
+        this.withRetry = true;
+        this.retryCodes = codes;
+        this.retryAllowedMethods = allowedMethods;
+        return this;
+    }
+
+    public HTTPUtils withRetry() {
+        return withRetry(this.retryCodes, this.retryAllowedMethods);
     }
 
     public static class Response {
