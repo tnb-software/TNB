@@ -21,6 +21,7 @@
         <module>fhir</module>
         <module>ftp</module>
         <module>gitops</module>
+        <module>graphql</module>
         <module>google</module>
         <module>knative</module>
         <module>ldap</module>
