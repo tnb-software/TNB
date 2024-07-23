@@ -92,7 +92,7 @@
         <jacoco.maven.plugin.version>0.8.8</jacoco.maven.plugin.version>
         <jgit.version>6.9.0.202403050737-r</jgit.version>
         <junit.version>5.10.0</junit.version>
-        <assertj.version>3.25.2</assertj.version>
+        <assertj.version>3.26.3</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
         <log4j.version>2.23.0</log4j.version>
         <vault.version>5.1.0</vault.version>
