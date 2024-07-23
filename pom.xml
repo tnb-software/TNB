@@ -80,12 +80,12 @@
           that brings model classes aligned to a specific camel-k-release version, also this version must be compatible with the version in xtf
          -->
         <kubernetes.client.version>6.8.1</kubernetes.client.version>
-        <javaparser.version>3.25.0</javaparser.version>
+        <javaparser.version>3.26.1</javaparser.version>
         <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <testcontainers.version>1.19.0</testcontainers.version>
+        <testcontainers.version>1.20.0</testcontainers.version>
         <xtf.version>0.34</xtf.version>
         <maven.surefire.plugin.version>3.3.0</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>

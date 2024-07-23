@@ -15,7 +15,7 @@
     <name>TNB :: System-X :: Services :: DB :: MySQL</name>
 
     <properties>
-        <mysql.driver.version>8.4.0</mysql.driver.version>
+        <mysql.driver.version>9.0.0</mysql.driver.version>
     </properties>
 
     <dependencies>
