@@ -27,6 +27,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -201,5 +202,37 @@ public final class IOUtils {
                     return false;
                 }
             }).map(p -> p.resolve(execName).toAbsolutePath().toString()).findFirst().orElse(null);
+    }
+
+    public static Path createTempFolderStructure(String name) {
+        return createTempFolderStructure(name, null);
+    }
+
+    public static Path createTempFolderStructure(String name, Stream<String> subFolders) {
+        final Path root;
+        try {
+            root = Files.createTempDirectory(name);
+        } catch (IOException e) {
+            throw new RuntimeException("unable to create temp folder", e);
+        }
+        allPermissionsAndDeleteOnExit(root);
+        if (subFolders != null) {
+            subFolders.forEach(folder -> {
+                try {
+                    allPermissionsAndDeleteOnExit(Files.createDirectories(Path.of(root.toAbsolutePath().toString(), folder)));
+                } catch (IOException e) {
+                    throw new RuntimeException(e);
+                }
+            });
+        }
+        return root;
+    }
+
+    private static void allPermissionsAndDeleteOnExit(Path directory) {
+        final File file = directory.toFile();
+        file.setReadable(true, false);
+        file.setWritable(true, false);
+        file.setExecutable(true, false);
+        file.deleteOnExit();
     }
 }
