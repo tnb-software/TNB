@@ -46,6 +46,7 @@
         <module>redis</module>
         <module>lra-coordinator</module>
         <module>mllp</module>
+        <module>opentelemetry</module>
         <module>webhook</module>
         <module>splunk</module>
         <module>microsoft</module>

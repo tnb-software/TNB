@@ -29,6 +29,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -41,6 +42,8 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
     private final String[] goals;
     private final String[] profiles;
     private boolean createTnbDeployment = false;
+    private boolean customizePom = true;
+    private Predicate<Pod> podSelector = super.podSelector();
 
     public CustomJKubeStrategy(final String[] goals, final String[] profiles) {
         this.goals = goals;
@@ -50,6 +53,21 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
     public CustomJKubeStrategy createTnbDeployment(final boolean createTnbDeployment) {
         this.createTnbDeployment = createTnbDeployment;
         return this;
+    }
+
+    public CustomJKubeStrategy customizePom(final boolean customizePom) {
+        this.customizePom = customizePom;
+        return this;
+    }
+
+    public CustomJKubeStrategy useCustomPodSelector(final Predicate<Pod> podSelector) {
+        this.podSelector = podSelector;
+        return this;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return this.podSelector;
     }
 
     protected Map<String, String> getOmpProperties() {
@@ -94,7 +112,7 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
 
         final File pomFile = baseDirectory.resolve("pom.xml").toFile();
 
-        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
+        if (customizePom && integrationBuilder instanceof AbstractMavenGitIntegrationBuilder) {
             //patch to avoid too characters on OCP resource names
             final Model model = Maven.loadPom(pomFile);
             model.setArtifactId(model.getArtifactId().replaceAll("camel-example-spring-boot-", "csb-"));
