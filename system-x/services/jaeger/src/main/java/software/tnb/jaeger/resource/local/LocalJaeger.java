@@ -71,7 +71,7 @@ public class LocalJaeger extends Jaeger implements Deployable, WithDockerImage {
 
     @NotNull
     private String getUrl(JaegerConfiguration.WithPort port) {
-        return String.format("http://%s:%d", container.getHost(), port.portNumber());
+        return String.format("http://%s:%d", container == null ? "localhost" : container.getHost(), port.portNumber());
     }
 
     @Override
