@@ -31,6 +31,9 @@ public class SpringBootConfiguration extends CamelConfiguration {
 
     public static final String OPENSHIFT_SB_RESULT_IMAGE_REPOSITORY = "openshift-sb.result-image.repo";
 
+    public static final String TOMCAT_ZIP_DOWNLOAD_URL = "tomcat.zip.download.url";
+    public static final String USE_TOMCAT = "test.use.tomcat";
+
     public static String springBootVersion() {
         return getProperty(SPRINGBOOT_VERSION, "2.6.1");
     }
@@ -103,5 +106,13 @@ public class SpringBootConfiguration extends CamelConfiguration {
      */
     public static String openshiftResultImageRepository() {
         return getProperty(OPENSHIFT_SB_RESULT_IMAGE_REPOSITORY);
+    }
+
+    public static String tomcatZipUrl() {
+        return getProperty(TOMCAT_ZIP_DOWNLOAD_URL, "https://dlcdn.apache.org/tomcat/tomcat-10/v10.1.23/bin/apache-tomcat-10.1.23.zip");
+    }
+
+    public static boolean isTomcat() {
+        return getBoolean(USE_TOMCAT, false);
     }
 }
