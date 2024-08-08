@@ -36,6 +36,7 @@
         <module>mail</module>
         <module>elasticsearch</module>
         <module>filesystem</module>
+        <module>rest</module>
         <module>salesforce</module>
         <module>servicenow</module>
         <module>telegram</module>
