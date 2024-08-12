@@ -230,7 +230,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
 
     @Override
     public String operatorChannel() {
-        return "7.11.x";
+        return "7.12.x";
     }
 
     @Override
