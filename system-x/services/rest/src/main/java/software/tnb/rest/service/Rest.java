@@ -22,7 +22,7 @@ public abstract class Rest extends Service<NoAccount, NoClient, RestValidation> 
     }
 
     public String defaultImage() {
-        return "swaggerapi/petstore3:latest";
+        return "quay.io/fuse_qe/petstore3:1.0.19";
     }
 
     public void openResources() {
