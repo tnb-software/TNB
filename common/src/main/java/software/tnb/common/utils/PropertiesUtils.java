@@ -6,9 +6,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.util.LinkedHashMap;
+import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.stream.Collectors;
 
@@ -44,13 +43,16 @@ public final class PropertiesUtils {
      * @param prefix e.g. "camel.kamelet.aws-s3-source."
      * @return map with keys in camelCase
      */
-    public static Map<String, Object> toMap(Properties properties, String prefix) {
-        Map<String, Object> map = new LinkedHashMap<>();
+    public static Map<String, String> toMap(Properties properties, String prefix) {
+        Map<String, String> map = new HashMap<>();
         if (properties != null) {
-            properties.forEach((key, value) -> map.put(Optional.ofNullable(prefix).orElse("")
-                + StringUtils.replaceUnderscoreWithCamelCase(key.toString()), value));
+            properties.forEach((key, value) -> map.put(prefix + StringUtils.replaceUnderscoreWithCamelCase(key.toString()), value.toString()));
         }
         return map;
+    }
+
+    public static Map<String, String> toMap(Properties properties) {
+        return toMap(properties, "");
     }
 
     public static String toUriParameters(Properties properties) {
@@ -71,7 +73,7 @@ public final class PropertiesUtils {
         final Properties properties = new Properties();
         try (InputStream is = new FileInputStream(filePath.toFile())) {
             properties.load(is);
-            props.entrySet().forEach(e -> properties.setProperty(e.getKey(), e.getValue()));
+            props.forEach(properties::setProperty);
             //recreate file
             FileUtils.deleteQuietly(filePath.toFile());
             IOUtils.writeFile(filePath, toString(properties));
