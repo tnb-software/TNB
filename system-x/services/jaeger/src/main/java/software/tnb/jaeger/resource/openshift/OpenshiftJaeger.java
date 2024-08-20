@@ -68,7 +68,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         // Create subscription if needed
         createSubscription();
         try {
-            OpenshiftClient.get().customResource(JAEGER_CTX).inNamespace(targetNamespace())
+            OpenshiftClient.get().customResource(JAEGER_CTX).inNamespace(OpenshiftClient.get().getNamespace())
                 .createOrReplace(createCr(JAEGER_INSTANCE_NAME));
         } catch (IOException e) {
             fail("Unable to create Jaeger instance", e);
@@ -78,7 +78,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     @Override
     public boolean isDeployed() {
         return OpenshiftClient.get().apps().deployments()
-            .inNamespace(targetNamespace()).list().getItems().stream()
+            .inNamespace(OpenshiftClient.get().getNamespace()).list().getItems().stream()
             .anyMatch(deployment -> JAEGER_INSTANCE_NAME.equals(deployment.getMetadata().getName()));
     }
 
@@ -133,7 +133,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         cr.put("kind", "Jaeger");
         Map<String, Object> metadata = new HashMap<>();
         metadata.put("name", name);
-        metadata.put("namespace", targetNamespace());
+        metadata.put("namespace", OpenshiftClient.get().getNamespace());
         cr.put("metadata", metadata);
         Map<String, Object> spec = new HashMap<>();
         spec.put("strategy", "allInOne");
