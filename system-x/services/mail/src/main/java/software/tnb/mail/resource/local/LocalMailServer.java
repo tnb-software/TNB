@@ -49,6 +49,11 @@ public class LocalMailServer extends MailServer implements Deployable {
     }
 
     @Override
+    protected String imapExternalHostname() {
+        return imapHostname();
+    }
+
+    @Override
     public String pop3Hostname() {
         return String.format("%s:%d", container.getHost(), container.getPop3Port());
     }

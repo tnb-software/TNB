@@ -21,7 +21,7 @@ public abstract class MailServer extends Service<NoAccount, NoClient, MailValida
     public MailValidation validation() {
         if (validation == null) {
             LOG.debug("Creating new Mail validation");
-            validation = new MailValidation(smtpValidationHostname(), httpHostname());
+            validation = new MailValidation(smtpValidationHostname(), httpHostname(), imapExternalHostname());
         }
         return validation;
     }
@@ -33,6 +33,9 @@ public abstract class MailServer extends Service<NoAccount, NoClient, MailValida
     public abstract String smtpHostname();
 
     public abstract String imapHostname();
+
+    // A hostname where you can connect using a java email client using imap
+    protected abstract String imapExternalHostname();
 
     public abstract String pop3Hostname();
 
