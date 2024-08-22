@@ -4,47 +4,8 @@ import org.apache.commons.lang3.RandomStringUtils;
 
 import java.time.Instant;
 
-public class MetricsRequest {
-    private String metricName;
-    private String namespace;
-    private String stat;
-    private int maxDataPoints;
-    private int period;
-    private Instant start;
-    private Instant end;
-    private String queryId;
-
-    public String metricName() {
-        return metricName;
-    }
-
-    public String namespace() {
-        return namespace;
-    }
-
-    public String stat() {
-        return stat;
-    }
-
-    public int maxDataPoints() {
-        return maxDataPoints;
-    }
-
-    public int period() {
-        return period;
-    }
-
-    public Instant start() {
-        return start;
-    }
-
-    public Instant end() {
-        return end;
-    }
-
-    public String queryId() {
-        return queryId;
-    }
+public record MetricsRequest(String metricName, String namespace, String stat, int maxDataPoints, int period,
+                             Instant start, Instant end, String queryId) {
 
     public static final class MetricsRequestBuilder {
         private String metricName;
@@ -110,16 +71,8 @@ public class MetricsRequest {
                     "At least one required parameter missing. Required parameters are metricName, namespace, stat, start");
             }
 
-            MetricsRequest metricsRequest = new MetricsRequest();
-            metricsRequest.maxDataPoints = this.maxDataPoints;
-            metricsRequest.start = this.start;
-            metricsRequest.metricName = this.metricName;
-            metricsRequest.end = this.end;
-            metricsRequest.namespace = this.namespace;
-            metricsRequest.stat = this.stat;
-            metricsRequest.queryId = this.queryId;
-            metricsRequest.period = this.period;
-            return metricsRequest;
+            return new MetricsRequest(this.metricName, this.namespace, this.stat, this.maxDataPoints, this.period, this.start, this.end,
+                this.queryId);
         }
     }
 }

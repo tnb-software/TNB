@@ -82,7 +82,7 @@ public class WebhookValidation implements Validation {
                 return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
             }).create();
 
-        return gson.fromJson(body, WebhookSiteRequests.class).getData();
+        return gson.fromJson(body, WebhookSiteRequests.class).data();
     }
 
     public void deleteRequest(String requestId) {

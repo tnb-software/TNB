@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
+import jakarta.mail.Address;
 import jakarta.mail.Authenticator;
 import jakarta.mail.BodyPart;
 import jakarta.mail.Flags;
@@ -113,7 +114,14 @@ public class MailValidation implements Validation {
 
             for (Message m : msgs) {
                 boolean seen = m.isSet(Flags.Flag.SEEN);
-                Email email = new Email(m.getFrom(), m.getAllRecipients(), m.getSubject(), m.getContent().toString(), !seen);
+                Email email = new Email(
+                    Arrays.stream(m.getFrom()).map(Address::toString).toList(),
+                    Arrays.stream(m.getAllRecipients()).map(Address::toString).toList(),
+                    m.getSubject(),
+                    m.getContent().toString(),
+                    new HashMap<>(),
+                    !seen
+                );
 
                 if (m.isMimeType("multipart/*")) {
                     MimeMultipart multipart = ((MimeMultipart) m.getContent());
