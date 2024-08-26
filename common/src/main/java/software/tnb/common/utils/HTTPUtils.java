@@ -186,11 +186,15 @@ public final class HTTPUtils {
         return sslContext;
     }
 
-    public static OkHttpClient trustAllSslClient() {
+    public static OkHttpClient.Builder trustAllSslClientBuilder() {
         OkHttpClient.Builder builder = new OkHttpClient().newBuilder();
         builder.sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0]);
         builder.hostnameVerifier((hostname, session) -> true);
-        return builder.build();
+        return builder;
+    }
+
+    public static OkHttpClient trustAllSslClient() {
+        return trustAllSslClientBuilder().build();
     }
     
     public static class OkHttpClientBuilder {
