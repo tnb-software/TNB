@@ -73,6 +73,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private int port = 8080;
 
     private String jvmAgentPath;
+    private List<String> vmArguments = new ArrayList<>();
 
     private OpenshiftCustomDeployer customStrategy;
 
@@ -502,6 +503,20 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public String getJvmAgentPath() {
         return jvmAgentPath;
+    }
+
+    /**
+     * Add a VM Argument like -Xmx256m
+     * @param argument the VM Argument, example, Xmx256m
+     * @return SELF
+     */
+    public SELF addVmArgument(String argument) {
+        this.vmArguments.add(argument);
+        return self();
+    }
+
+    public List<String> getVmArguments() {
+        return vmArguments;
     }
 
     public SELF useOcpCustomStrategy(OpenshiftCustomDeployer customStrategy) {

@@ -61,6 +61,12 @@ public class LocalSpringBootApp extends SpringBootApp {
             command.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=0.0.0.0:" + TestConfiguration.appDebugPort());
         }
 
+        if (!integrationBuilder.getVmArguments().isEmpty()) {
+            integrationBuilder.getVmArguments().stream()
+                .map(vmArgument -> "-" + vmArgument)
+                .forEach(command::add);
+        }
+
         command.add("-jar");
         fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
