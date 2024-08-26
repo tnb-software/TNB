@@ -114,6 +114,11 @@ public class LocalQuarkusApp extends QuarkusApp {
                 cmd.add("-Xdebug");
                 cmd.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=0.0.0.0:" + TestConfiguration.appDebugPort());
             }
+            if (!integrationBuilder.getVmArguments().isEmpty()) {
+                integrationBuilder.getVmArguments().stream()
+                    .map(vmArgument -> "-" + vmArgument)
+                    .forEach(cmd::add);
+            }
             cmd.add("-jar");
             fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
             cmd.add(fileName);
