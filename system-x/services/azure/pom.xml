@@ -17,7 +17,7 @@
     <properties>
         <azure.core.version>1.49.1</azure.core.version>
         <!-- Align the version, as blob and queue may contain different versions -->
-        <azure.storage.common.version>12.24.0</azure.storage.common.version>
+        <azure.storage.common.version>12.26.1</azure.storage.common.version>
     </properties>
 
     <modules>
