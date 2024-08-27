@@ -1,6 +1,6 @@
 package software.tnb.azure.event.hubs.service;
 
-import software.tnb.azure.event.hubs.account.EventHubsAccount;
+import software.tnb.azure.event.hubs.account.AzureEventHubsAccount;
 import software.tnb.azure.event.hubs.client.EventHubClients;
 import software.tnb.azure.event.hubs.validation.EventHubsValidation;
 import software.tnb.azure.storage.blob.service.StorageBlob;
@@ -14,13 +14,16 @@ import com.google.auto.service.AutoService;
 import java.util.Date;
 
 @AutoService(EventHubs.class)
-public class EventHubs extends Service<EventHubsAccount, EventHubClients, EventHubsValidation> {
-
+public class EventHubs extends Service<AzureEventHubsAccount, EventHubClients, EventHubsValidation> {
     private final StorageBlob storageBlob = ServiceFactory.create(StorageBlob.class);
     private String blobContainer;
 
     public String getBlobContainer() {
         return blobContainer;
+    }
+
+    public StorageBlob getBlobService() {
+        return storageBlob;
     }
 
     @Override
@@ -39,14 +42,8 @@ public class EventHubs extends Service<EventHubsAccount, EventHubClients, EventH
         blobContainer = "event-hub-blob-" + new Date().getTime();
         storageBlob.validation().createBlobContainer(blobContainer);
 
-        validation = new EventHubsValidation(client());
-    }
+        client = new EventHubClients(account());
 
-    @Override
-    protected EventHubClients client() {
-        if (client == null) {
-            client = new EventHubClients(account());
-        }
-        return client;
+        validation = new EventHubsValidation(client());
     }
 }
