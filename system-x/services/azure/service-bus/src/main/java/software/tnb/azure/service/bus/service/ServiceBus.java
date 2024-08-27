@@ -1,6 +1,6 @@
 package software.tnb.azure.service.bus.service;
 
-import software.tnb.azure.service.bus.account.ServiceBusAccount;
+import software.tnb.azure.service.bus.account.AzureServiceBusAccount;
 import software.tnb.azure.service.bus.validation.ServiceBusValidation;
 import software.tnb.common.service.Service;
 
@@ -11,7 +11,7 @@ import com.azure.messaging.servicebus.administration.ServiceBusAdministrationCli
 import com.google.auto.service.AutoService;
 
 @AutoService(ServiceBus.class)
-public class ServiceBus extends Service<ServiceBusAccount, ServiceBusAdministrationClient, ServiceBusValidation> {
+public class ServiceBus extends Service<AzureServiceBusAccount, ServiceBusAdministrationClient, ServiceBusValidation> {
     @Override
     protected ServiceBusAdministrationClient client() {
         if (client == null) {
