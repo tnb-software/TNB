@@ -1,6 +1,6 @@
 package software.tnb.azure.storage.blob.service;
 
-import software.tnb.azure.common.account.AzureAccount;
+import software.tnb.azure.common.account.AzureStorageAccount;
 import software.tnb.azure.storage.blob.validation.StorageBlobValidation;
 import software.tnb.common.service.Service;
 
@@ -15,7 +15,7 @@ import com.azure.storage.common.StorageSharedKeyCredential;
 import com.google.auto.service.AutoService;
 
 @AutoService(StorageBlob.class)
-public class StorageBlob extends Service<AzureAccount, BlobServiceClient, StorageBlobValidation> {
+public class StorageBlob extends Service<AzureStorageAccount, BlobServiceClient, StorageBlobValidation> {
 
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlob.class);
 
@@ -35,6 +35,6 @@ public class StorageBlob extends Service<AzureAccount, BlobServiceClient, Storag
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
         LOG.debug("Creating new Azure Storage Blob validation");
-        validation = new StorageBlobValidation(client());
+        validation = new StorageBlobValidation(client(), account());
     }
 }

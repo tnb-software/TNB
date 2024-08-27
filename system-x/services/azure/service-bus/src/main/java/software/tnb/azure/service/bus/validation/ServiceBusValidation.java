@@ -1,6 +1,6 @@
 package software.tnb.azure.service.bus.validation;
 
-import software.tnb.azure.service.bus.account.ServiceBusAccount;
+import software.tnb.azure.service.bus.account.AzureServiceBusAccount;
 import software.tnb.azure.service.bus.service.ErrorProcessor;
 import software.tnb.azure.service.bus.service.MessageProcessor;
 import software.tnb.common.utils.WaitUtils;
@@ -17,15 +17,15 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ServiceBusValidation implements Validation {
-    private final ServiceBusAccount serviceBusAccount;
+    private final AzureServiceBusAccount serviceBusAccount;
     private final ServiceBusAdministrationClient adminClient;
 
-    public ServiceBusValidation(ServiceBusAccount serviceBusAccount, ServiceBusAdministrationClient adminClient) {
+    public ServiceBusValidation(AzureServiceBusAccount serviceBusAccount, ServiceBusAdministrationClient adminClient) {
         this.serviceBusAccount = serviceBusAccount;
         this.adminClient = adminClient;
     }
 
-    public ServiceBusAccount getAzureServiceBusAccount() {
+    public AzureServiceBusAccount getAzureServiceBusAccount() {
         return serviceBusAccount;
     }
 

@@ -11,7 +11,7 @@
 
     <artifactId>system-x-azure-storage-blob</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>TNB :: System-X :: Services :: Azure :: Storage Blob</name>
+    <name>TNB :: System-X :: Services :: Azure :: Storage :: Blob</name>
 
     <properties>
         <azure.storage.blob.version>12.22.0</azure.storage.blob.version>
@@ -20,7 +20,7 @@
     <dependencies>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-azure-common</artifactId>
+            <artifactId>system-x-azure-storage-common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
         <dependency>
