@@ -83,10 +83,6 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-azure-storage-common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
             <artifactId>system-x-azure-event-hubs</artifactId>
         </dependency>
         <dependency>
@@ -96,6 +92,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-azure-storage-blob</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-azure-storage-common</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
