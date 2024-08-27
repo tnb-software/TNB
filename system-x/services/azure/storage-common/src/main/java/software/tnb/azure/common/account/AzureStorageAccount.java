@@ -3,13 +3,13 @@ package software.tnb.azure.common.account;
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-public class AzureAccount implements Account, WithId {
+public class AzureStorageAccount implements Account, WithId {
     private String access_key;
     private String account_name;
 
     @Override
     public String credentialsId() {
-        return "azure-tnb";
+        return "tnb-azure-storage";
     }
 
     public void setAccess_key(String access_key) {
