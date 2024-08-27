@@ -83,7 +83,7 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-azure-common</artifactId>
+            <artifactId>system-x-azure-storage-common</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

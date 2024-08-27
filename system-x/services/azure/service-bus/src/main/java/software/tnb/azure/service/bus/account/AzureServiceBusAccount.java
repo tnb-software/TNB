@@ -3,12 +3,12 @@ package software.tnb.azure.service.bus.account;
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-public class ServiceBusAccount implements Account, WithId {
+public class AzureServiceBusAccount implements Account, WithId {
     private String connection_string;
 
     @Override
     public String credentialsId() {
-        return "azure-servicebus";
+        return "tnb-azure-servicebus";
     }
 
     public void setConnection_string(String connection_string) {

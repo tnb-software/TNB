@@ -21,8 +21,8 @@
     </properties>
 
     <modules>
-        <module>common</module>
         <module>event-hubs</module>
+        <module>storage-common</module>
         <module>storage-blob</module>
         <module>storage-queue</module>
         <module>service-bus</module>
