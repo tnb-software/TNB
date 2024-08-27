@@ -1,6 +1,6 @@
 package software.tnb.azure.storage.blob.validation;
 
-import software.tnb.azure.common.account.AzureAccount;
+import software.tnb.azure.common.account.AzureStorageAccount;
 import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
@@ -25,9 +25,9 @@ public class StorageBlobValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(StorageBlobValidation.class);
 
     private final BlobServiceClient client;
-    private final AzureAccount account;
+    private final AzureStorageAccount account;
 
-    public StorageBlobValidation(BlobServiceClient client, AzureAccount account) {
+    public StorageBlobValidation(BlobServiceClient client, AzureStorageAccount account) {
         this.client = client;
         this.account = account;
     }
