@@ -39,10 +39,12 @@ import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
 @AutoService(MailServer.class)
 public class OpenshiftMailServer extends MailServer implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMailServer.class);
-    private String sccName;
-    private String serviceAccountName;
+    private final String serviceAccountName = name() + "-sa";
+    private static String sccName;
     private PortForward smtpPortForward;
     private int smtpLocalPort;
+    private PortForward imapPortForward;
+    private int imapLocalPort;
 
     private final Map<String, Integer> services = Map.of("smtp", SMTP_PORT, "http", HTTP_PORT, "imap", IMAP_PORT, "pop3", POP3_PORT);
 
@@ -50,8 +52,6 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     public void create() {
         LOG.info("Deploying OpenShift JamesServer");
         sccName = "tnb-james-" + OpenshiftClient.get().getNamespace();
-
-        serviceAccountName = name() + "-sa";
 
         OpenshiftClient.get().serviceAccounts()
             .createOrReplace(new ServiceAccountBuilder()
@@ -147,7 +147,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
         OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
 
         services.forEach((name, port) -> {
-            LOG.debug("Deleting service {}", name());
+            LOG.debug("Deleting service {}", name() + "-" + name);
             OpenshiftClient.get().services().withName(name() + "-" + name).delete();
         });
 
@@ -161,6 +161,8 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
         LOG.debug("Creating port-forward to {} for port {}", name(), SMTP_PORT);
         smtpLocalPort = NetworkUtils.getFreePort();
         smtpPortForward = OpenshiftClient.get().services().withName(name() + "-smtp").portForward(SMTP_PORT, smtpLocalPort);
+        imapLocalPort = NetworkUtils.getFreePort();
+        imapPortForward = OpenshiftClient.get().services().withName(name() + "-imap").portForward(IMAP_PORT, imapLocalPort);
     }
 
     @Override
@@ -197,6 +199,11 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
             IOUtils.closeQuietly(smtpPortForward);
         }
         NetworkUtils.releasePort(smtpLocalPort);
+        if (imapPortForward != null && imapPortForward.isAlive()) {
+            LOG.debug("Closing port-forward");
+            IOUtils.closeQuietly(imapPortForward);
+        }
+        NetworkUtils.releasePort(imapLocalPort);
     }
 
     @Override
@@ -212,6 +219,11 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
     @Override
     public String imapHostname() {
         return OpenshiftClient.get().getClusterHostname(name() + "-imap");
+    }
+
+    @Override
+    protected String imapExternalHostname() {
+        return "localhost:" + imapLocalPort;
     }
 
     @Override
