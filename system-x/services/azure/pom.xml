@@ -15,10 +15,20 @@
     <packaging>pom</packaging>
 
     <properties>
-        <azure.core.version>1.49.1</azure.core.version>
+        <azure.core.version>1.51.0</azure.core.version>
         <!-- Align the version, as blob and queue may contain different versions -->
-        <azure.storage.common.version>12.24.0</azure.storage.common.version>
+        <azure.storage.common.version>12.26.1</azure.storage.common.version>
+        <!-- There is some issue with the latest 1.15.3 version, so pin this version until it stops working -->
+        <azure.core.netty.http.version>1.13.11</azure.core.netty.http.version>
     </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-core-http-netty</artifactId>
+            <version>${azure.core.netty.http.version}</version>
+        </dependency>
+    </dependencies>
 
     <modules>
         <module>event-hubs</module>
