@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.Map;
@@ -30,9 +31,9 @@ public class IBMMQContainer extends GenericContainer<IBMMQContainer> {
             try {
                 Files.createDirectories(keysFolderPath);
                 final Path keyFile = Paths.get(keysFolderPath.toAbsolutePath().toString(), "key.key");
-                Files.copy(privateKey, keyFile);
+                Files.copy(privateKey, keyFile, StandardCopyOption.REPLACE_EXISTING);
                 final Path certFile = Paths.get(keysFolderPath.toAbsolutePath().toString(), "key.crt");
-                Files.copy(publicKey, certFile);
+                Files.copy(publicKey, certFile, StandardCopyOption.REPLACE_EXISTING);
                 Set<PosixFilePermission> perms = PosixFilePermissions.fromString("rw-r--r--");
                 Files.setPosixFilePermissions(keyFile, perms);
                 Files.setPosixFilePermissions(certFile, perms);
