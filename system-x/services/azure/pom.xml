@@ -19,7 +19,7 @@
         <!-- Align the version, as blob and queue may contain different versions -->
         <azure.storage.common.version>12.26.1</azure.storage.common.version>
         <!-- There is some issue with the latest 1.15.3 version, so pin this version until it stops working -->
-        <azure.core.netty.http.version>1.13.11</azure.core.netty.http.version>
+        <azure.core.netty.http.version>1.15.3</azure.core.netty.http.version>
     </properties>
 
     <dependencies>
