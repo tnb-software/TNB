@@ -1,6 +1,7 @@
 package software.tnb.product.csb.application;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
@@ -114,7 +115,12 @@ public class LocalSpringBootApp extends SpringBootApp {
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
-                WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
+                try {
+                    WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
+                } catch (TimeoutException e) {
+                    LOG.warn("Integration process did not terminate normally, calling force destroy");
+                    appProcess.destroyForcibly();
+                }
             }
         }
     }

@@ -1,6 +1,7 @@
 package software.tnb.product.cq.application;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
@@ -82,7 +83,12 @@ public class LocalQuarkusApp extends QuarkusApp {
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
-                WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
+                try {
+                    WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
+                } catch (TimeoutException e) {
+                    LOG.warn("Integration process did not terminate normally, calling force destroy");
+                    appProcess.destroyForcibly();
+                }
             }
         }
     }
