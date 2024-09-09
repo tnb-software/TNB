@@ -12,7 +12,7 @@ import java.util.Map;
 public abstract class Telegram extends Service<TelegramAccount, NoClient, TelegramValidation> implements WithDockerImage {
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/telegram-client-without-dc:latest";
+        return "quay.io/fuse_qe/telegram-client:latest";
     }
 
     public abstract String execInContainer(String... commands);
