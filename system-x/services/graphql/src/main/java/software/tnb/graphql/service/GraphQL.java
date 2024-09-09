@@ -22,7 +22,7 @@ public abstract class GraphQL extends Service<NoAccount, NoClient, GraphQLValida
     }
 
     public String defaultImage() {
-        return "dgraph/standalone:latest";
+        return "quay.io/fuse_qe/dgraph:v24.0.2";
     }
 
     public void openResources() {
