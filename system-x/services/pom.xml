@@ -18,6 +18,7 @@
         <module>jms</module>
         <module>aws</module>
         <module>azure</module>
+        <module>cxf-soap</module>
         <module>fhir</module>
         <module>ftp</module>
         <module>gitops</module>
