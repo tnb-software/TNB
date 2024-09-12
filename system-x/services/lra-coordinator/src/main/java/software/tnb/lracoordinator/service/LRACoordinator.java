@@ -23,7 +23,7 @@ public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoVali
     public abstract int port();
 
     public String defaultImage() {
-        return "quay.io/jbosstm/lra-coordinator:latest";
+        return "quay.io/fuse_qe/lra-coordinator-quarkus:7.0.2.Final-3.14.3";
     }
 
     public void openResources() {
