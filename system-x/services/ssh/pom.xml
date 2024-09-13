@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: SSH</name>
 
     <properties>
-        <ssh.client.version>0.38.0</ssh.client.version>
+        <ssh.client.version>0.39.0</ssh.client.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
     </properties>
 

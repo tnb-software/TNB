@@ -15,7 +15,7 @@
 
     <properties>
         <ftp.client.version>3.11.1</ftp.client.version>
-        <sftp.client.version>0.38.0</sftp.client.version>
+        <sftp.client.version>0.39.0</sftp.client.version>
     </properties>
 
     <dependencies>
