@@ -14,7 +14,7 @@
     <properties>
         <swagger-core-version>1.6.3</swagger-core-version>
         <jakarta-annotation-version>3.0.0</jakarta-annotation-version>
-        <threetenbp-version>1.6.0</threetenbp-version>
+        <threetenbp-version>1.7.0</threetenbp-version>
         <google-code-findbugs-jsr305>3.0.2</google-code-findbugs-jsr305>
         <okio-jvm-version>3.3.0</okio-jvm-version>
         <gson-fire-version>1.9.0</gson-fire-version>
