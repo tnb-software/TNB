@@ -15,7 +15,7 @@
 
     <properties>
         <google-oauth-client-jetty.version>1.34.1</google-oauth-client-jetty.version>
-        <google-sheets.client.version>v4-rev20240826-2.0.0</google-sheets.client.version>
+        <google-sheets.client.version>v4-rev20240917-2.0.0</google-sheets.client.version>
     </properties>
 
     <dependencies>
