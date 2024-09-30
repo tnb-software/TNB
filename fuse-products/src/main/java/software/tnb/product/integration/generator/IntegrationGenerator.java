@@ -26,11 +26,8 @@ import com.github.javaparser.ast.Modifier;
 import com.github.javaparser.ast.PackageDeclaration;
 import com.github.javaparser.ast.body.TypeDeclaration;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
 import java.util.stream.Collectors;
 
 /**
@@ -42,8 +39,13 @@ public final class IntegrationGenerator {
     private IntegrationGenerator() {
     }
 
-    private static void doWriteResource(Path resourcesPath, Resource resource) {
-        if (resource.getIsContentPath()) {
+    /**
+     * Creates the given resource inside the given path.
+     * @param resourcesPath resources directory path
+     * @param resource resource to create
+     */
+    private static void createResource(Path resourcesPath, Resource resource) {
+        if (resource.isContentPath()) {
             IOUtils.copyFile(Paths.get(resource.getContent()), resourcesPath.resolve(resource.getName()));
         } else {
             IOUtils.writeFile(resourcesPath.resolve(resource.getName()), resource.getContent());
@@ -51,67 +53,31 @@ public final class IntegrationGenerator {
     }
 
     /**
-     * Dumps the integration class into a file.
+     * Creates the integration app directory.
+     * @param integrationBuilder integration builder instance
+     * @return app directory
+     */
+    public static Path createApplicationDirectory(AbstractIntegrationBuilder<?> integrationBuilder) {
+        TestConfiguration.appLocation().resolve(integrationBuilder.getIntegrationName()).toFile().mkdirs();
+        return TestConfiguration.appLocation().resolve(integrationBuilder.getIntegrationName());
+    }
+
+    /**
+     * Creates all necessary files based on the integration builder setup.
      *
      * @param integrationBuilder integration builder instance
-     * @param location location of the root of the app
+     * @param appDir location of the root of the app
      */
-    public static void toFile(AbstractIntegrationBuilder<?> integrationBuilder, Path location) {
-        final Path sources = location.resolve("src/main/java");
-
-        if (!integrationBuilder.getResources().isEmpty()) {
-            integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->
-                    i.addToProperties("quarkus.native.resources.includes",
-                        integrationBuilder.getResources().stream().map(Resource::getName).collect(Collectors.joining(","))
-                    )
-                )
-            );
-        }
-
+    public static void createFiles(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
         processCustomizers(integrationBuilder);
-        // Add additional resources to the application
-        final Path resourcesPath = location.resolve("src/main/resources");
-        integrationBuilder.getResources().forEach(resource -> doWriteResource(resourcesPath, resource));
 
-        //Add additional classes to the application
-        integrationBuilder.getAdditionalClasses().forEach(cu -> {
-            final String packageName = cu.getPackageDeclaration().get().getNameAsString();
-            final String typeName = cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString());
+        createResourceFiles(integrationBuilder, appDir);
 
-            final Path packageFolder = sources.resolve(packageName.replace(".", "/"));
-            packageFolder.toFile().mkdirs();
-            final Path fileName = packageFolder.resolve(typeName + ".java");
-            //fully qualified class name
-            final String fqn = packageName + "." + typeName;
-            LOG.info("Adding class '{}' to application as class '{}'", packageName + "." + typeName, fqn);
-            IOUtils.writeFile(fileName, cu.toString());
+        createAdditionalClasses(integrationBuilder, appDir);
 
-            integrationBuilder.getRouteBuilder().ifPresent(rb -> {
-                //If the class isn't in the same package, it needs to be imported explicitly
-                rb.addImport(new ImportDeclaration(fqn, false, false));
-            });
-        });
+        createApplicationProperties(integrationBuilder, appDir);
 
-        Path applicationPropertiesPath = location.resolve("src/main/resources/application.properties");
-        String applicationPropertiesContent = PropertiesUtils.toString(integrationBuilder.getApplicationProperties());
-        if (!applicationPropertiesContent.trim().isEmpty()) {
-            LOG.debug("Application properties:\n{}", applicationPropertiesContent);
-            try {
-                // Properties#store() escapes stuff by default, so construct the property file manually
-                Files.write(applicationPropertiesPath, applicationPropertiesContent.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
-            } catch (IOException e) {
-                throw new RuntimeException("Unable to write application.properties: ", e);
-            }
-        }
-
-        integrationBuilder.getRouteBuilder().ifPresent(rb -> {
-            final PackageDeclaration packageDeclaration = rb.getPackageDeclaration().get();
-            final Path destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
-            destination.toFile().mkdirs();
-            String integrationClass = rb.toString();
-            LOG.debug("Integration class:\n{}", integrationClass);
-            IOUtils.writeFile(destination.resolve(integrationBuilder.getFileName()), integrationClass);
-        });
+        createIntegrationClass(integrationBuilder, appDir);
     }
 
     /**
@@ -166,7 +132,20 @@ public final class IntegrationGenerator {
         return result;
     }
 
-    private static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder) {
+    /**
+     * Processes the customizers defined in the integration builder.
+     * @param integrationBuilder integration builder
+     */
+    public static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder) {
+        if (!integrationBuilder.getResources().isEmpty()) {
+            integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->
+                    i.addToApplicationProperties("quarkus.native.resources.includes",
+                        integrationBuilder.getResources().stream().map(Resource::getName).collect(Collectors.joining(","))
+                    )
+                )
+            );
+        }
+
         integrationBuilder.addCustomizer(
             new ApplicationScopeCustomizer(),
             new RemoveQuarkusAnnotationsCustomizer(),
@@ -195,5 +174,91 @@ public final class IntegrationGenerator {
             customizer.setIntegrationBuilder(integrationBuilder);
             customizer.doCustomize();
         }
+    }
+
+    /**
+     * Creates the resource files defined in the integration builder.
+     * @param integrationBuilder integration builder
+     * @param appDir app directory
+     */
+    public static void createResourceFiles(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+        final Path resourcesPath = appDir.resolve("src/main/resources");
+        integrationBuilder.getResources().forEach(resource -> createResource(resourcesPath, resource));
+    }
+
+    /**
+     * Creates the additional classes defined in the integration builder.
+     * @param integrationBuilder integration builder
+     * @param appDir app directory
+     */
+    public static void createAdditionalClasses(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+        // For Camel JBang, place all additional files in the app root dir alongside the routebuilder class
+        final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
+
+        // Add additional classes to the application
+        integrationBuilder.getAdditionalClasses().forEach(cu -> {
+            final String typeName = cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString());
+            final Path fileName;
+            final String packageName = cu.getPackageDeclaration().get().getNameAsString();
+            final String fqn = packageName + "." + typeName;
+
+            if (integrationBuilder.isJBang()) {
+                fileName = sources.resolve(typeName + ".java");
+            } else {
+                final Path packageFolder = sources.resolve(packageName.replace(".", "/"));
+                packageFolder.toFile().mkdirs();
+                fileName = packageFolder.resolve(typeName + ".java");
+            }
+            integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+                //If the class isn't in the same package, it needs to be imported explicitly
+                rb.addImport(new ImportDeclaration(fqn, false, false));
+            });
+            LOG.info("Adding class '{}' to application as class '{}'", packageName + "." + typeName, fqn);
+            IOUtils.writeFile(fileName, cu.toString());
+        });
+    }
+
+    /**
+     * Creates the application.properties file.
+     * @param integrationBuilder integration builder
+     * @param appDir app directory
+     */
+    public static void createApplicationProperties(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+        Path propertiesFile = appDir.resolve("src/main/resources/application.properties");
+
+        if (propertiesFile.toFile().exists()) {
+            // If the file already exists, append newline first in case the file does not end with a newline
+            IOUtils.appendFile(propertiesFile, "\n");
+        }
+
+        String content = PropertiesUtils.toString(integrationBuilder.getApplicationProperties());
+        if (!content.trim().isEmpty()) {
+            LOG.debug("Application properties:\n{}", content);
+            // Properties#store() escapes stuff by default, so construct the property file manually
+            IOUtils.appendFile(propertiesFile, content);
+        }
+    }
+
+    /**
+     * Creates the integration class file.
+     * @param integrationBuilder integration builder
+     * @param appDir app directory
+     */
+    public static void createIntegrationClass(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+        final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
+
+        integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+            final Path destination;
+            if (integrationBuilder.isJBang()) {
+                destination = sources;
+            } else {
+                final PackageDeclaration packageDeclaration = rb.getPackageDeclaration().get();
+                destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
+                destination.toFile().mkdirs();
+            }
+            String integrationClass = rb.toString();
+            LOG.debug("Integration class:\n{}", integrationClass);
+            IOUtils.writeFile(destination.resolve(integrationBuilder.getFileName()), integrationClass);
+        });
     }
 }

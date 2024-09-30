@@ -30,9 +30,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
@@ -48,60 +48,95 @@ public abstract class SpringBootApp extends App {
     public SpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
-        if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
-            && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
-            mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
-                , name, getLogPath(Phase.BUILD)
-                , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
-            shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
-        } else if (getExistingJar(integrationBuilder) == null) {
-            LOG.info("Creating Camel Spring Boot application project for integration {}", name);
+        // If there is an existing jar defined, don't create a new app
+        if (getExistingJar() == null) {
+            if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
+                && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
+                mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
+                    , name, getLogPath(Phase.BUILD)
+                    , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
+                shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
+            } else {
+                if (integrationBuilder.isJBang()) {
+                    createUsingJBang();
+                } else {
+                    createUsingMaven();
+                }
 
-            Map<String, String> properties = new HashMap<>(13);
-            properties.putAll(Map.of(
-                "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
-                "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
-                "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
-                "groupId", TestConfiguration.appGroupId(),
-                "artifactId", name,
-                "version", SpringBootConfiguration.camelSpringBootArchetypeGeneratedVersion(),
-                "package", TestConfiguration.appGroupId()));
-            properties.put("archetypeCatalog", "internal");
+                final Path basePath = TestConfiguration.appLocation().resolve(name);
 
-            Maven.invoke(new BuildRequest.Builder()
-                .withBaseDirectory(TestConfiguration.appLocation())
-                .withGoals("archetype:generate")
-                .withProperties(properties)
-                .withLogFile(getLogPath(Phase.GENERATE))
-                .withLogMarker(LogStream.marker(name, Phase.GENERATE))
-                .build());
+                removeExistingTests(basePath);
 
-            final Path basePath = TestConfiguration.appLocation().resolve(name);
+                keepWebLayerOnlyForOcp(OpenshiftConfiguration.isOpenshift(), basePath);
 
-            removeExistingTests(basePath);
+                IntegrationGenerator.createFiles(integrationBuilder, basePath);
 
-            keepWebLayerOnlyForOcp(OpenshiftConfiguration.isOpenshift(), basePath);
+                customizeMain(basePath);
 
-            IntegrationGenerator.toFile(integrationBuilder, basePath);
+                customizeDependencies(integrationBuilder.getDependencies());
 
-            customizeMain(integrationBuilder, basePath);
+                customizePlugins(integrationBuilder.getPlugins());
 
-            customizeDependencies(integrationBuilder.getDependencies());
+                BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
+                    .withBaseDirectory(basePath)
+                    .withGoals("clean", "package")
+                    .withProperties(Map.of(
+                        "skipTests", "true"
+                    ))
+                    .withLogFile(getLogPath(Phase.BUILD))
+                    .withLogMarker(LogStream.marker(name, Phase.BUILD));
 
-            customizePlugins(integrationBuilder.getPlugins());
-
-            BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
-                .withBaseDirectory(basePath)
-                .withGoals("clean", "package")
-                .withProperties(Map.of(
-                    "skipTests", "true"
-                ))
-                .withLogFile(getLogPath(Phase.BUILD))
-                .withLogMarker(LogStream.marker(name, Phase.BUILD));
-
-            LOG.info("Building {} application project", name);
-            Maven.invoke(requestBuilder.build());
+                LOG.info("Building {} application project", name);
+                Maven.invoke(requestBuilder.build());
+            }
         }
+    }
+
+    private void createUsingJBang() {
+        List<String> arguments = new ArrayList<>(List.of(
+            "--runtime", "spring-boot",
+            // Align the generated CamelApplication class to correct package
+            "--package-name", TestConfiguration.appGroupId(),
+            "--camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion(),
+            "--spring-boot-version", SpringBootConfiguration.springBootVersion()
+            ));
+        super.createUsingJBang(arguments);
+        doTempJBangFixes();
+    }
+
+    /**
+     * Workaround current issues with jbang csb template:
+     *   - remove unresolved {{ .AdditionalProperties }} placeholder
+     *   - replace unresolved ${openshift-maven-plugin-version} property
+     */
+    private void doTempJBangFixes() {
+        Path pomPath = TestConfiguration.appLocation().resolve(integrationBuilder.getIntegrationName()).resolve("pom.xml");
+        String pom = IOUtils.readFile(pomPath);
+        pom = pom.replace("{{ .AdditionalProperties }}", "")
+            .replace("${openshift-maven-plugin-version}", SpringBootConfiguration.openshiftMavenPluginVersion());
+        IOUtils.writeFile(pomPath, pom);
+    }
+
+    private void createUsingMaven() {
+        LOG.info("Creating Camel SpringBoot application project for integration {}", name);
+        Map<String, String> properties = Map.of(
+            "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
+            "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
+            "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
+            "groupId", TestConfiguration.appGroupId(),
+            "artifactId", name,
+            "version", TestConfiguration.appVersion(),
+            "package", TestConfiguration.appGroupId(),
+            "archetypeCatalog", "internal"
+        );
+
+        Maven.invoke(new BuildRequest.Builder()
+            .withBaseDirectory(TestConfiguration.appLocation())
+            .withGoals("archetype:generate")
+            .withProperties(properties)
+            .withLogFile(getLogPath(Phase.GENERATE))
+            .withLogMarker(LogStream.marker(name, Phase.GENERATE))
+            .build());
     }
 
     private void keepWebLayerOnlyForOcp(boolean isOpenShift, Path location) {
@@ -114,14 +149,9 @@ public abstract class SpringBootApp extends App {
         File pom = location.resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
-        artifactsToRemove.stream().forEach(artifact -> {
-            model.getDependencies().stream()
-                .filter(dependency -> artifact.equals(dependency.getArtifactId()))
-                .findFirst().ifPresent(dependency -> model.removeDependency(dependency));
-        });
+        model.getDependencies().removeIf(d -> artifactsToRemove.contains(d.getArtifactId()));
 
         Maven.writePom(pom, model);
-
     }
 
     private void removeExistingTests(final Path location) {
@@ -132,14 +162,13 @@ public abstract class SpringBootApp extends App {
             basePackagePath = basePackagePath.resolve(aPackage);
         }
         final Path finalBasePackagePath = basePackagePath;
-        List.of("MySpringBean.java", "MySpringBootRouter.java")
-            .stream()
+        Stream.of("MySpringBean.java", "MySpringBootRouter.java")
             .map(f -> finalBasePackagePath.resolve(f).toFile())
             .filter(File::exists)
             .forEach(File::delete);
     }
 
-    protected Path getExistingJar(AbstractIntegrationBuilder<?> integrationBuilder) {
+    protected Path getExistingJar() {
         return integrationBuilder instanceof SpringBootIntegrationBuilder
             ? ((SpringBootIntegrationBuilder) integrationBuilder).getExistingJar() : null;
     }
@@ -153,7 +182,7 @@ public abstract class SpringBootApp extends App {
         Maven.writePom(pom, model);
     }
 
-    private void customizeMain(AbstractIntegrationBuilder<?> integrationBuilder, Path location) {
+    private void customizeMain(Path location) {
         if (integrationBuilder instanceof SpringBootIntegrationBuilder) {
             addXmlResourceImport((SpringBootIntegrationBuilder) integrationBuilder, location);
         }

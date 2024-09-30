@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -36,37 +37,16 @@ public abstract class QuarkusApp extends App {
 
         this.integrationBuilder = integrationBuilder;
 
-        LOG.info("Creating Camel Quarkus application project for integration {}", name);
-
-        String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
-            QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
-
-        Map<String, String> properties = new HashMap<>(Map.of(
-            "projectGroupId", TestConfiguration.appGroupId(),
-            "projectArtifactId", name,
-            "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
-            "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
-            "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
-            "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
-        ));
-
-        properties.putAll(QuarkusConfiguration.fromSystemProperties());
-
-        Maven.invoke(new BuildRequest.Builder()
-            .withBaseDirectory(TestConfiguration.appLocation())
-            .withGoals(quarkusMavenPluginCreate)
-            .withProperties(properties)
-            .withLogFile(getLogPath(Phase.GENERATE))
-            .withLogMarker(LogStream.marker(name, Phase.GENERATE))
-            .build()
-        );
-
-        IntegrationGenerator.toFile(integrationBuilder, TestConfiguration.appLocation().resolve(name));
+        if (integrationBuilder.isJBang()) {
+            createUsingJBang();
+        } else {
+            createWithMaven();
+        }
 
         customizeProject(integrationBuilder.getDependencies());
         customizePlugins(integrationBuilder.getPlugins());
 
-        properties = new HashMap<>(Map.of(
+        Map<String, String> properties = new HashMap<>(Map.of(
             "skipTests", "true",
             "quarkus.native.container-build", "true"
         ));
@@ -85,6 +65,58 @@ public abstract class QuarkusApp extends App {
 
         LOG.info("Building {} application project ({})", name, QuarkusConfiguration.isQuarkusNative() ? "native" : "JVM");
         Maven.invoke(requestBuilder.build());
+    }
+
+    /**
+     * Creates the application skeleton using camel export command.
+     */
+    private void createUsingJBang() {
+        List<String> arguments = new ArrayList<>(List.of(
+            "--runtime", "quarkus",
+            "--quarkus-group-id", QuarkusConfiguration.quarkusPlatformGroupId(),
+            "--quarkus-artifact-id", QuarkusConfiguration.quarkusPlatformArtifactId(),
+            "--quarkus-version", QuarkusConfiguration.quarkusPlatformVersion()
+        ));
+
+        if (OpenshiftConfiguration.isOpenshift()) {
+            arguments.add("--dep");
+            arguments.add("io.quarkus:quarkus-openshift");
+        }
+
+        super.createUsingJBang(arguments);
+    }
+
+    /**
+     * Creates the application skeleton using quarkus-maven-plugin.
+     */
+    private void createWithMaven() {
+        LOG.info("Creating Camel Quarkus application project for integration {}", name);
+
+        String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
+            QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
+
+        Map<String, String> properties = new HashMap<>(Map.of(
+            "projectGroupId", TestConfiguration.appGroupId(),
+            "projectArtifactId", name,
+            "projectVersion", TestConfiguration.appVersion(),
+            "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
+            "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
+            "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
+            "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
+        ));
+
+        properties.putAll(QuarkusConfiguration.fromSystemProperties());
+
+        Maven.invoke(new BuildRequest.Builder()
+            .withBaseDirectory(TestConfiguration.appLocation())
+            .withGoals(quarkusMavenPluginCreate)
+            .withProperties(properties)
+            .withLogFile(getLogPath(Phase.GENERATE))
+            .withLogMarker(LogStream.marker(name, Phase.GENERATE))
+            .build()
+        );
+
+        IntegrationGenerator.createFiles(integrationBuilder, TestConfiguration.appLocation().resolve(name));
     }
 
     /**
@@ -112,6 +144,11 @@ public abstract class QuarkusApp extends App {
         Model model = Maven.loadPom(pom);
 
         // Append the camel platform bom (quarkus bom already present)
+        // Check if the cq bom is already present in the dependencies management, if it is, then it is overriden
+        model.getDependencyManagement().getDependencies().stream()
+            .filter(d -> d.getArtifactId().equals(QuarkusConfiguration.camelQuarkusPlatformArtifactId())).findFirst()
+            .ifPresent(d -> model.getDependencyManagement().getDependencies().remove(d));
+
         Dependency camelQuarkusBom = new Dependency();
         camelQuarkusBom.setGroupId(QuarkusConfiguration.camelQuarkusPlatformGroupId());
         camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelQuarkusPlatformArtifactId());

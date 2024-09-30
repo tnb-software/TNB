@@ -96,10 +96,11 @@ public class JiraValidation implements Validation {
     }
 
     /**
-     * @param issueKey
-     * @param message
+     * Deprecated.
+     * @param issueKey jira issue key
+     * @param message message
      * @deprecated use getComments and assert on it
-     * @return
+     * @return true/false
      */
     @Deprecated
     public boolean findInComments(String issueKey, String message) {

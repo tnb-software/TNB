@@ -53,6 +53,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
             QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion()));
         sa.assertThat(request.getProperties()).isEqualTo(Map.of(
             "projectGroupId", TestConfiguration.appGroupId(),
+            "projectVersion", TestConfiguration.appVersion(),
             "projectArtifactId", name(),
             "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
             "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),

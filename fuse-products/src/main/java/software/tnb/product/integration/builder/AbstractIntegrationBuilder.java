@@ -73,9 +73,11 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private int port = 8080;
 
     private String jvmAgentPath;
-    private List<String> vmArguments = new ArrayList<>();
+    private final List<String> vmArguments = new ArrayList<>();
 
     private OpenshiftCustomDeployer customStrategy;
+
+    private boolean useJBang = false;
 
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
@@ -526,5 +528,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public OpenshiftCustomDeployer getOCPCustomStrategy() {
         return customStrategy;
+    }
+
+    public SELF useJBang() {
+        this.useJBang = true;
+        return self();
+    }
+
+    public boolean isJBang() {
+        return useJBang;
     }
 }

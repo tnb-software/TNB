@@ -121,7 +121,7 @@ public class Maven {
      * @param buildRequest MavenRequest class instance
      */
     public static void invoke(BuildRequest buildRequest) {
-        InvocationResult result = null;
+        InvocationResult result;
 
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
@@ -134,7 +134,7 @@ public class Maven {
             .setBatchMode(true)
             .setGoals(goals)
             .setProperties(properties)
-            .setNoTransferProgress(true)
+            .setNoTransferProgress(TestConfiguration.mavenTransferProgress())
             .setOutputHandler(buildRequest.getOutputHandler())
             .setErrorHandler(buildRequest.getOutputHandler());
 
