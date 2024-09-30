@@ -27,6 +27,10 @@ public abstract class Kafka extends Service<KafkaAccount, NoClient, KafkaValidat
 
     public abstract String bootstrapSSLServers();
 
+    public void createTopic(String name) {
+        createTopic(name, 1, 1);
+    }
+
     public abstract void createTopic(String name, int partitions, int replicas);
 
     public <T> KafkaValidation<T> validation(Class<T> clazz) {
