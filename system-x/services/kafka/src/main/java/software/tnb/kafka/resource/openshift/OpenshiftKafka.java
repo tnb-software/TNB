@@ -5,9 +5,9 @@ import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.kafka.service.Kafka;
 
-import org.apache.kafka.clients.admin.AdminClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -31,6 +31,7 @@ import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
 import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.strimzi.api.kafka.KafkaList;
 import io.strimzi.api.kafka.KafkaTopicList;
@@ -68,6 +69,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         // https://github.com/strimzi/strimzi-kafka-operator/issues/5042
         if (!usePreparedGlobalInstallation()) {
             if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
+                deleteTopics();
                 kafkaCrdClient.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
                 OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
                     .timeout(120_000).waitFor();
@@ -208,6 +210,13 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
         OpenshiftClient.get().resources(KafkaTopic.class, KafkaTopicList.class).inNamespace(targetNamespace()).createOrReplace(kafkaTopic);
     }
 
+    public void deleteTopics() {
+        final NonNamespaceOperation<KafkaTopic, KafkaTopicList, Resource<KafkaTopic>> topics =
+            OpenshiftClient.get().resources(KafkaTopic.class, KafkaTopicList.class).inNamespace(targetNamespace());
+        topics.list().getItems().forEach(t -> topics.resource(t).delete());
+        WaitUtils.waitFor(() -> topics.list().getItems().isEmpty(), "Waiting until all topics are removed");
+    }
+
     private void createBasicUser() { // via https://access.redhat.com/documentation/en-us/red_hat_amq/2021
         // .q2/html-single/using_amq_streams_on_openshift/index#type-KafkaClientAuthenticationPlain-reference
         String password = Base64.getEncoder().encodeToString(account().basicPassword().getBytes());
@@ -226,13 +235,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
     @Override
     public void cleanup() {
         LOG.debug("Cleaning kafka instance");
-        try {
-            AdminClient adminClient = AdminClient.create(props);
-            adminClient.deleteTopics(adminClient.listTopics().names().get());
-            adminClient.close();
-        } catch (Exception e) {
-            LOG.warn("Unable to clean kafka instance", e);
-        }
+        deleteTopics();
     }
 
     public void extractCertificate() {
