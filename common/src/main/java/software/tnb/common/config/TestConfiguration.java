@@ -22,7 +22,8 @@ public class TestConfiguration extends Configuration {
     public static final String VAULT_ADDRESS = "test.credentials.vault.address";
     public static final String VAULT_PATH_PATTERN = "test.credentials.vault.path.pattern";
     public static final String APP_GROUP_ID = "test.app.group.id";
-    public static final String APP_LOCATION = "app.location";
+    public static final String APP_VERSION = "test.app.version";
+    public static final String APP_LOCATION = "test.app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
     public static final String TEST_WAIT_KILL_TIMEOUT = "test.wait.kill.timeout";
@@ -33,6 +34,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_SETTINGS_FILE_NAME = "test.maven.settings.file.name";
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
     public static final String MAVEN_EXTRA_ARGS = "test.maven.extra.args";
+    public static final String MAVEN_TRANSFER_PROGRESS = "test.maven.transfer.progress";
     public static final String REPORT_PORTAL = "test.report.portal.enabled";
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
@@ -49,6 +51,8 @@ public class TestConfiguration extends Configuration {
     public static final String APP_DEBUG = "tnb.app.debug";
 
     public static final String APP_DEBUG_PORT = "tnb.app.debug.port";
+
+    public static final String KAMELETS_VERSION = "kamelets.version";
 
     public static ProductType product() {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
@@ -88,6 +92,10 @@ public class TestConfiguration extends Configuration {
         return getProperty(APP_GROUP_ID, "com.test");
     }
 
+    public static String appVersion() {
+        return getProperty(APP_VERSION, "1.0.0-SNAPSHOT");
+    }
+
     public static Path appLocation() {
         return Paths.get(getProperty(APP_LOCATION, "target"));
     }
@@ -122,6 +130,10 @@ public class TestConfiguration extends Configuration {
 
     public static String mavenRepositoryId() {
         return getProperty(MAVEN_REPOSITORY_ID, "tnb-maven-repo");
+    }
+
+    public static boolean mavenTransferProgress() {
+        return getBoolean(MAVEN_TRANSFER_PROGRESS, false);
     }
 
     public static boolean isMavenMirror() {
@@ -181,5 +193,9 @@ public class TestConfiguration extends Configuration {
 
     public static Integer appDebugPort() {
         return getInteger(APP_DEBUG_PORT, 5005);
+    }
+
+    public static String kameletsVersion() {
+        return getProperty(KAMELETS_VERSION);
     }
 }

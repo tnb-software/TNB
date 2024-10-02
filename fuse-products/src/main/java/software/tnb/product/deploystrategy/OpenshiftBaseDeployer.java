@@ -125,7 +125,7 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
                     Files.createDirectories(resFolder);
                     resources.forEach(resource -> {
                         try {
-                            if (resource.getIsContentPath()) {
+                            if (resource.isContentPath()) {
                                 IOUtils.copyFile(Paths.get(resource.getContent()), resFolder.resolve(resource.getName()));
                             } else {
                                 FileUtils.writeStringToFile(new File(resFolder.resolve(resource.getName()).toUri()), resource.getContent(),

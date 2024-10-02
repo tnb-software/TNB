@@ -34,7 +34,7 @@ public class Resource {
         this.content = content;
     }
 
-    public boolean getIsContentPath() {
+    public boolean isContentPath() {
         return isContentPath;
     }
 }

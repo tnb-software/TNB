@@ -34,7 +34,7 @@ public class LocalSpringBootApp extends SpringBootApp {
         String jarName;
 
         final Path projectPath;
-        final Path existingJarPath = getExistingJar(integrationBuilder);
+        final Path existingJarPath = getExistingJar();
         if (mavenGitApp != null) {
             args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());

@@ -95,6 +95,14 @@ public class JiraValidation implements Validation {
         }
     }
 
+    /**
+     * Deprecated.
+     * @param issueKey jira issue key
+     * @param message message
+     * @deprecated use getComments and assert on it
+     * @return true/false
+     */
+    @Deprecated
     public boolean findInComments(String issueKey, String message) {
         return getComments(issueKey).contains(message);
     }

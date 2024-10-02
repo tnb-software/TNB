@@ -50,7 +50,7 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
 
     @Override
     public String process(AbstractIntegrationBuilder<?> ib) {
-        IntegrationGenerator.toFile(ib, TEST_DIR);
+        IntegrationGenerator.createFiles(ib, TEST_DIR);
         return null;
     }
 
@@ -136,7 +136,7 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
         setProduct(ProductType.CAMEL_SPRINGBOOT);
         IntegrationBuilder ib = builderWithAdditionalClass();
 
-        IntegrationGenerator.toFile(ib, TEST_DIR);
+        IntegrationGenerator.createFiles(ib, TEST_DIR);
 
         final Path routeBuilderPath = TEST_DIR
             .resolve("src/main/java/")

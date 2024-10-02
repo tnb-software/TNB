@@ -23,6 +23,7 @@ public class SpringBootConfiguration extends CamelConfiguration {
     public static final String CAMEL_SPRINGBOOT_EXAMPLES_BRANCH = "camel.springboot.examples.branch";
 
     public static final String OPENSHIFT_MAVEN_PLUGIN_GROUP_ID = "openshift-maven-plugin-group-id";
+    public static final String OPENSHIFT_MAVEN_PLUGIN_ARTIFACT_ID = "openshift-maven-plugin-artifact-id";
     public static final String OPENSHIFT_MAVEN_PLUGIN_VERSION = "openshift-maven-plugin-version";
 
     public static final String MAVEN_COMPILER_PLUGIN_VERSION = "maven-compiler-plugin-version";
@@ -75,12 +76,12 @@ public class SpringBootConfiguration extends CamelConfiguration {
         return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_VERSION, camelSpringBootVersion());
     }
 
-    public static String camelSpringBootArchetypeGeneratedVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_ARCHETYPE_GENERATED_VERSION, "1.0.0-SNAPSHOT");
-    }
-
     public static String openshiftMavenPluginGroupId() {
         return getProperty(OPENSHIFT_MAVEN_PLUGIN_GROUP_ID, "org.eclipse.jkube");
+    }
+
+    public static String openshiftMavenPluginArtifactId() {
+        return getProperty(OPENSHIFT_MAVEN_PLUGIN_ARTIFACT_ID, "openshift-maven-plugin");
     }
 
     public static String openshiftMavenPluginVersion() {

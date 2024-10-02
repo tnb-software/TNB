@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.Map;
@@ -52,6 +53,19 @@ public final class IOUtils {
             Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
         } catch (IOException e) {
             throw new RuntimeException("Unable to copy to " + source, e);
+        }
+    }
+
+    /**
+     * Appends the given content into a file. If the file does not exists, it is created first.
+     * @param file file file
+     * @param content content
+     */
+    public static void appendFile(Path file, String content) {
+        try {
+            Files.write(file, content.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to append to " + file, e);
         }
     }
 
