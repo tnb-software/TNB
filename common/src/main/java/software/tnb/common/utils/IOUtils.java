@@ -63,6 +63,7 @@ public final class IOUtils {
      */
     public static void appendFile(Path file, String content) {
         try {
+            Files.createDirectories(file.getParent());
             Files.write(file, content.getBytes(), StandardOpenOption.APPEND, StandardOpenOption.CREATE);
         } catch (IOException e) {
             throw new RuntimeException("Unable to append to " + file, e);
