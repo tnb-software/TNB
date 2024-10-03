@@ -36,7 +36,7 @@
         <module>infinispan</module>
         <module>db</module>
         <module>mail</module>
-        <module>elasticsearch</module>
+        <module>search-engine</module>
         <module>filesystem</module>
         <module>rest</module>
         <module>salesforce</module>
