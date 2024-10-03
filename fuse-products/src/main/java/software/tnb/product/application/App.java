@@ -163,6 +163,9 @@ public abstract class App {
                 .toList());
         }
 
+        // application.properties are loaded automatically when they are in the root of the dir
+        IntegrationGenerator.createApplicationProperties(integrationBuilder, appDir);
+
         LOG.trace("Camel JBang command: {}", String.join(" ", command));
 
         int exitCode;
@@ -182,7 +185,6 @@ public abstract class App {
             throw new RuntimeException("camel export invocation failed with exit code " + exitCode + ", check " + logFile + " for more details");
         }
 
-        IntegrationGenerator.createApplicationProperties(integrationBuilder, appDir);
         IntegrationGenerator.createResourceFiles(integrationBuilder, appDir);
     }
 }
