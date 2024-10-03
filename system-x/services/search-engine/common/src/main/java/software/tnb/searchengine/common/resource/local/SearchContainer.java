@@ -2,7 +2,6 @@ package software.tnb.searchengine.common.resource.local;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.LogMessageWaitStrategy;
-import org.testcontainers.utility.TestcontainersConfiguration;
 
 import java.util.Map;
 
@@ -12,14 +11,8 @@ public class SearchContainer extends GenericContainer<SearchContainer> {
         Map<String, String> environment, String regex, String networkAliases) {
         super(image);
 
-        if (TestcontainersConfiguration.getInstance().getEnvironment().get("DOCKER_HOST") != null) {
-            // Use network mode "host" so that elasticsearch can bind itself to the public ip if a remote docker host is used
-            withNetworkMode("host");
-            // This is not exposed in SearchContainer, that's why it is not used
-            addFixedExposedPort(port, port);
-        } else {
-            addExposedPort(port);
-        }
+        withNetworkMode("host");
+        addFixedExposedPort(port, port);
 
         withEnv(environment);
 
