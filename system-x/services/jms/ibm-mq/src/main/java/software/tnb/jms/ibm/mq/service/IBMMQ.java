@@ -28,15 +28,6 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
     public static final String SSLCIPHERSUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256";
 
-    public IBMMQValidation validation() {
-        if (validation == null) {
-            LOG.debug("Creating new IBM MQ validation");
-            validation = new IBMMQValidation(account(), clientHostname(), clientPort(), client()
-                , getConfiguration().useSSL() ? SSLCIPHERSUITE : null);
-        }
-        return validation;
-    }
-
     public Map<String, String> containerEnvironment() {
         return Map.of(
             "LICENSE", "accept",
@@ -51,8 +42,9 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
         return port();
     }
 
+    // In 9.4 the environment variable for password is deprecated, so for the next bump it will be needed to migrate to docker secrets
     public String defaultImage() {
-        return "icr.io/ibm-messaging/mq:9.3.2.1-r1";
+        return "icr.io/ibm-messaging/mq:9.4.0.5-r1";
     }
 
     /**
