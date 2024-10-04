@@ -34,6 +34,6 @@ public abstract class RabbitMQ extends Service<RabbitmqAccount, Connection, Rabb
 
     @Override
     public String defaultImage() {
-        return "quay.io/rh_integration/rabbitmq:3-management";
+        return "quay.io/rh_integration/rabbitmq:3.13.7-management";
     }
 }
