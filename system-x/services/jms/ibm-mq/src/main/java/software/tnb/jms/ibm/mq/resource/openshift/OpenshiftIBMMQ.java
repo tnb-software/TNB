@@ -10,6 +10,7 @@ import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.jms.ibm.mq.service.IBMMQ;
+import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -90,6 +91,15 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
     @Override
     protected String clientHostname() {
         return externalHostname();
+    }
+
+    @Override
+    public IBMMQValidation validation() {
+        if (validation == null) {
+            LOG.debug("Creating new IBM MQ validation");
+            validation = new IBMMQValidation(account(), client(), servicePod().get());
+        }
+        return validation;
     }
 
     @Override

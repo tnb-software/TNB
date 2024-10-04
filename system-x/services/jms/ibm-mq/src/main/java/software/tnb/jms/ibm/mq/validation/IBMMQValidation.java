@@ -1,73 +1,47 @@
 package software.tnb.jms.ibm.mq.validation;
 
+import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.validation.Validation;
 import software.tnb.jms.client.JMSClientManager;
 import software.tnb.jms.client.JMSQueueClient;
 import software.tnb.jms.client.JMSTopicClient;
 import software.tnb.jms.ibm.mq.account.IBMMQAccount;
+import software.tnb.jms.ibm.mq.resource.local.IBMMQContainer;
 
-import com.ibm.mq.MQException;
-import com.ibm.mq.MQQueueManager;
-import com.ibm.mq.constants.MQConstants;
-import com.ibm.mq.headers.MQDataException;
-import com.ibm.mq.headers.pcf.PCFMessage;
-import com.ibm.mq.headers.pcf.PCFMessageAgent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.testcontainers.containers.Container;
 
 import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Objects;
 import java.util.Set;
 
+import cz.xtf.core.openshift.PodShellOutput;
+import io.fabric8.kubernetes.api.model.Pod;
 import jakarta.jms.Connection;
 
 public class IBMMQValidation implements Validation {
+    private static final Logger LOG = LoggerFactory.getLogger(IBMMQValidation.class);
+
     private final IBMMQAccount account;
 
     private JMSClientManager client;
     private final Connection connection;
-    private final PCFMessageAgent agent;
+    private IBMMQContainer container;
+    private Pod pod;
 
     private final Set<String> createdQueues = new HashSet<>();
     private final Set<String> createdTopics = new HashSet<>();
 
-    public IBMMQValidation(IBMMQAccount account, String host, int port, Connection connection, String cipherSpec) {
+    public IBMMQValidation(IBMMQAccount account, Connection connection, IBMMQContainer container) {
         this.account = account;
         this.connection = connection;
-        agent = createPCFAgent(host, port, cipherSpec);
+        this.container = container;
     }
 
-    private MQQueueManager createQueueManager(String host, int port, String cipherSpec) {
-        Hashtable<String, Object> properties = new Hashtable<>();
-        properties.put(MQConstants.HOST_NAME_PROPERTY, host);
-        properties.put(MQConstants.PORT_PROPERTY, port);
-        properties.put(MQConstants.CHANNEL_PROPERTY, account.adminChannel());
-        properties.put(MQConstants.USE_MQCSP_AUTHENTICATION_PROPERTY, true);
-        properties.put(MQConstants.USER_ID_PROPERTY, account.adminUsername());
-        properties.put(MQConstants.PASSWORD_PROPERTY, account.adminPassword());
-        if (Objects.nonNull(cipherSpec)) {
-            properties.put(MQConstants.SSL_CIPHER_SUITE_PROPERTY, cipherSpec);
-        }
-        try {
-            return new MQQueueManager(account.queueManager(), properties);
-        } catch (MQException e) {
-            throw new RuntimeException("Unable to create MQQueueManager:", e);
-        }
-    }
-
-    private PCFMessageAgent createPCFAgent(String host, int port, String cipherSpec) {
-        try {
-            return new PCFMessageAgent(createQueueManager(host, port, cipherSpec));
-        } catch (MQDataException e) {
-            throw new RuntimeException("Unable to create PCFMessageAgent:", e);
-        }
-    }
-
-    private void sendRequest(PCFMessage request) {
-        try {
-            agent.send(request);
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to send PCFMessage:", e);
-        }
+    public IBMMQValidation(IBMMQAccount account, Connection connection, Pod pod) {
+        this.account = account;
+        this.connection = connection;
+        this.pod = pod;
     }
 
     private JMSClientManager client() {
@@ -79,21 +53,14 @@ public class IBMMQValidation implements Validation {
 
     private void createQueue(String queueName) {
         if (!createdQueues.contains(queueName)) {
-            PCFMessage request = new PCFMessage(MQConstants.MQCMD_CREATE_Q);
-            request.addParameter(MQConstants.MQCA_Q_NAME, queueName);
-            request.addParameter(MQConstants.MQIA_Q_TYPE, MQConstants.MQQT_LOCAL);
-            sendRequest(request);
+            executeCommand("echo \"DEFINE QLOCAL('" + queueName + "')\" | runmqsc " + account.queueManager());
             createdQueues.add(queueName);
         }
     }
 
     private void createTopic(String topicName) {
         if (!createdTopics.contains(topicName)) {
-            PCFMessage request = new PCFMessage(MQConstants.MQCMD_CREATE_TOPIC);
-            request.addParameter(MQConstants.MQCA_TOPIC_NAME, topicName);
-            request.addParameter(MQConstants.MQCA_TOPIC_STRING, topicName);
-            request.addParameter(MQConstants.MQIA_TOPIC_TYPE, MQConstants.MQTOPT_LOCAL);
-            sendRequest(request);
+            executeCommand("echo \"DEFINE TOPIC('" + topicName + "') TOPICSTR('" + topicName + "') REPLACE\" | runmqsc " + account.queueManager());
             createdTopics.add(topicName);
         }
     }
@@ -106,5 +73,28 @@ public class IBMMQValidation implements Validation {
     public JMSTopicClient topic(String topicName) {
         createTopic(topicName);
         return client().topic(topicName);
+    }
+
+    private void executeCommand(String command) {
+        String out;
+        String err;
+        if (pod != null) {
+            final PodShellOutput output = OpenshiftClient.get().podShell(pod).executeWithBash(command);
+            out = output.getOutput();
+            err = output.getError();
+        } else {
+            try {
+                final Container.ExecResult result = container.execInContainer("/bin/bash", "-c", command);
+                out = result.getStdout();
+                err = result.getStderr();
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to execute command in container", e);
+            }
+        }
+        if (!err.isEmpty()) {
+            throw new RuntimeException("Unable to execute command: " + command + ": " + err);
+        } else {
+            LOG.trace(out);
+        }
     }
 }

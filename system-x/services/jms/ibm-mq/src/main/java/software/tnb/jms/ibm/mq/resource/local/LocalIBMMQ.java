@@ -2,6 +2,7 @@ package software.tnb.jms.ibm.mq.resource.local;
 
 import software.tnb.common.deployment.Deployable;
 import software.tnb.jms.ibm.mq.service.IBMMQ;
+import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +47,15 @@ public class LocalIBMMQ extends IBMMQ implements Deployable {
     @Override
     protected String clientHostname() {
         return host();
+    }
+
+    @Override
+    public IBMMQValidation validation() {
+        if (validation == null) {
+            LOG.debug("Creating new IBM MQ validation");
+            validation = new IBMMQValidation(account(), client(), container);
+        }
+        return validation;
     }
 
     protected void generateKeystore() {
