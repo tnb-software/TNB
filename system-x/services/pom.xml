@@ -24,6 +24,7 @@
         <module>gitops</module>
         <module>graphql</module>
         <module>google</module>
+        <module>hashicorp-vault</module>
         <module>knative</module>
         <module>ldap</module>
         <module>slack</module>
