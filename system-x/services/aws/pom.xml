@@ -31,5 +31,6 @@
         <module>sns</module>
         <module>sqs</module>
         <module>s3</module>
+        <module>secrets-manager</module>
     </modules>
 </project>
