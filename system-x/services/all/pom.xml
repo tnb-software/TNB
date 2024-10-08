@@ -179,6 +179,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-hashicorp-vault</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-horreum</artifactId>
         </dependency>
         <dependency>
