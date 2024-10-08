@@ -10,6 +10,7 @@ import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Plugin;
 import org.slf4j.Logger;
@@ -27,6 +28,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public abstract class App {
     private static final Pattern LOG_STARTED_REGEX = Pattern.compile("(?m)^.*Apache Camel.*started in.*$");
@@ -155,6 +157,25 @@ public abstract class App {
         ));
 
         command.addAll(arguments);
+
+        if (!integrationBuilder.getDependencies().isEmpty()) {
+            command.add("--dep");
+            command.add(integrationBuilder.getDependencies().stream().map(d -> {
+                // Convert runtime-specific camel dependencies to camel:<dependency> format
+                if (d.getArtifactId().startsWith("camel-quarkus-")) {
+                    return "camel:" + StringUtils.substringAfter(d.getArtifactId(), "camel-quarkus-");
+                } else if (d.getArtifactId().startsWith("camel-") && d.getArtifactId().endsWith("-starter")) {
+                    return "camel:" + StringUtils.substringBetween(d.getArtifactId(), "camel-", "-starter");
+                } else {
+                    String dep = d.getGroupId() + ":" + d.getArtifactId();
+                    if (d.getVersion() != null) {
+                        dep += ":" + d.getVersion();
+                    }
+                    return dep;
+                }
+            }).collect(Collectors.joining(",")));
+        }
+
         command.add(integrationBuilder.getFileName());
 
         List<CompilationUnit> additionalClasses = integrationBuilder.getAdditionalClasses();
