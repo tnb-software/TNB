@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Event Hubs</name>
 
     <properties>
-        <azure.event.hubs.version>5.18.0</azure.event.hubs.version>
+        <azure.event.hubs.version>5.19.0</azure.event.hubs.version>
     </properties>
 
     <dependencies>
