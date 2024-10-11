@@ -15,7 +15,7 @@ public class DbAllocatorConfiguration extends Configuration {
     public static final String URL = "dballocator.url";
 
     public static String getLabel() {
-        return getProperty(LABEL, "postgresql");
+        return getProperty(LABEL, "postgresql145");
     }
 
     public static String[] getDependencies() {
