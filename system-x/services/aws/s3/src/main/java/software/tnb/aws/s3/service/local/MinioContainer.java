@@ -15,6 +15,6 @@ public class MinioContainer extends GenericContainer<MinioContainer> {
         this.withEnv(env);
         this.withExposedPorts(containerApiPort);
         this.withCommand("server", "/data");
-        this.waitingFor(Wait.forLogMessage(".*1 Online, 0 Offline.*", 1));
+        this.waitingFor(Wait.forListeningPorts(9000));
     }
 }
