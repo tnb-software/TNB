@@ -3,7 +3,6 @@ package software.tnb.aws.s3.service;
 import software.tnb.aws.common.account.AWSAccount;
 import software.tnb.aws.common.service.AWSService;
 import software.tnb.aws.s3.validation.S3Validation;
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 
 import java.net.URI;
@@ -24,10 +23,11 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
     public AWSAccount account() {
         if (account == null) {
             LOG.debug("Creating new Minio account");
-            account = AccountFactory.create(AWSAccount.class);
+            account = new AWSAccount();
             account.setAccount_id("minio");
             account.setAccess_key("minio");
             account.setSecret_key("minio123minio123minio123");
+            account.setRegion("us-west-1");
         }
         return account;
     }
@@ -47,6 +47,6 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
 
     @Override
     public String defaultImage() {
-        return "quay.io/minio/minio:RELEASE.2022-09-17T00-09-45Z";
+        return "quay.io/minio/minio:RELEASE.2024-10-13T13-34-11Z";
     }
 }
