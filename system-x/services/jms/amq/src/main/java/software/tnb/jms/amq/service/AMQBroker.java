@@ -45,7 +45,10 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
     }
 
     public void closeResources() {
-        validation = null;
+        if (validation != null) {
+            validation.close();
+            validation = null;
+        }
         try {
             client.close();
         } catch (JMSException e) {
