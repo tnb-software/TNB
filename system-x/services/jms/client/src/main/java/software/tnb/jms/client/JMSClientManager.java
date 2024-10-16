@@ -47,5 +47,7 @@ public class JMSClientManager {
         queueClients.clear();
         topicClients.values().forEach(JMSTopicClient::close);
         topicClients.clear();
+        mqttTopicClients.values().forEach(MQTTTopicClient::close);
+        mqtt5TopicClients.values().forEach(MQTT5TopicClient::close);
     }
 }

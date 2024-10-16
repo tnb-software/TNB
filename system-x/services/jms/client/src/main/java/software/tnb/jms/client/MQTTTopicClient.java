@@ -9,7 +9,7 @@ import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
 
-public class MQTTTopicClient implements BasicJMSOperations<MqttMessage>, TopicClient {
+public class MQTTTopicClient extends MQTTKeepAlive implements BasicJMSOperations<MqttMessage>, TopicClient {
     protected final IMqttClient client;
     protected final String topicName;
     private final MQTTMessageListener listener = new MQTTMessageListener();
@@ -22,6 +22,7 @@ public class MQTTTopicClient implements BasicJMSOperations<MqttMessage>, TopicCl
             MqttConnectOptions options = new MqttConnectOptions();
             options.setAutomaticReconnect(true);
             options.setCleanSession(true);
+            options.setKeepAliveInterval(300);
             options.setConnectionTimeout(10);
             options.setUserName(username);
             options.setPassword(password.toCharArray());
@@ -32,6 +33,7 @@ public class MQTTTopicClient implements BasicJMSOperations<MqttMessage>, TopicCl
             }
 
             client.connect(options);
+            startKeepAlive(client);
         } catch (Exception e) {
             throw new RuntimeException("Unable to create mqtt client instance", e);
         }
@@ -61,6 +63,14 @@ public class MQTTTopicClient implements BasicJMSOperations<MqttMessage>, TopicCl
             listener.setSubscribed(true);
         } catch (MqttException e) {
             throw new RuntimeException("Unable to subscribe to mqtt topic", e);
+        }
+    }
+
+    public void close() {
+        stopKeepAlive();
+        try {
+            client.close();
+        } catch (MqttException ignored) {
         }
     }
 }

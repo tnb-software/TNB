@@ -84,7 +84,10 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
     protected abstract String clientHostname();
 
     public void closeResources() {
-        validation = null;
+        if (validation != null) {
+            validation.close();
+            validation = null;
+        }
         if (client != null) {
             try {
                 client.stop();

@@ -97,4 +97,10 @@ public class IBMMQValidation implements Validation {
             LOG.trace(out);
         }
     }
+
+    public void close() {
+        if (client != null) {
+            client.close();
+        }
+    }
 }

@@ -11,7 +11,7 @@ import org.eclipse.paho.mqttv5.common.MqttException;
 import org.eclipse.paho.mqttv5.common.MqttMessage;
 import org.eclipse.paho.mqttv5.common.MqttSubscription;
 
-public class MQTT5TopicClient implements BasicJMSOperations<MqttMessage>, TopicClient {
+public class MQTT5TopicClient extends MQTTKeepAlive implements BasicJMSOperations<MqttMessage>, TopicClient {
     protected final IMqttClient client;
     protected final String topicName;
     private final MQTT5MessageListener listener = new MQTT5MessageListener();
@@ -34,6 +34,7 @@ public class MQTT5TopicClient implements BasicJMSOperations<MqttMessage>, TopicC
             }
 
             client.connect(options);
+            startKeepAlive(client);
         } catch (Exception e) {
             throw new RuntimeException("Unable to create mqtt5 client instance", e);
         }
@@ -66,6 +67,14 @@ public class MQTT5TopicClient implements BasicJMSOperations<MqttMessage>, TopicC
             listener.setSubscribed(true);
         } catch (MqttException e) {
             throw new RuntimeException("Unable to subscribe to mqtt5 topic", e);
+        }
+    }
+
+    public void close() {
+        stopKeepAlive();
+        try {
+            client.close();
+        } catch (MqttException ignored) {
         }
     }
 }

@@ -54,4 +54,10 @@ public class AMQValidation implements Validation {
     public MQTT5TopicClient mqtt5(String topic, String clientId) {
         return client().mqtt5(mqttUrl, account.username(), account.password(), clientId, topic);
     }
+
+    public void close() {
+        if (client != null) {
+            client.close();
+        }
+    }
 }
