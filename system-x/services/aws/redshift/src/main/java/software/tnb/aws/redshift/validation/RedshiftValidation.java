@@ -4,8 +4,6 @@ import software.tnb.aws.redshift.account.RedshiftAccount;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.validation.Validation;
 
-import org.junit.jupiter.api.Assertions;
-
 import java.util.List;
 
 import software.amazon.awssdk.services.redshift.RedshiftClient;
@@ -31,7 +29,7 @@ public class RedshiftValidation implements Validation {
         this.redshiftAccount = redshiftAccount;
     }
 
-    public String execSql(String sql) {
+    public String executeQuery(String query) {
         Cluster cluster = redshiftClient.describeClusters().clusters().stream()
             .filter(c -> c.clusterIdentifier().equals(redshiftAccount.clusterIdentifier())).findFirst().get();
         String responseId = redshiftDataClient.executeStatement(
@@ -39,19 +37,14 @@ public class RedshiftValidation implements Validation {
                 .clusterIdentifier(redshiftAccount.clusterIdentifier())
                 .database(cluster.dbName())
                 .dbUser(cluster.masterUsername())
-                .sql(sql).build()).id();
+                .sql(query).build()).id();
         WaitUtils.waitFor(
-            () -> {
-                switch (getStatementStatus(responseId).toUpperCase()) {
-                    case "FINISHED":
-                        return true;
-                    case "FAILED":
-                        Assertions.fail(String.format("Failure executing sql statement: '%s'", sql));
-                    default:
-                        return false;
-                }
+            () -> switch (getStatementStatus(responseId).toUpperCase()) {
+                case "FINISHED" -> true;
+                case "FAILED" -> throw new RuntimeException(String.format("Failure executing sql statement: '%s'", query));
+                default -> false;
             }, 20,
-            5000, "waiting until the statement " + sql + " is finished");
+            5000, "Waiting until the statement " + query + " is finished");
         return responseId;
     }
 

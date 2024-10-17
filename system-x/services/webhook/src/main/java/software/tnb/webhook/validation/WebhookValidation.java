@@ -54,10 +54,12 @@ public class WebhookValidation implements Validation {
     }
 
     public void deleteEndpoint() {
-        final String url = String.format("%s/token/%s", WEBHOOK_ENDPOINT, token);
-        LOG.debug("Deleting webhook endpoint {}", url);
-        client.delete(url);
-        token = null;
+        if (token != null) {
+            final String url = String.format("%s/token/%s", WEBHOOK_ENDPOINT, token);
+            LOG.debug("Deleting webhook endpoint {}", url);
+            client.delete(url);
+            token = null;
+        }
     }
 
     public List<WebhookSiteRequest> getRequests() {
@@ -78,9 +80,8 @@ public class WebhookValidation implements Validation {
         String body = client.get(url).getBody();
 
         Gson gson = new GsonBuilder().registerTypeAdapter(
-            LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, jsonDeserializationContext) -> {
-                return LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
-            }).create();
+            LocalDateTime.class, (JsonDeserializer<LocalDateTime>) (json, type, jsonDeserializationContext)
+                -> LocalDateTime.parse(json.getAsJsonPrimitive().getAsString(), DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))).create();
 
         return gson.fromJson(body, WebhookSiteRequests.class).data();
     }

@@ -31,7 +31,6 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
         redshiftClient = AWSClient.createDefaultClient(account(), RedshiftClient.class,
             getConfiguration().isLocalstack() ? localStack.clientUrl() : null);
         validation = new RedshiftValidation(redshiftClient, client(), account());
-        LOG.debug("Clusters: " + redshiftClient.describeClusters().toString());
         resumeCluster();
     }
 
@@ -44,31 +43,31 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
         }
     }
 
-    public Cluster getCluster() {
+    public Cluster cluster() {
         return redshiftClient.describeClusters().clusters().stream()
             .filter(cluster -> cluster.clusterIdentifier().equals(account.clusterIdentifier())).findFirst().get();
     }
 
     private void resumeCluster() {
         //resume cluster
-        if (!getCluster().clusterAvailabilityStatus().equalsIgnoreCase("available")) {
+        if (!cluster().clusterAvailabilityStatus().equalsIgnoreCase("available")) {
             redshiftClient
                 .resumeCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
             //wait for available
-            WaitUtils.waitFor(() -> getCluster().clusterAvailabilityStatus().equalsIgnoreCase("available"), 30, 30000,
-                "Waiting for Cluster " + getCluster().clusterIdentifier() + " to be available");
+            WaitUtils.waitFor(() -> cluster().clusterAvailabilityStatus().equalsIgnoreCase("available"), 60, 30000,
+                "Waiting for Cluster " + cluster().clusterIdentifier() + " to be available");
         }
     }
 
     private void pauseCluster() {
-        if (!getCluster().clusterAvailabilityStatus().equalsIgnoreCase("paused")) {
+        if (!cluster().clusterAvailabilityStatus().equalsIgnoreCase("paused")) {
             checkSnapshots();
             try {
                 redshiftClient.pauseCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
                 //wait for paused
                 WaitUtils
-                    .waitFor(() -> getCluster().clusterAvailabilityStatus().equalsIgnoreCase("paused"), 30, 30000,
-                        "Waiting for Cluster " + getCluster().clusterIdentifier() + " to be paused");
+                    .waitFor(() -> cluster().clusterAvailabilityStatus().equalsIgnoreCase("paused"), 60, 30000,
+                        "Waiting for Cluster " + cluster().clusterIdentifier() + " to be paused");
             } catch (RedshiftException e) {
                 throw new RuntimeException("Failed to stop redshift cluster, needs to be stopped manually");
             }
@@ -81,7 +80,7 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
             .startTime(Instant.now().minus(5, ChronoUnit.HOURS)) //any - manual/automated
         );
 
-        if (respRecent.snapshots().size() == 0) {
+        if (respRecent.snapshots().isEmpty()) {
             LOG.debug("Create a snapshot");
             //needs to be created new snapshot
             String id = "snapshot-tnb-" + new Date().getTime();
@@ -96,8 +95,8 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
 
             //wait till cluster leaves "Modifying" state
             WaitUtils
-                .waitFor(() -> !getCluster().clusterAvailabilityStatus().equalsIgnoreCase("modifying"), 30, 30000,
-                    "Waiting for Cluster " + getCluster().clusterIdentifier() + " to process the snapshot");
+                .waitFor(() -> !cluster().clusterAvailabilityStatus().equalsIgnoreCase("modifying"), 60, 30000,
+                    "Waiting for Cluster " + cluster().clusterIdentifier() + " to process the snapshot");
         }
     }
 }

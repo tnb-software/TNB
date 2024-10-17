@@ -6,7 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kinesis.KinesisClient;
@@ -24,18 +23,19 @@ public class KinesisValidation implements Validation {
     }
 
     public void createDataStream(String name) {
-        LOG.debug("Creating Kinesis data stream {}", name);
+        LOG.info("Creating Kinesis data stream {}", name);
         client.createStream(b -> b.streamName(name).shardCount(1));
+        waitForDataStream(name);
     }
 
-    public void waitForDataStream(String name) {
+    private void waitForDataStream(String name) {
         LOG.debug("Waiting for Kinesis data stream {} to be ready", name);
         client.waiter().waitUntilStreamExists(builder -> builder.streamName(name));
-        LOG.debug("Kinesis data stream {} is ready!", name);
+        LOG.debug("Kinesis data stream {} is ready", name);
     }
 
     public void deleteDataStream(String name) {
-        LOG.debug("Deleting Kinesis data stream {}", name);
+        LOG.info("Deleting Kinesis data stream {}", name);
         client.deleteStream(b -> b.streamName(name));
     }
 
@@ -55,13 +55,12 @@ public class KinesisValidation implements Validation {
                 .startingSequenceNumber(s.sequenceNumberRange().startingSequenceNumber())
                 .shardIteratorType(ShardIteratorType.AT_SEQUENCE_NUMBER)
             ).shardIterator()
-        ).collect(Collectors.toList());
+        ).toList();
         // The stream has only one shard, so use only that shard
-        String shardIterator = initialShardIterators.get(0);
-        return getRecords(streamName, maxNumberOfRecords, shardIterator);
+        return getRecords(maxNumberOfRecords, initialShardIterators.get(0));
     }
 
-    public GetRecordsResponse getRecords(String streamName, int maxNumberOfRecords, String shardIterator) {
+    public GetRecordsResponse getRecords(int maxNumberOfRecords, String shardIterator) {
         return client.getRecords(b -> b.shardIterator(shardIterator).limit(maxNumberOfRecords));
     }
 }
