@@ -76,6 +76,22 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
                     new EnvVar("MINIO_ROOT_USER", account().accountId(), null),
                     new EnvVar("MINIO_ROOT_PASSWORD", account().secretKey(), null)
                 ).withArgs("server", "/data", "--console-address", ":" + CONTAINER_UI_PORT)
+                .withNewReadinessProbe()
+                    .withNewTcpSocket()
+                        .withNewPort(CONTAINER_API_PORT)
+                    .endTcpSocket()
+                    .withInitialDelaySeconds(5)
+                    .withTimeoutSeconds(2)
+                    .withFailureThreshold(5)
+                .endReadinessProbe()
+                .withNewLivenessProbe()
+                    .withNewTcpSocket()
+                        .withNewPort(CONTAINER_API_PORT)
+                    .endTcpSocket()
+                    .withInitialDelaySeconds(5)
+                    .withTimeoutSeconds(2)
+                    .withFailureThreshold(5)
+                .endLivenessProbe()
                 .endContainer()
                 .endSpec()
                 .endTemplate()
@@ -127,7 +143,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
     @Override
     public boolean isReady() {
         final PodResource pod = servicePod();
-        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("1 Online, 0 Offline.");
+        return pod != null && pod.isReady();
     }
 
     @Override
