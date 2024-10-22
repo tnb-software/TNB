@@ -71,6 +71,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-aws-secrets-manager</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-aws-ses</artifactId>
         </dependency>
         <dependency>
