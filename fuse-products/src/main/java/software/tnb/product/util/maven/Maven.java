@@ -74,8 +74,13 @@ public class Maven {
         }
 
         LOG.info("Setting up maven");
+
         if (TestConfiguration.mavenSettings() == null) {
-            createSettingsXmlFile();
+            if (TestConfiguration.mavenRepository() != null) {
+                createSettingsXmlFile();
+            } else {
+                LOG.info("No maven settings or repository specified, using default maven system settings");
+            }
         }
 
         if (System.getProperty("maven.home") != null) {
@@ -83,13 +88,13 @@ public class Maven {
             return;
         }
 
-        LOG.debug("M2_HOME env property is " + System.getenv("M2_HOME"));
+        LOG.debug("M2_HOME env property is {}", System.getenv("M2_HOME"));
         if (System.getenv("M2_HOME") != null) {
             System.setProperty("maven.home", System.getenv("M2_HOME"));
             return;
         }
 
-        LOG.debug("M2_HOME system property is " + System.getProperty("M2_HOME"));
+        LOG.debug("M2_HOME system property is {}", System.getProperty("M2_HOME"));
         if (System.getProperty("M2_HOME") != null) {
             System.setProperty("maven.home", System.getProperty("M2_HOME"));
             return;
@@ -127,7 +132,7 @@ public class Maven {
         Properties properties = buildRequest.getProperties();
         List<String> goals = buildRequest.getGoals();
         List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
-        File mavenSettings;
+        File mavenSettings = null;
 
         InvocationRequest request = newRequest()
             .setBaseDirectory(dir)
@@ -144,10 +149,12 @@ public class Maven {
 
         // If you didn't specify custom maven settings, use settings.xml file created in createSettingsXmlFile method as the global settings
         if (TestConfiguration.mavenSettings() == null) {
-            mavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
-            if (!TestConfiguration.isMavenMirror()) {
-                LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenRepositoryId());
-                profiles.add(TestConfiguration.mavenRepositoryId());
+            if (TestConfiguration.mavenRepository() != null) {
+                mavenSettings = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
+                if (!TestConfiguration.isMavenMirror()) {
+                    LOG.debug("Adding {} profile to build profiles", TestConfiguration.mavenRepositoryId());
+                    profiles.add(TestConfiguration.mavenRepositoryId());
+                }
             }
         } else {
             // For custom settings, we want to override also the user settings, so that it is the only file used
@@ -156,14 +163,17 @@ public class Maven {
             request.setUserSettingsFile(mavenSettings);
         }
         request.setProfiles(profiles);
-        request.setGlobalSettingsFile(mavenSettings);
+
+        if (mavenSettings != null) {
+            request.setGlobalSettingsFile(mavenSettings);
+        }
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
             + "  Base dir: " + dir.getAbsolutePath() + "\n"
             + "  Goals: " + goals.toString() + "\n"
             + "  Profiles: " + profiles + "\n"
             + (request.getUserSettingsFile() == null ? "" : "  User settings: " + request.getUserSettingsFile().getAbsolutePath() + "\n")
-            + "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n"
+            + (request.getGlobalSettingsFile() == null ? "" : "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n")
         );
 
         if (StringUtils.isNotBlank(mavenExtraArgs)) {
@@ -192,7 +202,7 @@ public class Maven {
                 try {
                     ((Closeable) buildRequest.getOutputHandler()).close();
                 } catch (IOException e) {
-                    throw new RuntimeException("Can't close log file stream", e);
+                    LOG.warn("Can't close log file stream", e);
                 }
             }
         }

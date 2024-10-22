@@ -113,7 +113,7 @@ public class TestConfiguration extends Configuration {
     }
 
     public static String mavenRepository() {
-        return getProperty(MAVEN_REPOSITORY, "https://repository.jboss.org/nexus/content/groups/public/");
+        return getProperty(MAVEN_REPOSITORY);
     }
 
     public static String mavenSettings() {
