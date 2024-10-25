@@ -494,7 +494,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     /**
-     * Add command parameter -javaagent:path/to/jvmagent.jar
+     * Add command parameter -javaagent:path/to/jvmagent.jar, if the jvmAgentPath starts with /,
+     * resolves to the project root, in particular, src/main/resources folder won't be included in the folder resolve.
      * @param jvmAgentPath String, the path of the agent
      * @return SELF
      */
