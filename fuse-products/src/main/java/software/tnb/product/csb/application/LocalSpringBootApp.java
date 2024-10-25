@@ -52,7 +52,12 @@ public class LocalSpringBootApp extends SpringBootApp {
         command = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
 
         if (StringUtils.isNotEmpty(integrationBuilder.getJvmAgentPath())) {
-           command.add("-javaagent:" + projectPath.resolve("src/main/resources/").resolve(integrationBuilder.getJvmAgentPath()).toAbsolutePath());
+            if (integrationBuilder.getJvmAgentPath().startsWith("/")) {
+                command.add("-javaagent:" + projectPath.resolve(integrationBuilder.getJvmAgentPath().substring(1)).toAbsolutePath());
+            } else {
+                command.add("-javaagent:" + projectPath.resolve("src/main/resources/")
+                    .resolve(integrationBuilder.getJvmAgentPath()).toAbsolutePath());
+            }
         }
 
         command.addAll(args);
