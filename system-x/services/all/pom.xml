@@ -123,6 +123,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-search-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-elasticsearch</artifactId>
         </dependency>
         <dependency>
@@ -264,6 +268,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-opensearch</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
