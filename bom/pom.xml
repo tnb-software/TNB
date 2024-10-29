@@ -171,16 +171,6 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-search-engine</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
-                <artifactId>system-x-search-common</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
                 <artifactId>system-x-elasticsearch</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -427,6 +417,16 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-samba</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-search-common</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-search-engine</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
