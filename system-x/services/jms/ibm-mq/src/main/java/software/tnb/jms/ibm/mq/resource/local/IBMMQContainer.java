@@ -5,6 +5,7 @@ import software.tnb.jms.ibm.mq.service.IBMMQ;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
+import org.testcontainers.utility.MountableFile;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -25,7 +26,8 @@ public class IBMMQContainer extends GenericContainer<IBMMQContainer> {
         super(image);
         createLocalMqscCommandFile(mqsc);
         withExposedPorts(port);
-        withFileSystemBind(mqscCommandFilePath.toAbsolutePath().toString(), IBMMQ.MQSC_COMMAND_FILES_LOCATION + "/" + IBMMQ.MQSC_COMMAND_FILE_NAME);
+        withCopyFileToContainer(MountableFile.forHostPath(mqscCommandFilePath.toAbsolutePath()),
+            IBMMQ.MQSC_COMMAND_FILES_LOCATION + "/" + IBMMQ.MQSC_COMMAND_FILE_NAME);
 
         if (Objects.nonNull(privateKey) && Objects.nonNull(publicKey)) {
             try {
@@ -40,7 +42,7 @@ public class IBMMQContainer extends GenericContainer<IBMMQContainer> {
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
-            withFileSystemBind(keysFolderPath.toAbsolutePath().toString(), IBMMQ.KEYS_FOLDER);
+            withCopyFileToContainer(MountableFile.forHostPath(keysFolderPath.toAbsolutePath()), IBMMQ.KEYS_FOLDER);
         }
 
         withEnv(env);
