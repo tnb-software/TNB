@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: DB :: DBAllocator</name>
 
     <properties>
-        <dballocator.client.version>2.6.6</dballocator.client.version>
+        <dballocator.client.version>2.6.6.jakarta</dballocator.client.version>
     </properties>
 
     <dependencies>

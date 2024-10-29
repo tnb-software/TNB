@@ -6,10 +6,11 @@ import org.jboss.qa.dballoc.api.allocator.entity.JaxbAllocation;
 import org.jboss.qa.dballoc.api.executor.SqlExecutor;
 import org.jboss.qa.dballoc.api.executor.SqlRequest;
 import org.jboss.qa.dballoc.api.executor.SqlResponse;
-import org.jboss.resteasy.client.ClientResponse;
 
 import java.util.Arrays;
 import java.util.List;
+
+import jakarta.ws.rs.core.Response;
 
 public class SqlValidation implements Validation {
 
@@ -31,19 +32,19 @@ public class SqlValidation implements Validation {
             sqlCommands
         );
 
-        ClientResponse<SqlResponse> r = null;
+        Response r = null;
 
         try {
-            r = (ClientResponse) this.executor.execute(request, true, 60);
+            r = this.executor.execute(request, true, 60);
 
             if (r.getStatus() >= 400) {
                 throw new AssertionError("Sql execution operation failed. Status code " + r.getStatus()
-                    + ", reason: " + r.getEntity(SqlResponse.class).getError());
+                    + ", reason: " + r.getEntity().toString());
             }
-            return r.getEntity(SqlResponse.class);
+            return r.readEntity(SqlResponse.class);
         } finally {
-            if (r != null) {
-                r.releaseConnection();
+            if (r != null && !r.isClosed()) {
+                r.close();
             }
         }
     }
