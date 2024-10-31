@@ -36,5 +36,6 @@
         <module>storage-blob</module>
         <module>storage-queue</module>
         <module>service-bus</module>
+        <module>key-vault</module>
     </modules>
 </project>

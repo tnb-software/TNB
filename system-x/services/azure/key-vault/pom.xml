@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>system-x-azure</artifactId>
+        <groupId>software.tnb</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>system-x-azure-key-vault</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: Azure :: Key Vault</name>
+
+    <properties>
+        <azure.keyvault.secrets.version>4.9.0</azure.keyvault.secrets.version>
+        <azure.identity.version>1.14.0</azure.identity.version>
+    </properties>
+
+    <dependencies>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-security-keyvault-secrets</artifactId>
+            <version>${azure.keyvault.secrets.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.azure</groupId>
+            <artifactId>azure-identity</artifactId>
+            <version>${azure.identity.version}</version>
+        </dependency>
+    </dependencies>
+    
+</project>
