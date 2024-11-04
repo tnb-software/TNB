@@ -18,9 +18,9 @@ public class LocalFlink extends Flink implements Deployable {
     @Override
     public void deploy() {
         LOG.info("Starting Flink containers");
-        flinkJobManagerContainer = new FlinkJobManagerContainer(defaultImage(), PORT);
+        flinkJobManagerContainer = new FlinkJobManagerContainer(image(), PORT);
         flinkJobManagerContainer.start();
-        flinkTaskManagerContainer = new FlinkTaskManagerContainer(defaultImage(), flinkJobManagerContainer);
+        flinkTaskManagerContainer = new FlinkTaskManagerContainer(image(), flinkJobManagerContainer);
         flinkTaskManagerContainer.start();
         LOG.info("Flink containers started");
     }
