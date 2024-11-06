@@ -6,6 +6,7 @@ import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.Log;
+import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.Maven;
 
@@ -153,7 +154,8 @@ public abstract class App {
             "camel", "export",
             "--kamelets-version", TestConfiguration.kameletsVersion(),
             "--gav", TestConfiguration.appGroupId() + ":" + integrationBuilder.getIntegrationName() + ":" + TestConfiguration.appVersion(),
-            "--dir", "."
+            "--dir", ".",
+            "--logging", "true"
         ));
 
         command.addAll(arguments);
@@ -190,7 +192,8 @@ public abstract class App {
         LOG.trace("Camel JBang command: {}", String.join(" ", command));
 
         int exitCode;
-        File logFile = new File(getLogPath(Phase.BUILD).toAbsolutePath().toString());
+        File logFile = new File(getLogPath(Phase.GENERATE).toAbsolutePath().toString());
+        LogStream generateLogStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, Phase.GENERATE));
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectOutput(logFile);
@@ -200,6 +203,8 @@ public abstract class App {
             exitCode = start.waitFor();
         } catch (Exception e) {
             throw new RuntimeException("Unable to export integration using Camel JBang: ", e);
+        } finally {
+            generateLogStream.stop();
         }
 
         if (exitCode != 0) {
