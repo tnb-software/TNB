@@ -19,4 +19,6 @@ public @interface RunOn {
     boolean openshift() default true;
 
     boolean quarkusNative() default true;
+
+    boolean quarkusJvm() default true;
 }
