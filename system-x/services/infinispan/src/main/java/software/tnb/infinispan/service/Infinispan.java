@@ -21,6 +21,6 @@ public abstract class Infinispan extends Service<InfinispanAccount, NoClient, No
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/datagrid/datagrid-8-rhel8:latest";
+        return "registry.redhat.io/datagrid/datagrid-8-rhel9:latest";
     }
 }
