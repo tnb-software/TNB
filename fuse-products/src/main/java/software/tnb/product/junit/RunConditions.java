@@ -180,6 +180,11 @@ public class RunConditions implements ExecutionCondition {
             LOG.debug("Skipping {}, should not run in native", name);
             return true;
         }
+
+        if (!QuarkusConfiguration.isQuarkusNative() && !runOn.quarkusJvm()) {
+            LOG.debug("Skipping {}, should not run in jvm", name);
+            return true;
+        }
         return false;
     }
 }
