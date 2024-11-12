@@ -17,7 +17,7 @@ public class HorreumAccount implements Account, WithId {
     private HorreumDataSetAccount getTest(String testName) {
         HorreumDataSetAccount account = tests.get(testName);
         if (account == null) {
-            throw new IllegalArgumentException("Unknown test " + testName);
+            throw new IllegalArgumentException(String.format("Credentials for test %s are missing", testName));
         }
         return account;
     }
