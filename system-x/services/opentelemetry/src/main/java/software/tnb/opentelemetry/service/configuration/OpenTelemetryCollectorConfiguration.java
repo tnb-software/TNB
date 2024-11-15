@@ -40,7 +40,7 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
     public OpenTelemetryCollectorConfiguration withDefaultProcessors() {
         Map<String, Object> batch = new HashMap<>();
-        batch.put("send_batch_size", "10000");
+        batch.put("send_batch_size", 10000);
         batch.put("timeout", "10s");
         processors.put("batch", batch);
         return this;
