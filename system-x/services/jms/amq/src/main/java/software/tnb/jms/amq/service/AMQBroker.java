@@ -1,7 +1,8 @@
 package software.tnb.jms.amq.service;
 
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.jms.amq.account.AMQBrokerAccount;
+import software.tnb.jms.amq.service.configuration.AMQConfiguration;
 import software.tnb.jms.amq.validation.AMQValidation;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
@@ -12,7 +13,7 @@ import java.util.Map;
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
 
-public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AMQValidation> {
+public abstract class AMQBroker extends ConfigurableService<AMQBrokerAccount, Connection, AMQValidation, AMQConfiguration> {
     public abstract String host();
 
     public abstract int getPortMapping(int port);
@@ -70,6 +71,11 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
         }
     }
 
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().requireLogin(true);
+    }
+
     protected Map<String, String> containerEnvironment() {
         final Map<String, String> env = new HashMap<>();
         env.put("AMQ_USER", account().username());
@@ -77,7 +83,7 @@ public abstract class AMQBroker extends Service<AMQBrokerAccount, Connection, AM
         env.put("AMQ_ROLE", "admin");
         env.put("AMQ_NAME", "broker");
         env.put("AMQ_TRANSPORTS", "openwire,amqp,stomp,mqtt,hornetq");
-        env.put("AMQ_REQUIRE_LOGIN", "true");
+        env.put("AMQ_REQUIRE_LOGIN", getConfiguration().isRequireLogin() + "");
         return env;
     }
 }

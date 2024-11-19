@@ -160,7 +160,7 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
         final DeploymentPlan dp = new DeploymentPlan();
         dp.setSize(1);
         dp.setImage("placeholder");
-        dp.setRequireLogin(false);
+        dp.setRequireLogin(getConfiguration().isRequireLogin());
         dp.setPersistenceEnabled(false);
         dp.setJournalType("nio");
         dp.setMessageMigration(true);
