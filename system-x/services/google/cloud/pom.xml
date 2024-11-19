@@ -18,6 +18,7 @@
         <module>common</module>
         <module>functions</module>
         <module>pubsub</module>
+        <module>secret-manager</module>
         <module>storage</module>
     </modules>
 
