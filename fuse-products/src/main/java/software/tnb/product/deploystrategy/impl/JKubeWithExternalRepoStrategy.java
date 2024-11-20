@@ -1,6 +1,6 @@
 package software.tnb.product.deploystrategy.impl;
 
-import software.tnb.common.config.DockerConfiguration;
+import software.tnb.product.config.DockerConfiguration;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.csb.configuration.SpringBootConfiguration;
