@@ -1,4 +1,4 @@
-package software.tnb.product.configuration;
+package software.tnb.product.junit.jira;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
