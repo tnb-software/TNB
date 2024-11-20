@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -191,20 +192,28 @@ public abstract class App {
 
         LOG.trace("Camel JBang command: {}", String.join(" ", command));
 
-        int exitCode;
+        int exitCode = -1;
+        boolean hasExited;
         File logFile = new File(getLogPath(Phase.GENERATE).toAbsolutePath().toString());
         LogStream generateLogStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, Phase.GENERATE));
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectOutput(logFile);
             pb.redirectErrorStream(true);
-            pb.directory(TestConfiguration.appLocation().resolve(integrationBuilder.getIntegrationName()).toFile());
-            final Process start = pb.start();
-            exitCode = start.waitFor();
+            pb.directory(TestConfiguration.appLocation().resolve(name).toFile());
+            final Process process = pb.start();
+            hasExited = process.waitFor(1, TimeUnit.HOURS);
+            if (hasExited) {
+                exitCode = process.exitValue();
+            }
         } catch (Exception e) {
             throw new RuntimeException("Unable to export integration using Camel JBang: ", e);
         } finally {
             generateLogStream.stop();
+        }
+
+        if (!hasExited) {
+            throw new RuntimeException("camel export invocation did not end in 1 hour, check " + logFile + " for more details");
         }
 
         if (exitCode != 0) {
