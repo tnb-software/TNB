@@ -11,6 +11,7 @@ import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.Customizers;
+import software.tnb.product.customizer.byteman.BytemanCustomizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.util.InlineCustomizer;
@@ -158,7 +159,8 @@ public final class IntegrationGenerator {
                 Container container = traits.getContainer() == null ? new Container() : traits.getContainer();
                 container.setServicePort((long) integrationBuilder.getPort());
                 traits.setContainer(container);
-            })
+            }),
+            new BytemanCustomizer()
         );
 
         if (TestConfiguration.streamLogs()) {

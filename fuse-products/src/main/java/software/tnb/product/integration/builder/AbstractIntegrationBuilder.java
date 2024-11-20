@@ -65,14 +65,15 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final List<Resource> resources = new ArrayList<>();
     private final Properties applicationProperties = new Properties();
     private final Properties systemProperties = new Properties();
+    private final List<Resource> bytemanRules = new ArrayList<>();
 
     private CompilationUnit routeBuilder;
     private String integrationName;
-    private String fileName = "MyRouteBuilder.java";
+    private String fileName = ROUTE_BUILDER_NAME + ".java";
 
     private int port = 8080;
 
-    private String jvmAgentPath;
+    private final List<String> javaAgents = new ArrayList<>();
     private final List<String> vmArguments = new ArrayList<>();
 
     private OpenshiftCustomDeployer customStrategy;
@@ -255,6 +256,11 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public SELF addToSystemProperties(Properties properties) {
         systemProperties.putAll(properties);
+        return self();
+    }
+
+    public SELF addBytemanRule(Resource rule) {
+        bytemanRules.add(rule);
         return self();
     }
 
@@ -494,18 +500,17 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     /**
-     * Add command parameter -javaagent:path/to/jvmagent.jar, if the jvmAgentPath starts with /,
-     * resolves to the project root, in particular, src/main/resources folder won't be included in the folder resolve.
-     * @param jvmAgentPath String, the path of the agent
+     * A path to the agent jar somewhere in the test application directory.
+     * @param javaAgentPath String, the path of the agent
      * @return SELF
      */
-    public SELF jvmAgentPath(String jvmAgentPath) {
-        this.jvmAgentPath = jvmAgentPath;
+    public SELF addJavaAgent(String javaAgentPath) {
+        this.javaAgents.add(javaAgentPath);
         return self();
     }
 
-    public String getJvmAgentPath() {
-        return jvmAgentPath;
+    public List<String> getJavaAgents() {
+        return javaAgents;
     }
 
     /**
@@ -538,5 +543,9 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public boolean isJBang() {
         return useJBang;
+    }
+
+    public List<Resource> getBytemanRules() {
+        return bytemanRules;
     }
 }

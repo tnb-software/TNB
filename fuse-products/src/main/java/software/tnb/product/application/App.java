@@ -131,6 +131,7 @@ public abstract class App {
 
     /**
      * Creates an application skeleton using camel export command.
+     *
      * @param arguments command to execute. "camel export --kamelets-version xxx --dir xxx --gav xxx integrationClass.java" are added automatically.
      */
     protected void createUsingJBang(List<String> arguments) {
@@ -154,7 +155,7 @@ public abstract class App {
         List<String> command = new ArrayList<>(List.of(
             "camel", "export",
             "--kamelets-version", TestConfiguration.kameletsVersion(),
-            "--gav", TestConfiguration.appGroupId() + ":" + integrationBuilder.getIntegrationName() + ":" + TestConfiguration.appVersion(),
+            "--gav", TestConfiguration.appGroupId() + ":" + name + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
             "--logging", "true"
         ));
