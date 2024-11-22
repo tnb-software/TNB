@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.product.application.Phase;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
@@ -60,7 +61,7 @@ public class LocalQuarkusApp extends QuarkusApp {
         WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
 
         log = new FileLog(logFile);
-        logStream = new FileLogStream(logFile, LogStream.marker(name));
+        logStream = new FileLogStream(logFile, LogStream.marker(name, Phase.RUN));
 
         if (TestConfiguration.appDebug()) {
             LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
@@ -106,7 +107,8 @@ public class LocalQuarkusApp extends QuarkusApp {
     private List<String> getCommand() {
         List<String> cmd = new ArrayList<>();
         String fileName;
-        Path integrationTarget = TestConfiguration.appLocation().resolve(name).resolve("target");
+        Path appDir = TestConfiguration.appLocation().resolve(name).toAbsolutePath();
+        Path integrationTarget = appDir.resolve("target");
 
         if (QuarkusConfiguration.isQuarkusNative()) {
             fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
@@ -120,11 +122,11 @@ public class LocalQuarkusApp extends QuarkusApp {
                 cmd.add("-Xdebug");
                 cmd.add("-Xrunjdwp:transport=dt_socket,server=y,suspend=y,address=0.0.0.0:" + TestConfiguration.appDebugPort());
             }
-            if (!integrationBuilder.getVmArguments().isEmpty()) {
-                integrationBuilder.getVmArguments().stream()
-                    .map(vmArgument -> "-" + vmArgument)
-                    .forEach(cmd::add);
-            }
+
+            cmd.addAll(integrationBuilder.getJavaAgents().stream().map(a -> "-javaagent:"
+                + (a.contains(appDir.toString()) ? a : appDir.resolve(a).toAbsolutePath())).toList());
+            integrationBuilder.getVmArguments().stream().map(vmArgument -> "-" + vmArgument).forEach(cmd::add);
+
             cmd.add("-jar");
             fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
             cmd.add(fileName);

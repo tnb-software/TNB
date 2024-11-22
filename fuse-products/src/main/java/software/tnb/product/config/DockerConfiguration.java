@@ -1,4 +1,6 @@
-package software.tnb.common.config;
+package software.tnb.product.config;
+
+import software.tnb.common.config.Configuration;
 
 import java.io.File;
 import java.util.Optional;

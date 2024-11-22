@@ -10,7 +10,6 @@ import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +38,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
             jarName = existingJarPath != null ? existingJarPath.getFileName().toString()
-                    : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
+                : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
             projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : mavenGitApp.getProjectLocation();
         } else {
             args = systemProperties();
@@ -51,14 +50,8 @@ public class LocalSpringBootApp extends SpringBootApp {
 
         command = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
 
-        if (StringUtils.isNotEmpty(integrationBuilder.getJvmAgentPath())) {
-            if (integrationBuilder.getJvmAgentPath().startsWith("/")) {
-                command.add("-javaagent:" + projectPath.resolve(integrationBuilder.getJvmAgentPath().substring(1)).toAbsolutePath());
-            } else {
-                command.add("-javaagent:" + projectPath.resolve("src/main/resources/")
-                    .resolve(integrationBuilder.getJvmAgentPath()).toAbsolutePath());
-            }
-        }
+        command.addAll(integrationBuilder.getJavaAgents().stream().map(a -> "-javaagent:"
+            + (a.contains(projectPath.toString()) ? a : projectPath.resolve(a).toAbsolutePath())).toList());
 
         command.addAll(args);
 

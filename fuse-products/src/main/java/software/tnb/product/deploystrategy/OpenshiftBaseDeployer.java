@@ -1,6 +1,7 @@
 package software.tnb.product.deploystrategy;
 
 import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.endpoint.Endpoint;
@@ -152,9 +153,17 @@ public abstract class OpenshiftBaseDeployer implements OpenshiftDeployer, Opensh
             entries.putAll(((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties());
         }
 
-        return Optional.ofNullable(integrationBuilder.getJvmAgentPath())
-            .map(path -> String.format("-javaagent:/deployments/data/%s ", path)) //all the resources are copied in the data folder
-            .orElse("") + entriesInString(entries);
+        String appDir = TestConfiguration.appLocation().resolve(name).toAbsolutePath() + "/";
+        StringBuilder javaAgents = new StringBuilder();
+        for (String javaAgent : integrationBuilder.getJavaAgents()) {
+            if (!javaAgent.contains(appDir)) {
+                // First append the absolute path to the local integration dir, so that we know what to replace with openshift dir
+                javaAgent = appDir + javaAgent;
+            }
+            javaAgent = javaAgent.replaceAll(appDir, "/deployments/data/").replaceAll("src/main/resources/", "");
+            javaAgents.append("-javaagent:").append(javaAgent).append(" ");
+        }
+        return javaAgents + entriesInString(entries);
     }
 
     protected String getPropertiesForMaven(AbstractIntegrationBuilder<?> integrationBuilder) {
