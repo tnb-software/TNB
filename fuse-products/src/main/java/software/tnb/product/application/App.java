@@ -8,6 +8,7 @@ import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.Log;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.rp.Attachments;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
@@ -212,6 +213,8 @@ public abstract class App {
         } finally {
             generateLogStream.stop();
         }
+
+        Attachments.addAttachment(logFile.toPath());
 
         if (!hasExited) {
             throw new RuntimeException("camel export invocation did not end in 1 hour, check " + logFile + " for more details");
