@@ -5,6 +5,7 @@ import software.tnb.common.service.configuration.ServiceConfiguration;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.StringWriter;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -16,10 +17,15 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
     protected static final String KEY_PORTS = "ports";
     protected static final String KEY_REPLICAS = "replicas";
+    public static final String FILTER_OTTL = "filter/ottl";
     private Map<String, Object> receivers = new LinkedHashMap<>();
     private Map<String, Object> processors = new LinkedHashMap<>();
     private Map<String, Object> exporters = new LinkedHashMap<>();
     private Map<String, Object> service = new LinkedHashMap<>();
+    public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
+    public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
+    private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
+    private static final String HTTP_RECEIVER_PORT = "otel.http.port";
 
     public OpenTelemetryCollectorConfiguration() {
         withDefaultReceivers()
@@ -30,8 +36,12 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
     public OpenTelemetryCollectorConfiguration withDefaultReceivers() {
         Map<String, Object> protocols = new HashMap<>();
-        protocols.put("grpc", new HashMap<>());
-        protocols.put("http", new HashMap<>());
+        Map<String, Object> grpc = new HashMap<>();
+        grpc.put("endpoint", ":" + DEFAULT_GRPC_RECEIVER_PORT);
+        Map<String, Object> http = new HashMap<>();
+        http.put("endpoint", ":" + DEFAULT_HTTP_RECEIVER_PORT);
+        protocols.put("grpc", grpc);
+        protocols.put("http", http);
         Map<String, Object> otlp = new HashMap<>();
         otlp.put("protocols", protocols);
         receivers.put("otlp", otlp);
@@ -73,6 +83,18 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         pipelines.put("traces", traces);
         pipelines.put("logs", logs);
         service.put("pipelines", pipelines);
+        return this;
+    }
+
+    public OpenTelemetryCollectorConfiguration withActuatorHealthCheckExcluded() {
+        Map<String, Object> filter = new HashMap<>();
+        filter.put("error_mode", "ignore");
+        Map<String, Object> traces = new HashMap<>();
+        List<String> span = new ArrayList<>();
+        span.add("attributes[\"url.path\"] == \"/actuator/health\"");
+        traces.put("span", span);
+        filter.put("traces", traces);
+        processors.put(FILTER_OTTL, filter);
         return this;
     }
 
@@ -145,7 +167,38 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         return withOtlpTracesExporter(otlpTracesConfiguration);
     }
 
+    public OpenTelemetryCollectorConfiguration withGrpcReceiverPort(int port) {
+        set(GRPC_RECEIVER_PORT, port);
+        return this;
+    }
+
+    public Integer getGrpcReceiverPort() {
+        return Optional.ofNullable(get(GRPC_RECEIVER_PORT, Integer.class)).orElse(DEFAULT_GRPC_RECEIVER_PORT);
+    }
+
+    public OpenTelemetryCollectorConfiguration withHttpReceiverPort(int port) {
+        set(HTTP_RECEIVER_PORT, port);
+        return this;
+    }
+
+    public Integer getHttpReceiverPort() {
+        return Optional.ofNullable(get(HTTP_RECEIVER_PORT, Integer.class)).orElse(DEFAULT_HTTP_RECEIVER_PORT);
+    }
+
     public Map<String, Object> getCollectorConfigurationAsMap() {
+
+        if (processors.containsKey(FILTER_OTTL)) {
+            addServiceOnPipeline((Map) ((Map) service.get("pipelines")).get("traces"), "processors", FILTER_OTTL);
+        }
+
+        if (getHttpReceiverPort() != null) {
+            ((Map) ((Map) ((Map) receivers.get("otlp")).get("protocols")).get("http")).put("endpoint", ":" + getHttpReceiverPort());
+        }
+
+        if (getGrpcReceiverPort() != null) {
+            ((Map) ((Map) ((Map) receivers.get("otlp")).get("protocols")).get("grpc")).put("endpoint", ":" + getGrpcReceiverPort());
+        }
+
         return Map.of("receivers", receivers
             , "processors", processors
             , "exporters", exporters

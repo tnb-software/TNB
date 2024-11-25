@@ -9,8 +9,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Optional;
-
 @AutoService(OpenTelemetryCollector.class)
 public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalOpenTelemetryCollector.class);
@@ -47,12 +45,12 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
 
     @Override
     public String getGrpcEndpoint() {
-        return "http://localhost:" + Optional.ofNullable(container).map(c -> c.getMappedPort(4317)).orElse(4317);
+        return "http://localhost:" + getConfiguration().getGrpcReceiverPort();
     }
 
     @Override
     public String getHttpEndpoint() {
-        return "http://localhost:" + Optional.ofNullable(container).map(c -> c.getMappedPort(4318)).orElse(4318);
+        return "http://localhost:" + getConfiguration().getHttpReceiverPort();
     }
 
     @Override

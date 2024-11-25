@@ -82,12 +82,12 @@ public class OpenshiftOpenTelemetryCollector extends OpenTelemetryCollector impl
 
     @Override
     public String getGrpcEndpoint() {
-        return getHeadlessEndpoint() + ":4317";
+        return getHeadlessEndpoint() + ":" + getConfiguration().getGrpcReceiverPort();
     }
 
     @Override
     public String getHttpEndpoint() {
-        return getHeadlessEndpoint() + ":4318";
+        return getHeadlessEndpoint() + ":" + getConfiguration().getHttpReceiverPort();
     }
 
     private String getHeadlessEndpoint() {
