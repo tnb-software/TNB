@@ -21,7 +21,7 @@ public class OpenTelemetryCollectorContainer extends GenericContainer<OpenTeleme
         super(image);
         withFileSystemBind(CONF_PATH.toAbsolutePath().toString(), "/conf", BindMode.READ_ONLY);
         setCommandParts(new String[]{"--config=/conf/collector.yaml"});
-        withExposedPorts(4317, 4318);
+        withNetworkMode("host");
         waitingFor(Wait.forLogMessage(".*Everything is ready. Begin running and processing data.*", 1)
             .withStartupTimeout(Duration.ofSeconds(20)));
 
