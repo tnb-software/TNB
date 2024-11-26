@@ -14,7 +14,10 @@ import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ExpirationStatus;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
+import software.amazon.awssdk.services.s3.model.LifecycleRule;
+import software.amazon.awssdk.services.s3.model.LifecycleRuleFilter;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -74,7 +77,7 @@ public class S3Validation implements Validation {
 
     public GetObjectAttributesResponse getFileAttributesFromBucket(String bucketName, String key) {
         return client.getObjectAttributes(
-                b -> b.bucket(bucketName).key(key).objectAttributes(new ArrayList<ObjectAttributes>(ObjectAttributes.knownValues())));
+            b -> b.bucket(bucketName).key(key).objectAttributes(new ArrayList<ObjectAttributes>(ObjectAttributes.knownValues())));
     }
 
     public void createFile(String bucketName, String key, String content) {
@@ -100,5 +103,15 @@ public class S3Validation implements Validation {
             .build();
 
         client.putObject(objectRequest, body);
+    }
+
+    public void setContentExpiration(String bucketName, int days) {
+        LifecycleRule rule = LifecycleRule.builder()
+            .id("DeleteAfter" + days + "Days")
+            .expiration(e -> e.days(days))
+            .filter(LifecycleRuleFilter.builder().build())
+            .status(ExpirationStatus.ENABLED)
+            .build();
+        client.putBucketLifecycleConfiguration(r -> r.bucket(bucketName).lifecycleConfiguration(c -> c.rules(rule)));
     }
 }

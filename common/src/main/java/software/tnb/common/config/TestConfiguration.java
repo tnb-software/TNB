@@ -156,7 +156,7 @@ public class TestConfiguration extends Configuration {
         if (!"hudson".equals(System.getProperty("user.name"))) {
             return System.getProperty("user.name");
         }
-        return System.getProperty(USER);
+        return getProperty(USER);
     }
 
     public static String odoPath() {
