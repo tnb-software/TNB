@@ -18,18 +18,22 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.TCPSocketActionBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 
@@ -52,69 +56,54 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
             .withContainerPort(CONTAINER_UI_PORT)
             .withProtocol("TCP").build());
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .editOrNewSelector()
-                .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endSelector()
-                .withReplicas(1)
-                .editOrNewTemplate()
-                .editOrNewMetadata()
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .addNewVolume()
-                .withName("data").withNewEmptyDir().endEmptyDir()
-                .endVolume()
-                .addNewContainer()
-                .withName(name()).withImage(image()).withPorts(ports).withEnv(
-                    new EnvVar("MINIO_ROOT_USER", account().accountId(), null),
-                    new EnvVar("MINIO_ROOT_PASSWORD", account().secretKey(), null)
-                ).withArgs("server", "/data", "--console-address", ":" + CONTAINER_UI_PORT)
-                .withNewReadinessProbe()
-                    .withNewTcpSocket()
-                        .withNewPort(CONTAINER_API_PORT)
-                    .endTcpSocket()
-                    .withInitialDelaySeconds(5)
-                    .withTimeoutSeconds(2)
-                    .withFailureThreshold(5)
-                .endReadinessProbe()
-                .withNewLivenessProbe()
-                    .withNewTcpSocket()
-                        .withNewPort(CONTAINER_API_PORT)
-                    .endTcpSocket()
-                    .withInitialDelaySeconds(5)
-                    .withTimeoutSeconds(2)
-                    .withFailureThreshold(5)
-                .endLivenessProbe()
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .endSpec()
+        // @formatter:off
+        final Probe probe = new ProbeBuilder()
+            .withTcpSocket(new TCPSocketActionBuilder()
+                .withPort(new IntOrString(CONTAINER_API_PORT))
                 .build()
+            )
+            .withInitialDelaySeconds(5)
+            .withTimeoutSeconds(2)
+            .withFailureThreshold(5)
+            .build();
+
+        List<String> args = List.of("server", "/data", "--console-address", ":" + CONTAINER_UI_PORT);
+        List<Volume> volumes = List.of(
+            new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName("data").build()
+        );
+        List<VolumeMount> volumeMounts = List.of(
+            new VolumeMountBuilder().withMountPath("/data").withName("data").build()
         );
 
-        ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-        serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName(name())
-            .withPort(CONTAINER_API_PORT)
-            .withTargetPort(new IntOrString(CONTAINER_API_PORT))
-            .build());
-        OpenshiftClient.get().services().createOrReplace(
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "args", args,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts,
+            "readinessProbe", probe,
+            "livenessProbe", probe
+        ));
+
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withName(name())
+                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
-                .editOrNewSpecLike(serviceSpecBuilder.build())
+                .editOrNewSpec()
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .addToPorts(new ServicePortBuilder()
+                        .withName(name())
+                        .withPort(CONTAINER_API_PORT)
+                        .withTargetPort(new IntOrString(CONTAINER_API_PORT))
+                        .build()
+                    )
                 .endSpec()
                 .build()
-        );
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
@@ -148,8 +137,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     public boolean isDeployed() {
-        Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override
