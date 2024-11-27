@@ -28,16 +28,15 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.KeyToPathBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.RouteBuilder;
@@ -121,87 +120,71 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
         createMqscConfigMap();
 
+        // @formatter:off
         Map<String, Integer> ports = Map.of(name(), DEFAULT_PORT, name() + "-console", CONSOLE_PORT);
         List<ContainerPort> containerPorts = ports.entrySet().stream()
             .map(e -> new ContainerPortBuilder().withName(e.getKey()).withContainerPort(e.getValue()).withProtocol("TCP").build())
             .collect(Collectors.toList());
+        List<Volume> volumes = List.of(
+            new VolumeBuilder().withName(CONFIG_MAP_VOLUME_NAME)
+                .withConfigMap(new ConfigMapVolumeSourceBuilder()
+                    .withName(CONFIG_MAP_NAME)
+                    .withItems(new KeyToPathBuilder()
+                        .withKey(IBMMQ.MQSC_COMMAND_FILE_NAME)
+                        .withPath(IBMMQ.MQSC_COMMAND_FILE_NAME)
+                        .build()
+                    )
+                    .build()
+                ).build()
+        );
+        List<VolumeMount> volumeMounts = List.of(
+            new VolumeMountBuilder().withName(CONFIG_MAP_VOLUME_NAME)
+                .withMountPath(IBMMQ.MQSC_COMMAND_FILES_LOCATION + "/" + IBMMQ.MQSC_COMMAND_FILE_NAME)
+                .withSubPath(IBMMQ.MQSC_COMMAND_FILE_NAME).build()
+        );
 
-        // @formatter:off
-        LOG.debug("Creating deployment {}", name());
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-                .editOrNewMetadata()
-                    .withName(name())
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addAllToPorts(containerPorts)
-                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                .collect(Collectors.toList()))
-                                .addToVolumeMounts(new VolumeMountBuilder()
-                                    .withName(CONFIG_MAP_VOLUME_NAME)
-                                    .withMountPath(IBMMQ.MQSC_COMMAND_FILES_LOCATION + "/" + IBMMQ.MQSC_COMMAND_FILE_NAME)
-                                    .withSubPath(IBMMQ.MQSC_COMMAND_FILE_NAME)
-                                    .build()
-                                )
-                                .withNewSecurityContext()
-                                    .withRunAsUser(uid)
-                                .endSecurityContext()
-                            .endContainer()
-                        .withVolumes(new VolumeBuilder()
-                            .withName(CONFIG_MAP_VOLUME_NAME)
-                            .withConfigMap(new ConfigMapVolumeSourceBuilder()
-                                .withName(CONFIG_MAP_NAME)
-                                .withItems(new KeyToPathBuilder()
-                                    .withKey(IBMMQ.MQSC_COMMAND_FILE_NAME)
-                                    .withPath(IBMMQ.MQSC_COMMAND_FILE_NAME)
-                                    .build()
-                                )
-                                .build()
-                            )
-                            .build()
-                        )
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-                .build()
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", containerPorts,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts
+        ), builder -> builder
+            .editSpec()
+                .editTemplate()
+                    .editSpec()
+                        .editContainer(0)
+                            .withNewSecurityContext()
+                                .withRunAsUser(uid)
+                            .endSecurityContext()
+                        .endContainer()
+                    .endSpec()
+                .endTemplate()
+            .endSpec()
         );
 
         ports.forEach((key, value) -> {
-            ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-
-            serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-                .withName(key)
-                .withPort(value)
-                .withTargetPort(new IntOrString(value))
-                .build());
-
             LOG.debug("Creating service {}", key);
-            OpenshiftClient.get().services().createOrReplace(
+            OpenshiftClient.get().services().resource(
                 new ServiceBuilder()
                     .editOrNewMetadata()
                         .withName(key)
                         .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
-                    .editOrNewSpecLike(serviceSpecBuilder.build())
-                    .withType("NodePort")
+                    .editOrNewSpec().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+
+                    .addToPorts(new ServicePortBuilder()
+                        .withName(key)
+                        .withPort(value)
+                        .withTargetPort(new IntOrString(value))
+                        .build())
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
         });
 
-        OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
             .withNewMetadata()
                 .withName(name() + "-console")
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -212,8 +195,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
             .withTo(new RouteTargetReferenceBuilder().withKind("Service").withName(name() + "-console").build())
             .endSpec()
             .build()
-        );
-
+        ).serverSideApply();
         // @formatter:on
     }
 
@@ -225,8 +207,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-                .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override
@@ -259,14 +240,14 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
     private void createMqscConfigMap() {
         // @formatter:off
         LOG.debug("Creating configmap {}", CONFIG_MAP_NAME);
-        OpenshiftClient.get().configMaps().createOrReplace(new ConfigMapBuilder()
+        OpenshiftClient.get().configMaps().resource(new ConfigMapBuilder()
             .withNewMetadata()
                 .withName(CONFIG_MAP_NAME)
                 .addToLabels(Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), name()))
             .endMetadata()
             .withData(Map.of(IBMMQ.MQSC_COMMAND_FILE_NAME, mqscConfig()))
             .build()
-        );
+        ).serverSideApply();
         // @formatter:on
     }
 

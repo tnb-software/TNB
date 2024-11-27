@@ -3,7 +3,6 @@ package software.tnb.searchengine.common.service;
 import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
-import software.tnb.common.deployment.WithName;
 import software.tnb.common.service.Service;
 import software.tnb.common.util.ReflectionUtil;
 import software.tnb.common.utils.HTTPUtils;
@@ -23,7 +22,7 @@ import org.slf4j.LoggerFactory;
 import java.io.Closeable;
 import java.io.IOException;
 
-public abstract class Search<C> extends Service<SearchAccount, C, SearchValidation> implements WithName, WithExternalHostname, WithDockerImage {
+public abstract class Search<C> extends Service<SearchAccount, C, SearchValidation> implements WithExternalHostname, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(Search.class);
     protected static final int PORT = 9200;
 
