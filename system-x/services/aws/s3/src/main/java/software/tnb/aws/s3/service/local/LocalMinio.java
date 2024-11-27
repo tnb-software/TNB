@@ -11,8 +11,6 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Map;
-
 @AutoService(Minio.class)
 public class LocalMinio extends Minio implements Deployable {
 
@@ -65,12 +63,5 @@ public class LocalMinio extends Minio implements Deployable {
     @Override
     protected String clientHostname() {
         return hostname(); //With local minio deployment, S3 client uses the same hostname as a connection for camel
-    }
-
-    public Map<String, String> containerEnvironment() {
-        return Map.of(
-            "MINIO_ROOT_USER", account().accountId(),
-            "MINIO_ROOT_PASSWORD", account().secretKey()
-        );
     }
 }

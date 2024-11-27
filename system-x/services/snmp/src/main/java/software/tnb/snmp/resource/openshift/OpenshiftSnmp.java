@@ -15,14 +15,16 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.openshift.api.model.DeploymentConfig;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(SnmpServer.class)
 public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeployable, WithName {
@@ -36,7 +38,7 @@ public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeploy
         LOG.info("Undeploying SNMP server");
         OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
         OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
@@ -56,64 +58,35 @@ public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeploy
 
         serviceAccountName = name() + "-sa";
 
-        OpenshiftClient.get().serviceAccounts()
-            .createOrReplace(new ServiceAccountBuilder()
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
                 .withNewMetadata()
                 .withName(serviceAccountName)
                 .endMetadata()
                 .build()
-            );
+            )
+            .serverSideApply();
 
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         LOG.info("Deploying SNMP server");
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name() + "-get").withProtocol("UDP").withContainerPort(port()).build(),
+            new ContainerPortBuilder().withName(name() + "-trap").withProtocol("UDP").withContainerPort(trapPort()).build()
+        );
 
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", sccName)
-            .endMetadata()
-                .editOrNewSpec()
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports,
+            "scc", sccName,
+            "serviceAccount", serviceAccountName,
+            "capabilities", List.of("SYS_CHROOT")
+        ));
 
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .withServiceAccount(serviceAccountName)
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(defaultImage())
-                                .addNewPort()
-                                    .withContainerPort(port())
-                                    .withProtocol("UDP")
-                                    .withName(name() + "-get")
-                                .endPort()
-                                .addNewPort()
-                                    .withContainerPort(trapPort())
-                                    .withProtocol("UDP")
-                                    .withName(name() + "-trap")
-                                .endPort()
-                                .editOrNewSecurityContext()
-                                    .editOrNewCapabilities()
-                                        .addToAdd("SYS_CHROOT")
-                                    .endCapabilities()
-                                .endSecurityContext()
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
-                .endSpec()
-            .build());
-
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        // @formatter:off
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -133,18 +106,14 @@ public class OpenshiftSnmp extends SnmpServer implements ReusableOpenshiftDeploy
                 .endPort()
                 .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endSpec()
-            .build());
-
-        WaitUtils.waitFor(() -> {
-            return servicePod() != null && this.isDeployed();
-        }, "Waiting for pod ready");
-
+            .build())
+            .serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        final DeploymentConfig dc = OpenshiftClient.get().deploymentConfigs().withName(name()).get();
-        return dc != null && !dc.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

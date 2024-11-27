@@ -14,14 +14,16 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(SshServer.class)
 public class OpenshiftSsh extends SshServer implements OpenshiftDeployable, WithName {
@@ -50,64 +52,38 @@ public class OpenshiftSsh extends SshServer implements OpenshiftDeployable, With
 
     @Override
     public void create() {
+        LOG.info("Deploying SSH server");
 
         sccName = "tnb-ssh-" + OpenshiftClient.get().getNamespace();
 
         serviceAccountName = name() + "-sa";
 
-        OpenshiftClient.get().serviceAccounts()
-            .createOrReplace(new ServiceAccountBuilder()
-                .withNewMetadata()
-                .withName(serviceAccountName)
-                .endMetadata()
-                .build()
-            );
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
+            .withNewMetadata()
+            .withName(serviceAccountName)
+            .endMetadata()
+            .build()
+        ).serverSideApply();
 
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
-        LOG.info("Deploying SSH server");
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withProtocol("TCP").withContainerPort(port()).build()
+        );
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", sccName)
-            .endMetadata()
-                .editOrNewSpec()
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "serviceAccount", serviceAccountName,
+            "scc", sccName,
+            "ports", ports,
+            "capabilities", List.of("SYS_CHROOT")
+        ));
 
-                .editOrNewSelector()
-                .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .withServiceAccount(serviceAccountName)
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(defaultImage())
-                                .addNewPort()
-                                    .withContainerPort(port())
-                                    .withProtocol("TCP")
-                                .endPort()
-                                .editOrNewSecurityContext()
-                                    .editOrNewCapabilities()
-                                        .addToAdd("SYS_CHROOT")
-                                    .endCapabilities()
-                                .endSecurityContext()
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-
-                .endSpec()
-            .build());
-
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        // @formatter:off
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -121,18 +97,14 @@ public class OpenshiftSsh extends SshServer implements OpenshiftDeployable, With
                 .endPort()
                 .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endSpec()
-            .build());
-
-        WaitUtils.waitFor(() -> {
-            return servicePod() != null && this.isDeployed();
-        }, "Waiting for pod ready");
-
+            .build()
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

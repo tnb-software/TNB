@@ -34,7 +34,6 @@ import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.api.model.apps.StatefulSetBuilder;
 import io.fabric8.kubernetes.client.readiness.Readiness;
 import io.fabric8.openshift.api.model.RouteBuilder;
@@ -349,31 +348,11 @@ public class OpenshiftKudu extends Kudu implements OpenshiftDeployable, WithInCl
     private void createClient() {
         // @formatter:off
         LOG.debug("Creating deployment for client");
-        OpenshiftClient.get().apps().deployments().resource(new DeploymentBuilder()
-                .editOrNewMetadata()
-                    .withName(KUDU_CLIENT)
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), KUDU_CLIENT)
-                .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), KUDU_CLIENT)
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), KUDU_CLIENT)
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(KUDU_CLIENT)
-                                .withImage(image())
-                                .withCommand("tail", "-f", "/dev/null")
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-                .build()
-        ).serverSideApply();
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", KUDU_CLIENT,
+            "image", image(),
+            "args", List.of("tail", "-f", "/dev/null")
+        ));
         // @formatter:on
     }
 }

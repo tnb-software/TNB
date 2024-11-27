@@ -4,6 +4,7 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.PropertiesUtils;
 import software.tnb.common.utils.WaitUtils;
 
@@ -24,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
 import java.util.function.BooleanSupplier;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -32,11 +34,18 @@ import cz.xtf.core.openshift.OpenShift;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
+import io.fabric8.kubernetes.api.model.ContainerBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
@@ -136,9 +145,9 @@ public class OpenshiftClient extends OpenShift {
                 .getInternalBuilder().followRedirects(false).build();
             Request request = new Request.Builder().get().url("https://oauth-openshift.apps."
                     + openshiftHost + "/oauth/authorize?response_type=token&client_id=openshift-challenging-client")
-                    .headers(Headers.of("Authorization",
-                            "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())))
-                    .build();
+                .headers(Headers.of("Authorization",
+                    "Basic " + Base64.getEncoder().encodeToString((username + ":" + password).getBytes())))
+                .build();
             Response response = httpClient.newCall(request).execute();
             Pattern p = Pattern.compile("(?<=access_token=)[^&]+");
             Matcher m = p.matcher(new URI(response.headers().get("Location")).getFragment());
@@ -584,5 +593,128 @@ public class OpenshiftClient extends OpenShift {
             }
         }
         return true;
+    }
+
+    /**
+     * #see {@link #createDeployment(Map, Consumer)}
+     * @param config map config
+     */
+    public void createDeployment(Map<String, Object> config) {
+        createDeployment(config, builder -> {
+        });
+    }
+
+    /**
+     * Creates an deployment based on the configuration in the given map.
+     * <p>
+     * The supported key-value pair in the map are:
+     * - name - string - deployment name
+     * - image - string - docker image to use
+     * - env - map of string,string - environment variables
+     * - ports - list of {@link ContainerPort} - ports exposed in the deployment
+     * - readinessProbe - {@link Probe}
+     * - livenessProbe - {@link Probe}
+     * - serviceAccount - string - service account associated with the deployment
+     * - volumes - list of {@link Volume}
+     * - volumeMounts - list of {@link VolumeMount}
+     * - capabilities - list of string - capabilities to add to the deployment
+     * - scc - string - security constraint
+     * - args - list of string - command to run in the pod
+     * <p>
+     * You can use the customization parameter to access the deployment builder to perform modifications. You always need to "end" all "opened" paths
+     * in the builder, so that the code returns the DeploymentBuilder object (e.g. builder.editSpec().editTemplate().endTemplate().endSpec()),
+     * otherwise the customization won't work.
+     * @param config map of configuration
+     * @param customization deploymentbuilder consumer for other modifications
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    public void createDeployment(Map<String, Object> config, Consumer<DeploymentBuilder> customization) {
+        final String name = (String) config.get("name");
+        final String image = (String) config.get("image");
+        Map<String, String> env = Map.of();
+        if (config.get("env") != null) {
+            env = (Map) config.get("env");
+        }
+        List<ContainerPort> ports = Collections.emptyList();
+        if (config.get("ports") != null) {
+            ports = (List) config.get("ports");
+        }
+        Probe readinessProbe = null;
+        if (config.get("readinessProbe") != null) {
+            readinessProbe = (Probe) config.get("readinessProbe");
+        }
+        Probe livenessProbe = null;
+        if (config.get("livenessProbe") != null) {
+            livenessProbe = (Probe) config.get("livenessProbe");
+        }
+        String serviceAccount = null;
+        if (config.get("serviceAccount") != null) {
+            serviceAccount = (String) config.get("serviceAccount");
+        }
+        List<Volume> volumes = Collections.emptyList();
+        if (config.get("volumes") != null) {
+            volumes = (List) config.get("volumes");
+        }
+        List<VolumeMount> volumeMounts = Collections.emptyList();
+        if (config.get("volumeMounts") != null) {
+            volumeMounts = (List) config.get("volumeMounts");
+        }
+        List<String> capabilities = Collections.emptyList();
+        if (config.get("capabilities") != null) {
+            capabilities = (List) config.get("capabilities");
+        }
+        Map<String, String> scc = Collections.emptyMap();
+        if (config.get("scc") != null) {
+            scc = Map.of("openshift.io/scc", (String) config.get("scc"));
+        }
+        List<String> args = Collections.emptyList();
+        if (config.get("args") != null) {
+            args = (List) config.get("args");
+        }
+
+        Map<String, String> labels = Map.of(OpenshiftConfiguration.openshiftDeploymentLabel(), name);
+        // @formatter:off
+        DeploymentBuilder builder = new DeploymentBuilder()
+            .withNewMetadata()
+                .withName(name)
+                .withLabels(labels)
+                .addToAnnotations(scc)
+            .endMetadata()
+            .withNewSpec()
+                .withSelector(new LabelSelectorBuilder().withMatchLabels(labels).build())
+                .withReplicas(1)
+                .withNewTemplate()
+                    .withNewMetadata()
+                        .withLabels(labels)
+                    .endMetadata()
+                    .withNewSpec()
+                        .withServiceAccount(serviceAccount)
+                       .withVolumes(volumes)
+                       .withContainers(
+                            new ContainerBuilder()
+                                .withName(name)
+                                .withImage(image)
+                                .withImagePullPolicy("IfNotPresent")
+                                .withEnv(MapUtils.toEnvVars(env))
+                                .withArgs(args)
+                                .withPorts(ports)
+                                .withLivenessProbe(livenessProbe)
+                                .withReadinessProbe(readinessProbe)
+                                .withVolumeMounts(volumeMounts)
+                                .withNewSecurityContext()
+                                    .withNewCapabilities()
+                                        .addAllToAdd(capabilities)
+                                    .endCapabilities()
+                                .endSecurityContext()
+                                .build()
+                            )
+                    .endSpec()
+                .endTemplate()
+            .endSpec();
+        // @formatter:on
+        customization.accept(builder);
+
+        LOG.debug("Creating deployment {}", name);
+        get().apps().deployments().resource(builder.build()).serverSideApply();
     }
 }

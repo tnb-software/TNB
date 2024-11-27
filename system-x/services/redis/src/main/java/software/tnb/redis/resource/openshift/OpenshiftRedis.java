@@ -11,12 +11,15 @@ import software.tnb.redis.service.Redis;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.lettuce.core.RedisClient;
 import io.lettuce.core.RedisURI;
@@ -43,7 +46,6 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
             .withHost("localhost")
             .withPort(localPort)
             .build());
-        
     }
 
     @Override
@@ -51,40 +53,23 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
         if (portForward != null && portForward.isAlive()) {
             IOUtils.closeQuietly(portForward);
         }
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override
     public void create() {
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withContainerPort(PORT).withName(name()).build()
+        );
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(defaultImage())
-                                .addNewPort()
-                                    .withContainerPort(PORT)
-                                    .withName(name())
-                                .endPort()
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build());
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports
+        ));
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        // @formatter:off
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -98,13 +83,14 @@ public class OpenshiftRedis extends Redis implements ReusableOpenshiftDeployable
                     .withTargetPort(new IntOrString(PORT))
                 .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return WithName.super.isDeployed();
     }
 
     @Override
