@@ -14,7 +14,10 @@ import java.util.stream.Collectors;
 
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.ExpirationStatus;
 import software.amazon.awssdk.services.s3.model.GetObjectAttributesResponse;
+import software.amazon.awssdk.services.s3.model.LifecycleRule;
+import software.amazon.awssdk.services.s3.model.LifecycleRuleFilter;
 import software.amazon.awssdk.services.s3.model.ObjectAttributes;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.model.S3Object;
@@ -74,31 +77,46 @@ public class S3Validation implements Validation {
 
     public GetObjectAttributesResponse getFileAttributesFromBucket(String bucketName, String key) {
         return client.getObjectAttributes(
-                b -> b.bucket(bucketName).key(key).objectAttributes(new ArrayList<ObjectAttributes>(ObjectAttributes.knownValues())));
+            b -> b.bucket(bucketName).key(key).objectAttributes(new ArrayList<ObjectAttributes>(ObjectAttributes.knownValues())));
     }
 
-    public void createFile(String bucketName, String key, String content) {
-        createFromBody(bucketName, key, RequestBody.fromString(content));
+    public String createFile(String bucketName, String key, String content) {
+        return createFromBody(bucketName, key, RequestBody.fromString(content));
     }
 
-    public void createFile(String bucketName, Path file) {
-        createFile(bucketName, file.getFileName().toString(), file);
+    public String createFile(String bucketName, Path file) {
+        return createFile(bucketName, file.getFileName().toString(), file);
     }
 
-    public void createFile(String bucketName, String key, Path file) {
-        createFromBody(bucketName, key, RequestBody.fromFile(file));
+    public String createFile(String bucketName, String key, Path file) {
+        return createFromBody(bucketName, key, RequestBody.fromFile(file));
     }
 
-    public void createFolder(String bucketName, String key) {
-        createFromBody(bucketName, key.endsWith("/") ? key : key + "/", RequestBody.empty());
+    public String createFolder(String bucketName, String key) {
+        return createFromBody(bucketName, key.endsWith("/") ? key : key + "/", RequestBody.empty());
     }
 
-    private void createFromBody(String bucketName, String key, RequestBody body) {
+    private String createFromBody(String bucketName, String key, RequestBody body) {
         PutObjectRequest objectRequest = PutObjectRequest.builder()
             .bucket(bucketName)
             .key(key)
             .build();
 
-        client.putObject(objectRequest, body);
+        // the etag is enclosed in quotes
+        return client.putObject(objectRequest, body).eTag().replaceAll("\"", "");
+    }
+
+    public void setContentExpiration(String bucketName, int days) {
+        LifecycleRule rule = LifecycleRule.builder()
+            .id("DeleteAfter" + days + "Days")
+            .expiration(e -> e.days(days))
+            .filter(LifecycleRuleFilter.builder().build())
+            .status(ExpirationStatus.ENABLED)
+            .build();
+        client.putBucketLifecycleConfiguration(r -> r.bucket(bucketName).lifecycleConfiguration(c -> c.rules(rule)));
+    }
+
+    public void deleteFile(String bucket, String file) {
+        client.deleteObject(b -> b.bucket(bucket).key(file));
     }
 }
