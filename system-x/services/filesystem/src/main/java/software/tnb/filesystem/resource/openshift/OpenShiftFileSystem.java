@@ -7,6 +7,7 @@ import software.tnb.filesystem.service.FileSystem;
 import com.google.auto.service.AutoService;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -21,6 +22,7 @@ import io.fabric8.kubernetes.api.model.Pod;
 @AutoService(FileSystem.class)
 public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployable {
     private String podLabelValue;
+    private final String directory = "/tmp/tnb-ocp-filesystem";
 
     @Override
     public void setAppName(String app) {
@@ -43,6 +45,27 @@ public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployab
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @Override
+    public boolean createFile(Path directory, String filename, String content) throws IOException {
+        final String podLabelKey = "app.kubernetes.io/name";
+        podIsReady(podLabelKey, podLabelValue);
+        final String podName = getPodName(podLabelKey, podLabelValue);
+        final Pod pod = OpenshiftClient.get().getPod(podName);
+        final String integrationContainer = OpenshiftClient.get().getIntegrationContainer(pod);
+
+        return OpenshiftClient.get().pods()
+            .inNamespace(OpenshiftClient.get().getNamespace())
+            .withName(podName)
+            .inContainer(integrationContainer).file(Path.of(directory.toString(), filename).toString())
+            .upload(new ByteArrayInputStream(content.getBytes()));
+    }
+
+    @Override
+    public Path createTempDirectory() throws IOException {
+        // use deployment/*
+        return Path.of(directory);
     }
 
     @Override
