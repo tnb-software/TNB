@@ -91,6 +91,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-azure-key-vault</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-azure-service-bus</artifactId>
         </dependency>
         <dependency>
