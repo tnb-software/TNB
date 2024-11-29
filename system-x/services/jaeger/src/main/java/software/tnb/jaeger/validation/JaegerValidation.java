@@ -22,4 +22,8 @@ public class JaegerValidation implements Validation {
     public List<Span> getSpans(String traceId) {
         return client.getSpans(traceId);
     }
+
+    public List<String> getTraces(String serviceName) {
+        return client.getTraces(serviceName);
+    }
 }
