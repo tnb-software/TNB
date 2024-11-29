@@ -10,4 +10,6 @@ public interface JaegerClient {
     Map<String, Object> getTrace(String traceId);
 
     List<Span> getSpans(String traceId);
+
+    List<String> getTraces(String service);
 }

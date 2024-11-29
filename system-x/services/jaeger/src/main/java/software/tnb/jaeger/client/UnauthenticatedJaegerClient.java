@@ -46,4 +46,14 @@ public class UnauthenticatedJaegerClient extends BaseJaegerClient implements Jae
         });
         return spans.stream().map(span -> span.withServiceName(serviceName)).collect(Collectors.toList());
     }
+
+    @Override
+    public List<String> getTraces(String service) {
+        try {
+            List<Map<String, Object>> traces = (List) objectMapper.readValue(apiClient.get(apiTraces(service)).getBody(), Map.class).get("data");
+            return traces.stream().map(trace -> trace.get("traceID").toString()).collect(Collectors.toList());
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("unable to read json from response", e);
+        }
+    }
 }

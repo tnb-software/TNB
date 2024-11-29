@@ -19,4 +19,8 @@ class BaseJaegerClient {
         return String.format("%s%s/%s", queryUrl, API_TRACES, traceId);
     }
 
+    protected String apiTraces(String serviceName) {
+        return String.format("%s%s?service=%s", queryUrl, API_TRACES, serviceName);
+    }
+
 }
