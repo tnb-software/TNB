@@ -32,16 +32,6 @@ public class LocalSambaServer extends SambaServer implements Deployable {
     }
 
     @Override
-    public void openResources() {
-
-    }
-
-    @Override
-    public void closeResources() {
-
-    }
-
-    @Override
     public int port() {
         return container.getMappedPort(SambaServer.SAMBA_PORT_DEFAULT);
     }
@@ -49,7 +39,12 @@ public class LocalSambaServer extends SambaServer implements Deployable {
     @Override
     public String address() {
         return
-            container.getHost() + ":" + port();
+            host() + ":" + port();
+    }
+
+    @Override
+    public String host() {
+        return container.getHost();
     }
 
     @Override
@@ -61,4 +56,5 @@ public class LocalSambaServer extends SambaServer implements Deployable {
     public String getLog() {
         return container.getLogs();
     }
+
 }

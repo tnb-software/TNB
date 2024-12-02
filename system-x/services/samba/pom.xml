@@ -15,10 +15,19 @@
     <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: Samba</name>
 
+    <properties>
+        <smbj.version>0.13.0</smbj.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>testcontainers</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>com.hierynomus</groupId>
+            <artifactId>smbj</artifactId>
+            <version>${smbj.version}</version>
         </dependency>
     </dependencies>
 
