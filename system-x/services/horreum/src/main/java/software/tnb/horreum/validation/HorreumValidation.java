@@ -10,6 +10,7 @@ import software.tnb.horreum.validation.generated.ApiException;
 import software.tnb.horreum.validation.generated.JSON;
 import software.tnb.horreum.validation.generated.api.ConfigServiceApi;
 import software.tnb.horreum.validation.generated.api.DefaultApi;
+import software.tnb.horreum.validation.generated.api.RunApi;
 import software.tnb.horreum.validation.generated.model.Access;
 import software.tnb.horreum.validation.generated.model.Change;
 import software.tnb.horreum.validation.generated.model.KeycloakConfig;
@@ -31,7 +32,8 @@ public class HorreumValidation implements Validation {
     public static final MediaType FORM_URLENC = MediaType.get("application/x-www-form-urlencoded; charset=utf-8");
 
     private static final Logger LOG = LoggerFactory.getLogger(HorreumValidation.class);
-    private final DefaultApi defaultApi;
+    //private final DefaultApi defaultApi;
+    private final RunApi runApi;
     private ConfigServiceApi configServiceApi;
     private HorreumAccount horreumAccount;
 
@@ -45,17 +47,14 @@ public class HorreumValidation implements Validation {
         String basePath = HorreumConfiguration.getUrl();
         apiClient.setBasePath(basePath);
         apiClient.setVerifyingSsl(false);
-        defaultApi = new DefaultApi(apiClient);
+        //defaultApi = new DefaultApi(apiClient);
+        runApi = new RunApi(apiClient);
         configServiceApi = new ConfigServiceApi(apiClient);
         this.horreumAccount = horreumAccount;
     }
 
-    public Integer postRunData(String description, String owner, String schema, String start, String stop, String testName,
-        String access, Object data) throws Exception {
-        String runDataIdAsString =
-            defaultApi.runServiceAddRunFromDataWithHttpInfo(start, stop, testName, data, Access.fromValue(access), description, owner, schema,
-                horreumAccount.token(testName)).getData();
-        return Integer.parseInt(runDataIdAsString);
+    public Integer postRunData(String start, String stop, String test, String owner, Access access, String schema, String description, String body) throws Exception {
+        return runApi.addRunFromDataWithHttpInfo(start, stop, test, owner, access, schema, description, body).getData();
     }
 
     public String getToken(String testName) throws Exception {
