@@ -17,8 +17,8 @@ public class KeyVaultAccount implements Account, WithId {
         this.tenantId = tenant_Id;
     }
 
-    public void setClientId(String clientId) {
-        this.clientId = clientId;
+    public void setClientId(String client_Id) {
+        this.clientId = client_Id;
     }
 
     public void setClient_secret(String client_secret) {
