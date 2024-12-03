@@ -41,9 +41,6 @@ public class KeyVaultValidation implements Validation {
         LOG.debug("Deleting secret " + name);
         SyncPoller<DeletedSecret, Void> deletionPoller = client.beginDeleteSecret(name);
         deletionPoller.waitForCompletion();
-    }
-
-    public void purgeDeletedSecret(String name) {
         client.purgeDeletedSecret(name);
     }
 }
