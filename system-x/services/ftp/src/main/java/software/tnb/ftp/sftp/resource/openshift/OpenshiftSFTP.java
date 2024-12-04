@@ -19,23 +19,20 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import net.schmizz.sshj.SSHClient;
@@ -82,40 +79,14 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", sccName)
-                .endMetadata()
-                .editOrNewSpec()
-                .editOrNewSelector()
-                .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endSelector()
-                .withReplicas(1)
-                .editOrNewTemplate()
-                .editOrNewMetadata()
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .withServiceAccount(serviceAccountName)
-                .addNewContainer()
-                .withName(name()).withImage(image()).addAllToPorts(ports)
-                .withImagePullPolicy("IfNotPresent")
-                .withEnv(containerEnvironment().entrySet().stream().map(entry -> new EnvVar(entry.getKey()
-                    , entry.getValue(), null)).collect(Collectors.toList()))
-                .editOrNewSecurityContext()
-                .editOrNewCapabilities()
-                .addToAdd("SYS_CHROOT")
-                .endCapabilities()
-                .endSecurityContext()
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .endSpec()
-                .build()
-        );
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", ports,
+            "serviceAccount", serviceAccountName,
+            "capabilities", List.of("SYS_CHROOT")
+        ));
 
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
@@ -125,16 +96,24 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             .withTargetPort(new IntOrString(port()))
             .build());
 
-        OpenshiftClient.get().services().createOrReplace(
+        // @formatter:off
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withName(name())
+                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
-                .editOrNewSpecLike(serviceSpecBuilder.build())
-                .endSpec()
+                .editOrNewSpec()
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .addToPorts(new ServicePortBuilder()
+                        .withName("sftp")
+                        .withPort(port())
+                        .withTargetPort(new IntOrString(port()))
+                        .build())
+                    .endSpec()
                 .build()
-        );
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
@@ -171,8 +150,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     @Override
     public boolean isDeployed() {
-        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

@@ -21,15 +21,17 @@ import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
@@ -41,8 +43,6 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLRACoordinator.class);
     protected static final String MOUNT_POINT_DEFAULT_STORE = "/home/jboss/ObjectStore/ShadowNoFileLockStore/defaultStore";
     protected static final String VOLUME_NAME = "data";
-
-    private long uid;
 
     @Override
     public void undeploy() {
@@ -82,86 +82,57 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
             .map(e -> new ContainerPortBuilder().withName(e.getKey()).withContainerPort(e.getValue()).withProtocol("TCP").build())
             .collect(Collectors.toList());
 
-        // @formatter:off
-
-        LOG.debug("Creating deployment {}", name());
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                    .withName(name())
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .withImagePullPolicy("IfNotPresent")
-                                .addAllToPorts(containerPorts)
-                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                    .collect(Collectors.toList()))
-                                .withVolumeMounts(new VolumeMountBuilder()
-                                    .withName(VOLUME_NAME)
-                                    .withMountPath(MOUNT_POINT_DEFAULT_STORE)
-                                    .build())
-                                .withLivenessProbe(new ProbeBuilder()
-                                    .editOrNewHttpGet()
-                                        .withPath("/lra-coordinator")
-                                        .withPort(new IntOrString(port()))
-                                        .withScheme("HTTP")
-                                    .endHttpGet()
-                                    .withInitialDelaySeconds(60)
-                                    .build())
-                                .withReadinessProbe(new ProbeBuilder()
-                                    .editOrNewHttpGet()
-                                        .withPath("/lra-coordinator")
-                                        .withPort(new IntOrString(port()))
-                                        .withScheme("HTTP")
-                                    .endHttpGet()
-                                    .withInitialDelaySeconds(10)
-                                    .build())
-                            .endContainer()
-                            .addNewVolume()
-                                .withName(VOLUME_NAME)
-                                .withNewEmptyDir().endEmptyDir()
-                            .endVolume()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
+        final Probe probe = new ProbeBuilder()
+            .withHttpGet(new HTTPGetActionBuilder()
+                .withPort(new IntOrString(port()))
+                .withPath("/lra-coordinator")
+                .withScheme("HTTP")
                 .build()
+            )
+            .withInitialDelaySeconds(60)
+            .build();
+
+        List<Volume> volumes = List.of(
+            new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName(VOLUME_NAME).build()
+        );
+        List<VolumeMount> volumeMounts = List.of(
+            new VolumeMountBuilder().withMountPath(MOUNT_POINT_DEFAULT_STORE).withName(VOLUME_NAME).build()
         );
 
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", containerPorts,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts,
+            "readinessProbe", probe,
+            "livenessProbe", probe
+        ));
+
         ports.forEach((key, value) -> {
-            ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-
-            serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-                .withName(key)
-                .withPort(value)
-                .withTargetPort(new IntOrString(value))
-                .build());
-
             LOG.debug("Creating service {}", key);
-            OpenshiftClient.get().services().createOrReplace(
+            OpenshiftClient.get().services().resource(
                 new ServiceBuilder()
                     .editOrNewMetadata()
                         .withName(key)
                         .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
-                    .editOrNewSpecLike(serviceSpecBuilder.build())
+                    .editOrNewSpec()
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                        .addToPorts(new ServicePortBuilder()
+                            .withName(key)
+                            .withPort(value)
+                            .withTargetPort(new IntOrString(value))
+                            .build()
+                        )
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
 
             LOG.debug("Creating route {}", key);
-            OpenshiftClient.get().routes().createOrReplace(
+            OpenshiftClient.get().routes().resource(
                 new RouteBuilder()
                     .editOrNewMetadata()
                     .withName(key)
@@ -178,9 +149,8 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
                         .build())
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
         });
-
         // @formatter:on
     }
 
@@ -192,8 +162,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return WithName.super.isDeployed();
     }
 
     @Override

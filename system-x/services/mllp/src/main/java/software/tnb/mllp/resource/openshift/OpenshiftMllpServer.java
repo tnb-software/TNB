@@ -13,19 +13,16 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
-import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(MllpServer.class)
@@ -53,57 +50,37 @@ public class OpenshiftMllpServer extends MllpServer implements OpenshiftDeployab
 
     @Override
     public void create() {
-        ContainerPort port = new ContainerPortBuilder()
-            .withName("mllp-port")
-            .withContainerPort(port())
-            .withProtocol("TCP").build();
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName("mllp-port").withContainerPort(port()).withProtocol("TCP").build()
+        );
 
         LOG.info("Creating MLLP server deployment");
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .editOrNewSelector()
-                .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endSelector()
-                .withReplicas(1)
-                .editOrNewTemplate()
-                .editOrNewMetadata()
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .addNewContainer()
-                .withName(name()).withImage(image()).addAllToPorts(Collections.singletonList(port))
-                .addToEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .endSpec()
-                .build()
-        );
-
-        ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-
-        serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName("mllp-port")
-            .withPort(port())
-            .withTargetPort(new IntOrString(port()))
-            .build());
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports
+        ));
 
         LOG.info("Creating MLLP server service");
-        OpenshiftClient.get().services().createOrReplace(
+        // @formatter:off
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withName(name())
+                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
-                .editOrNewSpecLike(serviceSpecBuilder.build())
+                .editOrNewSpec()
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .addToPorts(new ServicePortBuilder()
+                        .withName("mllp-port")
+                        .withPort(port())
+                        .withTargetPort(new IntOrString(port()))
+                        .build()
+                    )
                 .endSpec()
                 .build()
-        );
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
@@ -114,8 +91,7 @@ public class OpenshiftMllpServer extends MllpServer implements OpenshiftDeployab
 
     @Override
     public boolean isDeployed() {
-        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override
