@@ -175,11 +175,11 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-google-sheets</artifactId>
+            <artifactId>system-x-google-secret-manager</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-google-secret-manager</artifactId>
+            <artifactId>system-x-google-sheets</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
