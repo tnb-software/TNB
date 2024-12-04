@@ -226,7 +226,8 @@ public final class IntegrationGenerator {
      * @param appDir app directory
      */
     public static void createApplicationProperties(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
-        Path propertiesFile = appDir.resolve("src/main/resources/application.properties");
+        appDir = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/resources");
+        Path propertiesFile = appDir.resolve("application.properties");
 
         if (propertiesFile.toFile().exists()) {
             // If the file already exists, append newline first in case the file does not end with a newline
