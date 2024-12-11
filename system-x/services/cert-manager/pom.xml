@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>system-x-services</artifactId>
+        <groupId>software.tnb</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <properties>
+        <velocity.version>2.4.1</velocity.version>
+    </properties>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>system-x-cert-manager</artifactId>
+    <version>1.0-SNAPSHOT</version>
+    <name>TNB :: System-X :: Services :: Cert Manager</name>
+
+    <dependencies>
+        <dependency>
+            <groupId>org.apache.velocity</groupId>
+            <artifactId>velocity-engine-core</artifactId>
+            <version>${velocity.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.apache.commons</groupId>
+                    <artifactId>commons-lang3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-api</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+    </dependencies>
+
+</project>
