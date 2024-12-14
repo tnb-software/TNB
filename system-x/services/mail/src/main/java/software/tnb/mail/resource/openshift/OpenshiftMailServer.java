@@ -31,7 +31,6 @@ import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
@@ -53,18 +52,19 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
         LOG.info("Deploying OpenShift JamesServer");
         sccName = "tnb-james-" + OpenshiftClient.get().getNamespace();
 
-        OpenshiftClient.get().serviceAccounts()
-            .createOrReplace(new ServiceAccountBuilder()
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
                 .withNewMetadata()
                 .withName(serviceAccountName)
                 .endMetadata()
                 .build()
-            );
+            )
+            .serverSideApply();
 
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
+        // @formatter:off
         List<ContainerPort> ports = new LinkedList<>();
         services.forEach((name, port) -> {
             ports.add(new ContainerPortBuilder()
@@ -78,55 +78,29 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
                 .withTargetPort(new IntOrString(port))
                 .build());
             LOG.debug("Creating service {}", name() + "-" + name);
-            OpenshiftClient.get().services().createOrReplace(
+            OpenshiftClient.get().services().resource(
                 new ServiceBuilder()
                     .editOrNewMetadata()
-                    .withName(name() + "-" + name)
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                        .withName(name() + "-" + name)
+                        .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
                     .editOrNewSpecLike(serviceSpecBuilder.build())
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
         });
 
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports,
+            "scc", sccName,
+            "serviceAccount", serviceAccountName,
+            "capabilities", List.of("SYS_CHROOT")
+        ));
+
         // @formatter:off
-        LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(
-          new DeploymentConfigBuilder()
-            .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", sccName)
-            .endMetadata()
-            .editOrNewSpec()
-                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .withReplicas(1)
-                .editOrNewTemplate()
-                    .editOrNewMetadata()
-                        .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endMetadata()
-                    .editOrNewSpec()
-                        .withServiceAccount(serviceAccountName)
-                        .addNewContainer()
-                            .withName(name())
-                            .withImage(image())
-                            .addAllToPorts(ports)
-                            .editOrNewSecurityContext()
-                                .editOrNewCapabilities()
-                                    .addToAdd("SYS_CHROOT")
-                                .endCapabilities()
-                            .endSecurityContext()
-                        .endContainer()
-                    .endSpec()
-                .endTemplate()
-                .addNewTrigger()
-                    .withType("ConfigChange")
-                .endTrigger()
-            .endSpec()
-            .build()
-        );
-        OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
             .withNewMetadata()
                 .withName(name() + "-http")
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -136,7 +110,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
                 .withTo(new RouteTargetReferenceBuilder().withKind("Service").withName(name() + "-http").build())
             .endSpec()
             .build()
-        );
+        ).serverSideApply();
         // @formatter:on
     }
 
@@ -151,8 +125,8 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
             OpenshiftClient.get().services().withName(name() + "-" + name).delete();
         });
 
-        LOG.debug("Deleting deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        LOG.debug("Deleting deployment {}", name());
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
@@ -173,8 +147,7 @@ public class OpenshiftMailServer extends MailServer implements ReusableOpenshift
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().deploymentConfigs().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-                .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override

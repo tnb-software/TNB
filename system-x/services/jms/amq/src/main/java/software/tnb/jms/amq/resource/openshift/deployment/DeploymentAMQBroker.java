@@ -10,63 +10,42 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.jms.amq.service.AMQBroker;
 
 import org.apache.activemq.artemis.jms.client.ActiveMQConnectionFactory;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import jakarta.jms.Connection;
 import jakarta.jms.JMSException;
 
 @AutoService(AMQBroker.class)
 public class DeploymentAMQBroker extends AMQBroker implements MicroshiftDeployable, WithDockerImage, WithName, WithExternalHostname {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DeploymentAMQBroker.class);
-
     private static final int PORT = 61616;
     protected static final int CONSOLE_PORT = 8161;
 
     @Override
     public void create() {
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addNewPort()
-                                    .withContainerPort(PORT)
-                                    .withName(name())
-                                .endPort()
-                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                    .collect(Collectors.toList()))
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build());
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
+        );
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", ports
+        ));
+
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -87,7 +66,9 @@ public class DeploymentAMQBroker extends AMQBroker implements MicroshiftDeployab
                 .endPort()
                 .withType("NodePort")
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
@@ -99,8 +80,7 @@ public class DeploymentAMQBroker extends AMQBroker implements MicroshiftDeployab
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override

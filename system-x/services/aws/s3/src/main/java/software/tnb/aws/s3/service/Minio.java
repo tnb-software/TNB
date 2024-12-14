@@ -6,6 +6,7 @@ import software.tnb.aws.s3.validation.S3Validation;
 import software.tnb.common.deployment.WithDockerImage;
 
 import java.net.URI;
+import java.util.Map;
 
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.regions.Region;
@@ -48,5 +49,12 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
     @Override
     public String defaultImage() {
         return "quay.io/minio/minio:RELEASE.2024-10-02T17-50-41Z";
+    }
+
+    protected Map<String, String> containerEnvironment() {
+        return Map.of(
+            "MINIO_ROOT_USER", account().accountId(),
+            "MINIO_ROOT_PASSWORD", account().secretKey()
+        );
     }
 }
