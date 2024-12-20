@@ -64,6 +64,12 @@
             <artifactId>threetenbp</artifactId>
             <version>${threetenbp-version}</version>
         </dependency>
+        <!-- OpenApi Generator 7.1 is not generating JsonNullable class. It needs to be imported. -->
+        <dependency>
+            <groupId>org.openapitools</groupId>
+            <artifactId>jackson-databind-nullable</artifactId>
+            <version>0.2.6</version>
+        </dependency>
     </dependencies>
 
 </project>
