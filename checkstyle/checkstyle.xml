@@ -3,8 +3,12 @@
     "-//Puppy Crawl//DTD Check Configuration 1.3//EN"
     "http://www.puppycrawl.com/dtds/configuration_1_3.dtd">
 
-<!-- CheckStyle configuration for Red Hat JBoss Middleware QA -->
+<!-- CheckStyle configuration -->
 <module name="Checker">
+    <module name="SuppressionFilter">
+        <!-- path to the file is relative to the pwd when running the checkstyle, not to the checkstyle.xml file -->
+        <property name="file" value="checkstyle/suppressions.xml"/>
+    </module>
 
     <module name="FileTabCharacter"/>
 
