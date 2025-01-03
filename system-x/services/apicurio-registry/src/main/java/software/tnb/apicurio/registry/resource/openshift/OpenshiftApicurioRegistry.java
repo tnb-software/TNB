@@ -14,12 +14,17 @@ import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(ApicurioRegistry.class)
@@ -41,47 +46,28 @@ public class OpenshiftApicurioRegistry extends ApicurioRegistry implements Opens
 
     @Override
     public void create() {
-        //@formatter:off
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .withNewMetadata()
-                    .withName(name())
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                    .editOrNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .withNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addNewPort()
-                                    .withContainerPort(8080)
-                                    .withName("http")
-                                .endPort()
-                                .withImagePullPolicy("IfNotPresent")
-                                .withNewReadinessProbe()
-                                    .withNewTcpSocket()
-                                        .withNewPort("http")
-                                    .endTcpSocket()
-                                    .withInitialDelaySeconds(0)
-                                    .withTimeoutSeconds(5)
-                                    .withFailureThreshold(6)
-                                .endReadinessProbe()
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-                .build()
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName("http").withContainerPort(8080).build()
         );
 
-        OpenshiftClient.get().services().createOrReplace(
+        //@formatter:off
+        Probe probe = new ProbeBuilder()
+            .withNewTcpSocket()
+                .withNewPort("http")
+            .endTcpSocket()
+            .withInitialDelaySeconds(0)
+            .withTimeoutSeconds(5)
+            .withFailureThreshold(6)
+       .build();
+
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports,
+            "readinessProbe", probe
+        ));
+
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .withNewMetadata()
                     .withName(name())
@@ -96,9 +82,9 @@ public class OpenshiftApicurioRegistry extends ApicurioRegistry implements Opens
                     .endPort()
                 .endSpec()
                 .build()
-        );
+        ).serverSideApply();
 
-        OpenshiftClient.get().routes().createOrReplace(new RouteBuilder()
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
             .editOrNewMetadata()
                 .withName(name())
             .endMetadata()
@@ -112,14 +98,14 @@ public class OpenshiftApicurioRegistry extends ApicurioRegistry implements Opens
                     .withTargetPort(new IntOrString(8080))
                 .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
         //@formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return WithName.super.isDeployed();
     }
 
     @Override

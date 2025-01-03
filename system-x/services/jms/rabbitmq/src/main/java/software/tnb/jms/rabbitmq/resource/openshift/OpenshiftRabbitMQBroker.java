@@ -11,14 +11,15 @@ import software.tnb.jms.rabbitmq.service.RabbitMQ;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(RabbitMQ.class)
 public class OpenshiftRabbitMQBroker extends RabbitMQ implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithDockerImage {
@@ -32,37 +33,18 @@ public class OpenshiftRabbitMQBroker extends RabbitMQ implements ReusableOpenshi
 
     @Override
     public void create() {
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(defaultImage())
-                                .addNewPort()
-                                    .withContainerPort(PORT)
-                                    .withName(name())
-                                .endPort()
-                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                    .collect(Collectors.toList()))
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build());
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
+        );
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", ports
+        ));
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -74,15 +56,16 @@ public class OpenshiftRabbitMQBroker extends RabbitMQ implements ReusableOpenshi
                     .withProtocol("TCP")
                     .withPort(PORT)
                     .withTargetPort(new IntOrString(PORT))
-            .endPort()
+                .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return WithName.super.isDeployed();
     }
 
     @Override

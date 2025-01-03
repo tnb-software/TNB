@@ -20,21 +20,18 @@ import com.mongodb.client.MongoDatabase;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
 import io.fabric8.kubernetes.api.model.apps.Deployment;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(MongoDB.class)
 public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -51,57 +48,33 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
             .withName("mongodb")
             .withContainerPort(port())
             .withProtocol("TCP").build());
+
         // @formatter:off
-        LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(
-          new DeploymentConfigBuilder()
-            .editOrNewMetadata()
-              .withName(name())
-              .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-            .editOrNewSpec()
-                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .withReplicas(1)
-                .editOrNewTemplate()
-                    .editOrNewMetadata()
-                        .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endMetadata()
-                    .editOrNewSpec()
-                        .addNewContainer()
-                            .withName(name())
-                            .withImage(image())
-                            .addAllToPorts(ports)
-                            .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                .collect(Collectors.toList()))
-                        .endContainer()
-                    .endSpec()
-                .endTemplate()
-                .addNewTrigger()
-                    .withType("ConfigChange")
-                .endTrigger()
-            .endSpec()
-            .build()
-        );
-
-        ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
-
-        serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName(name())
-            .withPort(port())
-            .withTargetPort(new IntOrString(port()))
-            .build());
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", ports
+        ));
 
         LOG.debug("Creating service {}", name());
-        OpenshiftClient.get().services().createOrReplace(
+        OpenshiftClient.get().services().resource(
           new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
-            .editOrNewSpecLike(serviceSpecBuilder.build())
-            .endSpec()
-            .build()
-        );
+              .editOrNewSpec()
+                  .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                  .addToPorts(new ServicePortBuilder()
+                      .withName(name())
+                      .withPort(port())
+                      .withTargetPort(new IntOrString(port()))
+                      .build()
+                  )
+              .endSpec()
+              .build()
+        ).serverSideApply();
         // @formatter:on
     }
 
@@ -110,8 +83,8 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         LOG.info("Undeploying OpenShift MongoDB");
         LOG.debug("Deleting service {}", name());
         OpenshiftClient.get().services().withName(name()).delete();
-        LOG.debug("Deleting deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        LOG.debug("Deleting deployment {}", name());
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 

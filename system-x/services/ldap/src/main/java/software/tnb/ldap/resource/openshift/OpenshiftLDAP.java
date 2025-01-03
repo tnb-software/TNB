@@ -5,7 +5,6 @@ import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
-import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.ldap.service.LDAPLocalStack;
@@ -18,8 +17,12 @@ import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -28,7 +31,6 @@ import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.TCPSocketActionBuilder;
 import io.fabric8.kubernetes.client.PortForward;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
 
 @AutoService(LDAPLocalStack.class)
 public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDeployable, WithName {
@@ -44,14 +46,13 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
         LOG.info("Undeploying OpenShift LDAP");
         OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
         OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
     public void openResources() {
-
         localPort = NetworkUtils.getFreePort();
         portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
         final LDAPConnection ldapConnection = new LDAPConnection();
@@ -66,7 +67,6 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
 
     @Override
     public void closeResources() {
-
         if (client != null) {
             client.close();
         }
@@ -74,22 +74,22 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
         if (portForward != null && portForward.isAlive()) {
             IOUtils.closeQuietly(portForward);
         }
+
+        NetworkUtils.releasePort(localPort);
     }
 
     @Override
     public void create() {
-
         sccName = "tnb-ldap-" + OpenshiftClient.get().getNamespace();
 
         serviceAccountName = name() + "-sa";
 
-        OpenshiftClient.get().serviceAccounts()
-            .createOrReplace(new ServiceAccountBuilder()
-                .withNewMetadata()
-                .withName(serviceAccountName)
-                .endMetadata()
-                .build()
-            );
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
+            .withNewMetadata()
+            .withName(serviceAccountName)
+            .endMetadata()
+            .build()
+        ).serverSideApply();
 
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
@@ -100,46 +100,24 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
             .withTimeoutSeconds(15)
             .build();
 
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(new DeploymentConfigBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addToAnnotations("openshift.io/scc", sccName)
-            .endMetadata()
-                .editOrNewSpec()
-                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .withServiceAccount(serviceAccountName)
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addNewPort()
-                                    .withContainerPort(PORT)
-                                    .withName(name())
-                                .endPort()
-                                .editOrNewSecurityContext()
-                                    .editOrNewCapabilities()
-                                        .addToAdd("SYS_CHROOT")
-                                    .endCapabilities()
-                                .endSecurityContext()
-                                .withEnv(MapUtils.toEnvVars(environmentVariables()))
-                                .withReadinessProbe(probe)
-                                .withLivenessProbe(probe)
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                    .addNewTrigger()
-                        .withType("ConfigChange")
-                    .endTrigger()
-                .endSpec()
-            .build());
+        final List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
+        );
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", environmentVariables(),
+            "ports", ports,
+            "scc", sccName,
+            "serviceAccount", serviceAccountName,
+            "capabilities", List.of("SYS_CHROOT"),
+            "readinessProbe", probe,
+            "livenessProbe", probe
+        ));
+
+        // @formatter:off
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -153,13 +131,14 @@ public class OpenshiftLDAP extends LDAPLocalStack implements ReusableOpenshiftDe
                     .withTargetPort(new IntOrString(PORT))
                 .endPort()
             .endSpec()
-            .build());
+            .build())
+            .serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-                .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override
