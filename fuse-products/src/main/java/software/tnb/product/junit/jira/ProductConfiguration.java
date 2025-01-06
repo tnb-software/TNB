@@ -8,7 +8,6 @@ import software.tnb.product.cq.configuration.QuarkusConfiguration;
 public enum ProductConfiguration {
     ALL,
     QUARKUS, QUARKUS_JVM, QUARKUS_JVM_LOCAL, QUARKUS_JVM_OPENSHIFT, QUARKUS_NATIVE, QUARKUS_NATIVE_LOCAL, QUARKUS_NATIVE_OPENSHIFT,
-    CAMEL_K,
     SPRINGBOOT, SPRINGBOOT_JVM_LOCAL, SPRINGBOOT_JVM_OPENSHIFT;
 
     public boolean isCurrentEnv() {
@@ -27,7 +26,6 @@ public enum ProductConfiguration {
             case QUARKUS_NATIVE_OPENSHIFT -> TestConfiguration.product() == ProductType.CAMEL_QUARKUS
                 && QuarkusConfiguration.isQuarkusNative()
                 && OpenshiftConfiguration.isOpenshift();
-            case CAMEL_K -> TestConfiguration.product() == ProductType.CAMEL_K;
             case SPRINGBOOT -> TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT;
             case SPRINGBOOT_JVM_LOCAL -> TestConfiguration.product() == ProductType.CAMEL_SPRINGBOOT
                 && !OpenshiftConfiguration.isOpenshift();

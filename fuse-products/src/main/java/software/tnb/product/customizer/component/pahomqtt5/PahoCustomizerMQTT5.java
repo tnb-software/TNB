@@ -17,17 +17,12 @@ public class PahoCustomizerMQTT5 extends ProductsCustomizer {
     }
 
     @Override
-    public void customizeCamelK() {
-        customizeCEQAndCK();
-    }
-
-    @Override
     public void customizeQuarkus() {
         customizeCEQAndCK();
     }
 
     private void customizeCEQAndCK() {
-        getIntegrationBuilder().addToProperties(Map.of(
+        getIntegrationBuilder().addToApplicationProperties(Map.of(
             "camel.component.paho-mqtt5.username", username,
             "camel.component.paho-mqtt5.password", password,
             "paho-mqtt5.broker.tcp.url", brokerUrl
@@ -36,7 +31,7 @@ public class PahoCustomizerMQTT5 extends ProductsCustomizer {
 
     @Override
     public void customizeSpringboot() {
-        getIntegrationBuilder().addToProperties(Map.of(
+        getIntegrationBuilder().addToApplicationProperties(Map.of(
             "camel.component.paho-mqtt5.user-name", username,
             "camel.component.paho-mqtt5.password", password,
             "camel.component.paho-mqtt5.broker-url", brokerUrl

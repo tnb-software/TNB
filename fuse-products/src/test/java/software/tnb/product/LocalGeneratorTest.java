@@ -22,7 +22,7 @@ import java.util.Optional;
 
 @Tag("integration")
 public class LocalGeneratorTest extends TestParent {
-    private static final Logger log = LoggerFactory.getLogger(LoggerFactory.class);
+    private static final Logger log = LoggerFactory.getLogger(LocalGeneratorTest.class);
 
     @ParameterizedTest
     @CsvSource({
@@ -44,9 +44,9 @@ public class LocalGeneratorTest extends TestParent {
             .fromRouteBuilder(new DirectToLogRoute())
             .addCustomizer(
                 new AddClassCustomizer(emptyClass),
-                Customizers.QUARKUS.customize(i -> i.addToProperties("test.prop.not.exists", "not exists"))
+                Customizers.QUARKUS.customize(i -> i.addToApplicationProperties("test.prop.not.exists", "not exists"))
             )
-            .addToProperties("test.prop", "test prop")
+            .addToApplicationProperties("test.prop", "test prop")
             .dependencies("direct")
         );
 

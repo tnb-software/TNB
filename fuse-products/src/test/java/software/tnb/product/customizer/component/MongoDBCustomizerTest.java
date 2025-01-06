@@ -28,13 +28,6 @@ public class MongoDBCustomizerTest extends ProductCustomizerTestParent {
     }
 
     @Override
-    public void validateCamelK() {
-        customizer.doCustomize();
-
-        assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("quarkus.mongodb.connection-string", REPLICA_SET_URL));
-    }
-
-    @Override
     public void validateSpringBoot() {
         CompilationUnit expectedClass = new CompilationUnit();
         expectedClass.setPackageDeclaration(TestConfiguration.appGroupId());

@@ -53,7 +53,7 @@ public abstract class SpringBootApp extends App {
             if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?>
                 && ((AbstractGitIntegrationBuilder<?>) integrationBuilder).getRepositoryUrl() != null) {
                 mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
-                    , name, getLogPath(Phase.BUILD)
+                    , getName(), getLogPath(Phase.BUILD)
                     , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
                 shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
             } else {
@@ -63,7 +63,7 @@ public abstract class SpringBootApp extends App {
                     createUsingMaven();
                 }
 
-                final Path basePath = TestConfiguration.appLocation().resolve(name);
+                final Path basePath = TestConfiguration.appLocation().resolve(getName());
 
                 removeExistingTests(basePath);
 
@@ -84,9 +84,9 @@ public abstract class SpringBootApp extends App {
                         "skipTests", "true"
                     ))
                     .withLogFile(getLogPath(Phase.BUILD))
-                    .withLogMarker(LogStream.marker(name, Phase.BUILD));
+                    .withLogMarker(LogStream.marker(getName(), Phase.BUILD));
 
-                LOG.info("Building {} application project", name);
+                LOG.info("Building {} application project", getName());
                 Maven.invoke(requestBuilder.build());
             }
         }
@@ -118,13 +118,13 @@ public abstract class SpringBootApp extends App {
     }
 
     private void createUsingMaven() {
-        LOG.info("Creating Camel SpringBoot application project for integration {}", name);
+        LOG.info("Creating Camel SpringBoot application project for integration {}", getName());
         Map<String, String> properties = Map.of(
             "archetypeGroupId", SpringBootConfiguration.camelSpringBootArchetypeGroupId(),
             "archetypeArtifactId", SpringBootConfiguration.camelSpringBootArchetypeArtifactId(),
             "archetypeVersion", SpringBootConfiguration.camelSpringBootArchetypeVersion(),
             "groupId", TestConfiguration.appGroupId(),
-            "artifactId", name,
+            "artifactId", getName(),
             "version", TestConfiguration.appVersion(),
             "package", TestConfiguration.appGroupId(),
             "archetypeCatalog", "internal"
@@ -135,7 +135,7 @@ public abstract class SpringBootApp extends App {
             .withGoals("archetype:generate")
             .withProperties(properties)
             .withLogFile(getLogPath(Phase.GENERATE))
-            .withLogMarker(LogStream.marker(name, Phase.GENERATE))
+            .withLogMarker(LogStream.marker(getName(), Phase.GENERATE))
             .build());
     }
 
@@ -174,7 +174,7 @@ public abstract class SpringBootApp extends App {
     }
 
     private void customizeDependencies(List<Dependency> mavenDependencies) {
-        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        File pom = TestConfiguration.appLocation().resolve(getName()).resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
         mavenDependencies.forEach(model.getDependencies()::add);

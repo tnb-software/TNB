@@ -15,11 +15,11 @@ public class QuarkusConfiguration extends CamelConfiguration {
         Set.of("quarkus.version", "quarkus.native", "quarkus.platform.group-id", "quarkus.platform.artifact-id", "quarkus.platform.version");
     public static final String CAMEL_QUARKUS_VERSION = "camel-quarkus.version";
 
-    public static final String DEFAULT_CAMEL_QUARKUS_VERSION = "2.13.3";
+    public static final String DEFAULT_CAMEL_QUARKUS_VERSION = "3.17.0";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
 
-    public static final String DEFAULT_QUARKUS_VERSION = "2.13.7.Final";
+    public static final String DEFAULT_QUARKUS_VERSION = "3.17.3";
     public static final String QUARKUS_NATIVE_BUILD = "quarkus.native";
 
     public static final String QUARKUS_PLATFORM_GROUP_ID = "quarkus.platform.group-id";

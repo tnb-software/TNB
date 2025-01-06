@@ -2,13 +2,10 @@ package software.tnb.product.customizer.component;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.datasource.DataSourceCustomizer;
 
 import org.junit.jupiter.api.Tag;
-
-import org.apache.camel.v1.IntegrationSpec;
 
 import java.util.Map;
 
@@ -32,16 +29,6 @@ public class DataSourceCustomizerTest extends ProductCustomizerTestParent {
         assertThat(ib.getDependencies()).hasSize(1);
         assertThat(ib.getDependencies().get(0).getGroupId()).isEqualTo("io.quarkus");
         assertThat(ib.getDependencies().get(0).getArtifactId()).isEqualTo("quarkus-jdbc-" + type);
-    }
-
-    @Override
-    public void validateCamelK() {
-        validateQuarkus();
-
-        IntegrationSpec spec = new IntegrationSpec();
-        ((IntegrationSpecCustomizer) customizer).customizeIntegration(spec);
-
-        assertThat(spec.getTraits().getBuilder().getProperties()).isNotNull().hasSize(1).contains("quarkus.datasource.db-kind=" + type);
     }
 
     @Override

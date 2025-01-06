@@ -1,23 +1,18 @@
 package software.tnb.product.customizer.component.datasource;
 
-import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.ProductsCustomizer;
 
-import org.apache.camel.v1.IntegrationSpec;
-import org.apache.camel.v1.integrationspec.Traits;
-import org.apache.camel.v1.integrationspec.traits.Builder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-public class DataSourceCustomizer extends ProductsCustomizer implements IntegrationSpecCustomizer {
+public class DataSourceCustomizer extends ProductsCustomizer {
 
     private static final Logger LOG = LoggerFactory.getLogger(DataSourceCustomizer.class);
 
@@ -37,11 +32,6 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
         this.username = username;
         this.password = password;
         this.driver = driver;
-    }
-
-    @Override
-    public void customizeCamelK() {
-        customizeQuarkus();
     }
 
     @Override
@@ -71,7 +61,7 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
             }
         }
 
-        getIntegrationBuilder().addToProperties(
+        getIntegrationBuilder().addToApplicationProperties(
             Map.of("spring.datasource.url", url,
                 "spring.datasource.username", username,
                 "spring.datasource.password", password,
@@ -86,7 +76,7 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
         if (type.contains("mssql")) {
             url = url + ";encrypt=false;"; //turn off SSL similarly to springboot (method above)
         }
-        getIntegrationBuilder().addToProperties(
+        getIntegrationBuilder().addToApplicationProperties(
             Map.of(
                 "quarkus.datasource.db-kind", type,
                 "quarkus.datasource.jdbc.url", url,
@@ -102,17 +92,6 @@ public class DataSourceCustomizer extends ProductsCustomizer implements Integrat
         } else {
             getIntegrationBuilder().dependencies(dbDependencies);
         }
-    }
-
-    @Override
-    public void customizeIntegration(IntegrationSpec integrationSpec) {
-        final Traits traits = integrationSpec.getTraits() == null ? new Traits() : integrationSpec.getTraits();
-        final Builder builder = traits.getBuilder() == null ? new Builder() : traits.getBuilder();
-        final List<String> properties = builder.getProperties() == null ? new ArrayList<>() : builder.getProperties();
-        properties.add("quarkus.datasource.db-kind=" + type);
-        builder.setProperties(properties);
-        traits.setBuilder(builder);
-        integrationSpec.setTraits(traits);
     }
 
     private String[] getDbAllocatorDependencies() {

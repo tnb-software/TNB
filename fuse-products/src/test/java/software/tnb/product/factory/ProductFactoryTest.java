@@ -7,7 +7,6 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.product.Product;
 import software.tnb.product.ProductFactory;
-import software.tnb.product.ck.CamelK;
 import software.tnb.product.cq.LocalCamelQuarkus;
 import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.csb.LocalCamelSpringBoot;
@@ -46,8 +45,7 @@ public class ProductFactoryTest extends TestParent {
             Arguments.of("camelspringboot", false, LocalCamelSpringBoot.class),
             Arguments.of("camelspringboot", true, OpenshiftCamelSpringBoot.class),
             Arguments.of("camelquarkus", false, LocalCamelQuarkus.class),
-            Arguments.of("camelquarkus", true, OpenshiftCamelQuarkus.class),
-            Arguments.of("camelk", true, CamelK.class)
+            Arguments.of("camelquarkus", true, OpenshiftCamelQuarkus.class)
         );
     }
 

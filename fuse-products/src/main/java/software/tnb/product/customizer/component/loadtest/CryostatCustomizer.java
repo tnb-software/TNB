@@ -12,10 +12,6 @@ public class CryostatCustomizer extends ProductsCustomizer {
         , "com.sun.management.jmxremote.ssl", "false");
 
     @Override
-    public void customizeCamelK() {
-    }
-
-    @Override
     public void customizeQuarkus() {
         addJmxArgs();
     }

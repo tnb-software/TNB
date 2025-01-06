@@ -21,19 +21,18 @@ public class CustomizerTest extends TestParent {
     @EnumSource(Customizers.class)
     public void shouldNotRunForDifferentProductTest(Customizers cs) {
         switch (cs) {
-            case CAMELK:
             case SPRINGBOOT:
                 setProduct(ProductType.CAMEL_QUARKUS);
                 break;
             case QUARKUS:
-                setProduct(ProductType.CAMEL_K);
+                setProduct(ProductType.CAMEL_SPRINGBOOT);
                 break;
             default:
                 throw new IllegalArgumentException("Implement new switch case for " + cs.name());
         }
 
         IntegrationBuilder ib = dummyIb();
-        Customizer c = cs.customize(i -> i.addToProperties("key", "value"));
+        Customizer c = cs.customize(i -> i.addToApplicationProperties("key", "value"));
         c.setIntegrationBuilder(ib);
         c.doCustomize();
         assertThat(ib.getApplicationProperties()).isEmpty();
@@ -43,9 +42,6 @@ public class CustomizerTest extends TestParent {
     @EnumSource(Customizers.class)
     public void shouldRunForGivenProduct(Customizers cs) {
         switch (cs) {
-            case CAMELK:
-                setProduct(ProductType.CAMEL_K);
-                break;
             case SPRINGBOOT:
                 setProduct(ProductType.CAMEL_SPRINGBOOT);
                 break;
@@ -57,7 +53,7 @@ public class CustomizerTest extends TestParent {
         }
 
         IntegrationBuilder ib = dummyIb();
-        Customizer c = cs.customize(i -> i.addToProperties("key", "value"));
+        Customizer c = cs.customize(i -> i.addToApplicationProperties("key", "value"));
         c.setIntegrationBuilder(ib);
         c.doCustomize();
         assertThat(ib.getApplicationProperties()).isEqualTo(Map.of("key", "value"));
@@ -69,18 +65,13 @@ public class CustomizerTest extends TestParent {
         setProduct(type);
         Customizer c = new ProductsCustomizer() {
             @Override
-            public void customizeCamelK() {
-                getIntegrationBuilder().addToProperties("key", type.name());
-            }
-
-            @Override
             public void customizeQuarkus() {
-                getIntegrationBuilder().addToProperties("key", type.name());
+                getIntegrationBuilder().addToApplicationProperties("key", type.name());
             }
 
             @Override
             public void customizeSpringboot() {
-                getIntegrationBuilder().addToProperties("key", type.name());
+                getIntegrationBuilder().addToApplicationProperties("key", type.name());
             }
         };
         IntegrationBuilder ib = dummyIb();

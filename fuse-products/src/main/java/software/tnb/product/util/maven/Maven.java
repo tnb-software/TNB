@@ -279,11 +279,6 @@ public class Maven {
             p.setPluginRepositories(Collections.singletonList(r));
 
             settings.setProfiles(Collections.singletonList(p));
-
-            if (TestConfiguration.product() == ProductType.CAMEL_K) {
-                // For camel-k also activate that profile
-                settings.addActiveProfile(TestConfiguration.mavenRepositoryId());
-            }
         }
         File out = TestConfiguration.appLocation().resolve(TestConfiguration.mavenSettingsFileName()).toFile();
         try (OutputStream os = new FileOutputStream(out)) {

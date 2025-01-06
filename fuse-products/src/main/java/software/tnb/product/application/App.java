@@ -38,8 +38,6 @@ public abstract class App {
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     protected AbstractIntegrationBuilder<?> integrationBuilder;
-    // Integrations for camel-k can be created without integration builder object, therefore keeping track also of "name" only
-    protected String name;
     protected final String logFilePrefix;
     protected Log log;
     protected LogStream logStream;
@@ -55,12 +53,11 @@ public abstract class App {
     }
 
     protected App(String name) {
-        this.name = name;
-        ensureDirNotPresent();
+        ensureDirNotPresent(name);
         logFilePrefix = name + "-" + new Date().getTime() + "-";
     }
 
-    private void ensureDirNotPresent() {
+    private void ensureDirNotPresent(String name) {
         final File target = TestConfiguration.appLocation().resolve(name).toFile();
         if (target.exists()) {
             try {
@@ -93,7 +90,7 @@ public abstract class App {
     }
 
     public String getName() {
-        return name;
+        return integrationBuilder.getIntegrationName();
     }
 
     public Path getLogPath(Phase phase) {
@@ -106,7 +103,8 @@ public abstract class App {
 
     public void waitUntilReady() {
         if (shouldRun()) {
-            WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
+            WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L,
+                "Waiting until the integration " + getName() + " is running");
             started = true;
         }
     }
@@ -116,7 +114,7 @@ public abstract class App {
     }
 
     protected void customizePlugins(List<Plugin> mavenPlugins) {
-        File pom = TestConfiguration.appLocation().resolve(name).resolve("pom.xml").toFile();
+        File pom = TestConfiguration.appLocation().resolve(getName()).resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
         if (model.getBuild() != null && model.getBuild().getPlugins() != null) {
@@ -145,7 +143,7 @@ public abstract class App {
             camelInPath = true;
         }
 
-        LOG.info("Creating Camel Quarkus application project for integration {} using Camel JBang", name);
+        LOG.info("Creating Camel Quarkus application project for integration {} using Camel JBang", getName());
 
         final Path appDir = IntegrationGenerator.createApplicationDirectory(integrationBuilder);
 
@@ -156,7 +154,7 @@ public abstract class App {
         List<String> command = new ArrayList<>(List.of(
             "camel", "export",
             "--kamelets-version", TestConfiguration.kameletsVersion(),
-            "--gav", TestConfiguration.appGroupId() + ":" + name + ":" + TestConfiguration.appVersion(),
+            "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
             "--logging", "true"
         ));
@@ -197,12 +195,12 @@ public abstract class App {
         int exitCode = -1;
         boolean hasExited;
         File logFile = new File(getLogPath(Phase.GENERATE).toAbsolutePath().toString());
-        LogStream generateLogStream = new FileLogStream(logFile.toPath(), LogStream.marker(name, Phase.GENERATE));
+        LogStream generateLogStream = new FileLogStream(logFile.toPath(), LogStream.marker(getName(), Phase.GENERATE));
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
             pb.redirectOutput(logFile);
             pb.redirectErrorStream(true);
-            pb.directory(TestConfiguration.appLocation().resolve(name).toFile());
+            pb.directory(TestConfiguration.appLocation().resolve(getName()).toFile());
             final Process process = pb.start();
             hasExited = process.waitFor(1, TimeUnit.HOURS);
             if (hasExited) {
