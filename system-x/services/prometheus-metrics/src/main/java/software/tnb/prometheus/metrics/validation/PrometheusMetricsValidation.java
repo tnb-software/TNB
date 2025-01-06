@@ -170,10 +170,6 @@ public class PrometheusMetricsValidation implements Validation {
         return executeQueryRangeSingleMetricWithVector(metric.query, start, end, step, nodeName);
     }
 
-    public List<InstantValue> executeQuery(CamelKMetric metric, String podName) {
-        return executeQueryToGetVector(metric.query, targetNamespace, podName);
-    }
-
         /**
      * Executes a generic query using <i>query_range</i> request and returning a vector
      * 
@@ -282,25 +278,6 @@ public class PrometheusMetricsValidation implements Validation {
         String query;
 
         PodMetric(String query) {
-            this.query = query;
-        }
-    }
-
-    public enum CamelKMetric {
-        BUILD_DURATION_SEC_COUNT("camel_k_build_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
-        BUILD_DURATION_SEC_SUM("camel_k_build_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
-        BUILD_QUEUE_DURATION_SEC_COUNT("camel_k_build_queue_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
-        BUILD_QUEUE_DURATION_SEC_SUM("camel_k_build_queue_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
-        BUILD_RECOVERY_ATTEMPTS_COUNT("camel_k_build_recovery_attempts_count{namespace=\"%s\",pod=\"%s\"}"),
-        BUILD_RECOVERY_ATTEMPTS_SUM("camel_k_build_recovery_attempts_sum{namespace=\"%s\",pod=\"%s\"}"),
-        INTEGRATION_FIRST_READINESS_SEC_COUNT("camel_k_integration_first_readiness_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
-        INTEGRATION_FIRST_READINESS_SEC_SUM("camel_k_integration_first_readiness_seconds_sum{namespace=\"%s\",pod=\"%s\"}"),
-        RECONCILIATION_DURATION_SEC_COUNT("camel_k_reconciliation_duration_seconds_count{namespace=\"%s\",pod=\"%s\"}"),
-        RECONCILIATION_DURATION_SEC_SUM("camel_k_reconciliation_duration_seconds_sum{namespace=\"%s\",pod=\"%s\"}");
-
-        String query;
-        
-        CamelKMetric(String query) {
             this.query = query;
         }
     }

@@ -25,8 +25,6 @@ for creating integrations on all products (so there are methods related to every
   - it is possible to instantiate it via [IntegrationBuilder](src/main/java/software/tnb/product/integration/builder/IntegrationBuilder.java) class
 - AbstractGitIntegrationBuilder
 - AbstractMavenGitIntegrationBuilder
-- [CamelKIntegrationBuilder](src/main/java/software/tnb/product/ck/integration/builder/CamelKIntegrationBuilder.java)
-that extends `AbstractIntegrationBuilder` and adds methods related to camel-k only
 - [SpringBootIntegrationBuilder](src/main/java/software/tnb/product/csb/integration/builder/SpringBootIntegrationBuilder.java)
   that extends `AbstractIntegrationBuilder` and adds methods related to camel on springboot only
 
@@ -37,14 +35,13 @@ Again, there are multiple customizers you can use:
 - [ProductsCustomizer](src/main/java/software/tnb/product/customizer/ProductsCustomizer.java) - when you want to do modifications for two
 or more products
 - [SpringBootCustomizer](src/main/java/software/tnb/product/csb/customizer/SpringbootCustomizer.java),
-[QuarkusCustomizer](src/main/java/software/tnb/product/cq/customizer/QuarkusCustomizer.java),
-[CamelKCustomizer](src/main/java/software/tnb/product/ck/customizer/CamelKCustomizer.java) to do the change only for specific product
+[QuarkusCustomizer](src/main/java/software/tnb/product/cq/customizer/QuarkusCustomizer.java)
 
-Instead of creating `new SpringBoot|Quarkus|CamelK customizers`, you can use
+Instead of creating `new SpringBoot|Quarkus customizers`, you can use
 [Customizers](src/main/java/software/tnb/product/customizer/Customizers.java) enum, for example:
 
 ```java
-Customizers.CAMELK.customize(ib -> ...)
+Customizers.QUARKUS.customize(ib -> ...)
 ```
 
 There are also customizer implementations for common modifications needed for a given product. You can check them out in `customizer` sub-package
@@ -59,8 +56,6 @@ The integrations are created differently for each product:
 - `camel quarkus`:
     - an application skeleton is generated from the `io.quarkus:quarkus-maven-plugin:<version>:create` maven plugin
     - the `integration code` is dumped as a `java file` in the app skeleton
-- `camel-k`:
-    - the `integration code` is dumped as a `String` and the integration is created as the `Integration` object in OpenShift
 
 All products are implementing [JUnit 5 extensions](https://junit.org/junit5/docs/current/user-guide/#extensions) so creating a fuse product in your
 test is as simple as adding following piece of code:
@@ -70,14 +65,16 @@ test is as simple as adding following piece of code:
 public static Product product = ProductFactory.create();
 ```
 
-In this case a correct product instance is determined based on system property `fuse.product` (camelspringboot, camelquarkus, camelk)
+In this case a correct product instance is determined based on system property `fuse.product` (camelspringboot, camelquarkus)
 and based on `openshift.url` property presence (determines if the deployment is local or openshift)
 
 If you want a specific instance of a given fuse product, you can use:
 
 ```java
+import software.tnb.product.cq.LocalCamelQuarkus;
+
 @RegisterExtension
-public static CamelK camelk = ProductFactory.create(CamelK.class);
+public static LocalCamelQuarkus cq = ProductFactory.create(LocalCamelQuarkus.class);
 ```
 
-for example to test features specific to Camel-K only.
+for example to test features specific to Camel-Quarkus only.

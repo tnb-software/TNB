@@ -58,7 +58,7 @@ public class RunConditions implements ExecutionCondition {
         getCurrentElementAnnotation(context, RunOn.class).ifPresent(annotations::add);
 
         // If there are no annotations and the current element isn't a test method (e.g. is a test class), search the annotation in parent classes
-        // This enables to have @CamelKOnly annotation in CamelKTestSuiteParent and you don't have to add it to every class extending the parent
+        // This enables to have @SpringBootOnly annotation in test suite parent and you don't have to add it to every class extending the parent
         if (annotations.isEmpty() && context.getTestMethod().isEmpty()) {
             try {
                 Field f = Class.forName("org.junit.jupiter.engine.descriptor.AbstractExtensionContext").getDeclaredField("testDescriptor");
