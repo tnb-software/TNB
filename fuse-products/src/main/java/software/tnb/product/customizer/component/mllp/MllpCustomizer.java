@@ -11,11 +11,6 @@ public class MllpCustomizer extends ProductsCustomizer {
     }
 
     @Override
-    public void customizeCamelK() {
-        customizeCEQAndCK();
-    }
-
-    @Override
     public void customizeQuarkus() {
         customizeCEQAndCK();
     }
@@ -26,6 +21,6 @@ public class MllpCustomizer extends ProductsCustomizer {
     }
 
     private void customizeCEQAndCK() {
-        this.getIntegrationBuilder().addToProperties("quarkus.openshift.ports.\"ports\".container-port", String.valueOf(mllpPort));
+        this.getIntegrationBuilder().addToApplicationProperties("quarkus.openshift.ports.\"ports\".container-port", String.valueOf(mllpPort));
     }
 }

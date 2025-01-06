@@ -12,7 +12,7 @@ public class PlainQuarkusApp extends OpenshiftQuarkusApp {
     @Override
     public void waitUntilReady() {
         if (shouldRun()) {
-            WaitUtils.waitFor(() -> isReady(), this::isFailed, 1000L, "Waiting until the integration " + name + " is running");
+            WaitUtils.waitFor(this::isReady, this::isFailed, 1000L, "Waiting until the integration " + getName() + " is running");
             started = true;
         }
     }

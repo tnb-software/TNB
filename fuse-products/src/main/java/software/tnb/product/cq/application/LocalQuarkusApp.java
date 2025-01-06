@@ -52,7 +52,7 @@ public class LocalQuarkusApp extends QuarkusApp {
         Path logFile = getLogPath();
         ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
-        LOG.info("Starting integration {}", name);
+        LOG.info("Starting integration {}", getName());
         try {
             appProcess = processBuilder.start();
         } catch (IOException e) {
@@ -61,7 +61,7 @@ public class LocalQuarkusApp extends QuarkusApp {
         WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
 
         log = new FileLog(logFile);
-        logStream = new FileLogStream(logFile, LogStream.marker(name, Phase.RUN));
+        logStream = new FileLogStream(logFile, LogStream.marker(getName(), Phase.RUN));
 
         if (TestConfiguration.appDebug()) {
             LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
@@ -80,7 +80,7 @@ public class LocalQuarkusApp extends QuarkusApp {
         }
 
         if (appProcess != null) {
-            LOG.info("Stopping integration {}", name);
+            LOG.info("Stopping integration {}", getName());
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
@@ -107,11 +107,11 @@ public class LocalQuarkusApp extends QuarkusApp {
     private List<String> getCommand() {
         List<String> cmd = new ArrayList<>();
         String fileName;
-        Path appDir = TestConfiguration.appLocation().resolve(name).toAbsolutePath();
+        Path appDir = TestConfiguration.appLocation().resolve(getName()).toAbsolutePath();
         Path integrationTarget = appDir.resolve("target");
 
         if (QuarkusConfiguration.isQuarkusNative()) {
-            fileName = integrationTarget.resolve(name + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
+            fileName = integrationTarget.resolve(getName() + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
             cmd.add(fileName);
             cmd.addAll(systemProperties());
         } else {

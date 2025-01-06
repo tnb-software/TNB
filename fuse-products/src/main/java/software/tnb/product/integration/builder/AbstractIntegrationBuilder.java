@@ -471,7 +471,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     /**
      * Gets the route builder compilation unit.
      * <p>
-     * The RB may be null in case the integration is loaded from string (Camel-K), or from XML file (CSB)
+     * The RB may be null in case the integration is loaded from XML file (CSB)
      *
      * @return optional
      */

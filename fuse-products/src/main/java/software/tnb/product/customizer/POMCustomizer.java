@@ -29,8 +29,4 @@ public abstract class POMCustomizer extends ProductsCustomizer {
     public abstract void customizeQuarkus(Model pom);
 
     public abstract void customizeSpringboot(Model pom);
-
-    @Override
-    public void customizeCamelK() {
-    }
 }

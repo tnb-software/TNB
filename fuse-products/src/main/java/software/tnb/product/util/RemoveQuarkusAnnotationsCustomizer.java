@@ -33,11 +33,6 @@ public class RemoveQuarkusAnnotationsCustomizer extends ProductsCustomizer {
     }
 
     @Override
-    public void customizeCamelK() {
-        removeAnnotation();
-    }
-
-    @Override
     public void customizeQuarkus() {
         // no-op
     }

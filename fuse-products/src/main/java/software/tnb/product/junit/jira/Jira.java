@@ -16,7 +16,7 @@ import java.lang.annotation.Target;
  * <p>
  * You can use multiple jira annotations on one class / method:
  * \@Jira(configuration = ProductConfiguration.QUARKUS_NATIVE, keys = {"ENTESB-1", "ENTESB-2"})
- * \@Jira(configuration = ProductConfiguration.CAMEL_K, keys = {"ENTESB-3", "ENTESB-4"})
+ * \@Jira(configuration = ProductConfiguration.SPRINGBOOT, keys = {"ENTESB-3", "ENTESB-4"})
  * <p>
  * All jira annotations for given class / method are then stored automatically in {@link Jiras} annotation
  */

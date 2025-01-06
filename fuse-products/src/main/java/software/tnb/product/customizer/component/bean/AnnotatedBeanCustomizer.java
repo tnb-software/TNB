@@ -9,15 +9,10 @@ import com.github.javaparser.ast.CompilationUnit;
 import java.util.List;
 
 public class AnnotatedBeanCustomizer extends ProductsCustomizer {
-    private Class<?>[] classes;
+    private final Class<?>[] classes;
 
     public AnnotatedBeanCustomizer(Class<?>... classes) {
         this.classes = classes;
-    }
-
-    @Override
-    public void customizeCamelK() {
-        customizeQuarkus();
     }
 
     @Override

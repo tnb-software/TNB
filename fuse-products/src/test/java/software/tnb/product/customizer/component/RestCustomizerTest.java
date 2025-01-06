@@ -4,14 +4,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.ck.customizer.IntegrationSpecCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
 
-import org.apache.camel.v1.IntegrationSpec;
 import org.apache.maven.model.Dependency;
 
 import java.util.Map;
@@ -26,21 +24,6 @@ public class RestCustomizerTest extends ProductCustomizerTestParent {
             .isEqualTo(Map.of("quarkus.camel.servlet.url-patterns", "/camel/*", "quarkus.openshift.route.expose", "true"));
         assertThat(ib.getDependencies()).hasSize(1);
         assertThat(ib.getDependencies().get(0).getArtifactId()).contains("rest");
-    }
-
-    @Override
-    public void validateCamelK() {
-        customizer.doCustomize();
-
-        assertThat(ib.getApplicationProperties())
-            .isEqualTo(Map.of("quarkus.camel.servlet.url-patterns", "/camel/*", "quarkus.openshift.route.expose", "true"));
-        assertThat(ib.getDependencies()).hasSize(1);
-        assertThat(ib.getDependencies().get(0).getArtifactId()).contains("rest");
-
-        IntegrationSpec spec = new IntegrationSpec();
-        ((IntegrationSpecCustomizer) customizer).customizeIntegration(spec);
-
-        assertThat(spec.getTraits().getBuilder().getProperties()).isNotNull().hasSize(1).contains("quarkus.camel.servlet.url-patterns=/camel/*");
     }
 
     @Override

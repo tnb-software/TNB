@@ -38,12 +38,12 @@ public class LocalSpringBootApp extends SpringBootApp {
             args = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getJavaProperties().entrySet()
                 .stream().map(e -> "-D" + e.getKey() + "=" + e.getValue()).collect(Collectors.toList());
             jarName = existingJarPath != null ? existingJarPath.getFileName().toString()
-                : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(name);
+                : mavenGitApp.getFinalName().map(n -> n + ".jar").orElse(getName());
             projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : mavenGitApp.getProjectLocation();
         } else {
             args = systemProperties();
-            jarName = existingJarPath != null ? existingJarPath.getFileName().toString() : name + "-1.0.0-SNAPSHOT.jar";
-            projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : TestConfiguration.appLocation().resolve(name);
+            jarName = existingJarPath != null ? existingJarPath.getFileName().toString() : getName() + "-1.0.0-SNAPSHOT.jar";
+            projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : TestConfiguration.appLocation().resolve(getName());
         }
 
         Path integrationTarget = projectPath.resolve("target");
@@ -80,7 +80,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             Path logFile = getLogPath();
             ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
-            LOG.info("Starting integration {}", name);
+            LOG.info("Starting integration {}", getName());
             try {
                 appProcess = processBuilder.start();
             } catch (IOException e) {
@@ -89,7 +89,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
 
             log = new FileLog(logFile);
-            logStream = new FileLogStream(logFile, LogStream.marker(name));
+            logStream = new FileLogStream(logFile, LogStream.marker(getName()));
 
             if (TestConfiguration.appDebug()) {
                 LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
@@ -109,7 +109,7 @@ public class LocalSpringBootApp extends SpringBootApp {
         }
 
         if (appProcess != null) {
-            LOG.info("Stopping integration {}", name);
+            LOG.info("Stopping integration {}", getName());
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();

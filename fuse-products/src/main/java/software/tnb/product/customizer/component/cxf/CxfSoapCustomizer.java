@@ -7,10 +7,6 @@ import software.tnb.product.util.maven.Maven;
 public class CxfSoapCustomizer extends ProductsCustomizer {
 
     @Override
-    public void customizeCamelK() {
-    }
-
-    @Override
     public void customizeQuarkus() {
     }
 

@@ -17,13 +17,8 @@ public class MongoDBCustomizer extends ProductsCustomizer {
     }
 
     @Override
-    public void customizeCamelK() {
-        customizeQuarkus();
-    }
-
-    @Override
     public void customizeQuarkus() {
-        getIntegrationBuilder().addToProperties("quarkus.mongodb.connection-string", replicaSetUrl);
+        getIntegrationBuilder().addToApplicationProperties("quarkus.mongodb.connection-string", replicaSetUrl);
     }
 
     /**

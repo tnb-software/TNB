@@ -17,17 +17,12 @@ public class PahoCustomizer extends ProductsCustomizer {
     }
 
     @Override
-    public void customizeCamelK() {
-        customizeCEQAndCK();
-    }
-
-    @Override
     public void customizeQuarkus() {
         customizeCEQAndCK();
     }
 
     private void customizeCEQAndCK() {
-        getIntegrationBuilder().addToProperties(Map.of(
+        getIntegrationBuilder().addToApplicationProperties(Map.of(
             "camel.component.paho.username", username,
             "camel.component.paho.password", password,
             "paho.broker.tcp.url", brokerUrl
@@ -36,7 +31,7 @@ public class PahoCustomizer extends ProductsCustomizer {
 
     @Override
     public void customizeSpringboot() {
-        getIntegrationBuilder().addToProperties(Map.of(
+        getIntegrationBuilder().addToApplicationProperties(Map.of(
             "camel.component.paho.user-name", username,
             "camel.component.paho.password", password,
             "camel.component.paho.broker-url", brokerUrl

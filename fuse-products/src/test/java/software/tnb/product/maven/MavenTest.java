@@ -83,9 +83,6 @@ public class MavenTest extends TestParent {
                 verifyDependency(d, "org.apache.camel.springboot", "camel-" + component + "-starter", null);
                 break;
             case CAMEL_QUARKUS:
-            case CAMEL_K:
-                verifyDependency(d, "org.apache.camel.quarkus", "camel-quarkus-" + component, null);
-                break;
             case CXF_QUARKUS:
                 //CXF_QUARKUS doesn't use Camel
                 break;
@@ -149,17 +146,6 @@ public class MavenTest extends TestParent {
         assertThat(r.getUrl()).isEqualTo(repo);
         assertThat(r.getReleases().isEnabled()).isTrue();
         assertThat(r.getSnapshots().isEnabled()).isTrue();
-    }
-
-    @Test
-    public void shouldActivateProfileForCamelKTest() {
-        setProduct(ProductType.CAMEL_K);
-        System.setProperty(TestConfiguration.MAVEN_REPOSITORY, "http://example.com");
-
-        Settings settings = createSettings();
-
-        assertThat(settings.getActiveProfiles()).hasSize(1);
-        assertThat(settings.getActiveProfiles()).contains(TestConfiguration.mavenRepositoryId());
     }
 
     private Settings createSettings() {

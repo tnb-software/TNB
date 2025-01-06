@@ -6,9 +6,6 @@ public abstract class ProductsCustomizer extends Customizer {
     @Override
     public void customize() {
         switch (TestConfiguration.product()) {
-            case CAMEL_K:
-                customizeCamelK();
-                break;
             case CAMEL_QUARKUS:
             case CXF_QUARKUS:
                 customizeQuarkus();
@@ -20,8 +17,6 @@ public abstract class ProductsCustomizer extends Customizer {
                 throw new IllegalArgumentException("Implement a branch for new product in ProductsCustomizer");
         }
     }
-
-    public abstract void customizeCamelK();
 
     public abstract void customizeQuarkus();
 

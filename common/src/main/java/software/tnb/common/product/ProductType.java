@@ -2,7 +2,6 @@ package software.tnb.common.product;
 
 public enum ProductType {
     CAMEL_QUARKUS("camelquarkus"),
-    CAMEL_K("camelk"),
     CAMEL_SPRINGBOOT("camelspringboot"),
     CXF_QUARKUS("cxfquarkus");
 

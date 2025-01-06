@@ -19,7 +19,6 @@
         <maven.invoker.version>3.2.0</maven.invoker.version>
         <maven.model.version>3.9.0</maven.model.version>
         <junit-launcher.version>1.11.0</junit-launcher.version>
-        <camel-k-crds.version>2.2.0</camel-k-crds.version>
     </properties>
 
     <dependencies>
@@ -69,17 +68,6 @@
             <version>${javaparser.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.apache.camel.k</groupId>
-            <artifactId>camel-k-crds</artifactId>
-            <version>${camel-k-crds.version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.fabric8</groupId>
-                    <artifactId>kubernetes-client</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-        <dependency>
             <groupId>org.eclipse.jgit</groupId>
             <artifactId>org.eclipse.jgit</artifactId>
             <version>${jgit.version}</version>
@@ -99,12 +87,6 @@
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
             <version>${assertj.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>io.fabric8</groupId>
-            <artifactId>openshift-server-mock</artifactId>
-            <version>${kubernetes.client.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
