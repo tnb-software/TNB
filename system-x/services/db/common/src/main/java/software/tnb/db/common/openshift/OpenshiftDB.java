@@ -5,20 +5,23 @@ import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
-import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.db.common.service.SQL;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.SecurityContext;
 import io.fabric8.kubernetes.api.model.SecurityContextBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.LocalPortForward;
 
 public class OpenshiftDB implements OpenshiftDeployable, WithName {
@@ -43,52 +46,39 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
             OpenshiftClient.get().createSecurityContext(getSccName(), "restricted"),
             "system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
 
-        //@formatter:off
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-
-            new DeploymentBuilder()
-                .withNewMetadata()
-                    .withName(name())
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                    .editOrNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .withNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(sqlService.image())
-                                .withSecurityContext(getSecurityContext())
-                                .addNewPort()
-                                    .withContainerPort(port)
-                                    .withName(name())
-                                .endPort()
-                                .withImagePullPolicy("IfNotPresent")
-                                .withEnv(MapUtils.toEnvVars(sqlService.containerEnvironment()))
-                                .withNewReadinessProbe()
-                                    .withNewTcpSocket()
-                                        .withNewPort(name())
-                                    .endTcpSocket()
-                                    .withInitialDelaySeconds(5)
-                                    .withTimeoutSeconds(5)
-                                    .withFailureThreshold(6)
-                                .endReadinessProbe()
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build()
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(port).build()
         );
-        //@formatter:on
 
         //@formatter:off
-        OpenshiftClient.get().services().createOrReplace(
+        Probe probe = new ProbeBuilder()
+            .withNewTcpSocket()
+                .withNewPort(name())
+            .endTcpSocket()
+            .withInitialDelaySeconds(5)
+            .withTimeoutSeconds(5)
+            .withFailureThreshold(6)
+            .build();
+
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", sqlService.image(),
+            "env", sqlService.containerEnvironment(),
+            "ports", ports,
+            "readinessProbe", probe
+        ), builder -> builder
+            .editSpec()
+                .editTemplate()
+                    .editSpec()
+                        .editContainer(0)
+                            .withNewSecurityContextLike(getSecurityContext()).endSecurityContext()
+                        .endContainer()
+                    .endSpec()
+                .endTemplate()
+            .endSpec()
+        );
+
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .withNewMetadata()
                     .withName(name())
@@ -103,7 +93,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
                     .endPort()
                 .endSpec()
             .build()
-        );
+        ).serverSideApply();
         //@formatter:on
     }
 
@@ -145,8 +135,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
 
     @Override
     public boolean isDeployed() {
-        final Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

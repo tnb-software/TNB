@@ -20,20 +20,15 @@ import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
-import io.fabric8.kubernetes.api.model.ObjectReferenceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.TCPSocketActionBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
-import io.fabric8.openshift.api.model.DeploymentConfig;
-import io.fabric8.openshift.api.model.DeploymentConfigBuilder;
-import io.fabric8.openshift.api.model.DeploymentTriggerImageChangeParams;
-import io.fabric8.openshift.api.model.ImageStream;
-import io.fabric8.openshift.api.model.ImageStreamBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePortBuilder;
 import io.fabric8.openshift.api.model.RouteSpecBuilder;
@@ -51,11 +46,9 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
         OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting service");
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        LOG.debug("Deleting deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().withName(name()).delete();
+        LOG.debug("Deleting deployment {}", name());
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-        LOG.debug("Deleting image stream");
-        OpenshiftClient.get().imageStreams().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
     }
 
     @Override
@@ -77,74 +70,22 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
             .map(e -> new ContainerPortBuilder().withName(e.getKey()).withContainerPort(e.getValue()).withProtocol("TCP").build())
             .collect(Collectors.toList());
 
-        // @formatter:off
-
-        ImageStream imageStream = new ImageStreamBuilder()
-            .withNewMetadata()
-            .withName(name())
-            .endMetadata()
-            .withNewSpec()
-            .addNewTag()
-            .withName("latest")
-            .withFrom(new ObjectReferenceBuilder().withKind("DockerImage").withName(image()).build())
-            .endTag()
-            .endSpec()
+        final Probe probe = new ProbeBuilder()
+            .withTcpSocket(new TCPSocketActionBuilder().withPort(new IntOrString(getPort())).build())
+            .withTimeoutSeconds(10)
             .build();
 
-        OpenshiftClient.get().imageStreams().createOrReplace(imageStream);
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", getEnv(),
+            "ports", containerPorts,
+            "args", Arrays.stream(startupParams()).toList(),
+            "livenessProbe", probe,
+            "readinessProbe", probe
+        ));
 
-        LOG.debug("Creating deploymentconfig {}", name());
-        OpenshiftClient.get().deploymentConfigs().createOrReplace(
-            new DeploymentConfigBuilder()
-                .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .withReplicas(1)
-                .editOrNewTemplate()
-                .editOrNewMetadata()
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .addNewContainer()
-                .withName(name())
-                .withArgs(startupParams())
-                .withImagePullPolicy("IfNotPresent")
-                .addAllToPorts(containerPorts)
-                .addAllToEnv(getEnv().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                    .collect(Collectors.toList()))
-                .withLivenessProbe(new ProbeBuilder()
-                    .editOrNewTcpSocket()
-                    .withPort(new IntOrString(getPort()))
-                    .endTcpSocket()
-                    .withInitialDelaySeconds(10)
-                    .build())
-                .withReadinessProbe(new ProbeBuilder()
-                    .editOrNewTcpSocket()
-                    .withPort(new IntOrString(getPort()))
-                    .endTcpSocket()
-                    .withInitialDelaySeconds(10)
-                    .build())
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .addNewTrigger()
-                .withType("ConfigChange")
-                .endTrigger()
-                .addNewTrigger()
-                .withType("ImageChange")
-                .withImageChangeParams(
-                    new DeploymentTriggerImageChangeParams(true, Arrays.asList(name()),
-                        new ObjectReferenceBuilder().withKind("ImageStreamTag").withName(name() + ":latest").build()
-                        , null)
-                )
-                .endTrigger()
-                .endSpec()
-                .build()
-        );
-
+        // @formatter:off
         ports.forEach((key, value) -> {
             ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
@@ -155,19 +96,26 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
                 .build());
 
             LOG.debug("Creating service {}", key);
-            OpenshiftClient.get().services().createOrReplace(
+            OpenshiftClient.get().services().resource(
                 new ServiceBuilder()
                     .editOrNewMetadata()
-                    .withName(key)
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                        .withName(key)
+                        .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                     .endMetadata()
-                    .editOrNewSpecLike(serviceSpecBuilder.build())
+                    .editOrNewSpec()
+                        .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                        .addToPorts(new ServicePortBuilder()
+                            .withName(key)
+                            .withPort(value)
+                            .withTargetPort(new IntOrString(value))
+                            .build()
+                        )
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
 
             LOG.debug("Creating route {}", key);
-            OpenshiftClient.get().routes().createOrReplace(
+            OpenshiftClient.get().routes().resource(
                 new RouteBuilder()
                     .editOrNewMetadata()
                     .withName(key)
@@ -184,9 +132,8 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
                         .build())
                     .endSpec()
                     .build()
-            );
+            ).serverSideApply();
         });
-
         // @formatter:on
     }
 
@@ -199,8 +146,7 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
 
     @Override
     public boolean isDeployed() {
-        final DeploymentConfig dc = OpenshiftClient.get().deploymentConfigs().withName(name()).get();
-        return dc != null && !dc.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

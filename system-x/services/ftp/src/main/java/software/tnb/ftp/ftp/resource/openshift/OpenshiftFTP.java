@@ -23,19 +23,17 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
-import io.fabric8.kubernetes.api.model.apps.Deployment;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 
 @AutoService(FTP.class)
@@ -56,31 +54,13 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
                 .withProtocol("TCP").build());
         }
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .editOrNewSelector()
-                .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endSelector()
-                .withReplicas(1)
-                .editOrNewTemplate()
-                .editOrNewMetadata()
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                .addNewContainer()
-                .withName(name()).withImage(image()).addAllToPorts(ports)
-                .withEnv(new EnvVar("USERS", containerEnvironment().get("USERS"), null))
-                .endContainer()
-                .endSpec()
-                .endTemplate()
-                .endSpec()
-                .build()
-        );
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", Map.of("USERS", containerEnvironment().get("USERS")),
+            "ports", ports
+        ));
 
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
 
@@ -92,16 +72,17 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
                 .build());
         }
 
-        OpenshiftClient.get().services().createOrReplace(
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .editOrNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .withName(name())
+                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
                 .editOrNewSpecLike(serviceSpecBuilder.build())
                 .endSpec()
                 .build()
-        );
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
@@ -132,8 +113,7 @@ public class OpenshiftFTP extends FTP implements OpenshiftDeployable, WithName, 
 
     @Override
     public boolean isDeployed() {
-        Deployment deployment = OpenshiftClient.get().apps().deployments().withName(name()).get();
-        return deployment != null && !deployment.isMarkedForDeletion();
+        return WithName.super.isDeployed();
     }
 
     @Override

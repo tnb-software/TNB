@@ -15,6 +15,7 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
@@ -24,11 +25,12 @@ import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
-import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.dsl.PodResource;
+import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(LocalStack.class)
 public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
@@ -63,74 +65,58 @@ public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployab
             .withName("main")
             .withContainerPort(PORT)
             .withProtocol("TCP").build());
-
-        // @formatter:off
-        LOG.debug("Creating deployment {}", name());
-        OpenshiftClient.get().apps().deployments().createOrReplace(
-            new DeploymentBuilder()
-                .editOrNewMetadata()
-                    .withName(name())
-                    .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addAllToPorts(ports)
-                                .addToVolumeMounts(new VolumeMountBuilder().withMountPath("/var/lib/localstack").withName("empty").build())
-                            .endContainer()
-                            .addToVolumes(new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName("empty").build())
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-                .build()
+        List<Volume> volumes = List.of(
+            new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName("empty").build()
+        );
+        List<VolumeMount> volumeMounts = List.of(
+            new VolumeMountBuilder().withMountPath("/var/lib/localstack").withName("empty").build()
         );
 
-        ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts
+        ));
 
-        serviceSpecBuilder.addToPorts(new ServicePortBuilder()
-            .withName(name())
-            .withPort(PORT)
-            .withTargetPort(new IntOrString(PORT))
-            .build());
-
+        // @formatter:off
         LOG.debug("Creating service {}", name());
-        OpenshiftClient.get().services().createOrReplace(
+        OpenshiftClient.get().services().resource(
             new ServiceBuilder()
                 .editOrNewMetadata()
                     .withName(name())
                     .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
-                .editOrNewSpecLike(serviceSpecBuilder.build())
+                .editOrNewSpec()
+                    .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                    .addToPorts(new ServicePortBuilder()
+                        .withName(name())
+                        .withPort(PORT)
+                        .withTargetPort(new IntOrString(PORT))
+                        .build()
+                    )
                 .endSpec()
                 .build()
-        );
+        ).serverSideApply();
 
         LOG.debug("Creating route {}", name());
-        OpenshiftClient.get().routes().createOrReplace(new io.fabric8.openshift.api.model.RouteBuilder()
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
                 .withNewTo()
-                .withKind("Service")
-                .withName(name())
-            .endTo()
-            .editOrNewPort()
-                .withTargetPort(new IntOrString(PORT))
-            .endPort()
+                   .withKind("Service")
+                    .withName(name())
+                .endTo()
+                .editOrNewPort()
+                    .withTargetPort(new IntOrString(PORT))
+                .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
         // @formatter:on
     }
 
@@ -142,8 +128,7 @@ public class OpenshiftLocalStack extends LocalStack implements OpenshiftDeployab
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-                .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override

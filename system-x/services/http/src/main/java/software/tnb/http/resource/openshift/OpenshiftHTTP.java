@@ -11,18 +11,17 @@ import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.EnvVar;
 import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(HTTP.class)
 public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, WithName {
@@ -69,35 +68,17 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                 .build()
             ).build();
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addAllToPorts(ports)
-                                .withLivenessProbe(probe)
-                                .withReadinessProbe(probe)
-                                .addToEnv(new EnvVar("LOG_IGNORE_PATH", "/live", null))
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build());
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", Map.of("LOG_IGNORE_PATH", "/live"),
+            "ports", ports,
+            "livenessProbe", probe,
+            "readinessProbe", probe
+        ));
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(HTTP_SVC)
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -111,9 +92,10 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                     .withTargetPort(new IntOrString(HTTP_PORT))
                 .endPort()
             .endSpec()
-        .build());
+            .build()
+        ).serverSideApply();
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(HTTPS_SVC)
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -127,14 +109,14 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
                     .withTargetPort(new IntOrString(HTTPS_PORT))
                 .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
         //@formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return !OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-                .getItems().isEmpty();
+        return WithName.super.isDeployed();
     }
 
     @Override

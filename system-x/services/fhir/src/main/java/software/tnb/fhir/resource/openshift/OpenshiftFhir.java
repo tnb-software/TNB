@@ -10,17 +10,21 @@ import software.tnb.fhir.service.Fhir;
 
 import com.google.auto.service.AutoService;
 
+import java.util.List;
+import java.util.Map;
 import java.util.function.Predicate;
-import java.util.stream.Collectors;
 
-import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 
 @AutoService(Fhir.class)
 public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname {
@@ -34,6 +38,9 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
 
     @Override
     public void create() {
+        List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
+        );
 
         final Probe probe = new ProbeBuilder()
             .editOrNewHttpGet()
@@ -44,47 +51,26 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
             .withTimeoutSeconds(5)
             .withFailureThreshold(10)
             .build();
+        List<Volume> volumes = List.of(
+            new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName("data").build()
+        );
+        List<VolumeMount> volumeMounts = List.of(
+            new VolumeMountBuilder().withMountPath("/app/target").withName("data").build()
+        );
 
-        OpenshiftClient.get().apps().deployments().createOrReplace(new DeploymentBuilder()
-            .withNewMetadata()
-                .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-                .editOrNewSpec()
-                    .withNewSelector()
-                        .addToMatchLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                    .endSelector()
-                    .withReplicas(1)
-                    .editOrNewTemplate()
-                        .editOrNewMetadata()
-                            .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                        .endMetadata()
-                        .editOrNewSpec()
-                            .addNewVolume()
-                                .withName("data").withNewEmptyDir().endEmptyDir()
-                            .endVolume()
-                            .addNewContainer()
-                                .withName(name())
-                                .withImage(image())
-                                .addNewPort()
-                                    .withContainerPort(PORT)
-                                    .withName(name())
-                                .endPort()
-                                .addAllToEnv(containerEnvironment().entrySet().stream().map(e -> new EnvVar(e.getKey(), e.getValue(), null))
-                                    .collect(Collectors.toList()))
-                                .withVolumeMounts(new VolumeMountBuilder()
-                                    .withName("data")
-                                    .withMountPath("/app/target")
-                                    .build())
-                                .withReadinessProbe(probe)
-                                .withLivenessProbe(probe)
-                            .endContainer()
-                        .endSpec()
-                    .endTemplate()
-                .endSpec()
-            .build());
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", containerEnvironment(),
+            "ports", ports,
+            "readinessProbe", probe,
+            "livenessProbe", probe,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts
+        ));
 
-        OpenshiftClient.get().services().createOrReplace(new ServiceBuilder()
+        // @formatter:off
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
@@ -96,15 +82,16 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
                     .withProtocol("TCP")
                     .withPort(PORT)
                     .withTargetPort(new IntOrString(PORT))
-            .endPort()
+                .endPort()
             .endSpec()
-            .build());
+            .build()
+        ).serverSideApply();
+        // @formatter:on
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).list()
-            .getItems().size() > 0;
+        return WithName.super.isDeployed();
     }
 
     @Override
