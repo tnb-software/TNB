@@ -1,4 +1,4 @@
-package software.tnb.certmanager.resource.opesnhift;
+package software.tnb.certmanager.resource.openshift;
 
 import software.tnb.certmanager.service.CertManager;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.util.Map;
-import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 
 import cz.xtf.core.openshift.helpers.ResourceParsers;
@@ -29,7 +28,6 @@ public class OpenshiftCertManager extends CertManager implements ReusableOpenshi
     public void undeploy() {
         OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-        deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("name", "cert-manager-operator").isEmpty());
     }
 
     /**
@@ -49,15 +47,9 @@ public class OpenshiftCertManager extends CertManager implements ReusableOpenshi
 
     @Override
     public void create() {
-        LOG.debug("Creating Cert Manager instance");
+        LOG.debug("Creating Cert Manager subscription");
         // Create subscription
         createSubscription();
-
-        WaitUtils.waitFor(() -> !OpenshiftClient.get()
-                .pods().inNamespace(targetNamespace())
-                .withLabel("name", "cert-manager-operator").list().getItems().isEmpty()
-            , "Wait for the operator has been installed");
-
     }
 
     @Override
@@ -69,7 +61,9 @@ public class OpenshiftCertManager extends CertManager implements ReusableOpenshi
 
     @Override
     public boolean isDeployed() {
-        return isReady();
+        return !OpenshiftClient.get()
+            .pods().inNamespace(targetNamespace())
+            .withLabel("name", "cert-manager-operator").list().getItems().isEmpty();
     }
 
     @Override
@@ -117,8 +111,4 @@ public class OpenshiftCertManager extends CertManager implements ReusableOpenshi
         return "openshift-cert-manager-operator";
     }
 
-    @Override
-    public void deleteSubscription(BooleanSupplier waitCondition) {
-        //want to keep the operator
-    }
 }

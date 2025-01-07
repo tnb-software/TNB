@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleRef;
 import io.fabric8.kubernetes.api.model.rbac.Subject;
+import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 public class CertManagerValidation implements Validation {
@@ -65,7 +66,7 @@ public class CertManagerValidation implements Validation {
                     "selfSigned", Map.of()
                 )))
                 .build()
-            ).create();
+            ).serverSideApply();
     }
 
     /**
@@ -106,7 +107,7 @@ public class CertManagerValidation implements Validation {
                 .endMetadata()
                 .withAdditionalProperties(spec)
                 .build()
-            ).create();
+            ).serverSideApply();
     }
 
     /**
@@ -122,7 +123,8 @@ public class CertManagerValidation implements Validation {
             .withNewMetadata().withName(serviceAccount).endMetadata()
             .withAutomountServiceAccountToken(false)
             .build();
-        OpenshiftClient.get().serviceAccounts().inNamespace(OpenshiftClient.get().getNamespace()).resource(sa).create();
+        OpenshiftClient.get().serviceAccounts().inNamespace(OpenshiftClient.get().getNamespace()).resource(sa)
+            .serverSideApply();
 
         List<PolicyRule> policyRuleList = new ArrayList<>();
         PolicyRule endpoints = new PolicyRule();
@@ -134,7 +136,9 @@ public class CertManagerValidation implements Validation {
             .withNewMetadata().withName(roleName).withNamespace(OpenshiftClient.get().getNamespace()).endMetadata()
             .addAllToRules(policyRuleList)
             .build();
-        OpenshiftClient.get().rbac().roles().resource(roleCreated).create();
+        final RbacAPIGroupDSL rbac = OpenshiftClient.get().rbac();
+        rbac.roles().resource(roleCreated)
+            .serverSideApply();
 
         List<Subject> subjects = new ArrayList<>();
         Subject subject = new Subject();
@@ -151,6 +155,7 @@ public class CertManagerValidation implements Validation {
             .withRoleRef(roleRef)
             .addAllToSubjects(subjects)
             .build();
-        OpenshiftClient.get().rbac().roleBindings().resource(roleBindingCreated).create();
+        rbac.roleBindings().resource(roleBindingCreated)
+            .serverSideApply();
     }
 }
