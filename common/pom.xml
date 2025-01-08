@@ -18,7 +18,7 @@
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <geronimo.config.version>1.2.3</geronimo.config.version>
-        <json.version>20241224</json.version>
+        <json.version>20250107</json.version>
     </properties>
 
     <dependencies>
