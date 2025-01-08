@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.function.BooleanSupplier;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -113,10 +114,9 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
          * What this does it gets the uid interval from the namespace annotation and generates a random uid from that range and "hardcodes" that id
          * in the deployment config and changes the auth configuration
          */
-        final List<Long> uidRange =
-            Arrays.stream(OpenshiftClient.get().namespaces().withName(OpenshiftClient.get().getNamespace()).get().getMetadata()
-                .getAnnotations().get("openshift.io/sa.scc.uid-range").split("/")).map(Long::parseLong).toList();
-        uid = ThreadLocalRandom.current().nextLong(uidRange.get(0), uidRange.get(0) + uidRange.get(1));
+        UidSupplier supplier = new UidSupplier();
+        WaitUtils.waitFor(supplier, "Waiting for uid-range openshift annotation");
+        uid = supplier.getUid();
 
         createMqscConfigMap();
 
@@ -260,5 +260,30 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
         return OpenshiftClient.get().getService(name()).getSpec().getPorts().stream()
             .filter(servicePort -> name().equals(servicePort.getName()))
             .findFirst().get().getNodePort();
+    }
+
+    /**
+     * In some cases the code was quick enough and the annotations were empty, so moved the uid-range logic into a separate supplier.
+     */
+    private static final class UidSupplier implements BooleanSupplier {
+        private long uid;
+
+        @Override
+        public boolean getAsBoolean() {
+            Map<String, String> annotations = OpenshiftClient.get().namespaces().withName(OpenshiftClient.get().getNamespace()).get().getMetadata()
+                .getAnnotations();
+            
+            if (annotations == null || annotations.isEmpty()) {
+                return false;
+            }
+
+            final List<Long> uidRange = Arrays.stream(annotations.get("openshift.io/sa.scc.uid-range").split("/")).map(Long::parseLong).toList();
+            uid = ThreadLocalRandom.current().nextLong(uidRange.get(0), uidRange.get(0) + uidRange.get(1));
+            return true;
+        }
+
+        public long getUid() {
+            return uid;
+        }
     }
 }
