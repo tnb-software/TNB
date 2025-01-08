@@ -47,8 +47,10 @@ public class JMSTopicClient extends JMSClient implements TopicClient {
     public void close() {
         try {
             producer.close();
-            consumer.close();
             session.close();
+            if (consumer != null) {
+                consumer.close();
+            }
         } catch (Exception e) {
             LOG.warn("Unable to close topic client", e);
         }
