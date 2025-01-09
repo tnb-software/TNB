@@ -18,17 +18,21 @@
 
     <dependencies>
         <dependency>
-            <groupId>org.apache.velocity</groupId>
-            <artifactId>velocity-engine-core</artifactId>
-            <version>${velocity.version}</version>
+            <groupId>io.fabric8</groupId>
+            <artifactId>certmanager-client</artifactId>
+            <version>${kubernetes.client.version}</version>
             <exclusions>
                 <exclusion>
-                    <groupId>org.apache.commons</groupId>
-                    <artifactId>commons-lang3</artifactId>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>certmanager-model-v1alpha2</artifactId>
                 </exclusion>
                 <exclusion>
-                    <groupId>org.slf4j</groupId>
-                    <artifactId>slf4j-api</artifactId>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>certmanager-model-v1alpha3</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>io.fabric8</groupId>
+                    <artifactId>certmanager-model-v1beta1</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>

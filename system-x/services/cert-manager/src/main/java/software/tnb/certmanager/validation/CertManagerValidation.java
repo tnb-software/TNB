@@ -3,19 +3,16 @@ package software.tnb.certmanager.validation;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.validation.Validation;
 
-import org.apache.velocity.Template;
-import org.apache.velocity.VelocityContext;
-import org.apache.velocity.app.VelocityEngine;
-import org.apache.velocity.runtime.RuntimeConstants;
-import org.apache.velocity.runtime.resource.loader.ClasspathResourceLoader;
-import org.yaml.snakeyaml.Yaml;
-
-import java.io.StringWriter;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
+import io.fabric8.certmanager.api.model.v1.Certificate;
+import io.fabric8.certmanager.api.model.v1.CertificateBuilder;
+import io.fabric8.certmanager.client.CertManagerClient;
+import io.fabric8.kubernetes.api.model.Duration;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.ServiceAccount;
 import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
@@ -30,6 +27,8 @@ import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.base.CustomResourceDefinitionContext;
 
 public class CertManagerValidation implements Validation {
+
+    private final CertManagerClient client;
 
     private static final CustomResourceDefinitionContext ISSUER_CTX = new CustomResourceDefinitionContext
         .Builder()
@@ -50,6 +49,10 @@ public class CertManagerValidation implements Validation {
         .withScope("Namespaced")
         .withVersion("v1")
         .build();
+
+    public CertManagerValidation(CertManagerClient client) {
+        this.client = client;
+    }
 
     /**
      * Creates self-signed issuer in the current namespace
@@ -81,33 +84,41 @@ public class CertManagerValidation implements Validation {
      */
     public void createSelfSignedCertificate(String name, String secretName, String commonName, List<String> usages
         , List<String> dnsNames, String passwordSecretName) {
-        VelocityEngine engine = new VelocityEngine();
-        engine.setProperty(RuntimeConstants.RESOURCE_LOADER, "classpath");
-        engine.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
-        engine.init();
-        Template template = engine.getTemplate("cert-manager/certificate-template.vm");
-        VelocityContext context = new VelocityContext();
-        context.put("name", name);
-        context.put("secretName", secretName);
-        context.put("commonName", commonName);
-        context.put("namespace", OpenshiftClient.get().getNamespace());
-        context.put("usagesList", usages);
-        context.put("dnsNameList", dnsNames);
-        context.put("passwordSecretRef", passwordSecretName);
-        StringWriter writer = new StringWriter();
-        template.merge(context, writer);
-        Map<String, Object> spec = new Yaml().load(writer.toString());
 
-        OpenshiftClient.get().genericKubernetesResources(CERTIFICATE_CTX)
-            .inNamespace(OpenshiftClient.get().getNamespace())
-            .resource(new GenericKubernetesResourceBuilder()
-                .withKind(CERTIFICATE_CTX.getKind())
+        try {
+            // @formatter:off
+            Certificate certificate = new CertificateBuilder()
                 .withNewMetadata()
-                .withName(name)
+                    .withName(name)
                 .endMetadata()
-                .withAdditionalProperties(spec)
-                .build()
-            ).serverSideApply();
+                .withNewSpec()
+                    .withSecretName(secretName)
+                    .withDuration(Duration.parse("2160h"))
+                    .withRenewBefore(Duration.parse("360h"))
+                    .withNewSubject()
+                        .withOrganizations(OpenshiftClient.get().getNamespace())
+                    .endSubject()
+                    .withCommonName(commonName)
+                    .withIsCA(Boolean.FALSE)
+                    .withNewPrivateKey("RSA", "PKCS1", null, 2048)
+                    .withUsages(usages)
+                    .withDnsNames(dnsNames)
+                    .withNewIssuerRef("cert-manager.io", "Issuer", "selfsigned-issuer")
+                    .withNewKeystores()
+                        .withNewJks()
+                            .withCreate(true)
+                            .withNewPasswordSecretRef("password", passwordSecretName)
+                        .endJks()
+                    .endKeystores()
+                .endSpec()
+            .build();
+            // @formatter:on
+
+            client.v1().certificates().inNamespace(OpenshiftClient.get().getNamespace())
+                .resource(certificate).create();
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**
