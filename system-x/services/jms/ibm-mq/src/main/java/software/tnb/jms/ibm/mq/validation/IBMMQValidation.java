@@ -84,7 +84,13 @@ public class IBMMQValidation implements Validation {
             err = output.getError();
         } else {
             try {
-                final Container.ExecResult result = container.execInContainer("/bin/bash", "-c", command);
+                Container.ExecResult result;
+                // with podman the second call of any command always fails, so a lazy fix with one retry seems to help
+                try {
+                    result = container.execInContainer("/bin/bash", "-c", command);
+                } catch (Exception e) {
+                    result = container.execInContainer("/bin/bash", "-c", command);
+                }
                 out = result.getStdout();
                 err = result.getStderr();
             } catch (Exception e) {
