@@ -1,4 +1,4 @@
-package software.tnb.aws.s3.service.local;
+package software.tnb.aws.s3.service.local.minio;
 
 import software.tnb.aws.s3.service.Minio;
 import software.tnb.aws.s3.validation.S3Validation;
