@@ -10,7 +10,8 @@ import com.google.auto.service.AutoService;
 
 @AutoService(PostgreSQL.class)
 public class LocalPostgreSQL extends PostgreSQL implements Deployable {
-    private final LocalDB localDb = new LocalDB(this, PORT, Wait.forLogMessage(".*Future log output will appear in directory.*", 2));
+    private final LocalDB localDb = new LocalDB(this, PORT,
+        Wait.forSuccessfulCommand("[ $(cat /var/lib/pgsql/data/userdata/log/*.log | grep \"ready to accept\" | wc -l) -eq 2 ]"));
 
     @Override
     public String host() {
