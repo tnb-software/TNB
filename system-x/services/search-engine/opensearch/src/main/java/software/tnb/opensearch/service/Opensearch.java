@@ -13,6 +13,7 @@ import org.testcontainers.utility.Base58;
 
 import java.io.Closeable;
 import java.util.Map;
+import org.apache.commons.lang3.SystemUtils;
 
 public abstract class Opensearch extends Search<OpenSearchClient> {
     private static final String CLUSTER_NAME = "tnb-os";
@@ -50,7 +51,12 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/opensearch:" + version();
+        //return "quay.io/fuse_qe/opensearch:" + version();
+        if ("ppc64le".equals(SystemUtils.OS_ARCH)) {
+            return "icr.io/ppc64le-oss/opensearch-ppc64le:2.12.0";
+        }else{
+            return "quay.io/fuse_qe/opensearch:" + version();
+        }
     }
 
     public static String version() {
@@ -69,7 +75,8 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
     }
 
     public String containerStartRegex() {
-        return ".*ML configuration initialized successfully.*";
+        return ".*Node started.*";
+        //return ".*ML configuration initialized successfully.*";
     }
 
     public Map<String, String> containerEnv() {
