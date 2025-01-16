@@ -51,7 +51,6 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
 
     @Override
     public String defaultImage() {
-        //return "quay.io/fuse_qe/opensearch:" + version();
         if ("ppc64le".equals(SystemUtils.OS_ARCH)) {
             return "icr.io/ppc64le-oss/opensearch-ppc64le:2.12.0";
         }else{

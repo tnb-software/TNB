@@ -10,6 +10,7 @@ import org.testcontainers.utility.Base58;
 
 import java.io.Closeable;
 import java.util.Map;
+import org.apache.commons.lang3.SystemUtils;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.json.jackson.JacksonJsonpMapper;
@@ -52,7 +53,11 @@ public abstract class Elasticsearch extends Search<ElasticsearchClient> {
 
     @Override
     public String defaultImage() {
-        return "docker.elastic.co/elasticsearch/elasticsearch:" + Elasticsearch.version();
+        if ("ppc64le".equals(SystemUtils.OS_ARCH)) {
+            return "icr.io/ppc64le-oss/elasticsearch-ppc64le:7.17.10";
+        }else{
+            return "docker.elastic.co/elasticsearch/elasticsearch:" + Elasticsearch.version();
+	}
     }
 
     public static String version() {
