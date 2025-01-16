@@ -75,7 +75,6 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
 
     public String containerStartRegex() {
         return ".*Node started.*";
-        //return ".*ML configuration initialized successfully.*";
     }
 
     public Map<String, String> containerEnv() {
