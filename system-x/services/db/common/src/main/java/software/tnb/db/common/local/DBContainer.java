@@ -14,6 +14,8 @@ public class DBContainer extends GenericContainer<DBContainer> {
         withExposedPorts(port);
         withEnv(service.containerEnvironment());
         waitingFor(waitStrategy);
+        // with podman the startup occasionally fails and adding this seems to help
+        withStartupAttempts(2);
     }
 
     public int getPort() {
