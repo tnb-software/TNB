@@ -52,11 +52,11 @@ public abstract class Elasticsearch extends Search<ElasticsearchClient> {
 
     @Override
     public String defaultImage() {
-        return "docker.elastic.co/elasticsearch/elasticsearch:" + Elasticsearch.version();
+        return "quay.io/fuse_qe/elasticsearch:" + version();
     }
 
     public static String version() {
-        return System.getProperty(ELASTICSEARCH_VERSION, "7.17.9");
+        return System.getProperty(ELASTICSEARCH_VERSION, "7.17.20");
     }
 
     @Override
