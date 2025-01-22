@@ -54,7 +54,7 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
     }
 
     public static String version() {
-        return System.getProperty(OPENSEARCH_VERSION, "latest");
+        return System.getProperty(OPENSEARCH_VERSION, "2.18.0");
     }
 
     @Override
@@ -69,13 +69,13 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
     }
 
     public String containerStartRegex() {
-        return ".*ML configuration initialized successfully.*";
+        return ".*Node.*started.*";
     }
 
     public Map<String, String> containerEnv() {
         return Map.of(
             "OPENSEARCH_INITIAL_ADMIN_PASSWORD", account().password(),
-            "plugins.security.disabled", "true",
+            "DISABLE_SECURITY_PLUGIN", "true",
             "discovery.type", "single-node");
     }
 }
