@@ -68,7 +68,7 @@ public class HorreumValidation implements Validation {
      * @return Uploaded run data ID
      * @throws Exception
      */
-    public Integer postRunData(String start, String stop, String testName, String owner, Access access,
+    public String postRunData(String start, String stop, String testName, String owner, Access access,
         String schema, String description, String body) throws Exception {
         runApi.getApiClient().setApiKey(horreumAccount.apiKey(HorreumConfiguration.getUserName()));
         Call uploadCall = runApi.addRunFromDataCall(start, stop, testName, owner, access, schema, description, body, null);
@@ -76,9 +76,9 @@ public class HorreumValidation implements Validation {
             LOG.info("Horreum upload request:");
             prettyPrinter.printRequest(uploadCall.request());
         }
-        Type responseType = new TypeToken<Integer>() {
+        Type responseType = new TypeToken<String>() {
         }.getType();
-        ApiResponse<Integer> horreumResp = runApi.getApiClient().execute(uploadCall, responseType);
+        ApiResponse<String> horreumResp = runApi.getApiClient().execute(uploadCall, responseType);
         if (HorreumConfiguration.isRequestLogEnabled()) {
             LOG.info("Horreum upload response: ");
             prettyPrinter.printResponse(horreumResp);

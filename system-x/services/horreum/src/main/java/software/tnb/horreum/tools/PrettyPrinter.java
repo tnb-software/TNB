@@ -68,7 +68,7 @@ public class PrettyPrinter {
         System.out.println(output.toString());
     }
 
-    public void printHeaders(ApiResponse<Integer> response) {
+    public void printHeaders(ApiResponse<String> response) {
         System.out.println(
             response.getHeaders().entrySet()
                 .stream()
@@ -93,7 +93,7 @@ public class PrettyPrinter {
         printJsonBody(convertBodyToString(request.body()));
     }
 
-    public void printResponse(ApiResponse<Integer> response) {
+    public void printResponse(ApiResponse<String> response) {
         System.out.println("\nStatus code -> ");
         printStatusCode(response);
         System.out.println("\nHeaders ->");
