@@ -18,6 +18,7 @@ import com.google.auto.service.AutoService;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -36,6 +37,7 @@ public class OpenshiftOpensearch extends Opensearch implements ReusableOpenshift
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftOpensearch.class);
     private String sccName;
     private String serviceAccountName;
+    private final Pattern logStartPattern = Pattern.compile(containerStartRegex());
 
     @Override
     public void undeploy() {
@@ -125,7 +127,7 @@ public class OpenshiftOpensearch extends Opensearch implements ReusableOpenshift
     @Override
     public boolean isReady() {
         final PodResource pod = servicePod();
-        return pod != null && pod.isReady() && OpenshiftClient.get().getLogs(pod.get()).contains("ML configuration initialized successfully");
+        return pod != null && pod.isReady() && logStartPattern.matcher(OpenshiftClient.get().getLogs(pod.get())).find();
     }
 
     @Override
