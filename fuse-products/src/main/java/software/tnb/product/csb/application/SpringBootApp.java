@@ -95,6 +95,8 @@ public abstract class SpringBootApp extends App {
     private void createUsingJBang() {
         List<String> arguments = new ArrayList<>(List.of(
             "--runtime", "spring-boot",
+            "--additional-properties", "openshift-maven-plugin-version=" + SpringBootConfiguration.openshiftMavenPluginVersion(),
+            "--build-properties", "openshift-maven-plugin-version=" + SpringBootConfiguration.openshiftMavenPluginVersion(),
             // Align the generated CamelApplication class to correct package
             "--package-name", TestConfiguration.appGroupId(),
             "--camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion(),
