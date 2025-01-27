@@ -202,7 +202,7 @@ public abstract class App {
             pb.redirectErrorStream(true);
             pb.directory(TestConfiguration.appLocation().resolve(getName()).toFile());
             final Process process = pb.start();
-            hasExited = process.waitFor(1, TimeUnit.HOURS);
+            hasExited = process.waitFor(20, TimeUnit.MINUTES);
             if (hasExited) {
                 exitCode = process.exitValue();
             }
