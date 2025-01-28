@@ -222,7 +222,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public int clientPort() {
-        return OpenshiftConfiguration.isMicroshift() ? microshiftClientPort() : localPort;
+        return localPort;
     }
 
     @Override
@@ -253,13 +253,7 @@ public class OpenshiftIBMMQ extends IBMMQ implements OpenshiftDeployable, WithNa
 
     @Override
     public String externalHostname() {
-        return OpenshiftConfiguration.isMicroshift() ? OpenshiftClient.get().config().getMasterUrl().getHost() : "localhost";
-    }
-
-    private int microshiftClientPort() {
-        return OpenshiftClient.get().getService(name()).getSpec().getPorts().stream()
-            .filter(servicePort -> name().equals(servicePort.getName()))
-            .findFirst().get().getNodePort();
+        return "localhost";
     }
 
     /**
