@@ -143,7 +143,16 @@ public abstract class App {
             camelInPath = true;
         }
 
-        LOG.info("Creating Camel Quarkus application project for integration {} using Camel JBang", getName());
+        ProcessBuilder processBuilder = new ProcessBuilder("camel", "--version");
+        String version = "";
+        try {
+            Process process = processBuilder.start();
+            version = new String(process.getInputStream().readAllBytes());
+        } catch (IOException e) {
+            version = "N/A";
+        }
+
+        LOG.info("Creating {} application project for integration {} using Camel JBang {}", TestConfiguration.product(), getName(), version);
 
         final Path appDir = IntegrationGenerator.createApplicationDirectory(integrationBuilder);
 
