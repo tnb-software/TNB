@@ -1,6 +1,7 @@
 package software.tnb.product.util.maven;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.log.stream.FileLogStream;
@@ -209,11 +210,15 @@ public class Maven {
 
         // Don't throw exception in case the exit code is less than zero (happens when killing the process through executorservice)
         if (result.getExitCode() > 0) {
+            String exceptionMessage = "Maven invocation failed with exit code " + result.getExitCode();
             if (buildRequest.getLogFile() != null) {
-                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check "
-                    + buildRequest.getLogFile().toAbsolutePath() + " for more details");
+                if (TestConfiguration.streamLogs()) {
+                    throw new RuntimeException(exceptionMessage + ", check " + buildRequest.getLogFile().toAbsolutePath() + " for more details");
+                } else {
+                    throw new RuntimeException(exceptionMessage, new FailureCauseException(buildRequest.getLogFile()));
+                }
             } else {
-                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode());
+                throw new RuntimeException(exceptionMessage);
             }
         }
     }

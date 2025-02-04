@@ -1,6 +1,7 @@
 package software.tnb.common.utils;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.exception.TimeoutException;
 
@@ -14,6 +15,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
+import java.util.function.Supplier;
 
 public final class WaitUtils {
     private static final Logger LOG = LoggerFactory.getLogger(WaitUtils.class);
@@ -73,6 +75,10 @@ public final class WaitUtils {
         LOG.debug("Done waiting");
     }
 
+    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
+        waitFor(check, fail, timeout, logMessage, null);
+    }
+
     /**
      * Waits until the check or fail condition return true.
      * <p>
@@ -84,14 +90,21 @@ public final class WaitUtils {
      * @param logMessage log message that will be printed out before waiting
      * @throws FailureConditionMetException when the fail condition is true
      */
-    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
+    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage,
+        Supplier<FailureCauseException> failureCause) throws FailureConditionMetException {
         LOG.info(logMessage);
         Instant start = Instant.now();
         while (true) {
             if (check.getAsBoolean()) {
                 break;
             } else if (fail.getAsBoolean()) {
-                throw new FailureConditionMetException("Specified fail condition met");
+                String exceptionMessage = "Specified fail condition met";
+                if (failureCause != null) {
+                    FailureCauseException e = failureCause.get();
+                    throw new FailureConditionMetException(e.getDescription() != null ? e.getDescription() : exceptionMessage, e);
+                } else {
+                    throw new FailureConditionMetException(exceptionMessage);
+                }
             } else if (Duration.between(start, Instant.now()).compareTo(TestConfiguration.testWaitKillTimeout()) > 0) {
                 LOG.error("Wait killed after {} minutes", TestConfiguration.testWaitKillTimeout().toMinutes());
                 break;

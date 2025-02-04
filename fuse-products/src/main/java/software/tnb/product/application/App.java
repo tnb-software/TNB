@@ -1,6 +1,7 @@
 package software.tnb.product.application;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
@@ -104,7 +105,8 @@ public abstract class App {
     public void waitUntilReady() {
         if (shouldRun()) {
             WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L,
-                "Waiting until the integration " + getName() + " is running");
+                "Waiting until the integration " + getName() + " is running",
+                TestConfiguration.streamLogs() ? null : () -> new FailureCauseException("The Camel app failed to start.", getLog().toString()));
             started = true;
         }
     }
