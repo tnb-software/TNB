@@ -55,7 +55,7 @@ public class MavenGitRepository extends GitRepository {
         Map<String, String> mavenBuildProperties) {
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(projectLocation)
-            .withGoals(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "", "package")
+            .withArgs(gitIntegrationBuilder.cleanBeforeBuild() ? "clean" : "", "package")
             .withProperties(mavenBuildProperties)
             .withLogFile(logFile)
             .withLogMarker(LogStream.marker(name, Phase.BUILD));

@@ -131,14 +131,14 @@ public class Maven {
 
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
-        List<String> goals = buildRequest.getGoals();
+        List<String> args = buildRequest.getArgs();
         List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
         File mavenSettings = null;
 
         InvocationRequest request = newRequest()
             .setBaseDirectory(dir)
             .setBatchMode(true)
-            .addArgs(goals)
+            .addArgs(args)
             .setProperties(properties)
             .setNoTransferProgress(TestConfiguration.mavenTransferProgress())
             .setOutputHandler(buildRequest.getOutputHandler())
@@ -171,7 +171,7 @@ public class Maven {
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
             + "  Base dir: " + dir.getAbsolutePath() + "\n"
-            + "  Goals: " + goals.toString() + "\n"
+            + "  Args: " + args.toString() + "\n"
             + "  Profiles: " + profiles + "\n"
             + (request.getUserSettingsFile() == null ? "" : "  User settings: " + request.getUserSettingsFile().getAbsolutePath() + "\n")
             + (request.getGlobalSettingsFile() == null ? "" : "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n")

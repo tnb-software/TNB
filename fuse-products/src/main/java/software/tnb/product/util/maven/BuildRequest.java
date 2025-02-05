@@ -1,10 +1,9 @@
 package software.tnb.product.util.maven;
 
-import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
-import software.tnb.product.util.maven.handler.MavenOutputHandler;
-
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.MapUtils;
+import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
+import software.tnb.product.util.maven.handler.MavenOutputHandler;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -22,7 +21,7 @@ public final class BuildRequest {
     private static final DateTimeFormatter FORMATTER = DateTimeFormatter.ofPattern("HH-mm-ss-SSS").withZone(ZoneId.systemDefault());
 
     private File baseDirectory;
-    private List<String> goals = new ArrayList<>();
+    private List<String> args = new ArrayList<>();
     private List<String> profiles = new ArrayList<>();
     private Map<String, String> properties = new HashMap<>();
     private MavenOutputHandler outputHandler;
@@ -41,12 +40,12 @@ public final class BuildRequest {
         this.baseDirectory = baseDirectory;
     }
 
-    public List<String> getGoals() {
-        return goals;
+    public List<String> getArgs() {
+        return args;
     }
 
-    public void setGoals(List<String> goals) {
-        this.goals = goals;
+    public void setArgs(List<String> args) {
+        this.args = args;
     }
 
     public List<String> getProfiles() {
@@ -106,8 +105,8 @@ public final class BuildRequest {
             return this;
         }
 
-        public Builder withGoals(String... goals) {
-            request.setGoals(Arrays.asList(goals));
+        public Builder withArgs(String... args) {
+            request.setArgs(Arrays.asList(args));
             return this;
         }
 

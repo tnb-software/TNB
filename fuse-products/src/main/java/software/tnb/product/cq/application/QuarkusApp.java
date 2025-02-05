@@ -54,7 +54,7 @@ public abstract class QuarkusApp extends App {
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
-            .withGoals("clean", "package")
+            .withArgs("clean", "package")
             .withProperties(properties)
             .withLogFile(getLogPath(Phase.BUILD))
             .withLogMarker(LogStream.marker(getName(), Phase.BUILD));
@@ -109,7 +109,7 @@ public abstract class QuarkusApp extends App {
 
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
-            .withGoals(quarkusMavenPluginCreate)
+            .withArgs(quarkusMavenPluginCreate)
             .withProperties(properties)
             .withLogFile(getLogPath(Phase.GENERATE))
             .withLogMarker(LogStream.marker(getName(), Phase.GENERATE))

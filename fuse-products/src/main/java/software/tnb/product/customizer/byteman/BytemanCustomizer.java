@@ -59,7 +59,7 @@ public class BytemanCustomizer extends Customizer {
 
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(bytemanDownloadDir)
-            .withGoals("dependency:copy")
+            .withArgs("dependency:copy")
             .withProperties(Map.of(
                 "artifact", String.format("%s:%s:%s", BytemanConfiguration.mavenCoordinates(), BytemanConfiguration.version(), "jar"),
                 "outputDirectory", "."
