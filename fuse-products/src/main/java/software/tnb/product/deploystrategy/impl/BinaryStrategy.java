@@ -63,7 +63,7 @@ public class BinaryStrategy extends OpenshiftBaseDeployer {
         );
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
-            .withGoals("clean", "package")
+            .withArgs("clean", "package")
             .withProfiles("openshift")
             .withLogFile(TestConfiguration.appLocation().resolve(name + "-build.log"))
             .withLogMarker(LogStream.marker(name, Phase.BUILD));

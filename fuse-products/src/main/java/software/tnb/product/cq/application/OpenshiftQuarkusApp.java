@@ -57,7 +57,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     public void start() {
         final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
-            .withGoals("package")
+            .withArgs("package")
             .withProperties(getProperties())
             .withLogFile(getLogPath(Phase.DEPLOY))
             .withLogMarker(LogStream.marker(getName(), Phase.DEPLOY));

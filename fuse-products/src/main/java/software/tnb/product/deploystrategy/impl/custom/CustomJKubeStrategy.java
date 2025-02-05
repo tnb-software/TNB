@@ -39,14 +39,14 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
 
     public static final String OPENSHIFT_MAVEN_PLUGIN_AID = "openshift-maven-plugin";
 
-    private final String[] goals;
+    private final String[] args;
     private final String[] profiles;
     private boolean createTnbDeployment = false;
     private boolean customizePom = true;
     private Predicate<Pod> podSelector = super.podSelector();
 
-    public CustomJKubeStrategy(final String[] goals, final String[] profiles) {
-        this.goals = goals;
+    public CustomJKubeStrategy(final String[] args, final String[] profiles) {
+        this.args = args;
         this.profiles = profiles;
     }
 
@@ -98,7 +98,7 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
                     , mvnProps.entrySet().stream())
                 .collect(Collectors
                     .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
-            .withGoals(goals)
+            .withArgs(args)
             .withProfiles(profiles)
             .withLogFile(TestConfiguration.appLocation().resolve(String.format("%s-%s-deploy.log", name, System.currentTimeMillis())))
             .withLogMarker(LogStream.marker(name, Phase.DEPLOY));

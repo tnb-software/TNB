@@ -48,8 +48,8 @@ public class QuarkusAppTest extends LocalAppTestParent {
         SoftAssertions sa = new SoftAssertions();
         InvocationRequest request = TEST_INVOKER.getRequests().get(0);
         sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(TestConfiguration.appLocation().toAbsolutePath().toString());
-        sa.assertThat(request.getGoals()).hasSize(1);
-        sa.assertThat(request.getGoals().get(0)).isEqualTo(String.format("%s:%s:%s:create",
+        sa.assertThat(request.getArgs()).hasSize(1);
+        sa.assertThat(request.getArgs().get(0)).isEqualTo(String.format("%s:%s:%s:create",
             QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion()));
         sa.assertThat(request.getProperties()).isEqualTo(Map.of(
             "projectGroupId", TestConfiguration.appGroupId(),
@@ -64,7 +64,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
 
         request = TEST_INVOKER.getRequests().get(1);
         sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(APP_PATH.toAbsolutePath().toString());
-        sa.assertThat(request.getGoals()).containsOnly("clean", "package");
+        sa.assertThat(request.getArgs()).containsOnly("clean", "package");
         sa.assertThat(request.getProperties()).isEqualTo(Map.of(
             "skipTests", "true",
             "quarkus.native.container-build", "true"

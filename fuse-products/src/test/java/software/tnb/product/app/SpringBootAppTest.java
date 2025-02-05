@@ -61,13 +61,13 @@ public class SpringBootAppTest extends LocalAppTestParent {
         SoftAssertions sa = new SoftAssertions();
         InvocationRequest request = TEST_INVOKER.getRequests().get(0);
         sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(TestConfiguration.appLocation().toAbsolutePath().toString());
-        sa.assertThat(request.getGoals()).containsOnly("archetype:generate");
+        sa.assertThat(request.getArgs()).containsOnly("archetype:generate");
         sa.assertThat(request.getProperties()).isEqualTo(properties);
         sa.assertThat(request.getOutputHandler(null)).isInstanceOf(MavenFileOutputHandler.class);
 
         request = TEST_INVOKER.getRequests().get(1);
         sa.assertThat(request.getBaseDirectory().getAbsolutePath()).isEqualTo(APP_PATH.toAbsolutePath().toString());
-        sa.assertThat(request.getGoals()).containsOnly("clean", "package");
+        sa.assertThat(request.getArgs()).containsOnly("clean", "package");
         sa.assertThat(request.getProperties()).isEqualTo(Map.of(
             "skipTests", "true"
         ));
