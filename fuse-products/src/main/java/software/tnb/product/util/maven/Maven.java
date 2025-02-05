@@ -138,7 +138,7 @@ public class Maven {
         InvocationRequest request = newRequest()
             .setBaseDirectory(dir)
             .setBatchMode(true)
-            .setGoals(goals)
+            .addArgs(goals)
             .setProperties(properties)
             .setNoTransferProgress(TestConfiguration.mavenTransferProgress())
             .setOutputHandler(buildRequest.getOutputHandler())
@@ -146,7 +146,7 @@ public class Maven {
 
         //add extra args
         final String mavenExtraArgs = TestConfiguration.mavenExtraArgs();
-        Arrays.stream(mavenExtraArgs.split(" ")).forEach(request::addArg);
+        Arrays.stream(mavenExtraArgs.split(" ")).filter((arg) -> !arg.isBlank()).forEach(request::addArg);
 
         // If you didn't specify custom maven settings, use settings.xml file created in createSettingsXmlFile method as the global settings
         if (TestConfiguration.mavenSettings() == null) {
