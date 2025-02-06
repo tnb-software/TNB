@@ -1,6 +1,7 @@
 package software.tnb.product.application;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
@@ -104,7 +105,8 @@ public abstract class App {
     public void waitUntilReady() {
         if (shouldRun()) {
             WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L,
-                "Waiting until the integration " + getName() + " is running");
+                "Waiting until the integration " + getName() + " is running",
+                TestConfiguration.streamLogs() ? null : () -> new FailureCauseException("The Camel app failed to start.", getLog().toString()));
             started = true;
         }
     }
@@ -143,7 +145,16 @@ public abstract class App {
             camelInPath = true;
         }
 
-        LOG.info("Creating Camel Quarkus application project for integration {} using Camel JBang", getName());
+        ProcessBuilder processBuilder = new ProcessBuilder("camel", "--version");
+        String version = "";
+        try {
+            Process process = processBuilder.start();
+            version = new String(process.getInputStream().readAllBytes());
+        } catch (IOException e) {
+            version = "N/A";
+        }
+
+        LOG.info("Creating {} application project for integration {} using Camel JBang {}", TestConfiguration.product(), getName(), version);
 
         final Path appDir = IntegrationGenerator.createApplicationDirectory(integrationBuilder);
 
@@ -202,7 +213,7 @@ public abstract class App {
             pb.redirectErrorStream(true);
             pb.directory(TestConfiguration.appLocation().resolve(getName()).toFile());
             final Process process = pb.start();
-            hasExited = process.waitFor(1, TimeUnit.HOURS);
+            hasExited = process.waitFor(20, TimeUnit.MINUTES);
             if (hasExited) {
                 exitCode = process.exitValue();
             }

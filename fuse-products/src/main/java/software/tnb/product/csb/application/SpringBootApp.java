@@ -79,7 +79,7 @@ public abstract class SpringBootApp extends App {
 
                 BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
                     .withBaseDirectory(basePath)
-                    .withGoals("clean", "package")
+                    .withArgs("clean", "package")
                     .withProperties(Map.of(
                         "skipTests", "true"
                     ))
@@ -95,6 +95,7 @@ public abstract class SpringBootApp extends App {
     private void createUsingJBang() {
         List<String> arguments = new ArrayList<>(List.of(
             "--runtime", "spring-boot",
+            "--build-property", "openshift-maven-plugin-version=" + SpringBootConfiguration.openshiftMavenPluginVersion(),
             // Align the generated CamelApplication class to correct package
             "--package-name", TestConfiguration.appGroupId(),
             "--camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion(),
@@ -132,7 +133,7 @@ public abstract class SpringBootApp extends App {
 
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
-            .withGoals("archetype:generate")
+            .withArgs("archetype:generate")
             .withProperties(properties)
             .withLogFile(getLogPath(Phase.GENERATE))
             .withLogMarker(LogStream.marker(getName(), Phase.GENERATE))

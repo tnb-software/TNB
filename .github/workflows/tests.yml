@@ -41,7 +41,7 @@ jobs:
           maven-version: ${{ env.MAVEN_VERSION }}
       - name: Run tests
         run: mvn --no-transfer-progress clean test -Ptest
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: files

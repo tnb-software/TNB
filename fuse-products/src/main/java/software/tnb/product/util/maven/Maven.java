@@ -1,6 +1,7 @@
 package software.tnb.product.util.maven;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.log.stream.FileLogStream;
@@ -130,14 +131,14 @@ public class Maven {
 
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
-        List<String> goals = buildRequest.getGoals();
+        List<String> args = buildRequest.getArgs().stream().filter((arg) -> arg != null && !arg.isBlank()).toList();
         List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
         File mavenSettings = null;
 
         InvocationRequest request = newRequest()
             .setBaseDirectory(dir)
             .setBatchMode(true)
-            .setGoals(goals)
+            .addArgs(args)
             .setProperties(properties)
             .setNoTransferProgress(TestConfiguration.mavenTransferProgress())
             .setOutputHandler(buildRequest.getOutputHandler())
@@ -145,7 +146,7 @@ public class Maven {
 
         //add extra args
         final String mavenExtraArgs = TestConfiguration.mavenExtraArgs();
-        Arrays.stream(mavenExtraArgs.split(" ")).forEach(request::addArg);
+        Arrays.stream(mavenExtraArgs.split(" ")).filter((arg) -> !arg.isBlank()).forEach(request::addArg);
 
         // If you didn't specify custom maven settings, use settings.xml file created in createSettingsXmlFile method as the global settings
         if (TestConfiguration.mavenSettings() == null) {
@@ -170,7 +171,7 @@ public class Maven {
 
         StringBuilder propertiesLog = new StringBuilder("Invoking maven with:" + "\n"
             + "  Base dir: " + dir.getAbsolutePath() + "\n"
-            + "  Goals: " + goals.toString() + "\n"
+            + "  Args: " + args.toString() + "\n"
             + "  Profiles: " + profiles + "\n"
             + (request.getUserSettingsFile() == null ? "" : "  User settings: " + request.getUserSettingsFile().getAbsolutePath() + "\n")
             + (request.getGlobalSettingsFile() == null ? "" : "  Global settings: " + request.getGlobalSettingsFile().getAbsolutePath() + "\n")
@@ -209,11 +210,15 @@ public class Maven {
 
         // Don't throw exception in case the exit code is less than zero (happens when killing the process through executorservice)
         if (result.getExitCode() > 0) {
+            String exceptionMessage = "Maven invocation failed with exit code " + result.getExitCode();
             if (buildRequest.getLogFile() != null) {
-                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode() + ", check "
-                    + buildRequest.getLogFile().toAbsolutePath() + " for more details");
+                if (TestConfiguration.streamLogs()) {
+                    throw new RuntimeException(exceptionMessage + ", check " + buildRequest.getLogFile().toAbsolutePath() + " for more details");
+                } else {
+                    throw new RuntimeException(exceptionMessage, new FailureCauseException(buildRequest.getLogFile()));
+                }
             } else {
-                throw new RuntimeException("Maven invocation failed with exit code " + result.getExitCode());
+                throw new RuntimeException(exceptionMessage);
             }
         }
     }
