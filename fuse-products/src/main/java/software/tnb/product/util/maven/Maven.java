@@ -131,7 +131,7 @@ public class Maven {
 
         File dir = buildRequest.getBaseDirectory();
         Properties properties = buildRequest.getProperties();
-        List<String> args = buildRequest.getArgs();
+        List<String> args = buildRequest.getArgs().stream().filter((arg) -> arg != null && !arg.isBlank()).toList();
         List<String> profiles = new ArrayList<>(buildRequest.getProfiles());
         File mavenSettings = null;
 
