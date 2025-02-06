@@ -15,6 +15,7 @@ public class HorreumConfiguration extends Configuration {
     public static final String REQUEST_LOG_ENABLED = "horreum.request.log.enabled";
     public static final String FINGERPRINT_NAME = "horreum.fingerprint.name";
     public static final String TESTRUN_DESCRIPTION = "horreum.testrun.description";
+    public static final String HORREUM_UPLOAD_DISABLED = "horreum.upload.disabled";
 
     public static String getUrl() {
         return getProperty(URL);
@@ -50,5 +51,9 @@ public class HorreumConfiguration extends Configuration {
 
     public static Optional<String> getFingerprintName() {
         return Optional.ofNullable(getProperty(FINGERPRINT_NAME));
+    }
+
+    public static boolean isUploadDisabled() {
+        return Boolean.parseBoolean(getProperty(HORREUM_UPLOAD_DISABLED, "false"));
     }
 }
