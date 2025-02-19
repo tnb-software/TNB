@@ -33,6 +33,8 @@ import java.util.function.Predicate;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePort;
@@ -55,6 +57,10 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
+        LOG.trace("Creating service account for the integration {}", getName());
+        ServiceAccount sa = new ServiceAccountBuilder().withNewMetadata().withName(getName()).endMetadata().build();
+        OpenshiftClient.get().serviceAccounts().resource(sa).serverSideApply();
+
         final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
             .withArgs("package")
@@ -121,6 +127,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             "quarkus.kubernetes.deploy", "true",
             "quarkus.native.container-build", "true",
             "quarkus.openshift.build-strategy", "docker",
+            "quarkus.openshift.service-account", getName(),
             "skipTests", "true"
         ));
         if (!QuarkusConfiguration.isQuarkusNative()) {
@@ -152,6 +159,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         LOG.info("Undeploying integration resources");
         OpenshiftClient.get().routes().withName(getName()).delete();
         OpenshiftClient.get().services().withName(getName()).delete();
+        OpenshiftClient.get().serviceAccounts().withName(getName()).delete();
         Path openshiftResources = TestConfiguration.appLocation().resolve(getName()).resolve("target").resolve("kubernetes/openshift.yml");
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
