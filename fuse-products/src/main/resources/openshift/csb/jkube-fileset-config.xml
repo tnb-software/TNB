@@ -22,4 +22,12 @@
             </build>
         </image>
     </images>
+    <resources>
+        <serviceAccounts>
+            <serviceAccount>
+                <name>${project.build.finalName}</name>
+                <deploymentRef>${project.build.finalName}</deploymentRef>
+            </serviceAccount>
+        </serviceAccounts>
+    </resources>
 </configuration>
