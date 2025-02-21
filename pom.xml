@@ -92,7 +92,7 @@
         <jgit.version>7.1.0.202411261347-r</jgit.version>
         <junit.version>5.11.0</junit.version>
         <assertj.version>3.27.1</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.3.0</awaitility.version>
         <log4j.version>2.24.0</log4j.version>
         <vault.version>5.1.0</vault.version>
         <nexus.staging.plugin.version>1.7.0</nexus.staging.plugin.version>
