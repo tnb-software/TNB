@@ -80,7 +80,7 @@
          -->
         <kubernetes.client.version>6.8.1</kubernetes.client.version>
         <javaparser.version>3.26.1</javaparser.version>
-        <maven.compiler.plugin.version>3.13.0</maven.compiler.plugin.version>
+        <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -88,11 +88,11 @@
         <xtf.version>0.35</xtf.version>
         <maven.surefire.plugin.version>3.5.0</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
-        <jacoco.maven.plugin.version>0.8.8</jacoco.maven.plugin.version>
+        <jacoco.maven.plugin.version>0.8.12</jacoco.maven.plugin.version>
         <jgit.version>7.1.0.202411261347-r</jgit.version>
-        <junit.version>5.11.0</junit.version>
+        <junit.version>5.12.0</junit.version>
         <assertj.version>3.27.1</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
+        <awaitility.version>4.3.0</awaitility.version>
         <log4j.version>2.24.0</log4j.version>
         <vault.version>5.1.0</vault.version>
         <nexus.staging.plugin.version>1.7.0</nexus.staging.plugin.version>
