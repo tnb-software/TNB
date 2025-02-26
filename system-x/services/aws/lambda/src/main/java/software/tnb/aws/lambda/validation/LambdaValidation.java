@@ -88,6 +88,8 @@ public class LambdaValidation implements Validation {
                 }
             }
         }
+
+        client.waiter().waitUntilFunctionActive(b -> b.functionName(name));
     }
 
     public GetFunctionResponse getFunction(String name) {
