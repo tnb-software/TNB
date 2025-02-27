@@ -26,17 +26,25 @@ public class IAMValidation implements Validation {
             return getRoleArn(name).get();
         } else {
             LOG.debug("Creating IAM role {}", name);
-            return client.createRole(b -> b.roleName(name)
+            final String arn = client.createRole(b -> b.roleName(name)
                 .description(description)
                 .assumeRolePolicyDocument(rolePolicyDocument)
             ).role().arn();
+
+            client.waiter().waitUntilRoleExists(r -> r.roleName(name));
+
+            return arn;
         }
     }
 
     public String createPolicy(String name, String policyDocument) {
-        return client.createPolicy(b -> b.policyName(name)
+        final String arn = client.createPolicy(b -> b.policyName(name)
             .policyDocument(policyDocument)
         ).policy().arn();
+
+        client.waiter().waitUntilPolicyExists(b -> b.policyArn(arn));
+
+        return arn;
     }
 
     public void attachPolicy(String role, String policyArn) {

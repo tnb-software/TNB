@@ -62,9 +62,8 @@ public class DynamoDBValidation implements Validation {
             .keySchema(KeySchemaElement.builder().attributeName(primaryKey).keyType(KeyType.HASH).build())
             .attributeDefinitions(AttributeDefinition.builder().attributeType(ScalarAttributeType.S).attributeName(primaryKey).build())
         );
-        WaitUtils.waitFor(
-            () -> "active".equalsIgnoreCase(client.describeTable(b -> b.tableName(tableName)).table().tableStatusAsString()),
-            6, 5000L, "Waiting until the DynamoDB table " + tableName + " is created");
+
+        client.waiter().waitUntilTableExists(b -> b.tableName(tableName));
     }
 
     public String enableDataStream(String tableName) {
