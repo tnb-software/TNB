@@ -235,4 +235,8 @@ public abstract class App {
 
         IntegrationGenerator.createResourceFiles(integrationBuilder, appDir);
     }
+
+    public int getPort() {
+        return integrationBuilder.getPort();
+    }
 }
