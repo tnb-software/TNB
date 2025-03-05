@@ -404,9 +404,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      */
     public SELF port(int port, boolean configureDefaultServer) {
         this.port = port;
-        if (configureDefaultServer) {
-            // Add a customizer that sets this port as a server.port / quarkus.http.port
-            addCustomizer(new HTTPServerPortCustomizer());
+        if (!configureDefaultServer) {
+            addCustomizer(new HTTPServerPortCustomizer(false));
         }
         return self();
     }

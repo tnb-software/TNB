@@ -3,13 +3,23 @@ package software.tnb.product.customizer.app;
 import software.tnb.product.customizer.ProductsCustomizer;
 
 public class HTTPServerPortCustomizer extends ProductsCustomizer {
+    private final boolean configure;
+
+    public HTTPServerPortCustomizer(boolean configure) {
+        this.configure = configure;
+    }
+
     @Override
     public void customizeQuarkus() {
-        getIntegrationBuilder().addToApplicationProperties("quarkus.http.port", getIntegrationBuilder().getPort() + "");
+        if (configure) {
+            getIntegrationBuilder().addToApplicationProperties("quarkus.http.port", getIntegrationBuilder().getPort() + "");
+        }
     }
 
     @Override
     public void customizeSpringboot() {
-        getIntegrationBuilder().addToApplicationProperties("server.port", getIntegrationBuilder().getPort() + "");
+        if (configure) {
+            getIntegrationBuilder().addToApplicationProperties("server.port", getIntegrationBuilder().getPort() + "");
+        }
     }
 }

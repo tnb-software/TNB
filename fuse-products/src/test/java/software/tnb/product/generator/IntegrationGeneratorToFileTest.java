@@ -83,7 +83,7 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
         final Path expectedPath = TEST_DIR.resolve("src/main/resources/application.properties");
 
         assertThat(expectedPath).exists();
-        assertThat(expectedPath).content().isEqualTo(key + "=" + value);
+        assertThat(expectedPath).content().contains(key + "=" + value);
     }
 
     @Override
@@ -126,7 +126,6 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
 
         process(ib);
 
-        assertThat(ib.getApplicationProperties()).hasSize(1);
         assertThat(ib.getApplicationProperties()).containsKey("quarkus.native.resources.includes");
         assertThat(ib.getApplicationProperties().get("quarkus.native.resources.includes")).isEqualTo(resourceName);
     }
