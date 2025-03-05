@@ -2,7 +2,9 @@ package software.tnb.product.integration.builder;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.MapUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.product.customizer.Customizer;
+import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.deploystrategy.impl.custom.OpenshiftCustomDeployer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.util.maven.Maven;
@@ -71,7 +73,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private String integrationName;
     private String fileName = ROUTE_BUILDER_NAME + ".java";
 
-    private int port = 8080;
+    // use a random port if not specified otherwise
+    private int port = NetworkUtils.getFreePort();
 
     private final List<String> javaAgents = new ArrayList<>();
     private final List<String> vmArguments = new ArrayList<>();
@@ -389,7 +392,22 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     public SELF port(int port) {
+        return port(port, true);
+    }
+
+    /**
+     * Configures the port that is exposed by the app.getEndpoint() method.
+     * @param port port
+     * @param configureDefaultServer true/false whether to set this port as the port of the default http server. "false" should be used when
+     *  there is some other component that starts its own server and we want to target that one
+     * @return self
+     */
+    public SELF port(int port, boolean configureDefaultServer) {
         this.port = port;
+        if (configureDefaultServer) {
+            // Add a customizer that sets this port as a server.port / quarkus.http.port
+            addCustomizer(new HTTPServerPortCustomizer());
+        }
         return self();
     }
 
