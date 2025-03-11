@@ -1,47 +1,53 @@
 package software.tnb.infinispan.resource.openshift;
 
-import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
+import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.infinispan.resource.openshift.generated.v1.InfinispanSpec;
+import software.tnb.infinispan.resource.openshift.generated.v1.infinispanspec.Expose;
+import software.tnb.infinispan.resource.openshift.generated.v1.infinispanspec.Security;
+import software.tnb.infinispan.resource.openshift.generated.v1.infinispanspec.security.EndpointEncryption;
+import software.tnb.infinispan.resource.openshift.generated.v2alpha1.Cache;
+import software.tnb.infinispan.resource.openshift.generated.v2alpha1.CacheSpec;
+import software.tnb.infinispan.resource.openshift.generated.v2alpha1.cachespec.Updates;
 import software.tnb.infinispan.service.Infinispan;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.yaml.snakeyaml.DumperOptions;
+import org.yaml.snakeyaml.Yaml;
 
 import com.google.auto.service.AutoService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
+import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
-import io.fabric8.kubernetes.api.model.ConfigMapVolumeSourceBuilder;
-import io.fabric8.kubernetes.api.model.ContainerPort;
-import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
-import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.Probe;
-import io.fabric8.kubernetes.api.model.ProbeBuilder;
-import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.SecretBuilder;
 
 @AutoService(Infinispan.class)
-public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshiftDeployable, WithName {
+public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
 
-    protected static final String CONFIG_MAP_NAME = "infinispan-config";
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftInfinispan.class);
+
+    private static final String SECRET_NAME = "tnb-infinispan-identities";
+    public static final String CR_CACHE_NAME = "default-cache";
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        OpenshiftClient.get().configMaps().withName(CONFIG_MAP_NAME).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        OpenshiftClient.get().genericKubernetesResources("infinispan.org/v2alpha1", "Cache").delete();
+        OpenshiftClient.get().genericKubernetesResources("infinispan.org/v1", "Infinispan").delete();
+        WaitUtils.waitFor(() -> OpenshiftClient.get().resources(software.tnb.infinispan.resource.openshift.generated.v1.Infinispan.class)
+            .list().getItems().isEmpty(), "Waiting until the cluster has been removed");
     }
 
     @Override
@@ -56,85 +62,107 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
 
     @Override
     public void create() {
-        try {
-            OpenshiftClient.get()
-                .createConfigMap(CONFIG_MAP_NAME, Map.of("infinispan.xml", IOUtils.resourceToString("/infinispan.xml", StandardCharsets.UTF_8)));
+        LOG.debug("Creating Data Grid subscription");
+        createSubscription();
+
+        LOG.debug("Creating Identities secret");
+        createIdentitiesSecret();
+
+        LOG.debug("Creating Data Grid cluster");
+        OpenshiftClient.get().resources(software.tnb.infinispan.resource.openshift.generated.v1.Infinispan.class)
+            .resource(getInfinispanCR()).create();
+
+        createDefaultCache();
+    }
+
+    private void createDefaultCache() {
+        LOG.debug("Creating Default Cache");
+        OpenshiftClient.get().resources(Cache.class).resource(getInfinispanCacheCR()).create();
+    }
+
+    private void createIdentitiesSecret() {
+        final Map<String, Object> credentials = Map.of("credentials", List.of(Map.of("username", account().username()
+            , "password", account().password())));
+
+        final DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+        Yaml dataContent = new Yaml(options);
+
+        SecretBuilder sb = new SecretBuilder().editOrNewMetadata().withName(SECRET_NAME).endMetadata()
+                .addToStringData("identities.yaml", dataContent.dump(credentials));
+        OpenshiftClient.get().secrets().resource(sb.build()).create();
+    }
+
+    private software.tnb.infinispan.resource.openshift.generated.v1.Infinispan getInfinispanCR() {
+        final software.tnb.infinispan.resource.openshift.generated.v1.Infinispan cluster
+            = new software.tnb.infinispan.resource.openshift.generated.v1.Infinispan();
+        final ObjectMeta metadata = new ObjectMeta();
+        metadata.setName(name());
+        cluster.setMetadata(metadata);
+        final InfinispanSpec spec = new InfinispanSpec();
+        spec.setReplicas(1);
+        final Security security = new Security();
+        final EndpointEncryption endpointEncryption = new EndpointEncryption();
+        endpointEncryption.setType(EndpointEncryption.Type.NONE);
+        security.setEndpointEncryption(endpointEncryption);
+        security.setEndpointAuthentication(Boolean.TRUE);
+        security.setEndpointSecretName(SECRET_NAME);
+        spec.setSecurity(security);
+        final Expose expose = new Expose();
+        expose.setType(Expose.Type.ROUTE);
+        spec.setExpose(expose);
+        cluster.setSpec(spec);
+        return cluster;
+    }
+
+    private Cache getInfinispanCacheCR() {
+        final Cache cache = new Cache();
+        final ObjectMeta metadata = new ObjectMeta();
+        metadata.setName(CR_CACHE_NAME);
+        cache.setMetadata(metadata);
+        CacheSpec spec = new CacheSpec();
+        spec.setName("default");
+        spec.setClusterName(name());
+        try (InputStream ts = Thread.currentThread().getContextClassLoader().getResourceAsStream("cache-template.yaml")) {
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            IOUtils.copy(ts, out);
+            spec.setTemplate(out.toString());
+            out.close();
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        final List<ContainerPort> ports = List.of(
-            new ContainerPortBuilder().withContainerPort(PORT).withName(name()).build()
-        );
-
-        final Probe probe = new ProbeBuilder()
-            .withHttpGet(new HTTPGetActionBuilder()
-                .withPort(new IntOrString(PORT))
-                .withPath("/console")
-                .build()
-            ).build();
-
-        List<String> args = List.of("-c", "/user-config/infinispan.xml");
-        List<Volume> volumes = List.of(
-            new VolumeBuilder().withName(CONFIG_MAP_NAME)
-                .withConfigMap(new ConfigMapVolumeSourceBuilder()
-                    .withName(CONFIG_MAP_NAME)
-                    .build()
-                ).build()
-        );
-        List<VolumeMount> volumeMounts = List.of(
-            new VolumeMountBuilder().withName(CONFIG_MAP_NAME).withMountPath("/user-config").build()
-        );
-
-        OpenshiftClient.get().createDeployment(Map.of(
-            "name", name(),
-            "image", image(),
-            "env", containerEnvironment(),
-            "ports", ports,
-            "args", args,
-            "volumes", volumes,
-            "volumeMounts", volumeMounts,
-            "readinessProbe", probe,
-            "livenessProbe", probe
-        ));
-
-        OpenshiftClient.get().services().resource(new ServiceBuilder()
-            .editOrNewMetadata()
-               .withName(name())
-                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-            .endMetadata()
-            .editOrNewSpec()
-                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
-                .addNewPort()
-                    .withName(name())
-                    .withProtocol("TCP")
-                    .withPort(PORT)
-                    .withTargetPort(new IntOrString(PORT))
-                .endPort()
-            .endSpec()
-            .build()
-        ).serverSideApply();
-        // @formatter:on
+        Updates updates = new Updates();
+        updates.setStrategy(Updates.Strategy.RETAIN);
+        spec.setUpdates(updates);
+        cache.setSpec(spec);
+        return cache;
     }
 
     @Override
     public boolean isDeployed() {
-        return WithName.super.isDeployed();
+        Optional<software.tnb.infinispan.resource.openshift.generated.v1.Infinispan> cluster = OpenshiftClient.get()
+            .resources(software.tnb.infinispan.resource.openshift.generated.v1.Infinispan.class).list()
+            .getItems().stream().filter(infinispan -> infinispan.getMetadata().getName().equals(name()))
+            .findFirst();
+        return cluster.isPresent() && !cluster.get().isMarkedForDeletion();
     }
 
     @Override
     public Predicate<Pod> podSelector() {
-        return WithName.super.podSelector();
+        return pod -> OpenshiftClient.get().hasLabels(pod, Map.of("clusterName", name()));
     }
 
     @Override
     public void cleanup() {
-
+        //re-create the cache
+        OpenshiftClient.get().resources(Cache.class).withName(CR_CACHE_NAME).delete();
+        createDefaultCache();
     }
 
     @Override
     public String name() {
-        return "infinispan";
+        return "tnb-infinispan";
     }
 
     @Override
@@ -145,5 +173,10 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
     @Override
     public String getHost() {
         return name();
+    }
+
+    @Override
+    public String operatorName() {
+        return "datagrid";
     }
 }
