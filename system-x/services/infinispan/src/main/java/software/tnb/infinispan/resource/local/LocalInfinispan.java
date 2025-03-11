@@ -1,6 +1,7 @@
 package software.tnb.infinispan.resource.local;
 
 import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.infinispan.service.Infinispan;
 
 import org.slf4j.Logger;
@@ -10,7 +11,7 @@ import org.testcontainers.utility.TestcontainersConfiguration;
 import com.google.auto.service.AutoService;
 
 @AutoService(Infinispan.class)
-public class LocalInfinispan extends Infinispan implements Deployable {
+public class LocalInfinispan extends Infinispan implements Deployable, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalInfinispan.class);
     private InfinispanContainer container;
 
@@ -48,5 +49,10 @@ public class LocalInfinispan extends Infinispan implements Deployable {
     @Override
     public void closeResources() {
 
+    }
+
+    @Override
+    public String defaultImage() {
+        return Infinispan.DEFAULT_IMAGE;
     }
 }

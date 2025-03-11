@@ -1,0 +1,8 @@
+distributedCache:
+  mode: "SYNC"
+  statistics: "true"
+  encoding:
+    key:
+      mediaType: "text/plain"
+    value:
+      mediaType: "text/plain"
