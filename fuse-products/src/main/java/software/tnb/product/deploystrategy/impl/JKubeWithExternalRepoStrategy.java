@@ -59,7 +59,6 @@ public class JKubeWithExternalRepoStrategy extends CustomJKubeStrategy {
     protected Map<String, String> getOmpProperties() {
         final Map<String, String> props = new HashMap<>(super.getOmpProperties());
         props.put("jkube.build.strategy", "jib");
-        props.put("jkube.enricher.jkube-controller.type", "Deployment");
         props.put("jkube.docker.push.retries", String.valueOf(DockerConfiguration.pushImageRetries()));
         props.put("jkube.docker.push.registry", SpringBootConfiguration.openshiftResultImageRepository());
         props.put("jkube.docker.pull.registry", SpringBootConfiguration.openshiftResultImageRepository());

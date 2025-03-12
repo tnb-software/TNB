@@ -82,6 +82,7 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
             , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
             , "jkube.enricher.jkube-service.port", String.format("%s:%s", integrationBuilder.getPort(), integrationBuilder.getPort())
             , "jkube.enricher.jkube-service.expose", "true"
+            , "jkube.build.switchToDeployment", String.valueOf(SpringBootConfiguration.forceOpenshiftDeployment())
         );
     }
 
