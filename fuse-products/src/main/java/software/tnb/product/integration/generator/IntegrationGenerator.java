@@ -22,7 +22,6 @@ import com.github.javaparser.ast.PackageDeclaration;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.stream.Collectors;
 
 /**
@@ -102,9 +101,6 @@ public final class IntegrationGenerator {
         if (integrationBuilder.getCustomizers().stream().noneMatch(c -> c instanceof HTTPServerPortCustomizer)) {
             integrationBuilder.addCustomizer(new HTTPServerPortCustomizer(true));
         }
-
-        // Reverse the order of customizers, as the user-defined should take precedence over the default ones
-        Collections.reverse(integrationBuilder.getCustomizers());
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setIntegrationBuilder(integrationBuilder);
