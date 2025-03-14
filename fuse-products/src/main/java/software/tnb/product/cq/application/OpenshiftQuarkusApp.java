@@ -75,7 +75,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         // @formatter:off
         if (OpenshiftClient.get().services().withName(getName()).get() == null) {
             // create the service and route manually if it is not created by quarkus
-            OpenshiftClient.get().services().resource(new ServiceBuilder()
+            final ServiceBuilder serviceBuilder = new ServiceBuilder()
                 .withNewMetadata()
                     .withName(getName())
                     .addToLabels("app.kubernetes.io/name", getName())
@@ -87,9 +87,18 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
                         .withPort(integrationBuilder.getPort())
                         .withProtocol("TCP")
                     .endPort()
-                .endSpec()
-                .build()
-            ).serverSideApply();
+                .endSpec();
+
+            integrationBuilder.getAdditionalPorts().forEach(port ->
+                serviceBuilder.editSpec()
+                    .addNewPort()
+                        .withName("port-" + port)
+                        .withPort(port)
+                        .withProtocol("TCP")
+                    .endPort()
+                .endSpec());
+
+            OpenshiftClient.get().services().resource(serviceBuilder.build()).serverSideApply();
         }
         if (OpenshiftClient.get().routes().withName(getName()).get() == null) {
             OpenshiftClient.get().routes().resource(new RouteBuilder()

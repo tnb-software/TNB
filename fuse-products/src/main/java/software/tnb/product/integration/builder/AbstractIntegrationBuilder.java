@@ -1,5 +1,6 @@
 package software.tnb.product.integration.builder;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.MapUtils;
 import software.tnb.common.utils.NetworkUtils;
@@ -73,8 +74,10 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private String integrationName;
     private String fileName = ROUTE_BUILDER_NAME + ".java";
 
-    // use a random port if not specified otherwise
-    private int port = NetworkUtils.getFreePort();
+    // use a random port locally if not specified otherwise
+    private int port = OpenshiftConfiguration.isOpenshift() ? 8080 : NetworkUtils.getFreePort();
+
+    private final List<Integer> additionalPorts = new ArrayList<>();
 
     private final List<String> javaAgents = new ArrayList<>();
     private final List<String> vmArguments = new ArrayList<>();
@@ -564,5 +567,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public List<Resource> getBytemanRules() {
         return bytemanRules;
+    }
+
+    public SELF addAdditionalPorts(Integer ... ports) {
+        additionalPorts.addAll(Arrays.stream(ports).toList());
+        return self();
+    }
+
+    public List<Integer> getAdditionalPorts() {
+        return additionalPorts;
     }
 }

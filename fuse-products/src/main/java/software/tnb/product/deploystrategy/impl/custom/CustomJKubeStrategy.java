@@ -25,15 +25,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.openshift.api.model.RouteBuilder;
 
 public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
 
@@ -71,7 +74,8 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
     }
 
     protected Map<String, String> getOmpProperties() {
-        return Map.of(
+        final List<String> ports = getPorts();
+        final Map<String, String> props = new HashMap<>(Map.of(
             "skipTests", "true"
             , "openshift-maven-plugin-version", SpringBootConfiguration.openshiftMavenPluginVersion()
             , "openshift-maven-plugin-group-id", SpringBootConfiguration.openshiftMavenPluginGroupId()
@@ -80,10 +84,46 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
                 : OpenshiftClient.get().getMasterUrl().toString()
             , "jkube.username", OpenshiftConfiguration.openshiftUsername()
             , "jkube.generator.from", SpringBootConfiguration.openshiftBaseImage()
-            , "jkube.enricher.jkube-service.port", String.format("%s:%s", integrationBuilder.getPort(), integrationBuilder.getPort())
+            , "jkube.enricher.jkube-service.port", String.join(",", ports)
             , "jkube.enricher.jkube-service.expose", "true"
             , "jkube.build.switchToDeployment", String.valueOf(SpringBootConfiguration.forceOpenshiftDeployment())
-        );
+        ));
+        if (ports.size() > 1) {
+            props.put("jkube.enricher.jkube-service.multiPort", "true");
+            //make the port configuration on the pod
+            AtomicInteger portIdx = new AtomicInteger();
+            ports.forEach(portMapping -> props.put("jkube.container-image.ports." + portIdx.incrementAndGet()
+                , portMapping.split(":")[1]));
+            //since jkube generates route only for single port service, we need to create it manually
+            generateRoute();
+        }
+        return props;
+    }
+
+    private void generateRoute() {
+        final String name = integrationBuilder.getIntegrationName();
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
+            .withNewMetadata()
+                .withName(name)
+            .endMetadata()
+            .withNewSpec()
+                .withNewTo()
+                    .withKind("Service")
+                    .withName(name)
+                .endTo()
+                .withNewPort()
+                    .withNewTargetPort()
+                        .withValue(integrationBuilder.getPort())
+                        .endTargetPort()
+                .endPort()
+            .endSpec()
+            .build()).create();
+    }
+
+    private List<String> getPorts() {
+        final List<String> ports = new ArrayList<>(List.of(String.format("%s:%s", integrationBuilder.getPort(), integrationBuilder.getPort())));
+        integrationBuilder.getAdditionalPorts().forEach(port -> ports.add(String.format("%s:%s", port, port)));
+        return ports;
     }
 
     @Override
