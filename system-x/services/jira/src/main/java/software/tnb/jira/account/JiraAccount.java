@@ -7,10 +7,6 @@ public class JiraAccount implements Account, WithId {
     private String jira_url;
     private String username;
     private String password;
-    private String private_key;
-    private String access_token;
-    private String consumer_key;
-    private String verification_code;
 
     @Override
     public String credentialsId() {
@@ -39,37 +35,5 @@ public class JiraAccount implements Account, WithId {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getPrivateKey() {
-        return private_key;
-    }
-
-    public void setPrivate_key(final String private_key) {
-        this.private_key = private_key;
-    }
-
-    public String getAccessToken() {
-        return access_token;
-    }
-
-    public void setAccess_token(final String access_token) {
-        this.access_token = access_token;
-    }
-
-    public String getConsumerKey() {
-        return consumer_key;
-    }
-
-    public void setConsumer_key(final String consumer_key) {
-        this.consumer_key = consumer_key;
-    }
-
-    public String getVerificationCode() {
-        return verification_code;
-    }
-
-    public void setVerification_code(final String verification_code) {
-        this.verification_code = verification_code;
     }
 }

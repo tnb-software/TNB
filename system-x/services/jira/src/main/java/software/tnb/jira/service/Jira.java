@@ -2,9 +2,9 @@ package software.tnb.jira.service;
 
 import software.tnb.common.service.Service;
 import software.tnb.jira.account.JiraAccount;
+import software.tnb.jira.client.ConfigurableApiClient;
 import software.tnb.jira.validation.JiraValidation;
 import software.tnb.jira.validation.generated.ApiClient;
-import software.tnb.jira.validation.generated.Configuration;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -22,7 +22,7 @@ public class Jira extends Service<JiraAccount, ApiClient, JiraValidation> {
         if (client == null) {
             LOG.debug("Creating new JiraRest client");
 
-            client = Configuration.getDefaultApiClient();
+            client = new ConfigurableApiClient();
             client.setBasePath(account().getJiraUrl());
             client.setUsername(account().getUsername());
             client.setPassword(account().getPassword());
