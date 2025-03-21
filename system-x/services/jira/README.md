@@ -5,3 +5,7 @@ folder [jira-v3.v3.formatted.json](src%2Fmain%2Fresources%2Fjira-v3.v3.formatted
 Thanks to that, we don't need all generated resources (~around 750classes) in the source code repository.
 The classes are generated during the compile phase into target/generated-sources.
 Due to that, the IDE will show unresolved import errors until you run `mvn clean compile` in the `system-x-jira` package.
+
+# How do I need to use Jira Cloud?
+
+The `validation` has been implemented based on [Jira cloud](https://www.atlassian.com/try/cloud/) creating a base project and adding `Bug` issue type, then updating it adding `Priority` field.
