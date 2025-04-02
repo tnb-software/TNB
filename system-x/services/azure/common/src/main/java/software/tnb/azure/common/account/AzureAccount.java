@@ -9,7 +9,7 @@ public class AzureAccount implements Account, WithId {
 
     @Override
     public String credentialsId() {
-        return "azure-tnb";
+        return "tnb-azure-storage";
     }
 
     public void setAccess_key(String access_key) {
