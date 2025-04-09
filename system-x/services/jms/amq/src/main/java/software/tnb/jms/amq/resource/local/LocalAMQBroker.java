@@ -46,6 +46,6 @@ public class LocalAMQBroker extends AMQBroker implements Deployable, WithDockerI
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/amq7/amq-broker-rhel8:7.12.2";
+        return "registry.redhat.io/amq7/amq-broker-rhel8:7.12.3";
     }
 }
