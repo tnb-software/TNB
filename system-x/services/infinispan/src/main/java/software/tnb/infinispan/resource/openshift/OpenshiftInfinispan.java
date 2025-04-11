@@ -27,12 +27,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ObjectMeta;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.client.KubernetesClientException;
 
 @AutoService(Infinispan.class)
 public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
@@ -141,11 +141,19 @@ public class OpenshiftInfinispan extends Infinispan implements ReusableOpenshift
 
     @Override
     public boolean isDeployed() {
-        Optional<software.tnb.infinispan.resource.openshift.generated.v1.Infinispan> cluster = OpenshiftClient.get()
-            .resources(software.tnb.infinispan.resource.openshift.generated.v1.Infinispan.class).list()
-            .getItems().stream().filter(infinispan -> infinispan.getMetadata().getName().equals(name()))
-            .findFirst();
-        return cluster.isPresent() && !cluster.get().isMarkedForDeletion();
+        software.tnb.infinispan.resource.openshift.generated.v1.Infinispan cluster;
+        try {
+            cluster = OpenshiftClient.get()
+                .resources(software.tnb.infinispan.resource.openshift.generated.v1.Infinispan.class).withName(name()).get();
+        } catch (KubernetesClientException kce) {
+            // the CRD may not exist in the cluster in case of a fresh cluster
+            if (kce.getCode() == 404) {
+                return false;
+            } else {
+                throw kce;
+            }
+        }
+        return cluster != null && !cluster.isMarkedForDeletion();
     }
 
     @Override
