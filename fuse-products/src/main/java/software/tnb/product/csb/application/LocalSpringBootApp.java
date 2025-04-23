@@ -66,6 +66,8 @@ public class LocalSpringBootApp extends SpringBootApp {
                 .forEach(command::add);
         }
 
+        command.add("-Dserver.port=" + integrationBuilder.getPort());
+
         command.add("-jar");
         fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
