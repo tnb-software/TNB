@@ -35,7 +35,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class App {
-    private static final Pattern LOG_STARTED_REGEX = Pattern.compile("(?m)^.*Apache Camel.*started in.*$");
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     protected AbstractIntegrationBuilder<?> integrationBuilder;
@@ -104,15 +103,11 @@ public abstract class App {
 
     public void waitUntilReady() {
         if (shouldRun()) {
-            WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L,
+            WaitUtils.waitFor(() -> isReady() && getLog().containsRegex(integrationBuilder.getStartupRegex()), this::isFailed, 1000L,
                 "Waiting until the integration " + getName() + " is running",
                 TestConfiguration.streamLogs() ? null : () -> new FailureCauseException("The Camel app failed to start.", getLog().toString()));
             started = true;
         }
-    }
-
-    private boolean isCamelStarted() {
-        return getLog().containsRegex(LOG_STARTED_REGEX);
     }
 
     protected void customizePlugins(List<Plugin> mavenPlugins) {
