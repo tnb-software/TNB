@@ -32,7 +32,8 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
         return Map.of(
             "LICENSE", "accept",
             "MQ_QMGR_NAME", account().queueManager(),
-            "MQ_APP_PASSWORD", account().password()
+            "MQ_APP_PASSWORD", account().password(),
+            "AMQ_SSL_WEAK_CIPHER_ENABLE", SSLCIPHERSUITE
         );
     }
 
