@@ -86,6 +86,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private boolean useJBang = false;
 
+    private String startupRegex = "(?m)^.*Apache Camel.*started in.*$";
+
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
     }
@@ -576,5 +578,23 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public List<Integer> getAdditionalPorts() {
         return additionalPorts;
+    }
+
+    /**
+     * Allow overriding the evaluation regex for application startup.
+     * @param regex string passed to Pattern.compile method
+     * @return SELF
+     */
+    public SELF startupRegex(String regex) {
+        this.startupRegex = regex;
+        return self();
+    }
+
+    /**
+     * Regex that is a part of application startup check - only after this regex is in the application log the application is considered started up
+     * @return regex expected to be matched in the application log
+     */
+    public String getStartupRegex() {
+        return startupRegex;
     }
 }
