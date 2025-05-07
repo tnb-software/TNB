@@ -159,13 +159,17 @@ public abstract class App {
 
         List<String> command = new ArrayList<>(List.of(
             "camel", "export",
-            "--kamelets-version", TestConfiguration.kameletsVersion(),
             "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
             "--logging", "true"
         ));
 
         command.addAll(arguments);
+
+        if (TestConfiguration.kameletsVersion() != null) {
+            command.add("--kamelets-version");
+            command.add(TestConfiguration.kameletsVersion());
+        }
 
         if (!integrationBuilder.getDependencies().isEmpty()) {
             command.add("--dep");
