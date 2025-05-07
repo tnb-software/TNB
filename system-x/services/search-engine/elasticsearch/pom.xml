@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: ElasticSearch</name>
 
     <properties>
-        <elasticsearch.client.version>8.17.0</elasticsearch.client.version>
+        <elasticsearch.client.version>9.0.1</elasticsearch.client.version>
     </properties>
 
     <dependencies>
