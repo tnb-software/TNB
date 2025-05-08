@@ -31,7 +31,7 @@ public abstract class Keycloak extends Service<KeycloakAccount, NoClient, Keyclo
     }
 
     public String defaultImage() {
-        return "quay.io/keycloak/keycloak:26.1";
+        return "registry.redhat.io/rhbk/keycloak-rhel9:26.0";
     }
 
     public boolean isLocalHostname() {
