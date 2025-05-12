@@ -30,8 +30,12 @@ public abstract class Keycloak extends Service<KeycloakAccount, NoClient, Keyclo
         return new String[] {"start-dev"};
     }
 
+    /** Rebuilded from:
+     *  https://catalog.redhat.com/software/containers/rhbk/keycloak-rhel9/64f0add883a29ec473d40906?image=674f09b15573280ccffd2bb0
+     *  to correct s390x manifest
+     */
     public String defaultImage() {
-        return "quay.io/keycloak/keycloak:26.1";
+        return "quay.io/fuse_qe/keycloak:26.0-6";
     }
 
     public boolean isLocalHostname() {
