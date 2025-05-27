@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Opensearch</name>
 
     <properties>
-        <opensearch.client.version>2.23.0</opensearch.client.version>
+        <opensearch.client.version>3.0.0</opensearch.client.version>
         <opensearch.rest.client.version>2.19.0</opensearch.rest.client.version>
     </properties>
 
