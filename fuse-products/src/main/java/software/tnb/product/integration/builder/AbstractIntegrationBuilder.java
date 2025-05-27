@@ -20,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
@@ -273,7 +274,9 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
-        ProjectRoot projectRoot = new ParserCollectionStrategy().collect(CodeGenerationUtils.mavenModuleRoot(clazz));
+        ParserConfiguration config = new ParserConfiguration();
+        config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
+        ProjectRoot projectRoot = new ParserCollectionStrategy(config).collect(CodeGenerationUtils.mavenModuleRoot(clazz));
         return projectRoot.getSourceRoots().stream().filter(sr -> !sr.getRoot().toString().contains("target"));
     }
 
