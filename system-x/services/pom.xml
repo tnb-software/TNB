@@ -51,6 +51,7 @@
         <module>lra-coordinator</module>
         <module>mllp</module>
         <module>opentelemetry</module>
+        <module>operatorhub-subscription</module>
         <module>webhook</module>
         <module>splunk</module>
         <module>microsoft</module>
