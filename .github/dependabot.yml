@@ -4,10 +4,6 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-    assignees:
-      - "avano"
-    reviewers:
-      - "avano"
     open-pull-requests-limit: 10
     ignore:
       - dependency-name: "*"
