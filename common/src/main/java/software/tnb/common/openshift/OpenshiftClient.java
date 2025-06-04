@@ -24,9 +24,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -43,10 +46,14 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
+import io.fabric8.kubernetes.api.model.StatusDetails;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
@@ -717,4 +724,73 @@ public class OpenshiftClient extends OpenShift {
         LOG.debug("Creating deployment {}", name);
         get().apps().deployments().resource(builder.build()).serverSideApply();
     }
+
+    /**
+     * Delete custom resource
+     * @param group String, name of the resource group
+     * @param version String, name of the resource version
+     * @param kind String, name of the resource kind
+     * @param resourceName String, resource name
+     */
+    public void deleteCustomResource(String group, String version, String kind, String resourceName) {
+        deleteCustomResource(new ResourceDefinitionContext.Builder()
+            .withGroup(group)
+            .withVersion(version)
+            .withKind(kind)
+            .build(), resourceName);
+    }
+
+    /**
+     * Delete custom resource
+     * @param resourceContext ResourceDefinitionContext, custom resource context
+     * @param resourceName String, resource name
+     */
+    public void deleteCustomResource(ResourceDefinitionContext resourceContext, String resourceName) {
+        final String namespace = get().getNamespace();
+        LOG.debug("deleting resource {}/{}", resourceContext.getKind(), resourceName);
+        final AtomicReference<List<StatusDetails>> status = new AtomicReference<>();
+        get().genericKubernetesResources(resourceContext).inNamespace(namespace)
+            .list().getItems().stream().filter(r -> resourceName.equals(r.getMetadata().getName()))
+            .findFirst()
+            .ifPresent(foundRes -> status.set(get().resource(foundRes).delete()));
+        Optional.ofNullable(status.get()).orElseGet(List::of)
+                .forEach(statusDetails -> LOG.debug("deleted {}/{}/{}", statusDetails.getGroup(), statusDetails.getKind()
+                    , statusDetails.getName()));
+    }
+
+    /**
+     * Create a service account in the current namespace
+     * @param serviceAccountName String, the name of the service account
+     * @return ServiceAccount created
+     */
+    public ServiceAccount createServiceAccount(String serviceAccountName) {
+        LOG.debug("creating service account {}", serviceAccountName);
+        return get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).serverSideApply();
+    }
+
+    /**
+     * Wait for PODs with labels are ready
+     * @param labels Map of label to create the pod filter
+     * @param expectedPodNumber int, the expected pod number matching the labels
+     * @param waitSeconds int, seconds to wait for each POD to be ready, it is used also to wait for the expected pods are available
+     */
+    public void waitUntilThePodsAreReady(Map<String, String> labels, int expectedPodNumber, int waitSeconds) {
+
+        final Predicate<Pod> podPredicate = pod -> get().hasLabels(pod, labels);
+
+        WaitUtils.waitFor(() ->
+            get().pods().inNamespace(get().getNamespace())
+                .list().getItems().stream().filter(podPredicate).count() == expectedPodNumber
+        , waitSeconds, 1000L, String.format("Waiting until the expected pod number is %s", expectedPodNumber));
+
+        LOG.debug("waiting for all pods are ready");
+        get().pods().inNamespace(get().getNamespace())
+            .list().getItems().stream().filter(podPredicate).toList()
+            .forEach(pod -> get().pods().inNamespace(pod.getMetadata().getNamespace())
+                .withName(pod.getMetadata().getName()).waitUntilReady(waitSeconds, TimeUnit.SECONDS));
+        LOG.debug("all pods are ready");
+    }
+
 }
