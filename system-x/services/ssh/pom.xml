@@ -15,7 +15,7 @@
 
     <properties>
         <ssh.client.version>0.40.0</ssh.client.version>
-        <bouncycastle.version>1.80</bouncycastle.version>
+        <bouncycastle.version>1.81</bouncycastle.version>
     </properties>
 
     <dependencies>
