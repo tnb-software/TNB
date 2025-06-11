@@ -43,6 +43,9 @@ public abstract class App {
     protected LogStream logStream;
     protected Endpoint endpoint;
     protected boolean started = false;
+    // store the name from the integration builder, as when creating multiple apps from the same integration builder by just overriding its name
+    // it would always report the last name set
+    private final String name;
 
     private static final String JBANG_SCRIPT_NAME = "camel";
     protected static boolean camelInPath = false;
@@ -53,6 +56,7 @@ public abstract class App {
     }
 
     protected App(String name) {
+        this.name = name;
         ensureDirNotPresent(name);
         logFilePrefix = name + "-" + new Date().getTime() + "-";
     }
@@ -90,7 +94,7 @@ public abstract class App {
     }
 
     public String getName() {
-        return integrationBuilder.getIntegrationName();
+        return name;
     }
 
     public Path getLogPath(Phase phase) {
