@@ -79,7 +79,7 @@
           Careful when upgrading this version - this version must be compatible with the version in xtf
          -->
         <kubernetes.client.version>6.13.5</kubernetes.client.version>
-        <javaparser.version>3.26.1</javaparser.version>
+        <javaparser.version>3.27.0</javaparser.version>
         <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
