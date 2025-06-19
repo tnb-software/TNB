@@ -12,17 +12,19 @@ import java.util.List;
 public class LocalDB implements Deployable {
     private static final Logger LOG = LoggerFactory.getLogger(LocalDB.class);
     private final SQL sqlService;
-    private final DBContainer container;
+    private final WaitStrategy waitStrategy;
     private final int port;
+    private DBContainer container;
 
     public LocalDB(SQL sqlService, int port, WaitStrategy waitStrategy) {
         this.sqlService = sqlService;
         this.port = port;
-        this.container = new DBContainer(sqlService, port, waitStrategy);
+        this.waitStrategy = waitStrategy;
     }
 
     @Override
     public void deploy() {
+        this.container = new DBContainer(sqlService, port, waitStrategy);
         LOG.info("Starting " + sqlService.name() + " container");
         container.start();
         LOG.info(sqlService.name() + " container started");
