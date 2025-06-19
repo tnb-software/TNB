@@ -12,6 +12,6 @@ public class FhirContainer extends GenericContainer<FhirContainer> {
         super(image);
         withExposedPorts(port);
         withEnv(env);
-        waitingFor(Wait.forHttp("/fhir/metadata").withStartupTimeout(Duration.ofSeconds(240)));
+        waitingFor(Wait.forLogMessage(".*Started.*hapi-fhir-jpaserver.*", 1).withStartupTimeout(Duration.ofSeconds(240)));
     }
 }
