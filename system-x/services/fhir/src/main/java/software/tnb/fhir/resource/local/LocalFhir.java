@@ -36,7 +36,7 @@ public class LocalFhir extends Fhir implements Deployable {
 
     @Override
     public String getServerUrl() {
-        return String.format("http://%s:%d/fhir", container.getHost(), getPortMapping());
+        return String.format("http://%s:%d/hapi-fhir-jpaserver-example/", container.getHost(), getPortMapping());
     }
 
     @Override
