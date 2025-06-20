@@ -63,7 +63,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
         OpenshiftClient.get().createDeployment(Map.of(
             "name", name(),
             "image", sqlService.image(),
-            "env", sqlService.containerEnvironment(),
+            "env", sqlService.getConfiguration().getEnvironmentVariables(),
             "ports", ports,
             "readinessProbe", probe
         ), builder -> builder
