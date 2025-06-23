@@ -76,13 +76,17 @@ public class HorreumValidation implements Validation {
             LOG.info("Horreum upload request:");
             prettyPrinter.printRequest(uploadCall.request());
         }
-        Type responseType = new TypeToken<String>() {
-        }.getType();
-        ApiResponse<String> horreumResp = runApi.getApiClient().execute(uploadCall, responseType);
-        if (HorreumConfiguration.isRequestLogEnabled()) {
-            LOG.info("Horreum upload response: ");
-            prettyPrinter.printResponse(horreumResp);
+        if (!HorreumConfiguration.isUploadDisabled()) {
+            Type responseType = new TypeToken<String>() {
+            }.getType();
+            ApiResponse<String> horreumResp = runApi.getApiClient().execute(uploadCall, responseType);
+            if (HorreumConfiguration.isRequestLogEnabled()) {
+                LOG.info("Horreum upload response: ");
+                prettyPrinter.printResponse(horreumResp);
+            }
+            return horreumResp.getData();
+        } else {
+            return "horreum.upload.disabled=true -> results upload skipped";
         }
-        return horreumResp.getData();
     }
 }
