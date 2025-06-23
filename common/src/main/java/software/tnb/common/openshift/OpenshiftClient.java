@@ -462,7 +462,7 @@ public class OpenshiftClient extends OpenShift {
             LOG.info("Skipped deleting namespace " + name + ", not found");
         } else {
             get().namespaces().withName(name).cascading(true).delete();
-            WaitUtils.waitFor(() -> get().namespaces().withName(name).get() == null, "Waiting until the namespace is removed");
+            WaitUtils.waitFor(() -> get().namespaces().withName(name).get() == null, 60, 5000L, "Waiting until the namespace is removed");
             LOG.info("Deleted namespace " + name);
         }
     }
