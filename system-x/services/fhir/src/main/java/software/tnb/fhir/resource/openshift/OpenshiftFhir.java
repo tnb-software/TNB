@@ -2,9 +2,10 @@ package software.tnb.fhir.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
-import software.tnb.common.deployment.WithInClusterHostname;
+import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.fhir.service.Fhir;
 
@@ -20,53 +21,91 @@ import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.ProbeBuilder;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Fhir.class)
-public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname {
+public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithExternalHostname {
+
+    String sccName = "tnb-fhir-" + OpenshiftClient.get().getNamespace();
+    String serviceAccountName = name() + "-sa";
 
     @Override
     public void undeploy() {
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        OpenshiftClient.get().routes().withName(name()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
     }
 
     @Override
     public void create() {
+        final String authToken = StringUtils.base64Encode(account().username() + ":" + account().password());
+
+        if (OpenshiftClient.get().routes().withName(name()).get() == null) {
+            // @formatter:off
+            OpenshiftClient.get().routes().resource(new RouteBuilder()
+                .editOrNewMetadata()
+                .withName(name())
+                .endMetadata()
+                .editOrNewSpec()
+                    .withNewTo()
+                        .withKind("Service")
+                        .withName(name())
+                        .withWeight(100)
+                    .endTo()
+                    .editOrNewPort()
+                        .withTargetPort(new IntOrString("fhir"))
+                    .endPort()
+                    .withNewTls()
+                        .withTermination("edge")
+                        .withInsecureEdgeTerminationPolicy("Allow")
+                    .endTls()
+                     .withWildcardPolicy("None")
+                .endSpec()
+                .build()).create();
+            // @formatter:on
+        }
+
         List<ContainerPort> ports = List.of(
             new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
         );
 
+        // @formatter:off
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
+            .withNewMetadata()
+            .withName(serviceAccountName)
+            .endMetadata()
+            .build()
+        ).serverSideApply();
+
+        OpenshiftClient.get().addUsersToSecurityContext(
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName)
+        );
+
         final Probe probe = new ProbeBuilder()
-            .editOrNewHttpGet()
-                .withPort(new IntOrString(PORT))
-                .withPath("/fhir/metadata").withScheme("HTTP")
-            .endHttpGet()
+            .editOrNewExec()
+            .withCommand("curl", "http://0.0.0.0:8080/hapi-fhir-jpaserver-example/baseDstu3/metadata",
+                "--header", "\"Authorization: Basic " + authToken + "\"")
+            .endExec()
             .withInitialDelaySeconds(60)
             .withTimeoutSeconds(5)
             .withFailureThreshold(10)
             .build();
-        List<Volume> volumes = List.of(
-            new VolumeBuilder().withNewEmptyDir().endEmptyDir().withName("data").build()
-        );
-        List<VolumeMount> volumeMounts = List.of(
-            new VolumeMountBuilder().withMountPath("/app/target").withName("data").build()
-        );
 
         OpenshiftClient.get().createDeployment(Map.of(
             "name", name(),
             "image", image(),
             "env", containerEnvironment(),
+            "serviceAccount", serviceAccountName,
+            "securityContext", "runAsUser: 100",
             "ports", ports,
             "readinessProbe", probe,
-            "livenessProbe", probe,
-            "volumes", volumes,
-            "volumeMounts", volumeMounts
+            "livenessProbe", probe
         ));
 
         // @formatter:off
@@ -111,7 +150,7 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
 
     @Override
     public String getServerUrl() {
-        return String.format("http://%s:%s/fhir", inClusterHostname(), getPortMapping());
+        return String.format("http://%s/hapi-fhir-jpaserver-example/", externalHostname());
     }
 
     @Override
@@ -127,5 +166,10 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
     @Override
     public void closeResources() {
 
+    }
+
+    @Override
+    public String externalHostname() {
+        return OpenshiftClient.get().routes().withName(name()).get().getSpec().getHost();
     }
 }
