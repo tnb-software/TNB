@@ -9,6 +9,10 @@ import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.fhir.service.Fhir;
 
+import org.junit.jupiter.api.BeforeAll;
+
+import org.apache.commons.lang3.RandomStringUtils;
+
 import com.google.auto.service.AutoService;
 
 import java.util.List;
@@ -28,8 +32,16 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 @AutoService(Fhir.class)
 public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithExternalHostname {
 
-    String sccName = "tnb-fhir-" + OpenshiftClient.get().getNamespace();
-    String serviceAccountName = name() + "-sa";
+    static String sccName = String.format("tnb-fhir-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
+    static String serviceAccountName = "fhir-sa";
+
+    @BeforeAll
+    public static void initOCPServiceAccount() {
+        OpenshiftClient.get().addUsersToSecurityContext(
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName)
+        );
+    }
 
     @Override
     public void undeploy() {
