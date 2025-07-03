@@ -28,8 +28,8 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 @AutoService(Fhir.class)
 public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, WithName, WithExternalHostname {
 
-    String sccName = "tnb-fhir-" + OpenshiftClient.get().getNamespace();
-    String serviceAccountName = name() + "-sa";
+    private final String serviceAccountName = name() + "-sa";
+    private String sccName;
 
     @Override
     public void undeploy() {
@@ -43,6 +43,7 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
 
     @Override
     public void create() {
+        sccName = "tnb-fhir-" + OpenshiftClient.get().getNamespace();
         final String authToken = StringUtils.base64Encode(account().username() + ":" + account().password());
 
         if (OpenshiftClient.get().routes().withName(name()).get() == null) {
