@@ -34,6 +34,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.xtf.core.openshift.OpenShift;
+import cz.xtf.core.openshift.OpenShiftBinary;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
@@ -110,6 +111,10 @@ public class OpenshiftClient extends OpenShift {
     private static OpenshiftClient init() {
         final OpenshiftClient c = OpenshiftClient.createInstance();
         c.createNamespace(c.getNamespace());
+        if (OpenshiftConfiguration.openshiftNamespaceAutoSet()) {
+            LOG.info("Setting {} as your default namespace in your `oc` configuration", c.getNamespace());
+            new OpenShiftBinary("oc").project(c.getNamespace());
+        }
         return c;
     }
 

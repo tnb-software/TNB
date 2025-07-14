@@ -11,6 +11,8 @@ public class OpenshiftConfiguration extends Configuration {
     public static final String OPENSHIFT_USERNAME = "openshift.username";
     public static final String OPENSHIFT_PASSWORD = "openshift.password";
     public static final String OPENSHIFT_NAMESPACE = "openshift.namespace";
+
+    public static final String OPENSHIFT_NAMESPACE_AUTOSET = "openshift.namespace.autoset";
     public static final String OPENSHIFT_NAMESPACE_DELETE = "openshift.namespace.delete";
     public static final String OPENSHIFT_KUBECONFIG = "openshift.kubeconfig";
     public static final String KUBECONFIG = "kubeconfig";
@@ -61,6 +63,10 @@ public class OpenshiftConfiguration extends Configuration {
             namespace += "-" + StringUtils.getRandomAlphanumStringOfLength(8);
         }
         return namespace;
+    }
+
+    public static boolean openshiftNamespaceAutoSet() {
+        return getBoolean(OPENSHIFT_NAMESPACE_AUTOSET, false);
     }
 
     public static boolean openshiftNamespaceDelete() {
