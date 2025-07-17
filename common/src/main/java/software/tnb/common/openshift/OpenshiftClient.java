@@ -15,8 +15,10 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
@@ -776,6 +778,17 @@ public class OpenshiftClient extends OpenShift {
     }
 
     /**
+     * Delete a service account in the current namespace
+     * @param serviceAccountName String, the name of the service account
+     */
+    public void deleteServiceAccount(String serviceAccountName) {
+        LOG.debug("deleting service account {}", serviceAccountName);
+        get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).delete();
+    }
+
+    /**
      * Wait for PODs with labels are ready
      * @param labels Map of label to create the pod filter
      * @param expectedPodNumber int, the expected pod number matching the labels
@@ -796,6 +809,63 @@ public class OpenshiftClient extends OpenShift {
             .forEach(pod -> get().pods().inNamespace(pod.getMetadata().getNamespace())
                 .withName(pod.getMetadata().getName()).waitUntilReady(waitSeconds, TimeUnit.SECONDS));
         LOG.debug("all pods are ready");
+    }
+
+    /**
+     * Apply on server side from classpath resource
+     * @param classPathResource String, the path of the resource to apply (i.e. /software/tnb/mycrd.yaml)
+     * @param replacements Map, if provided, all the keys will be replaced by the relative values
+     * @param inNamespace boolean, if force to be executed in the current namespace
+     */
+    public void serverSideApply(String classPathResource, Map<String, String> replacements, boolean inNamespace) {
+        try (InputStream crRes = OpenshiftClient.class.getResourceAsStream(classPathResource)) {
+            final String namespace = get().getNamespace();
+            AtomicReference<String> content = new AtomicReference<>(org.apache.commons.io.IOUtils.toString(crRes, StandardCharsets.UTF_8));
+
+            if (replacements != null) {
+                replacements.forEach((key, value) -> content.set(content.get().replaceAll(key, value)));
+            }
+            if (inNamespace) {
+                get().inNamespace(namespace).resource(content.get()).serverSideApply();
+            } else {
+                get().resource(content.get()).serverSideApply();
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("unable to load " + classPathResource + " resource");
+        }
+    }
+
+    /**
+     * Overload of {@link OpenshiftClient#serverSideApply(String, Map, boolean)}
+     * @param classPathResource String, the path of the resource to apply (i.e. /software/tnb/mycrd.yaml)
+     */
+    public void serverSideApply(String classPathResource) {
+        serverSideApply(classPathResource, null, true);
+    }
+
+    /**
+     * Check if pods with some label are in ready state
+     * @param namespace String, the namespace to check PODs
+     * @param labelKey String, label key
+     * @param labelValue String, label value
+     * @return boolean, if the pods are found and if the status is ready for all matching pods
+     */
+    public boolean arePodsWithLabelReady(String namespace, String labelKey, String labelValue) {
+        return OpenshiftClient.get().pods().inNamespace(namespace).withLabel(labelKey, labelValue)
+            .list().getItems().stream()
+            .filter(pod -> pod.getStatus() != null)
+            .filter(pod -> pod.getStatus().getConditions() != null)
+            .allMatch(pod -> pod.getStatus().getConditions().stream()
+                .anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus())));
+    }
+
+    /**
+     * Return the URL of the console
+     * @return String, the console URL
+     */
+    public String getConsoleUrl() {
+        return "https://%s".formatted(OpenshiftClient.get().routes().inNamespace("openshift-console").withName("console")
+            .get().getSpec().getHost());
     }
 
 }

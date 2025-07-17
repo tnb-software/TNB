@@ -22,17 +22,12 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
     private Map<String, Object> processors = new LinkedHashMap<>();
     private Map<String, Object> exporters = new LinkedHashMap<>();
     private Map<String, Object> service = new LinkedHashMap<>();
+    private Map<String, Object> extensions = new LinkedHashMap<>();
     public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
     public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
     private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
     private static final String HTTP_RECEIVER_PORT = "otel.http.port";
-
-    public OpenTelemetryCollectorConfiguration() {
-        withDefaultReceivers()
-            .withDefaultProcessors()
-            .withDefaultExporters()
-            .withDefaultServices();
-    }
+    private static final String USES_TEMPOSTACK = "otel.tempostack";
 
     public OpenTelemetryCollectorConfiguration withDefaultReceivers() {
         Map<String, Object> protocols = new HashMap<>();
@@ -163,7 +158,15 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
     public OpenTelemetryCollectorConfiguration withOtlpTracesExporter(String otlpEndpoint) {
         Map<String, Object> otlpTracesConfiguration = new HashMap<>();
         otlpTracesConfiguration.put("endpoint", otlpEndpoint);
-        otlpTracesConfiguration.put("tls", Map.of("insecure", true));
+
+        if (isTempostack()) {
+            otlpTracesConfiguration.put("auth", Map.of("authenticator", "bearertokenauth"));
+            otlpTracesConfiguration.put("headers", Map.of("X-Scope-OrgID", "application")); //tenant created in tempostack
+            otlpTracesConfiguration.put("tls", Map.of("insecure_skip_verify", true));
+        } else {
+            otlpTracesConfiguration.put("tls", Map.of("insecure", true));
+        }
+
         return withOtlpTracesExporter(otlpTracesConfiguration);
     }
 
@@ -199,10 +202,25 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
             ((Map) ((Map) ((Map) receivers.get("otlp")).get("protocols")).get("grpc")).put("endpoint", ":" + getGrpcReceiverPort());
         }
 
+        if (isTempostack()) {
+            extensions.put("bearertokenauth", Map.of("filename", "/var/run/secrets/kubernetes.io/serviceaccount/token"));
+            service.put("extensions", List.of("bearertokenauth"));
+        }
+
         return Map.of("receivers", receivers
             , "processors", processors
             , "exporters", exporters
-            , "service", service);
+            , "service", service
+            , "extensions", extensions);
+    }
+
+    public OpenTelemetryCollectorConfiguration useTempostack(Boolean useTempostack) {
+        set(USES_TEMPOSTACK, useTempostack);
+        return this;
+    }
+
+    public Boolean isTempostack() {
+        return get(USES_TEMPOSTACK, Boolean.class);
     }
 
     @Override

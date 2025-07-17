@@ -287,6 +287,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-observability</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-opensearch</artifactId>
         </dependency>
         <dependency>
@@ -352,6 +356,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-telegram</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-tempo</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

@@ -62,6 +62,8 @@
         <module>ssh</module>
         <module>hawtio</module>
         <module>keycloak</module>
+        <module>tempo</module>
+        <module>observability</module>
         <!-- keep the "all" module last as it needs to collect all previous modules -->
         <module>all</module>
     </modules>
