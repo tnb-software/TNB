@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Kudu</name>
 
     <properties>
-        <kudu-client.version>1.17.0</kudu-client.version>
+        <kudu-client.version>1.18.0</kudu-client.version>
     </properties>
 
     <dependencyManagement>
