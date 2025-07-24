@@ -3,18 +3,18 @@ package software.tnb.tempo.service;
 import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.service.ConfigurableService;
-import software.tnb.common.validation.NoValidation;
 import software.tnb.tempo.service.configuration.TempoConfiguration;
+import software.tnb.tempo.validation.TempoValidation;
 
-public abstract class Tempo extends ConfigurableService<NoAccount, NoClient, NoValidation, TempoConfiguration> {
-
-    public abstract String getLog();
+public abstract class Tempo extends ConfigurableService<NoAccount, NoClient, TempoValidation, TempoConfiguration> {
 
     public abstract String getDistributorHostname();
 
     public abstract String getGatewayHostname();
 
     public abstract String getGatewayUrl();
+
+    public abstract String getGatewayExternalUrl();
 
     @Override
     protected void defaultConfiguration() {

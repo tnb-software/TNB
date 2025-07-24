@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
@@ -786,6 +787,34 @@ public class OpenshiftClient extends OpenShift {
         get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
             .withNewMetadata().withName(serviceAccountName).endMetadata()
             .build()).delete();
+    }
+
+    /**
+     * Retrieve the base64 encoded token for a service account
+     * @param serviceAccountName String, the name of the service account
+     * @return String, the base64 encoded auth token
+     */
+    public String getServiceAccountAuthToken(final String serviceAccountName) {
+        LOG.debug("get service account token for {}", serviceAccountName);
+        final String secret = get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).get().getSecrets().get(0).getName();
+        ObjectMapper objectMapper = new ObjectMapper();
+        final String token;
+        try {
+            Map<String, Object> secretData = objectMapper.readValue(Base64.getDecoder().decode(get().secrets()
+                .inNamespace(get().getNamespace()).withName(secret).get()
+                .getData().get(".dockercfg")),  new TypeReference<Map<String, Object>>() { });
+            Map<String, Object> authMap = (Map<String, Object>) secretData.entrySet().stream()
+                .filter(e -> e.getKey().contains("image-registry"))
+                .map(Map.Entry::getValue)
+                .findFirst().orElseThrow(() -> new RuntimeException("unable to read token for " + serviceAccountName));
+            token = new String(Base64.getDecoder().decode(((String) authMap.get("auth")).getBytes(StandardCharsets.UTF_8)))
+                .substring("<token>:".length());
+        } catch (IOException e) {
+            throw new RuntimeException("unable to read secret " + secret + " for service account " + serviceAccountName, e);
+        }
+        return token;
     }
 
     /**
