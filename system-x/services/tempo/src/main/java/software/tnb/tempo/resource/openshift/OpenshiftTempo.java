@@ -6,8 +6,10 @@ import software.tnb.common.deployment.WithCustomResource;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.service.ServiceFactory;
+import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.tempo.service.Tempo;
+import software.tnb.tempo.validation.TempoValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -19,6 +21,7 @@ import com.google.auto.service.AutoService;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
@@ -31,8 +34,8 @@ import io.fabric8.kubernetes.api.model.SecretBuilder;
 public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOperatorHub, WithCustomResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftTempo.class);
-    private static final String INSTANCE_NAME = "tnb-tempostack";
-    private static final String MINIO_SECRET_TEMPOSTACK = "minio-secret-tempostack";
+    private static final String INSTANCE_NAME = "tnb-tempo-" + StringUtils.getRandomAlphanumStringOfLength(4);
+    private static final String MINIO_SECRET_TEMPOSTACK = "minio-" + INSTANCE_NAME;
     private static final String MINIO_BUCKET = "tempo";
     private static final String STORAGE_TYPE = "s3";
     private static final String STORAGE_SIZE = "1Gi";
@@ -54,7 +57,15 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     @Override
     public void undeploy() {
         OpenshiftClient.get().deleteCustomResource(apiVersion().split("/")[0], apiVersion().split("/")[1], kind(), INSTANCE_NAME);
-        WaitUtils.waitFor(() -> servicePods().isEmpty(), "wait until tempostack pods are terminated");
+        WaitUtils.waitFor(() -> servicePods().isEmpty(), 60, 5000L, "wait until tempostack pods are terminated");
+    }
+
+    @Override
+    public TempoValidation validation() {
+        validation = Optional.ofNullable(validation)
+            .orElseGet(() -> new TempoValidation(getGatewayExternalUrl()
+                , OpenshiftClient.get().getServiceAccountAuthToken(getGatewayHostname())));
+        return validation;
     }
 
     @Override
@@ -121,11 +132,6 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     }
 
     @Override
-    public String getLog() {
-        return OpenshiftClient.get().getPodLog(servicePod().get());
-    }
-
-    @Override
     public String getDistributorHostname() {
         return "tempo-%s-distributor".formatted(INSTANCE_NAME);
     }
@@ -138,6 +144,12 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     @Override
     public String getGatewayUrl() {
         return "%s:8090".formatted(getGatewayHostname());
+    }
+
+    @Override
+    public String getGatewayExternalUrl() {
+        return "https://" + OpenshiftClient.get().routes().inNamespace(OpenshiftClient.get().getNamespace())
+            .withName(getGatewayHostname()).get().getSpec().getHost();
     }
 
     @Override

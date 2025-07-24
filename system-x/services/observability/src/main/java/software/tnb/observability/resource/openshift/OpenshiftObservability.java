@@ -3,9 +3,7 @@ package software.tnb.observability.resource.openshift;
 import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.WaitUtils;
 import software.tnb.observability.service.Observability;
-import software.tnb.observability.validation.ObservabilityValidation;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +12,6 @@ import com.google.auto.service.AutoService;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -30,24 +27,12 @@ public class OpenshiftObservability extends Observability implements OpenshiftDe
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftObservability.class);
 
     @Override
-    public ObservabilityValidation validation() {
-        validation = Optional.ofNullable(validation)
-            .orElseGet(() -> new ObservabilityValidation(getConfiguration().getTempoStackName()));
-        return validation;
-    }
-
-    @Override
     public void undeploy() {
         //cluster wide operator can be in use
     }
 
     @Override
     public void openResources() {
-        if (getConfiguration().isDeployTracesUiPlugin()) {
-            //check if the traces endpoint is reachable
-            WaitUtils.waitFor(() -> validation().isTraceEndpointAvailable(), 10, 10000
-                , "Wait until the trace endpoint is available on the OCP console");
-        }
     }
 
     @Override

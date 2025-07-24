@@ -1,4 +1,4 @@
-package software.tnb.observability.validation.model;
+package software.tnb.tempo.validation.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
