@@ -2,13 +2,16 @@ package software.tnb.common.deployment;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import java.util.List;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import io.fabric8.kubernetes.api.model.Pod;
@@ -55,8 +58,18 @@ public interface OpenshiftDeployable extends Deployable {
         if (!isDeployed()) {
             create();
         }
-        WaitUtils.waitFor(this::isReady, retries, waitTime() / retries,
-            "Waiting until the " + this.getClass().getSimpleName() + " resource is ready");
+
+        Supplier<TimeoutException> exception = () -> {
+            // Get all the pods in the namespace and add them to the TimeoutException message
+            String message = "Timeout exceeded when deploying " + this.getClass().getSimpleName() + " service\n"
+                + "Pods in the '" + OpenshiftClient.get().getNamespace() + "' namespace:\n"
+                + OpenshiftClient.get().getPods().stream()
+                .map(p -> "  " + p.getMetadata().getName() + " - " + p.getStatus().getPhase()).collect(Collectors.joining("\n"));
+            return new TimeoutException(message);
+        };
+
+        WaitUtils.waitFor(new Waiter(this::isReady, "Waiting until the " + this.getClass().getSimpleName() + " resource is ready")
+            .timeout(retries, waitTime() / retries).timeoutException(exception));
     }
 
     @Override
