@@ -3,6 +3,7 @@ package software.tnb.salesforce.validation;
 import software.tnb.common.validation.Validation;
 import software.tnb.salesforce.dto.Account;
 import software.tnb.salesforce.dto.Case;
+import software.tnb.salesforce.dto.Contact;
 import software.tnb.salesforce.dto.Lead;
 
 import org.junit.jupiter.api.Assertions;
@@ -127,5 +128,40 @@ public class SalesforceValidation implements Validation {
                 .header("Content-Type", "application/json"));
             return new ResourceRepresentation(res, jsonMapper);
         }
+    }
+
+    public String createContact(String name, String surname, String email) {
+        final Contact newContact = new Contact();
+        newContact.setFirstName(name);
+        newContact.setLastName(surname);
+        newContact.setEmail(email);
+        String id = client.createSObject("Contact", newContact);
+        LOG.debug("Created contact with id {}", id);
+        return id;
+    }
+
+    public Contact getContact(String contactId) {
+        LOG.debug("Retrieve contact with id {}", contactId);
+        ResourceRepresentation res = client.getSObject("Contact", contactId);
+        return Optional.ofNullable(res)
+                .map(ResourceRepresentation::asMap)
+                    .map(m -> {
+                        Contact contact = new Contact();
+                        contact.setFirstName((String) m.get("FirstName"));
+                        contact.setLastName((String) m.get("LastName"));
+                        contact.setSalutation((String) m.get("Salutation"));
+                        contact.setEmail((String) m.get("Email"));
+                        contact.setDescription((String) m.get("Description"));
+                        return contact;
+                    }).orElse(null);
+    }
+
+    public boolean deleteContact(String contactId) {
+        if (getContact(contactId) != null) {
+            LOG.debug("Delete contact with id {}", contactId);
+            client.deleteSObject("Contact", contactId);
+            return true;
+        }
+        return false;
     }
 }
