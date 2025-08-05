@@ -1,8 +1,9 @@
 package software.tnb.product.application;
 
 import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.exception.FailureCauseException;
+import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
@@ -31,6 +32,7 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -107,9 +109,23 @@ public abstract class App {
 
     public void waitUntilReady() {
         if (shouldRun()) {
-            WaitUtils.waitFor(() -> isReady() && getLog().containsRegex(integrationBuilder.getStartupRegex()), this::isFailed, 1000L,
-                "Waiting until the integration " + getName() + " is running",
-                TestConfiguration.streamLogs() ? null : () -> new FailureCauseException("The Camel app failed to start.", getLog().toString()));
+            Supplier<FailureConditionMetException> exception = () -> {
+                String message = "The Camel app failed to start";
+
+                if (!TestConfiguration.streamLogs()) {
+                    // Append the application log to the exception message
+                    message += ":\n" + getLog().toString();
+                }
+
+                return new FailureConditionMetException(message);
+            };
+
+            WaitUtils.waitFor(new Waiter(() -> isReady() && getLog().containsRegex(integrationBuilder.getStartupRegex()),
+                "Waiting until the integration " + getName() + " is running")
+                .failureCondition(this::isFailed)
+                .retryTimeout(1000L)
+                .failureException(exception)
+            );
             started = true;
         }
     }

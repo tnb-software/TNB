@@ -1,9 +1,9 @@
 package software.tnb.common.utils;
 
 import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.exception.TimeoutException;
+import software.tnb.common.utils.waiter.Waiter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,7 +15,6 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.function.BooleanSupplier;
-import java.util.function.Supplier;
 
 public final class WaitUtils {
     private static final Logger LOG = LoggerFactory.getLogger(WaitUtils.class);
@@ -42,9 +41,12 @@ public final class WaitUtils {
      * @param check booleansupplier instance
      * @param logMessage log message that will be printed out before waiting
      * @throws TimeoutException when the check isn't true after the time expires
+     *
+     * @deprecated Use {@link #waitFor(Waiter)}
      */
+    @Deprecated
     public static void waitFor(BooleanSupplier check, String logMessage) throws TimeoutException {
-        waitFor(check, 24, 5000L, logMessage);
+        waitFor(new Waiter(check, logMessage));
     }
 
     /**
@@ -55,63 +57,59 @@ public final class WaitUtils {
      * @param waitTime wait time between the retries
      * @param logMessage log message that will be printed out before waiting
      * @throws TimeoutException when the check isn't true after the time expires
+     *
+     * @deprecated Use {@link #waitFor(Waiter)}
      */
+    @Deprecated
     public static void waitFor(BooleanSupplier resourceCheck, int retries, long waitTime, String logMessage) throws TimeoutException {
-        LOG.info(logMessage);
-        boolean state;
-        do {
-            state = resourceCheck.getAsBoolean();
-
-            if (!state) {
-                LOG.debug("Condition not met yet, sleeping for {}", waitTime);
-                retries--;
-                sleep(waitTime);
-            }
-        } while (!state && retries > 0);
-
-        if (!state) {
-            throw new TimeoutException("Timeout exceeded");
-        }
-        LOG.debug("Done waiting");
-    }
-
-    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
-        waitFor(check, fail, timeout, logMessage, null);
+        waitFor(new Waiter(resourceCheck, logMessage).timeout(retries, waitTime));
     }
 
     /**
-     * Waits until the check or fail condition return true.
-     * <p>
-     * If a wait duration specified by {@link TestConfiguration#testWaitKillTimeout()} is reached, the wait is killed to prevent infinite waiting
+     * Waits until either success check or failure check returns true.
      *
-     * @param check booleansupplier instance
-     * @param fail booleansupplier instance
+     * @param check success condition
+     * @param fail failure condition
      * @param timeout wait time between the retries
      * @param logMessage log message that will be printed out before waiting
-     * @throws FailureConditionMetException when the fail condition is true
+     * @throws FailureConditionMetException when failure condition is true
+     *
+     * @deprecated Use {@link #waitFor(Waiter)}
      */
-    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage,
-        Supplier<FailureCauseException> failureCause) throws FailureConditionMetException {
-        LOG.info(logMessage);
+    @Deprecated
+    public static void waitFor(BooleanSupplier check, BooleanSupplier fail, long timeout, String logMessage) throws FailureConditionMetException {
+        waitFor(new Waiter(check, logMessage).failureCondition(fail).retryTimeout(timeout));
+    }
+
+    /**
+     * Waits until the wait defined by the waiter either succeedes, fails, timeouts or is killed by the global wait timeout.
+     * @param waiter wait definition
+     */
+    public static void waitFor(Waiter waiter) {
+        LOG.info(waiter.getLogMessage());
+
+        int retries = waiter.getRetries();
         Instant start = Instant.now();
-        while (true) {
-            if (check.getAsBoolean()) {
-                break;
-            } else if (fail.getAsBoolean()) {
-                String exceptionMessage = "Specified fail condition met";
-                if (failureCause != null) {
-                    FailureCauseException e = failureCause.get();
-                    throw new FailureConditionMetException(e.getDescription() != null ? e.getDescription() : exceptionMessage, e);
-                } else {
-                    throw new FailureConditionMetException(exceptionMessage);
+
+        while (!waiter.getCondition().getAsBoolean()) {
+            // if there is a failure condition defined in the waiter, ignore the retries count, as the wait ends either
+            // when success/failure is reached or it is killed by the wait kill timeout
+            if (waiter.getFailureCondition() != null) {
+                if (waiter.getFailureCondition().getAsBoolean()) {
+                    throw waiter.getFailureException();
+                } else if (Duration.between(start, Instant.now()).compareTo(TestConfiguration.testWaitKillTimeout()) > 0) {
+                    LOG.error("Wait killed after {} minutes", TestConfiguration.testWaitKillTimeout().toMinutes());
+                    break;
                 }
-            } else if (Duration.between(start, Instant.now()).compareTo(TestConfiguration.testWaitKillTimeout()) > 0) {
-                LOG.error("Wait killed after {} minutes", TestConfiguration.testWaitKillTimeout().toMinutes());
-                break;
             } else {
-                LOG.debug("Condition not met yet, sleeping for {}", timeout);
-                sleep(timeout);
+                retries--;
+                if (retries < 0) {
+                    throw waiter.getTimeoutException();
+                }
             }
+
+            LOG.debug("Condition not met yet, sleeping for {}", waiter.getRetryTimeout());
+            sleep(waiter.getRetryTimeout());
         }
         LOG.debug("Done waiting");
     }
