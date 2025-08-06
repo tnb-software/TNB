@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 import cz.xtf.core.openshift.OpenShiftWaiters;
 import io.fabric8.kubernetes.api.model.DeletionPropagation;
@@ -34,23 +35,31 @@ import io.fabric8.kubernetes.client.dsl.MixedOperation;
 import io.fabric8.kubernetes.client.dsl.NonNamespaceOperation;
 import io.fabric8.kubernetes.client.dsl.Resource;
 import io.strimzi.api.kafka.KafkaList;
+import io.strimzi.api.kafka.KafkaNodePoolList;
 import io.strimzi.api.kafka.KafkaTopicList;
 import io.strimzi.api.kafka.model.KafkaBuilder;
 import io.strimzi.api.kafka.model.KafkaTopic;
 import io.strimzi.api.kafka.model.KafkaTopicBuilder;
 import io.strimzi.api.kafka.model.listener.arraylistener.KafkaListenerType;
+import io.strimzi.api.kafka.model.nodepool.KafkaNodePool;
+import io.strimzi.api.kafka.model.nodepool.KafkaNodePoolBuilder;
+import io.strimzi.api.kafka.model.nodepool.ProcessRoles;
 import io.strimzi.api.kafka.model.status.Condition;
 
 @AutoService(Kafka.class)
 public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable, WithName, WithOperatorHub {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKafka.class);
+    public static final String NODE_POOL_NAME = "multirole";
 
     private static MixedOperation<io.strimzi.api.kafka.model.Kafka, KafkaList, Resource<io.strimzi.api.kafka.model.Kafka>> kafkaCrdClient;
+    private static MixedOperation<KafkaNodePool, KafkaNodePoolList, Resource<KafkaNodePool>> nodePoolCrdClient;
 
     @Override
     public void deploy() {
         kafkaCrdClient =
             OpenshiftClient.get().resources(io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
+        nodePoolCrdClient =
+            OpenshiftClient.get().resources(KafkaNodePool.class, KafkaNodePoolList.class);
         ReusableOpenshiftDeployable.super.deploy();
     }
 
@@ -71,6 +80,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             if (!TestConfiguration.skipTearDownOpenshiftAMQStreams()) {
                 deleteTopics();
                 kafkaCrdClient.withName(name()).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
+                nodePoolCrdClient.withName(NODE_POOL_NAME).withPropagationPolicy(DeletionPropagation.BACKGROUND).delete();
                 OpenShiftWaiters.get(OpenshiftClient.get(), () -> false).areNoPodsPresent("strimzi.io/cluster", name())
                     .timeout(120_000).waitFor();
                 deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("strimzi.io/kind", "cluster-operator").isEmpty());
@@ -136,9 +146,24 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
 
     private void deployKafkaCR() {
         //@formatter:off
+        KafkaNodePool nodePool = new KafkaNodePoolBuilder()
+            .withNewMetadata()
+                .withName(NODE_POOL_NAME)
+                .withLabels(Map.of("strimzi.io/cluster", name()))
+            .endMetadata()
+            .withNewSpec()
+                .addAllToRoles(Stream.of("controller", "broker").map(ProcessRoles::forValue).toList())
+                .withNewEphemeralStorage().endEphemeralStorage()
+                .withReplicas(1)
+            .endSpec()
+            .build();
+
+        nodePoolCrdClient.inNamespace(targetNamespace()).resource(nodePool).create();
+
         io.strimzi.api.kafka.model.Kafka kafka = new KafkaBuilder()
             .withNewMetadata()
                 .withName(name())
+                .withAnnotations(Map.of("strimzi.io/kraft", "enabled", "strimzi.io/node-pools", "enabled"))
             .endMetadata()
             .withNewSpec()
                 .withNewKafka()
@@ -155,16 +180,12 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
                         .withTls(true)
                         .withType(KafkaListenerType.ROUTE)
                     .endListener()
-                    .withNewEphemeralStorage()
-                    .endEphemeralStorage()
                     .addToConfig("offsets.topic.replication.factor", 1)
                     .addToConfig("transaction.state.log.replication.factor", 1)
                     .addToConfig("transaction.state.log.min.isr", 1)
+                    .addToConfig("min.insync.replicas", 1)
+                    .addToConfig("default.replication.factor", 1)
                 .endKafka()
-                .withNewZookeeper()
-                    .withReplicas(1)
-                    .withNewEphemeralStorage().endEphemeralStorage()
-                .endZookeeper()
                 .withNewEntityOperator()
                     .withNewTopicOperator().endTopicOperator()
                     .withNewUserOperator().endUserOperator()
@@ -173,7 +194,7 @@ public class OpenshiftKafka extends Kafka implements ReusableOpenshiftDeployable
             .build();
         //@formatter:on
 
-        kafkaCrdClient.inNamespace(targetNamespace()).createOrReplace(kafka);
+        kafkaCrdClient.inNamespace(targetNamespace()).resource(kafka).create();
     }
 
     @Override
