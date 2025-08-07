@@ -132,6 +132,8 @@ public class OpenshiftClient extends OpenShift {
         if (clientWrapper == null) {
             // First test running will create the wrapper and others are reused
             clientWrapper = new OpenshiftClientWrapper(OpenshiftClient::init);
+            LOG.debug("ocp version: {}", Optional.ofNullable(clientWrapper.getClient().getVersion())
+                .map(v -> "%s.%s".formatted(v.getMajor(), v.getMinor())).orElse(""));
         } else if (clientWrapper.getClient() == null) {
             // This happens when a thread is reused - there was a test running in this thread and it closed and deleted the client, so re-init it
             clientWrapper.init();
