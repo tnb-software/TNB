@@ -56,7 +56,14 @@ import io.fabric8.kubernetes.api.model.StatusDetails;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.Role;
+import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
+import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.RoleRefBuilder;
+import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
@@ -897,6 +904,56 @@ public class OpenshiftClient extends OpenShift {
     public String getConsoleUrl() {
         return "https://%s".formatted(OpenshiftClient.get().routes().inNamespace("openshift-console").withName("console")
             .get().getSpec().getHost());
+    }
+
+    /**
+     * Creates a role and assign it to the service account
+     * @param namespace String, the namespace for the role
+     * @param apiGroups List, the api groups of the resource for the role
+     * @param resources List, the resources of the role
+     * @param verbs List, the verbs for the resources
+     * @param name String the name of the new role
+     * @param serviceAccountName String the service account associated with the role using role binding
+     */
+    public void createRole(final String namespace, final List<String> apiGroups, final List<String> resources, final List<String> verbs
+        , final String name, final String serviceAccountName) {
+        RbacAPIGroupDSL rbac = OpenshiftClient.get().rbac();
+        final Role role = rbac.roles().inNamespace(namespace)
+            .resource(new RoleBuilder()
+                .withNewMetadata()
+                .withName(name)
+                .withNamespace(namespace)
+                .endMetadata()
+                .addToRules(new PolicyRuleBuilder()
+                    .withApiGroups(apiGroups)
+                    .withResources(resources)
+                    .withVerbs(verbs).build())
+                .build()).create();
+
+        rbac.roleBindings().inNamespace(namespace)
+            .resource(new RoleBindingBuilder()
+                .withNewMetadata()
+                .withName(role.getMetadata().getName())
+                .withNamespace(namespace)
+                .endMetadata()
+                .addToSubjects(new SubjectBuilder()
+                    .withNamespace(namespace)
+                    .withKind("ServiceAccount")
+                    .withName(serviceAccountName).build())
+                .withRoleRef(new RoleRefBuilder()
+                    .withName(role.getMetadata().getName())
+                    .withKind("Role")
+                    .withApiGroup("rbac.authorization.k8s.io")
+                    .build())
+                .build()).create();
+    }
+
+    /**
+     * overload of {@link #createRole(String, List, List, List, String, String)} using current namespace
+     */
+    public void createRole(final List<String> apiGroups, final List<String> resources, final List<String> verbs
+        , final String name, final String serviceAccountName) {
+        createRole(get().getNamespace(), apiGroups, resources, verbs, name, serviceAccountName);
     }
 
 }
