@@ -103,7 +103,7 @@
         <okhttp-version>4.11.0</okhttp-version>
         <failsafe-version>3.3.0</failsafe-version>
         <gson-version>2.13.1</gson-version>
-        <nashorn.version>15.6</nashorn.version>
+        <nashorn.version>15.7</nashorn.version>
     </properties>
 
     <dependencyManagement>
