@@ -15,6 +15,8 @@ public abstract class FileSystem extends Service<NoAccount, NoClient, NoValidati
 
     public abstract boolean createFile(Path directory, String filename, String content) throws IOException;
 
+    public abstract void copyFile(Path srcPath, Path destPath) throws IOException;
+
     public abstract Path createTempDirectory() throws IOException;
 
     public void deploy() {

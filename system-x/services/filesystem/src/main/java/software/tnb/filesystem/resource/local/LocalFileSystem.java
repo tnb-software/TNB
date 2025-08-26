@@ -4,6 +4,8 @@ import software.tnb.common.deployment.Deployable;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.filesystem.service.FileSystem;
 
+import org.apache.commons.io.FileUtils;
+
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
@@ -26,6 +28,11 @@ public class LocalFileSystem extends FileSystem implements Deployable {
         Files.write(Path.of(directory.toFile().getAbsolutePath(), filename), content.getBytes());
 
         return true;
+    }
+
+    @Override
+    public void copyFile(Path srcPath, Path destPath) throws IOException {
+        FileUtils.copyFile(srcPath.toFile(), destPath.toFile());
     }
 
     @Override
