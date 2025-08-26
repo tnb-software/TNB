@@ -94,11 +94,6 @@ public class OpenshiftFhir extends Fhir implements ReusableOpenshiftDeployable, 
             .build()
         ).serverSideApply();
 
-        OpenshiftClient.get().addUsersToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
-            OpenshiftClient.get().getServiceAccountRef(serviceAccountName)
-        );
-
         final Probe probe = new ProbeBuilder()
             .editOrNewExec()
             .withCommand("curl", "http://0.0.0.0:8080/fhir/metadata",
