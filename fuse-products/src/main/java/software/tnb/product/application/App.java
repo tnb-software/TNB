@@ -181,7 +181,7 @@ public abstract class App {
             "camel", "export",
             "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
-            "--logging", "true"
+            "--logging"
         ));
 
         command.addAll(arguments);
