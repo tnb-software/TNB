@@ -4,7 +4,7 @@ USER jboss
 ARG PROJECT_SOURCE=/projects
 ARG MAVEN_MIRROR_URL=
 ARG SUB_FOLDER=.
-ARG JAVA_OPTS_APPEND=-Dcamel.springboot.main-run-controller=true
+ARG JAVA_OPTS_APPEND=-Dcamel.main.run-controller=true
 ARG MAVEN_ARGS_APPEND=
 
 COPY . /projects
