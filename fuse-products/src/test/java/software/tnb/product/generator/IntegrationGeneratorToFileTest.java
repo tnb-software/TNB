@@ -12,6 +12,7 @@ import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.IntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
+import software.tnb.product.routebuilder.DummyRouteBuilder;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -65,10 +66,11 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
         final Path expectedPath = TEST_DIR
             .resolve("src/main/java/")
             .resolve(TestConfiguration.appGroupId().replaceAll("\\.", "/"))
-            .resolve(ib.getFileName());
+            .resolve(DummyRouteBuilder.class.getSimpleName() + ".java");
 
         assertThat(expectedPath).exists();
-        assertThat(expectedPath).content().isEqualTo(ib.getRouteBuilder().get().toString());
+        assertThat(ib.getRouteBuilders()).hasSize(1);
+        assertThat(expectedPath).content().isEqualTo(ib.getRouteBuilders().get(0).toString());
     }
 
     @Test
@@ -140,7 +142,7 @@ public class IntegrationGeneratorToFileTest extends AbstractIntegrationGenerator
         final Path routeBuilderPath = TEST_DIR
             .resolve("src/main/java/")
             .resolve(TestConfiguration.appGroupId().replaceAll("\\.", "/"))
-            .resolve(ib.getFileName());
+            .resolve(DummyRouteBuilder.class.getSimpleName() + ".java");
         assertThat(IOUtils.readFile(routeBuilderPath)).contains("import software.tnb.product.generator.AddedClass;");
     }
 

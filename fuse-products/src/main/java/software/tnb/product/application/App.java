@@ -161,7 +161,7 @@ public abstract class App {
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder("camel", "--version");
-        String version = "";
+        String version;
         try {
             Process process = processBuilder.start();
             version = new String(process.getInputStream().readAllBytes());
@@ -175,7 +175,7 @@ public abstract class App {
 
         IntegrationGenerator.processCustomizers(integrationBuilder);
         IntegrationGenerator.createAdditionalClasses(integrationBuilder, appDir);
-        IntegrationGenerator.createIntegrationClass(integrationBuilder, appDir);
+        IntegrationGenerator.createRouteBuilderClasses(integrationBuilder, appDir);
 
         List<String> command = new ArrayList<>(List.of(
             "camel", "export",
@@ -209,13 +209,11 @@ public abstract class App {
             }).collect(Collectors.joining(",")));
         }
 
-        command.add(integrationBuilder.getFileName());
+        List<CompilationUnit> classes = new ArrayList<>();
+        classes.addAll(integrationBuilder.getRouteBuilders());
+        classes.addAll(integrationBuilder.getAdditionalClasses());
 
-        List<CompilationUnit> additionalClasses = integrationBuilder.getAdditionalClasses();
-        if (!additionalClasses.isEmpty()) {
-            command.addAll(additionalClasses.stream().map(cu -> cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString()) + ".java")
-                .toList());
-        }
+        command.addAll(classes.stream().map(cu -> cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString()) + ".java").toList());
 
         // application.properties are loaded automatically when they are in the root of the dir
         IntegrationGenerator.createApplicationProperties(integrationBuilder, appDir);

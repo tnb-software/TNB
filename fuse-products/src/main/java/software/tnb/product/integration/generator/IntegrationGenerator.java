@@ -71,7 +71,7 @@ public final class IntegrationGenerator {
 
         createApplicationProperties(integrationBuilder, appDir);
 
-        createIntegrationClass(integrationBuilder, appDir);
+        createRouteBuilderClasses(integrationBuilder, appDir);
     }
 
     /**
@@ -141,7 +141,7 @@ public final class IntegrationGenerator {
                 packageFolder.toFile().mkdirs();
                 fileName = packageFolder.resolve(typeName + ".java");
             }
-            integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+            integrationBuilder.getRouteBuilders().forEach(rb -> {
                 //If the class isn't in the same package, it needs to be imported explicitly
                 rb.addImport(new ImportDeclaration(fqn, false, false));
             });
@@ -177,10 +177,10 @@ public final class IntegrationGenerator {
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
-    public static void createIntegrationClass(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+    public static void createRouteBuilderClasses(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
         final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
 
-        integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+        integrationBuilder.getRouteBuilders().forEach(rb -> {
             final Path destination;
             if (integrationBuilder.isJBang()) {
                 destination = sources;
@@ -189,9 +189,10 @@ public final class IntegrationGenerator {
                 destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
                 destination.toFile().mkdirs();
             }
-            String integrationClass = rb.toString();
-            LOG.debug("Integration class:\n{}", integrationClass);
-            IOUtils.writeFile(destination.resolve(integrationBuilder.getFileName()), integrationClass);
+            String routeBuilderSource = rb.toString();
+            String routeBuilderFile = rb.getPrimaryTypeName().orElse(rb.getType(0).getNameAsString()) + ".java";
+            LOG.debug("RouteBuilder class {}:\n{}", routeBuilderFile, routeBuilderSource);
+            IOUtils.writeFile(destination.resolve(routeBuilderFile), routeBuilderSource);
         });
     }
 }
