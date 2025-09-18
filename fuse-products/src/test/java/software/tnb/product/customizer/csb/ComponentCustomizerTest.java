@@ -7,20 +7,20 @@ import software.tnb.common.product.ProductType;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.CustomizerTestParent;
-import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.IntegrationBuilder;
+import software.tnb.product.parent.TestParent;
+import software.tnb.product.routebuilder.DummyRouteBuilder;
 
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
-
-import software.tnb.product.parent.TestParent;
 
 @Tag("unit")
 public class ComponentCustomizerTest extends CustomizerTestParent {
     @Test
     public void shouldAddComponentAnnotationTest() {
         customizer.doCustomize();
-        assertThat(ib.getRouteBuilder().get().getClassByName(AbstractIntegrationBuilder.ROUTE_BUILDER_NAME).get().getAnnotations())
+        assertThat(ib.getRouteBuilders()).hasSize(1);
+        assertThat(ib.getRouteBuilders().get(0).getClassByName(DummyRouteBuilder.class.getSimpleName()).get().getAnnotations())
             .anyMatch(a -> "Component".equals(a.getName().asString()));
     }
 

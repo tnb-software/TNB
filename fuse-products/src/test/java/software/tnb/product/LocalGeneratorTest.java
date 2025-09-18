@@ -55,7 +55,8 @@ public class LocalGeneratorTest extends TestParent {
         Assertions.assertTrue(Files.walk(app).anyMatch(file -> (emptyClass + ".java").equals(file.getFileName().toString())),
             "Empty class is not generated");
 
-        Optional<Path> routeBuilderFile = Files.walk(app).filter(file -> "MyRouteBuilder.java".equals(file.getFileName().toString()))
+        Optional<Path> routeBuilderFile = Files.walk(app).filter(file -> (DirectToLogRoute.class.getSimpleName() + ".java")
+                .equals(file.getFileName().toString()))
             .findAny();
 
         Assertions.assertTrue(routeBuilderFile.isPresent(), "Route Builder class is not generated");

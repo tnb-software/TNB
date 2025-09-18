@@ -12,7 +12,7 @@ public class ApplicationScopeCustomizer extends QuarkusCustomizer {
     @Override
     public void customize() {
         if (!getIntegrationBuilder().isJBang()) {
-            getIntegrationBuilder().getRouteBuilder().ifPresent(rb ->
+            getIntegrationBuilder().getRouteBuilders().forEach(rb ->
                 AnnotationUtils.addAnnotationsToRouteBuilder(rb, List.of("jakarta.enterprise.context.ApplicationScoped"),
                     List.of("ApplicationScoped"))
             );

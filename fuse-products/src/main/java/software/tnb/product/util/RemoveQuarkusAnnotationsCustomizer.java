@@ -15,7 +15,7 @@ import io.quarkus.runtime.annotations.RegisterForReflection;
 public class RemoveQuarkusAnnotationsCustomizer extends ProductsCustomizer {
     private void removeAnnotation() {
         List<CompilationUnit> compilationUnits = new ArrayList<>();
-        getIntegrationBuilder().getRouteBuilder().ifPresent(compilationUnits::add);
+        compilationUnits.addAll(getIntegrationBuilder().getRouteBuilders());
         compilationUnits.addAll(getIntegrationBuilder().getAdditionalClasses());
         for (CompilationUnit cu : compilationUnits) {
             cu.accept(new ModifierVisitor<>() {

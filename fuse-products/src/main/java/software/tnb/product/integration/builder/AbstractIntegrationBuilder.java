@@ -45,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -55,7 +54,6 @@ import java.util.stream.Stream;
  * Wrapper around creating integrations.
  */
 public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegrationBuilder<SELF>> {
-    public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntegrationBuilder.class);
@@ -70,10 +68,9 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final Properties applicationProperties = new Properties();
     private final Properties systemProperties = new Properties();
     private final List<Resource> bytemanRules = new ArrayList<>();
+    private final List<CompilationUnit> routeBuilders = new ArrayList<>();
 
-    private CompilationUnit routeBuilder;
     private String integrationName;
-    private String fileName = ROUTE_BUILDER_NAME + ".java";
 
     // use a random port locally if not specified otherwise
     private int port = OpenshiftConfiguration.isOpenshift() ? 8080 : NetworkUtils.getFreePort();
@@ -127,8 +124,11 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         }, null);
     }
 
-    public SELF fromRouteBuilder(RouteBuilder routeBuilder) {
-        return fromRouteBuilder(routeBuilder, DEFAULT_IGNORED_PACKAGES);
+    public SELF fromRouteBuilder(RouteBuilder... routeBuilders) {
+        for (RouteBuilder routeBuilder : routeBuilders) {
+            fromRouteBuilder(routeBuilder, DEFAULT_IGNORED_PACKAGES);
+        }
+        return self();
     }
 
     public SELF fromRouteBuilder(RouteBuilder routeBuilder, Set<String> ignoredPackages) {
@@ -165,7 +165,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         processRouteBuilder(routeBuilder, className, cu, ignoredPackages);
         cu.setPackageDeclaration(BASE_PACKAGE);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
-        this.routeBuilder = cu;
+        this.routeBuilders.add(cu);
         return self();
     }
 
@@ -323,8 +323,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
                 //Camel needs the class to be public
                 decl.setPublic(true);
             }
-            //Rewrite the original MyRouteBuilder class from the archetypes
-            decl.setName(ROUTE_BUILDER_NAME);
+
+            decl.setName(className);
             processImports(cu, ignoredPackages);
         });
     }
@@ -468,15 +468,6 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         }
     }
 
-    public SELF fileName(String fileName) {
-        this.fileName = fileName;
-        return self();
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
     public List<CompilationUnit> getAdditionalClasses() {
         return this.classesToAdd;
     }
@@ -493,15 +484,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return plugins;
     }
 
-    /**
-     * Gets the route builder compilation unit.
-     * <p>
-     * The RB may be null in case the integration is loaded from XML file (CSB)
-     *
-     * @return optional
-     */
-    public Optional<CompilationUnit> getRouteBuilder() {
-        return Optional.ofNullable(routeBuilder);
+    public List<CompilationUnit> getRouteBuilders() {
+        return routeBuilders;
     }
 
     public Properties getApplicationProperties() {

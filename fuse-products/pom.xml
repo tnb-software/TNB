@@ -14,7 +14,7 @@
     <name>TNB :: Fuse Products</name>
 
     <properties>
-        <camel.version>3.18.3</camel.version>
+        <camel.version>4.14.0</camel.version>
         <json.version>20220320</json.version>
         <maven.invoker.version>3.3.0</maven.invoker.version>
         <maven.model.version>3.9.0</maven.model.version>
