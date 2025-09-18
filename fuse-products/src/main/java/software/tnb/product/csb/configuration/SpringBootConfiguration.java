@@ -35,11 +35,11 @@ public class SpringBootConfiguration extends CamelConfiguration {
     public static final String OPENSHIFT_SB_DEPLOYMENT_FORCE = "openshift-sb.deployment.force";
 
     public static String springBootVersion() {
-        return getProperty(SPRINGBOOT_VERSION, "2.6.1");
+        return getProperty(SPRINGBOOT_VERSION, "3.5.5");
     }
 
     public static String camelSpringBootVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_VERSION, "4.0.0");
+        return getProperty(CAMEL_SPRINGBOOT_VERSION, "4.14.0");
     }
 
     public static String getCamelSpringbootExamplesRepo() {
