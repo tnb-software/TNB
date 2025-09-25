@@ -3,6 +3,7 @@ package software.tnb.product.csb.application;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
@@ -88,7 +89,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             } catch (IOException e) {
                 throw new RuntimeException("Unable to start integration process: ", e);
             }
-            WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
+            WaitUtils.waitFor(new Waiter(() -> logFile.toFile().exists(), "Waiting until the logfile is created"));
 
             log = new FileLog(logFile);
             logStream = new FileLogStream(logFile, LogStream.marker(getName()));
@@ -102,6 +103,20 @@ public class LocalSpringBootApp extends SpringBootApp {
 
     @Override
     public void stop() {
+        if (appProcess != null) {
+            LOG.info("Stopping integration {}", getName());
+            if (appProcess.isAlive()) {
+                LOG.debug("Killing integration process");
+                appProcess.destroy();
+                try {
+                    WaitUtils.waitFor(new Waiter(() -> !isReady(), "Waiting until the process is stopped").timeout(600, 100));
+                } catch (TimeoutException e) {
+                    LOG.warn("Integration process did not terminate normally, calling force destroy");
+                    appProcess.destroyForcibly();
+                }
+            }
+        }
+
         if (logStream != null) {
             logStream.stop();
         }
@@ -109,20 +124,12 @@ public class LocalSpringBootApp extends SpringBootApp {
         if (log != null) {
             log.save();
         }
+    }
 
-        if (appProcess != null) {
-            LOG.info("Stopping integration {}", getName());
-            if (appProcess.isAlive()) {
-                LOG.debug("Killing integration process");
-                appProcess.destroy();
-                try {
-                    WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
-                } catch (TimeoutException e) {
-                    LOG.warn("Integration process did not terminate normally, calling force destroy");
-                    appProcess.destroyForcibly();
-                }
-            }
-        }
+    @Override
+    public void kill() {
+        LOG.info("Killing integration {}", getName());
+        appProcess.destroyForcibly();
     }
 
     @Override

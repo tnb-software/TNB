@@ -62,6 +62,12 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
     }
 
     @Override
+    public void kill() {
+        LOG.warn("kill() is not supported on OpenShift, calling stop()");
+        stop();
+    }
+
+    @Override
     public boolean isReady() {
         try {
             final List<Pod> pods = OpenshiftClient.get().getPods().stream().filter(deploymentStrategy.podSelector()).toList();

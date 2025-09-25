@@ -180,6 +180,12 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     }
 
     @Override
+    public void kill() {
+        LOG.warn("kill() is not supported on OpenShift, calling stop()");
+        stop();
+    }
+
+    @Override
     public boolean isReady() {
         return ResourceFunctions.areExactlyNPodsReady(1).apply(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", getName()));
     }
