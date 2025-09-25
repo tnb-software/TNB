@@ -83,6 +83,8 @@ public abstract class App {
 
     public abstract void stop();
 
+    public abstract void kill();
+
     public abstract boolean isReady();
 
     public abstract boolean isFailed();
