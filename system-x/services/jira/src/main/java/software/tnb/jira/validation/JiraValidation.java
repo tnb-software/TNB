@@ -75,7 +75,7 @@ public class JiraValidation implements Validation {
     }
 
     public void deleteIssue(String issueKey) {
-        LOG.debug("Deleting issue " + issueKey);
+        LOG.debug("Deleting issue {}", issueKey);
         try {
             issuesApi.deleteIssue(issueKey, null);
         } catch (ApiException e) {
@@ -84,7 +84,7 @@ public class JiraValidation implements Validation {
     }
 
     public List<String> getComments(String issueKey) {
-        LOG.debug("Getting comments of " + issueKey);
+        LOG.debug("Getting comments of {}", issueKey);
         try {
             return issueCommentsApi.getComments(issueKey, null, null, null, null).getComments().stream()
                 .map(Comment::getBody)
@@ -95,28 +95,16 @@ public class JiraValidation implements Validation {
         }
     }
 
-    /**
-     * Deprecated.
-     * @param issueKey jira issue key
-     * @param message message
-     * @deprecated use getComments and assert on it
-     * @return true/false
-     */
-    @Deprecated
-    public boolean findInComments(String issueKey, String message) {
-        return getComments(issueKey).contains(message);
-    }
-
     public Issue getIssue(String issueKey) {
         try {
-            return convertIssueBeanToIssue(issuesApi.getIssue(issueKey, null, null, null, null, null));
+            return convertIssueBeanToIssue(issuesApi.getIssue(issueKey, List.of("*all"), null, null, null, null, null));
         } catch (ApiException e) {
             throw new RuntimeException(e);
         }
     }
 
     public void addComment(String issueKey, String content) {
-        LOG.debug("Adding comment on issue " + issueKey);
+        LOG.debug("Adding comment on issue {}", issueKey);
         try {
             Map<String, Object> body = new JSONObject()
                 .put("type", "doc")
@@ -135,10 +123,9 @@ public class JiraValidation implements Validation {
         }
     }
 
-    public List<Issue> getIssues(String project) {
-        assert StringUtils.isNotEmpty(project);
+    public List<Issue> getIssues(String jql) {
         try {
-            return issueSearchApi.searchForIssuesUsingJql(String.format("project = \"%s\"", project), null, 200, null, null, null, null, null)
+            return issueSearchApi.searchAndReconsileIssuesUsingJql(jql, null, 200, List.of("*all"), null, null, null, null, null)
                 .getIssues().stream()
                 .map(this::convertIssueBeanToIssue)
                 .collect(Collectors.toList());
@@ -150,21 +137,12 @@ public class JiraValidation implements Validation {
     public List<Issue> getIssues(String project, String customJQL) {
         assert StringUtils.isNotEmpty(project);
         assert StringUtils.isNotEmpty(customJQL);
-        try {
-            return issueSearchApi.searchForIssuesUsingJql(String.format("project = \"%s\" AND %s", project, customJQL), null, 200, null, null, null,
-                    null, null)
-                .getIssues().stream()
-                .map(this::convertIssueBeanToIssue)
-                .collect(Collectors.toList());
-        } catch (ApiException e) {
-            throw new RuntimeException(e);
-        }
+        return getIssues(String.format("project = \"%s\" AND %s", project, customJQL));
     }
 
     public void setTransition(String issueKey, int transitionId) {
-        LOG.debug("Transit issue " + issueKey + " - transition id: " + transitionId);
+        LOG.debug("Transit issue {} - transition id: {}", issueKey, transitionId);
         try {
-            JSONObject requestBody = new JSONObject().put("transition", new JSONObject().put("id", transitionId));
             issuesApi.doTransition(issueKey, new IssueUpdateDetails().transition(new IssueTransition().id(transitionId + "")));
         } catch (Exception e) {
             throw new RuntimeException("Failed to transit issue " + issueKey, e);
@@ -197,9 +175,9 @@ public class JiraValidation implements Validation {
     //@formatter:off
     /**
      * Method which gets all text from ADF (Atlassian Document Format) object.
-     * https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/
+     * @see <a href="https://developer.atlassian.com/cloud/jira/platform/apis/document/structure/">Structure</a>
      * The object is represented by tree data structure (combination of ArrayList and LinkedTreeMap). E.g.:
-     *
+     * <p>
      *         N           LinkedTreeMap          ADF format root, type==doc
      *        / \
      *       /   \
@@ -209,7 +187,7 @@ public class JiraValidation implements Validation {
      *   L   L   L   N     ArrayList of LinkedTreeMap  type == paragraph || heading || codeBlock ... for NODES, text || status || emoji ... for LEAFS
      *                \
      *                L    ArrayList of LinkedTreeMap  type == text || status || emoji ... for LEAFS
-     *
+     * <p>
      * Method is called recursively on each node till it finds the leaf where is stored the text (type==text) or (type==status || type==emoji)
      *
      * @param node the whole ADF (Atlassian Document Format) object
@@ -217,68 +195,40 @@ public class JiraValidation implements Validation {
      */
     //@formatter:on
     private String getTextFromADF(Object node) {
-        if (node instanceof ArrayList) {
+        if (node instanceof ArrayList<?> castedNode) {
             // list of all child nodes, collect String from all of them and then, concat it into one string
-            ArrayList<?> castedNode = (ArrayList<?>) node;
-            List<String> collect = castedNode.stream()
-                .map(this::getTextFromADF).collect(Collectors.toList());
-            return collect.stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(""));
-        } else if (node instanceof LinkedTreeMap) {
+            List<String> collect = castedNode.stream().map(this::getTextFromADF).toList();
+            return collect.stream().map(Object::toString).collect(Collectors.joining(""));
+        } else if (node instanceof LinkedTreeMap<?, ?> castedNode) {
             // node, decide if it is the parent node(contains arraylist of child nodes) or leaf node where is the text
-            LinkedTreeMap<?, ?> castedNode = (LinkedTreeMap<?, ?>) node;
 
             String nodeType = (String) castedNode.get("type");
-            switch (nodeType) {
+            return switch (nodeType) {
                 // root node, recursively call a method and remove trailing /n from recursion
-                case "doc":
-                    return getTextFromADF(castedNode.get("content")).trim();
+                case "doc" -> getTextFromADF(castedNode.get("content")).trim();
 
                 // we are in the parent node (not in the leaf), continue with recursion
-                case "blockquote":
-                case "bulletList":
-                case "mediaGroup":
-                case "mediaSingle":
-                case "orderedList":
-                case "listItem":
-                case "tableCell":
-                case "tableHeader":
-                case "tableRow":
-                case "panel":
-                case "table":
-                    return getTextFromADF(castedNode.get("content"));
+                case "blockquote", "bulletList", "mediaGroup", "mediaSingle", "orderedList", "listItem", "tableCell", "tableHeader", "tableRow",
+                     "panel", "table" -> getTextFromADF(castedNode.get("content"));
 
                 // these parent nodes represent line in the raw text, add \n to have result text formatted according to the lines (does not apply
                 // to the table)
-                case "codeBlock":
-                case "heading":
-                case "paragraph":
-                    return getTextFromADF(castedNode.get("content")) + "\n";
+                case "codeBlock", "heading", "paragraph" -> getTextFromADF(castedNode.get("content")) + "\n";
 
                 // in the text node (leaf), return text
-                case "text":
-                    return (String) castedNode.get("text");
+                case "text" -> (String) castedNode.get("text");
 
                 // inlineCard node (leaf) has url(text) saved in attributes map
-                case "inlineCard":
-                    return (String) ((LinkedTreeMap<?, ?>) castedNode.get("attrs")).get("url");
+                case "inlineCard" -> (String) ((LinkedTreeMap<?, ?>) castedNode.get("attrs")).get("url");
 
                 // status and emoji node (leaf) has text saved in attributes map
-                case "status":
-                case "emoji":
-                case "mention":
-                    return (String) ((LinkedTreeMap<?, ?>) castedNode.get("attrs")).get("text");
+                case "status", "emoji", "mention" -> (String) ((LinkedTreeMap<?, ?>) castedNode.get("attrs")).get("text");
 
                 // no text in this type of leaf
-                case "media":
-                case "rule":
-                    return "";
-
-                default:
-                    throw new IllegalStateException("getTextFromADF doesn't know this type of ADF node '" + nodeType
-                        + "'! Please update the switch above according to this type of node.");
-            }
+                case "media", "rule" -> "";
+                default -> throw new IllegalStateException("getTextFromADF doesn't know this type of ADF node '" + nodeType
+                    + "'! Please update the switch above according to this type of node.");
+            };
         } else {
             throw new IllegalStateException("Not supported instance of node in ADF! Instance: " + node.getClass().getTypeName());
         }
