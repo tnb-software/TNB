@@ -34,6 +34,7 @@
         <module>event-hubs</module>
         <module>storage-common</module>
         <module>storage-blob</module>
+        <module>storage-data-lake</module>
         <module>storage-queue</module>
         <module>service-bus</module>
         <module>key-vault</module>
