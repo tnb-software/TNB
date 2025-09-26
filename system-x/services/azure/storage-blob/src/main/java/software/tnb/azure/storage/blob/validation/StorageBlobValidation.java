@@ -93,7 +93,7 @@ public class StorageBlobValidation implements Validation {
         // Create a SAS token that's valid for 1 day, as an example
         OffsetDateTime expiryTime = OffsetDateTime.now().plusDays(1);
 
-        // Assign read permissions to the SAS token
+        // Assign permissions to the SAS token
         BlobContainerSasPermission blobContainerSasPermission = new BlobContainerSasPermission()
             .setWritePermission(true)
             .setListPermission(true)
