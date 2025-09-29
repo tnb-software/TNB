@@ -9,3 +9,9 @@ Due to that, the IDE will show unresolved import errors until you run `mvn clean
 # How do I need to use Jira Cloud?
 
 The `validation` has been implemented based on [Jira cloud](https://www.atlassian.com/try/cloud/) creating a base project and adding `Bug` issue type, then updating it adding `Priority` field.
+
+Last update of the openapi file: 2025-09-25 from https://dac-static.atlassian.com/cloud/jira/platform/swagger-v3.v3.json?_v=1.8183.0
+
+Manual changes performed:
+  - removed `exclude` property from `ApprovalConfiguration` as it does not conform to the openAPI spec - https://community.atlassian.com/forums/Jira-articles/Generating-a-REST-client-for-Jira-Cloud/bc-p/3072250#M19639 
+  - added `untranslatedName` property into `IssueTypeDetails` as it is returned by the API, but not present in the schema - https://community.developer.atlassian.com/t/untranslatedname-property-returned-within-the-issue-types-api-response/46934/10
