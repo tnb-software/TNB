@@ -57,6 +57,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
+        logCounter++;
         LOG.trace("Creating service account for the integration {}", getName());
         ServiceAccount sa = new ServiceAccountBuilder().withNewMetadata().withName(getName()).endMetadata().build();
         OpenshiftClient.get().serviceAccounts().resource(sa).serverSideApply();

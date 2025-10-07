@@ -43,6 +43,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public void start() {
+        logCounter++;
         LOG.info("Deploy app using {}", deploymentStrategy.getClass().getSimpleName());
         deploymentStrategy.deploy();
         endpoint = deploymentStrategy.getEndpoint();

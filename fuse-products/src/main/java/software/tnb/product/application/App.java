@@ -48,6 +48,8 @@ public abstract class App {
     // store the name from the integration builder, as when creating multiple apps from the same integration builder by just overriding its name
     // it would always report the last name set
     private final String name;
+    // Append the counter to the log file name in case the app is restarted during the test
+    protected int logCounter = 0;
 
     private static final String JBANG_SCRIPT_NAME = "camel";
     protected static boolean camelInPath = false;
@@ -102,7 +104,8 @@ public abstract class App {
     }
 
     public Path getLogPath(Phase phase) {
-        return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase() + ".log");
+        return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase()
+            + (logCounter != 1 ? "-" + logCounter : "") + ".log");
     }
 
     public Path getLogPath() {
