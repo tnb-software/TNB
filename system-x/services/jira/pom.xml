@@ -15,100 +15,28 @@
     <name>TNB :: System-X :: Services :: Jira</name>
 
     <properties>
-        <swagger-core-version>1.6.5</swagger-core-version>
-        <gson-fire-version>1.9.0</gson-fire-version>
-        <apache-oltu-oauth2-version>1.0.2</apache-oltu-oauth2-version>
-        <jakarta-annotation-version>3.0.0</jakarta-annotation-version>
-        <jakarta.ws.rs-api-version>3.1.0</jakarta.ws.rs-api-version>
-        <openapi.maven.plugin.version>7.15.0</openapi.maven.plugin.version>
+        <!-- 7.0.1 requires java 21 and we still need to support java 17 for now -->
+        <jira.client.version>6.0.2</jira.client.version>
+        <fugue.version>6.1.2</fugue.version>
     </properties>
 
     <dependencies>
-        <!-- DEPENDENCIES FROM OPENAPI GENERATOR -->
         <dependency>
-            <groupId>io.swagger</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-core-version}</version>
-            <scope>compile</scope>
+            <groupId>com.atlassian.jira</groupId>
+            <artifactId>jira-rest-java-client-core</artifactId>
+            <version>${jira.client.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <scope>compile</scope>
+            <groupId>io.atlassian.fugue</groupId>
+            <artifactId>fugue</artifactId>
+            <version>${fugue.version}</version>
         </dependency>
-        <dependency>
-            <groupId>io.gsonfire</groupId>
-            <artifactId>gson-fire</artifactId>
-            <version>${gson-fire-version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.apache.oltu.oauth2</groupId>
-            <artifactId>org.apache.oltu.oauth2.client</artifactId>
-            <version>${apache-oltu-oauth2-version}</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.json</groupId>
-                    <artifactId>json</artifactId>
-                </exclusion>
-            </exclusions>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.annotation</groupId>
-            <artifactId>jakarta.annotation-api</artifactId>
-            <version>${jakarta-annotation-version}</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-            <version>${jakarta.ws.rs-api-version}</version>
-            <scope>compile</scope>
-        </dependency>
-
     </dependencies>
 
-    <build>
-        <plugins>
-            <plugin>
-                <groupId>org.openapitools</groupId>
-                <artifactId>openapi-generator-maven-plugin</artifactId>
-                <version>${openapi.maven.plugin.version}</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>generate</goal>
-                        </goals>
-                        <configuration>
-                            <inputSpec>${project.basedir}/src/main/resources/jira-v3.v3.formatted.json</inputSpec>
-                            <generatorName>java</generatorName>
-                            <generateModelTests>false</generateModelTests>
-                            <generateApiTests>false</generateApiTests>
-                            <configOptions>
-                                <apiPackage>software.tnb.jira.validation.generated.api</apiPackage>
-                                <modelPackage>software.tnb.jira.validation.generated.model</modelPackage>
-                                <invokerPackage>software.tnb.jira.validation.generated</invokerPackage>
-                                <groupId>${project.groupId}</groupId>
-                                <artifactId>${project.artifactId}-generated</artifactId>
-                                <artifactVersion>${project.version}</artifactVersion>
-                                <useJakartaEe>true</useJakartaEe>
-                                <openApiNullable>false</openApiNullable>
-                            </configOptions>
-                            <!-- JSON class generated some data format manipulation with hardcoded +0000 value `date.endsWith("+0000")`,
-                             however, our JIRA Server sends the date with time zone +0100. We are not able to edit the JSON class because this plugin
-                             generates it and compiles it at the same time.
-                             As a workaround, we can use just a String instance. (we don't need to serialize/deserialize those values anyway) -->
-                            <typeMappings>
-                                <typeMapping>DateTime=String</typeMapping>
-                                <typeMapping>Date=String</typeMapping>
-                                <typeMapping>OffsetDateTime=String</typeMapping>
-                            </typeMappings>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-    </build>
-
+    <repositories>
+        <repository>
+            <id>atlassian</id>
+            <url>https://maven.atlassian.com/content/repositories/atlassian-public/</url>
+        </repository>
+    </repositories>
 </project>
