@@ -7,7 +7,7 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <properties>
-        <exec.plugin.version>3.5.0</exec.plugin.version>
+        <exec.plugin.version>3.6.1</exec.plugin.version>
         <xml.format.plugin.version>4.1.0</xml.format.plugin.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
