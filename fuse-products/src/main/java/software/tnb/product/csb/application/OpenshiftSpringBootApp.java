@@ -6,7 +6,6 @@ import software.tnb.product.deploystrategy.OpenshiftDeployStrategyFactory;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.interfaces.OpenshiftDeployer;
-import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 
@@ -53,12 +52,8 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public void stop() {
-        if (logStream != null) {
-            logStream.stop();
-        }
-        if (getLog() != null) {
-            ((OpenshiftLog) getLog()).save(started);
-        }
+        super.stop();
+
         deploymentStrategy.undeploy();
     }
 

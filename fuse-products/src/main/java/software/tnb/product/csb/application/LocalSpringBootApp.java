@@ -118,13 +118,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             }
         }
 
-        if (logStream != null) {
-            logStream.stop();
-        }
-
-        if (log != null) {
-            log.save();
-        }
+        super.stop();
     }
 
     @Override

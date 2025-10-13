@@ -102,20 +102,6 @@ public abstract class SpringBootApp extends App {
             "--spring-boot-version", SpringBootConfiguration.springBootVersion()
             ));
         super.createUsingJBang(arguments);
-        doTempJBangFixes();
-    }
-
-    /**
-     * Workaround current issues with jbang csb template:
-     *   - remove unresolved {{ .AdditionalProperties }} placeholder
-     *   - replace unresolved ${openshift-maven-plugin-version} property
-     */
-    private void doTempJBangFixes() {
-        Path pomPath = TestConfiguration.appLocation().resolve(integrationBuilder.getIntegrationName()).resolve("pom.xml");
-        String pom = IOUtils.readFile(pomPath);
-        pom = pom.replace("{{ .AdditionalProperties }}", "")
-            .replace("${openshift-maven-plugin-version}", SpringBootConfiguration.openshiftMavenPluginVersion());
-        IOUtils.writeFile(pomPath, pom);
     }
 
     private void createUsingMaven() {
