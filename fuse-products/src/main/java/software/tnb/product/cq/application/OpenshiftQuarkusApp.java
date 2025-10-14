@@ -160,12 +160,8 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void stop() {
-        if (logStream != null) {
-            logStream.stop();
-        }
-        if (getLog() != null) {
-            ((OpenshiftLog) getLog()).save(started);
-        }
+        super.stop();
+
         LOG.info("Undeploying integration resources");
         OpenshiftClient.get().routes().withName(getName()).delete();
         OpenshiftClient.get().services().withName(getName()).delete();

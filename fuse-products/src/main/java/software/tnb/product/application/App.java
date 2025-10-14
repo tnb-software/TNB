@@ -8,6 +8,7 @@ import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.Log;
+import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.rp.Attachments;
@@ -83,9 +84,34 @@ public abstract class App {
 
     public abstract void start();
 
-    public abstract void stop();
+    public void stop() {
+        if (logStream != null) {
+            logStream.stop();
+        }
+
+        if (getLog() != null) {
+            if (getLog() instanceof OpenshiftLog) {
+                ((OpenshiftLog) getLog()).save(started);
+            } else {
+                getLog().save();
+            }
+        }
+
+        started = false;
+    }
 
     public abstract void kill();
+
+    /**
+     * Stops the app, starts it back again and waits until it's ready.
+     */
+    public void restart() {
+        if (started) {
+            stop();
+        }
+        start();
+        waitUntilReady();
+    }
 
     public abstract boolean isReady();
 
@@ -104,8 +130,9 @@ public abstract class App {
     }
 
     public Path getLogPath(Phase phase) {
+        // only append the logCounter when the app was already started (so not for the first build/run)
         return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase()
-            + (logCounter != 1 ? "-" + logCounter : "") + ".log");
+            + (logCounter > 1 ? "-" + logCounter : "") + ".log");
     }
 
     public Path getLogPath() {

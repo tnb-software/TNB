@@ -87,13 +87,7 @@ public class LocalQuarkusApp extends QuarkusApp {
             }
         }
 
-        if (logStream != null) {
-            logStream.stop();
-        }
-
-        if (log != null) {
-            log.save();
-        }
+        super.stop();
     }
 
     @Override
