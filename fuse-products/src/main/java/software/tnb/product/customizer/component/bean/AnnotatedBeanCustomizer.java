@@ -33,7 +33,7 @@ public class AnnotatedBeanCustomizer extends ProductsCustomizer {
     public void customizeSpringboot() {
         for (Class<?> clazz : classes) {
             CompilationUnit compilationUnit = getIntegrationBuilder().getCompilationUnit(clazz);
-            getIntegrationBuilder().getRouteBuilder().ifPresent(
+            getIntegrationBuilder().getRouteBuilders().forEach(
                 cu -> cu.getPackageDeclaration().ifPresent(compilationUnit::setPackageDeclaration)
             );
 

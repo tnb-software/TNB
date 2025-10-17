@@ -32,7 +32,8 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
         return Map.of(
             "LICENSE", "accept",
             "MQ_QMGR_NAME", account().queueManager(),
-            "MQ_APP_PASSWORD", account().password()
+            "MQ_APP_PASSWORD", account().password(),
+            "AMQ_SSL_WEAK_CIPHER_ENABLE", SSLCIPHERSUITE
         );
     }
 
@@ -44,7 +45,7 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
 
     // In 9.4 the environment variable for password is deprecated, so for the next bump it will be needed to migrate to docker secrets
     public String defaultImage() {
-        return "icr.io/ibm-messaging/mq:9.4.0.5-r1";
+        return "icr.io/ibm-messaging/mq:9.4.2.0-r2";
     }
 
     /**

@@ -12,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.Base64;
 import java.util.Collections;
@@ -24,13 +27,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import cz.xtf.core.openshift.OpenShift;
+import cz.xtf.core.openshift.OpenShiftBinary;
 import io.fabric8.kubernetes.api.model.ConfigMap;
 import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
@@ -43,10 +50,21 @@ import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
+import io.fabric8.kubernetes.api.model.StatusDetails;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.apps.DeploymentBuilder;
+import io.fabric8.kubernetes.api.model.rbac.PolicyRuleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.Role;
+import io.fabric8.kubernetes.api.model.rbac.RoleBindingBuilder;
+import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
+import io.fabric8.kubernetes.api.model.rbac.RoleRefBuilder;
+import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
+import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
 import io.fabric8.openshift.api.model.operatorhub.v1.OperatorGroupBuilder;
@@ -90,7 +108,7 @@ public class OpenshiftClient extends OpenShift {
         configBuilder
             .withNamespace(namespace)
             .withHttpsProxy(OpenshiftConfiguration.openshiftHttpsProxy())
-            .withBuildTimeout(60_000)
+            .withBuildTimeout(60_000L)
             .withRequestTimeout(120_000)
             .withConnectionTimeout(120_000)
             .withTrustCerts(true);
@@ -103,6 +121,10 @@ public class OpenshiftClient extends OpenShift {
     private static OpenshiftClient init() {
         final OpenshiftClient c = OpenshiftClient.createInstance();
         c.createNamespace(c.getNamespace());
+        if (OpenshiftConfiguration.openshiftNamespaceAutoSet()) {
+            LOG.info("Setting {} as your default namespace in your `oc` configuration", c.getNamespace());
+            new OpenShiftBinary("oc").project(c.getNamespace());
+        }
         return c;
     }
 
@@ -117,6 +139,8 @@ public class OpenshiftClient extends OpenShift {
         if (clientWrapper == null) {
             // First test running will create the wrapper and others are reused
             clientWrapper = new OpenshiftClientWrapper(OpenshiftClient::init);
+            LOG.debug("ocp version: {}", Optional.ofNullable(clientWrapper.getClient().getVersion())
+                .map(v -> "%s.%s".formatted(v.getMajor(), v.getMinor())).orElse(""));
         } else if (clientWrapper.getClient() == null) {
             // This happens when a thread is reused - there was a test running in this thread and it closed and deleted the client, so re-init it
             clientWrapper.init();
@@ -455,7 +479,7 @@ public class OpenshiftClient extends OpenShift {
             LOG.info("Skipped deleting namespace " + name + ", not found");
         } else {
             get().namespaces().withName(name).cascading(true).delete();
-            WaitUtils.waitFor(() -> get().namespaces().withName(name).get() == null, "Waiting until the namespace is removed");
+            WaitUtils.waitFor(() -> get().namespaces().withName(name).get() == null, 60, 5000L, "Waiting until the namespace is removed");
             LOG.info("Deleted namespace " + name);
         }
     }
@@ -717,4 +741,219 @@ public class OpenshiftClient extends OpenShift {
         LOG.debug("Creating deployment {}", name);
         get().apps().deployments().resource(builder.build()).serverSideApply();
     }
+
+    /**
+     * Delete custom resource
+     * @param group String, name of the resource group
+     * @param version String, name of the resource version
+     * @param kind String, name of the resource kind
+     * @param resourceName String, resource name
+     */
+    public void deleteCustomResource(String group, String version, String kind, String resourceName) {
+        deleteCustomResource(new ResourceDefinitionContext.Builder()
+            .withGroup(group)
+            .withVersion(version)
+            .withKind(kind)
+            .build(), resourceName);
+    }
+
+    /**
+     * Delete custom resource
+     * @param resourceContext ResourceDefinitionContext, custom resource context
+     * @param resourceName String, resource name
+     */
+    public void deleteCustomResource(ResourceDefinitionContext resourceContext, String resourceName) {
+        final String namespace = get().getNamespace();
+        LOG.debug("deleting resource {}/{}", resourceContext.getKind(), resourceName);
+        final AtomicReference<List<StatusDetails>> status = new AtomicReference<>();
+        get().genericKubernetesResources(resourceContext).inNamespace(namespace)
+            .list().getItems().stream().filter(r -> resourceName.equals(r.getMetadata().getName()))
+            .findFirst()
+            .ifPresent(foundRes -> status.set(get().resource(foundRes).delete()));
+        Optional.ofNullable(status.get()).orElseGet(List::of)
+                .forEach(statusDetails -> LOG.debug("deleted {}/{}/{}", statusDetails.getGroup(), statusDetails.getKind()
+                    , statusDetails.getName()));
+    }
+
+    /**
+     * Create a service account in the current namespace
+     * @param serviceAccountName String, the name of the service account
+     * @return ServiceAccount created
+     */
+    public ServiceAccount createServiceAccount(String serviceAccountName) {
+        LOG.debug("creating service account {}", serviceAccountName);
+        return get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).serverSideApply();
+    }
+
+    /**
+     * Delete a service account in the current namespace
+     * @param serviceAccountName String, the name of the service account
+     */
+    public void deleteServiceAccount(String serviceAccountName) {
+        LOG.debug("deleting service account {}", serviceAccountName);
+        get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).delete();
+    }
+
+    /**
+     * Retrieve the base64 encoded token for a service account
+     * @param serviceAccountName String, the name of the service account
+     * @return String, the base64 encoded auth token
+     */
+    public String getServiceAccountAuthToken(final String serviceAccountName) {
+        LOG.debug("get service account token for {}", serviceAccountName);
+        final String secret = get().serviceAccounts().inNamespace(get().getNamespace()).resource(new ServiceAccountBuilder()
+            .withNewMetadata().withName(serviceAccountName).endMetadata()
+            .build()).get().getSecrets().get(0).getName();
+        ObjectMapper objectMapper = new ObjectMapper();
+        final String token;
+        try {
+            Map<String, Object> secretData = objectMapper.readValue(Base64.getDecoder().decode(get().secrets()
+                .inNamespace(get().getNamespace()).withName(secret).get()
+                .getData().get(".dockercfg")),  new TypeReference<Map<String, Object>>() { });
+            Map<String, Object> authMap = (Map<String, Object>) secretData.entrySet().stream()
+                .filter(e -> e.getKey().contains("image-registry"))
+                .map(Map.Entry::getValue)
+                .findFirst().orElseThrow(() -> new RuntimeException("unable to read token for " + serviceAccountName));
+            token = new String(Base64.getDecoder().decode(((String) authMap.get("auth")).getBytes(StandardCharsets.UTF_8)))
+                .substring("<token>:".length());
+        } catch (IOException e) {
+            throw new RuntimeException("unable to read secret " + secret + " for service account " + serviceAccountName, e);
+        }
+        return token;
+    }
+
+    /**
+     * Wait for PODs with labels are ready
+     * @param labels Map of label to create the pod filter
+     * @param expectedPodNumber int, the expected pod number matching the labels
+     * @param waitSeconds int, seconds to wait for each POD to be ready, it is used also to wait for the expected pods are available
+     */
+    public void waitUntilThePodsAreReady(Map<String, String> labels, int expectedPodNumber, int waitSeconds) {
+
+        final Predicate<Pod> podPredicate = pod -> get().hasLabels(pod, labels);
+
+        WaitUtils.waitFor(() ->
+            get().pods().inNamespace(get().getNamespace())
+                .list().getItems().stream().filter(podPredicate).count() == expectedPodNumber
+        , waitSeconds, 1000L, String.format("Waiting until the expected pod number is %s", expectedPodNumber));
+
+        LOG.debug("waiting for all pods are ready");
+        get().pods().inNamespace(get().getNamespace())
+            .list().getItems().stream().filter(podPredicate).toList()
+            .forEach(pod -> get().pods().inNamespace(pod.getMetadata().getNamespace())
+                .withName(pod.getMetadata().getName()).waitUntilReady(waitSeconds, TimeUnit.SECONDS));
+        LOG.debug("all pods are ready");
+    }
+
+    /**
+     * Apply on server side from classpath resource
+     * @param classPathResource String, the path of the resource to apply (i.e. /software/tnb/mycrd.yaml)
+     * @param replacements Map, if provided, all the keys will be replaced by the relative values
+     * @param inNamespace boolean, if force to be executed in the current namespace
+     */
+    public void serverSideApply(String classPathResource, Map<String, String> replacements, boolean inNamespace) {
+        try (InputStream crRes = OpenshiftClient.class.getResourceAsStream(classPathResource)) {
+            final String namespace = get().getNamespace();
+            AtomicReference<String> content = new AtomicReference<>(org.apache.commons.io.IOUtils.toString(crRes, StandardCharsets.UTF_8));
+
+            if (replacements != null) {
+                replacements.forEach((key, value) -> content.set(content.get().replaceAll(key, value)));
+            }
+            if (inNamespace) {
+                get().inNamespace(namespace).resource(content.get()).serverSideApply();
+            } else {
+                get().resource(content.get()).serverSideApply();
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException("unable to load " + classPathResource + " resource");
+        }
+    }
+
+    /**
+     * Overload of {@link OpenshiftClient#serverSideApply(String, Map, boolean)}
+     * @param classPathResource String, the path of the resource to apply (i.e. /software/tnb/mycrd.yaml)
+     */
+    public void serverSideApply(String classPathResource) {
+        serverSideApply(classPathResource, null, true);
+    }
+
+    /**
+     * Check if pods with some label are in ready state
+     * @param namespace String, the namespace to check PODs
+     * @param labelKey String, label key
+     * @param labelValue String, label value
+     * @return boolean, if the pods are found and if the status is ready for all matching pods
+     */
+    public boolean arePodsWithLabelReady(String namespace, String labelKey, String labelValue) {
+        return OpenshiftClient.get().pods().inNamespace(namespace).withLabel(labelKey, labelValue)
+            .list().getItems().stream()
+            .filter(pod -> pod.getStatus() != null)
+            .filter(pod -> pod.getStatus().getConditions() != null)
+            .allMatch(pod -> pod.getStatus().getConditions().stream()
+                .anyMatch(c -> "Ready".equals(c.getType()) && "True".equals(c.getStatus())));
+    }
+
+    /**
+     * Return the URL of the console
+     * @return String, the console URL
+     */
+    public String getConsoleUrl() {
+        return "https://%s".formatted(OpenshiftClient.get().routes().inNamespace("openshift-console").withName("console")
+            .get().getSpec().getHost());
+    }
+
+    /**
+     * Creates a role and assign it to the service account
+     * @param namespace String, the namespace for the role
+     * @param apiGroups List, the api groups of the resource for the role
+     * @param resources List, the resources of the role
+     * @param verbs List, the verbs for the resources
+     * @param name String the name of the new role
+     * @param serviceAccountName String the service account associated with the role using role binding
+     */
+    public void createRole(final String namespace, final List<String> apiGroups, final List<String> resources, final List<String> verbs
+        , final String name, final String serviceAccountName) {
+        RbacAPIGroupDSL rbac = OpenshiftClient.get().rbac();
+        final Role role = rbac.roles().inNamespace(namespace)
+            .resource(new RoleBuilder()
+                .withNewMetadata()
+                .withName(name)
+                .withNamespace(namespace)
+                .endMetadata()
+                .addToRules(new PolicyRuleBuilder()
+                    .withApiGroups(apiGroups)
+                    .withResources(resources)
+                    .withVerbs(verbs).build())
+                .build()).create();
+
+        rbac.roleBindings().inNamespace(namespace)
+            .resource(new RoleBindingBuilder()
+                .withNewMetadata()
+                .withName(role.getMetadata().getName())
+                .withNamespace(namespace)
+                .endMetadata()
+                .addToSubjects(new SubjectBuilder()
+                    .withNamespace(namespace)
+                    .withKind("ServiceAccount")
+                    .withName(serviceAccountName).build())
+                .withRoleRef(new RoleRefBuilder()
+                    .withName(role.getMetadata().getName())
+                    .withKind("Role")
+                    .withApiGroup("rbac.authorization.k8s.io")
+                    .build())
+                .build()).create();
+    }
+
+    /**
+     * overload of {@link #createRole(String, List, List, List, String, String)} using current namespace
+     */
+    public void createRole(final List<String> apiGroups, final List<String> resources, final List<String> verbs
+        , final String name, final String serviceAccountName) {
+        createRole(get().getNamespace(), apiGroups, resources, verbs, name, serviceAccountName);
+    }
+
 }

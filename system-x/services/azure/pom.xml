@@ -15,9 +15,9 @@
     <packaging>pom</packaging>
 
     <properties>
-        <azure.core.version>1.54.0</azure.core.version>
+        <azure.core.version>1.57.0</azure.core.version>
         <!-- Align the version, as blob and queue may contain different versions -->
-        <azure.storage.common.version>12.28.0</azure.storage.common.version>
+        <azure.storage.common.version>12.30.0</azure.storage.common.version>
         <!-- There is some issue with the latest 1.15.3 version, so pin this version until it stops working -->
         <azure.core.netty.http.version>1.13.11</azure.core.netty.http.version>
     </properties>
@@ -34,6 +34,7 @@
         <module>event-hubs</module>
         <module>storage-common</module>
         <module>storage-blob</module>
+        <module>storage-data-lake</module>
         <module>storage-queue</module>
         <module>service-bus</module>
         <module>key-vault</module>

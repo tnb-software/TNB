@@ -32,12 +32,14 @@ public class SpringBootConfiguration extends CamelConfiguration {
 
     public static final String OPENSHIFT_SB_RESULT_IMAGE_REPOSITORY = "openshift-sb.result-image.repo";
 
+    public static final String OPENSHIFT_SB_DEPLOYMENT_FORCE = "openshift-sb.deployment.force";
+
     public static String springBootVersion() {
-        return getProperty(SPRINGBOOT_VERSION, "2.6.1");
+        return getProperty(SPRINGBOOT_VERSION, "3.5.5");
     }
 
     public static String camelSpringBootVersion() {
-        return getProperty(CAMEL_SPRINGBOOT_VERSION, "4.0.0");
+        return getProperty(CAMEL_SPRINGBOOT_VERSION, "4.14.0");
     }
 
     public static String getCamelSpringbootExamplesRepo() {
@@ -104,5 +106,13 @@ public class SpringBootConfiguration extends CamelConfiguration {
      */
     public static String openshiftResultImageRepository() {
         return getProperty(OPENSHIFT_SB_RESULT_IMAGE_REPOSITORY);
+    }
+
+    /**
+     * set <a href="https://eclipse.dev/jkube/docs/openshift-maven-plugin/#jkube-openshift-deploymentconfig">jkube.build.switchToDeployment</a>
+     * @return boolean, true if jkube creates a Deployment, false to create a DeploymentConfig, default true
+     */
+    public static boolean forceOpenshiftDeployment() {
+        return getBoolean(OPENSHIFT_SB_DEPLOYMENT_FORCE, true);
     }
 }

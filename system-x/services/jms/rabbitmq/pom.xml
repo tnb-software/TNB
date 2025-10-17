@@ -16,7 +16,7 @@
 
     <properties>
         <artemis.jms.client.version>2.28.0</artemis.jms.client.version>
-        <rabbitmq.jms.version>3.4.0</rabbitmq.jms.version>
+        <rabbitmq.jms.version>3.5.0</rabbitmq.jms.version>
     </properties>
 
     <dependencies>

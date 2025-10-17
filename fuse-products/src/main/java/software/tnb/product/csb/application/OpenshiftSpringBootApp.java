@@ -6,7 +6,6 @@ import software.tnb.product.deploystrategy.OpenshiftDeployStrategyFactory;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.interfaces.OpenshiftDeployer;
-import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
 
@@ -43,6 +42,7 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public void start() {
+        logCounter++;
         LOG.info("Deploy app using {}", deploymentStrategy.getClass().getSimpleName());
         deploymentStrategy.deploy();
         endpoint = deploymentStrategy.getEndpoint();
@@ -52,13 +52,15 @@ public class OpenshiftSpringBootApp extends SpringBootApp {
 
     @Override
     public void stop() {
-        if (logStream != null) {
-            logStream.stop();
-        }
-        if (getLog() != null) {
-            ((OpenshiftLog) getLog()).save(started);
-        }
+        super.stop();
+
         deploymentStrategy.undeploy();
+    }
+
+    @Override
+    public void kill() {
+        LOG.warn("kill() is not supported on OpenShift, calling stop()");
+        stop();
     }
 
     @Override

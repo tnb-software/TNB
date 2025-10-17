@@ -16,6 +16,12 @@ public abstract class OpenTelemetryCollector extends ConfigurableService<NoAccou
 
     @Override
     protected void defaultConfiguration() {
-        getConfiguration().withReplicas(1).withActuatorHealthCheckExcluded();
+        getConfiguration().withDefaultReceivers()
+            .withDefaultProcessors()
+            .withDefaultExporters()
+            .withDefaultServices()
+            .withReplicas(1)
+            .withActuatorHealthCheckExcluded()
+            .useTempostack(false);
     }
 }

@@ -5,6 +5,7 @@ import software.tnb.common.deployment.WithCustomResource;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.jaeger.client.JaegerClient;
 import software.tnb.jaeger.client.UnauthenticatedJaegerClient;
 import software.tnb.jaeger.service.Jaeger;
@@ -31,7 +32,10 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
 
     @Override
     public void undeploy() {
-        //cluster wide operator can be in use
+        // undeploy only the custom resource
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).delete();
+        WaitUtils.waitFor(() -> OpenshiftClient.get().pods().list().getItems().stream().noneMatch(podSelector()),
+            "Waiting until the Jaeger pod is removed");
     }
 
     @Override
@@ -55,16 +59,20 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
         //create target namespace if not exists
         OpenshiftClient.get().createNamespace(targetNamespace());
 
-        // Create subscription if needed
-        createSubscription();
+        // Check if the operator pod already exists
+        if (OpenshiftClient.get().apps().deployments().inNamespace(targetNamespace())
+            .withLabels(Map.of("name", "jaeger-operator")).list().getItems().isEmpty()) {
+            // Create subscription if needed
+            createSubscription();
+        }
 
+        // Create the custom resource in test namespace
         OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
     }
 
     @Override
     public boolean isDeployed() {
-        return OpenshiftClient.get().apps().deployments()
-            .inNamespace(targetNamespace()).list().getItems().stream()
+        return OpenshiftClient.get().apps().deployments().list().getItems().stream()
             .anyMatch(deployment -> JAEGER_INSTANCE_NAME.equals(deployment.getMetadata().getName()));
     }
 

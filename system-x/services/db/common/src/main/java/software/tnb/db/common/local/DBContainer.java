@@ -12,7 +12,7 @@ public class DBContainer extends GenericContainer<DBContainer> {
         super(service.image());
         this.port = port;
         withExposedPorts(port);
-        withEnv(service.containerEnvironment());
+        withEnv(service.getConfiguration().getEnvironmentVariables());
         waitingFor(waitStrategy);
         // with podman the startup occasionally fails and adding this seems to help
         withStartupAttempts(2);

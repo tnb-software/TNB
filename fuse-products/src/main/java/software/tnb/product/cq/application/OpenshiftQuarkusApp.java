@@ -33,6 +33,8 @@ import java.util.function.Predicate;
 import cz.xtf.core.openshift.helpers.ResourceFunctions;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceAccount;
+import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 import io.fabric8.openshift.api.model.RoutePort;
@@ -55,6 +57,11 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
+        logCounter++;
+        LOG.trace("Creating service account for the integration {}", getName());
+        ServiceAccount sa = new ServiceAccountBuilder().withNewMetadata().withName(getName()).endMetadata().build();
+        OpenshiftClient.get().serviceAccounts().resource(sa).serverSideApply();
+
         final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
             .withArgs("package")
@@ -69,7 +76,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         // @formatter:off
         if (OpenshiftClient.get().services().withName(getName()).get() == null) {
             // create the service and route manually if it is not created by quarkus
-            OpenshiftClient.get().services().resource(new ServiceBuilder()
+            final ServiceBuilder serviceBuilder = new ServiceBuilder()
                 .withNewMetadata()
                     .withName(getName())
                     .addToLabels("app.kubernetes.io/name", getName())
@@ -81,9 +88,18 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
                         .withPort(integrationBuilder.getPort())
                         .withProtocol("TCP")
                     .endPort()
-                .endSpec()
-                .build()
-            ).serverSideApply();
+                .endSpec();
+
+            integrationBuilder.getAdditionalPorts().forEach(port ->
+                serviceBuilder.editSpec()
+                    .addNewPort()
+                        .withName("port-" + port)
+                        .withPort(port)
+                        .withProtocol("TCP")
+                    .endPort()
+                .endSpec());
+
+            OpenshiftClient.get().services().resource(serviceBuilder.build()).serverSideApply();
         }
         if (OpenshiftClient.get().routes().withName(getName()).get() == null) {
             OpenshiftClient.get().routes().resource(new RouteBuilder()
@@ -121,6 +137,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             "quarkus.kubernetes.deploy", "true",
             "quarkus.native.container-build", "true",
             "quarkus.openshift.build-strategy", "docker",
+            "quarkus.openshift.service-account", getName(),
             "skipTests", "true"
         ));
         if (!QuarkusConfiguration.isQuarkusNative()) {
@@ -143,15 +160,12 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
 
     @Override
     public void stop() {
-        if (logStream != null) {
-            logStream.stop();
-        }
-        if (getLog() != null) {
-            ((OpenshiftLog) getLog()).save(started);
-        }
+        super.stop();
+
         LOG.info("Undeploying integration resources");
         OpenshiftClient.get().routes().withName(getName()).delete();
         OpenshiftClient.get().services().withName(getName()).delete();
+        OpenshiftClient.get().serviceAccounts().withName(getName()).delete();
         Path openshiftResources = TestConfiguration.appLocation().resolve(getName()).resolve("target").resolve("kubernetes/openshift.yml");
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
@@ -160,6 +174,12 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         } catch (IOException e) {
             throw new RuntimeException("Unable to read openshift.yml resource: ", e);
         }
+    }
+
+    @Override
+    public void kill() {
+        LOG.warn("kill() is not supported on OpenShift, calling stop()");
+        stop();
     }
 
     @Override

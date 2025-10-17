@@ -16,7 +16,7 @@ public class CamelMainCustomizerTest extends CustomizerTestParent {
     public void shouldAddToPropertiesTest() {
         customizer.doCustomize();
         assertThat(ib.getApplicationProperties()).hasSize(1);
-        assertThat(ib.getApplicationProperties()).containsEntry("camel.springboot.main-run-controller", "true");
+        assertThat(ib.getApplicationProperties()).containsEntry("camel.main.run-controller", "true");
     }
 
     @Override

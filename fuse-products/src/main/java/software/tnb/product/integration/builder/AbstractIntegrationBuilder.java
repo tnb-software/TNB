@@ -1,8 +1,11 @@
 package software.tnb.product.integration.builder;
 
+import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.MapUtils;
+import software.tnb.common.utils.NetworkUtils;
 import software.tnb.product.customizer.Customizer;
+import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.deploystrategy.impl.custom.OpenshiftCustomDeployer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.util.maven.Maven;
@@ -17,6 +20,7 @@ import org.slf4j.LoggerFactory;
 
 import com.github.javaparser.JavaParser;
 import com.github.javaparser.ParseProblemException;
+import com.github.javaparser.ParserConfiguration;
 import com.github.javaparser.StaticJavaParser;
 import com.github.javaparser.ast.CompilationUnit;
 import com.github.javaparser.ast.ImportDeclaration;
@@ -41,7 +45,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Properties;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -51,7 +54,6 @@ import java.util.stream.Stream;
  * Wrapper around creating integrations.
  */
 public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegrationBuilder<SELF>> {
-    public static final String ROUTE_BUILDER_NAME = "MyRouteBuilder";
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntegrationBuilder.class);
@@ -66,12 +68,14 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final Properties applicationProperties = new Properties();
     private final Properties systemProperties = new Properties();
     private final List<Resource> bytemanRules = new ArrayList<>();
+    private final List<CompilationUnit> routeBuilders = new ArrayList<>();
 
-    private CompilationUnit routeBuilder;
     private String integrationName;
-    private String fileName = ROUTE_BUILDER_NAME + ".java";
 
-    private int port = 8080;
+    // use a random port locally if not specified otherwise
+    private int port = OpenshiftConfiguration.isOpenshift() ? 8080 : NetworkUtils.getFreePort();
+
+    private final List<Integer> additionalPorts = new ArrayList<>();
 
     private final List<String> javaAgents = new ArrayList<>();
     private final List<String> vmArguments = new ArrayList<>();
@@ -79,6 +83,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private OpenshiftCustomDeployer customStrategy;
 
     private boolean useJBang = false;
+
+    private String startupRegex = "(?m)^.*Apache Camel.*started in.*$";
 
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
@@ -118,8 +124,11 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         }, null);
     }
 
-    public SELF fromRouteBuilder(RouteBuilder routeBuilder) {
-        return fromRouteBuilder(routeBuilder, DEFAULT_IGNORED_PACKAGES);
+    public SELF fromRouteBuilder(RouteBuilder... routeBuilders) {
+        for (RouteBuilder routeBuilder : routeBuilders) {
+            fromRouteBuilder(routeBuilder, DEFAULT_IGNORED_PACKAGES);
+        }
+        return self();
     }
 
     public SELF fromRouteBuilder(RouteBuilder routeBuilder, Set<String> ignoredPackages) {
@@ -156,7 +165,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         processRouteBuilder(routeBuilder, className, cu, ignoredPackages);
         cu.setPackageDeclaration(BASE_PACKAGE);
         LOG.debug("Adding RouteBuilder class: {} to the application", className);
-        this.routeBuilder = cu;
+        this.routeBuilders.add(cu);
         return self();
     }
 
@@ -265,7 +274,9 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     private Stream<SourceRoot> getSourceRoots(Class<?> clazz) {
-        ProjectRoot projectRoot = new ParserCollectionStrategy().collect(CodeGenerationUtils.mavenModuleRoot(clazz));
+        ParserConfiguration config = new ParserConfiguration();
+        config.setLanguageLevel(ParserConfiguration.LanguageLevel.JAVA_21);
+        ProjectRoot projectRoot = new ParserCollectionStrategy(config).collect(CodeGenerationUtils.mavenModuleRoot(clazz));
         return projectRoot.getSourceRoots().stream().filter(sr -> !sr.getRoot().toString().contains("target"));
     }
 
@@ -312,8 +323,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
                 //Camel needs the class to be public
                 decl.setPublic(true);
             }
-            //Rewrite the original MyRouteBuilder class from the archetypes
-            decl.setName(ROUTE_BUILDER_NAME);
+
+            decl.setName(className);
             processImports(cu, ignoredPackages);
         });
     }
@@ -389,7 +400,21 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     }
 
     public SELF port(int port) {
+        return port(port, true);
+    }
+
+    /**
+     * Configures the port that is exposed by the app.getEndpoint() method.
+     * @param port port
+     * @param configureDefaultServer true/false whether to set this port as the port of the default http server. "false" should be used when
+     *  there is some other component that starts its own server and we want to target that one
+     * @return self
+     */
+    public SELF port(int port, boolean configureDefaultServer) {
         this.port = port;
+        if (!configureDefaultServer) {
+            addCustomizer(new HTTPServerPortCustomizer(false));
+        }
         return self();
     }
 
@@ -443,15 +468,6 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         }
     }
 
-    public SELF fileName(String fileName) {
-        this.fileName = fileName;
-        return self();
-    }
-
-    public String getFileName() {
-        return fileName;
-    }
-
     public List<CompilationUnit> getAdditionalClasses() {
         return this.classesToAdd;
     }
@@ -468,15 +484,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return plugins;
     }
 
-    /**
-     * Gets the route builder compilation unit.
-     * <p>
-     * The RB may be null in case the integration is loaded from XML file (CSB)
-     *
-     * @return optional
-     */
-    public Optional<CompilationUnit> getRouteBuilder() {
-        return Optional.ofNullable(routeBuilder);
+    public List<CompilationUnit> getRouteBuilders() {
+        return routeBuilders;
     }
 
     public Properties getApplicationProperties() {
@@ -547,5 +556,32 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     public List<Resource> getBytemanRules() {
         return bytemanRules;
+    }
+
+    public SELF addAdditionalPorts(Integer ... ports) {
+        additionalPorts.addAll(Arrays.stream(ports).toList());
+        return self();
+    }
+
+    public List<Integer> getAdditionalPorts() {
+        return additionalPorts;
+    }
+
+    /**
+     * Allow overriding the evaluation regex for application startup.
+     * @param regex string passed to Pattern.compile method
+     * @return SELF
+     */
+    public SELF startupRegex(String regex) {
+        this.startupRegex = regex;
+        return self();
+    }
+
+    /**
+     * Regex that is a part of application startup check - only after this regex is in the application log the application is considered started up
+     * @return regex expected to be matched in the application log
+     */
+    public String getStartupRegex() {
+        return startupRegex;
     }
 }

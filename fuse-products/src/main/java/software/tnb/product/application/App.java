@@ -1,12 +1,14 @@
 package software.tnb.product.application;
 
 import software.tnb.common.config.TestConfiguration;
-import software.tnb.common.exception.FailureCauseException;
+import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.Log;
+import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.rp.Attachments;
@@ -31,11 +33,11 @@ import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class App {
-    private static final Pattern LOG_STARTED_REGEX = Pattern.compile("(?m)^.*Apache Camel.*started in.*$");
     private static final Logger LOG = LoggerFactory.getLogger(App.class);
 
     protected AbstractIntegrationBuilder<?> integrationBuilder;
@@ -44,6 +46,11 @@ public abstract class App {
     protected LogStream logStream;
     protected Endpoint endpoint;
     protected boolean started = false;
+    // store the name from the integration builder, as when creating multiple apps from the same integration builder by just overriding its name
+    // it would always report the last name set
+    private final String name;
+    // Append the counter to the log file name in case the app is restarted during the test
+    protected int logCounter = 0;
 
     private static final String JBANG_SCRIPT_NAME = "camel";
     protected static boolean camelInPath = false;
@@ -54,6 +61,7 @@ public abstract class App {
     }
 
     protected App(String name) {
+        this.name = name;
         ensureDirNotPresent(name);
         logFilePrefix = name + "-" + new Date().getTime() + "-";
     }
@@ -76,7 +84,34 @@ public abstract class App {
 
     public abstract void start();
 
-    public abstract void stop();
+    public void stop() {
+        if (logStream != null) {
+            logStream.stop();
+        }
+
+        if (getLog() != null) {
+            if (getLog() instanceof OpenshiftLog) {
+                ((OpenshiftLog) getLog()).save(started);
+            } else {
+                getLog().save();
+            }
+        }
+
+        started = false;
+    }
+
+    public abstract void kill();
+
+    /**
+     * Stops the app, starts it back again and waits until it's ready.
+     */
+    public void restart() {
+        if (started) {
+            stop();
+        }
+        start();
+        waitUntilReady();
+    }
 
     public abstract boolean isReady();
 
@@ -91,11 +126,13 @@ public abstract class App {
     }
 
     public String getName() {
-        return integrationBuilder.getIntegrationName();
+        return name;
     }
 
     public Path getLogPath(Phase phase) {
-        return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase() + ".log");
+        // only append the logCounter when the app was already started (so not for the first build/run)
+        return TestConfiguration.appLocation().resolve(logFilePrefix + phase.name().toLowerCase()
+            + (logCounter > 1 ? "-" + logCounter : "") + ".log");
     }
 
     public Path getLogPath() {
@@ -104,15 +141,25 @@ public abstract class App {
 
     public void waitUntilReady() {
         if (shouldRun()) {
-            WaitUtils.waitFor(() -> isReady() && isCamelStarted(), this::isFailed, 1000L,
-                "Waiting until the integration " + getName() + " is running",
-                TestConfiguration.streamLogs() ? null : () -> new FailureCauseException("The Camel app failed to start.", getLog().toString()));
+            Supplier<FailureConditionMetException> exception = () -> {
+                String message = "The Camel app failed to start";
+
+                if (!TestConfiguration.streamLogs()) {
+                    // Append the application log to the exception message
+                    message += ":\n" + getLog().toString();
+                }
+
+                return new FailureConditionMetException(message);
+            };
+
+            WaitUtils.waitFor(new Waiter(() -> isReady() && getLog().containsRegex(integrationBuilder.getStartupRegex()),
+                "Waiting until the integration " + getName() + " is running")
+                .failureCondition(this::isFailed)
+                .retryTimeout(1000L)
+                .failureException(exception)
+            );
             started = true;
         }
-    }
-
-    private boolean isCamelStarted() {
-        return getLog().containsRegex(LOG_STARTED_REGEX);
     }
 
     protected void customizePlugins(List<Plugin> mavenPlugins) {
@@ -146,7 +193,7 @@ public abstract class App {
         }
 
         ProcessBuilder processBuilder = new ProcessBuilder("camel", "--version");
-        String version = "";
+        String version;
         try {
             Process process = processBuilder.start();
             version = new String(process.getInputStream().readAllBytes());
@@ -160,17 +207,21 @@ public abstract class App {
 
         IntegrationGenerator.processCustomizers(integrationBuilder);
         IntegrationGenerator.createAdditionalClasses(integrationBuilder, appDir);
-        IntegrationGenerator.createIntegrationClass(integrationBuilder, appDir);
+        IntegrationGenerator.createRouteBuilderClasses(integrationBuilder, appDir);
 
         List<String> command = new ArrayList<>(List.of(
             "camel", "export",
-            "--kamelets-version", TestConfiguration.kameletsVersion(),
             "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
-            "--logging", "true"
+            "--logging"
         ));
 
         command.addAll(arguments);
+
+        if (TestConfiguration.kameletsVersion() != null) {
+            command.add("--kamelets-version");
+            command.add(TestConfiguration.kameletsVersion());
+        }
 
         if (!integrationBuilder.getDependencies().isEmpty()) {
             command.add("--dep");
@@ -190,13 +241,11 @@ public abstract class App {
             }).collect(Collectors.joining(",")));
         }
 
-        command.add(integrationBuilder.getFileName());
+        List<CompilationUnit> classes = new ArrayList<>();
+        classes.addAll(integrationBuilder.getRouteBuilders());
+        classes.addAll(integrationBuilder.getAdditionalClasses());
 
-        List<CompilationUnit> additionalClasses = integrationBuilder.getAdditionalClasses();
-        if (!additionalClasses.isEmpty()) {
-            command.addAll(additionalClasses.stream().map(cu -> cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString()) + ".java")
-                .toList());
-        }
+        command.addAll(classes.stream().map(cu -> cu.getPrimaryTypeName().orElse(cu.getType(0).getNameAsString()) + ".java").toList());
 
         // application.properties are loaded automatically when they are in the root of the dir
         IntegrationGenerator.createApplicationProperties(integrationBuilder, appDir);
@@ -234,5 +283,9 @@ public abstract class App {
         }
 
         IntegrationGenerator.createResourceFiles(integrationBuilder, appDir);
+    }
+
+    public int getPort() {
+        return integrationBuilder.getPort();
     }
 }

@@ -14,8 +14,8 @@
     <name>TNB :: System-X :: Services :: FTP</name>
 
     <properties>
-        <ftp.client.version>3.11.1</ftp.client.version>
-        <sftp.client.version>0.39.0</sftp.client.version>
+        <ftp.client.version>3.12.0</ftp.client.version>
+        <sftp.client.version>0.40.0</sftp.client.version>
     </properties>
 
     <dependencies>

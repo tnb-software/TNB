@@ -6,9 +6,10 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.common.util.ReflectionUtil;
 import software.tnb.db.common.account.SQLAccount;
+import software.tnb.db.common.service.configuration.SQLConfiguration;
 import software.tnb.db.common.validation.SQLValidation;
 
 import org.slf4j.Logger;
@@ -16,7 +17,8 @@ import org.slf4j.LoggerFactory;
 
 import java.util.Map;
 
-public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> implements WithName, WithExternalHostname, WithDockerImage {
+public abstract class SQL extends ConfigurableService<SQLAccount, NoClient, SQLValidation, SQLConfiguration>
+    implements WithName, WithExternalHostname, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
 
     protected abstract Class<? extends SQLAccount> accountClass();
@@ -73,5 +75,10 @@ public abstract class SQL extends Service<SQLAccount, NoClient, SQLValidation> i
 
     public String name() {
         return ReflectionUtil.getSuperClassName(this.getClass());
+    }
+
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().environmentVariables(containerEnvironment());
     }
 }

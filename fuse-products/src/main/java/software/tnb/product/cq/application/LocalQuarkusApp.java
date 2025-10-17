@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.application.Phase;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.Customizer;
@@ -49,6 +50,7 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     @Override
     public void start() {
+        logCounter++;
         Path logFile = getLogPath();
         ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
@@ -58,7 +60,7 @@ public class LocalQuarkusApp extends QuarkusApp {
         } catch (IOException e) {
             throw new RuntimeException("Unable to start integration process: ", e);
         }
-        WaitUtils.waitFor(() -> logFile.toFile().exists(), "Waiting until the logfile is created");
+        WaitUtils.waitFor(new Waiter(() -> logFile.toFile().exists(), "Waiting until the logfile is created"));
 
         log = new FileLog(logFile);
         logStream = new FileLogStream(logFile, LogStream.marker(getName(), Phase.RUN));
@@ -71,27 +73,27 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     @Override
     public void stop() {
-        if (logStream != null) {
-            logStream.stop();
-        }
-
-        if (log != null) {
-            log.save();
-        }
-
         if (appProcess != null) {
             LOG.info("Stopping integration {}", getName());
             if (appProcess.isAlive()) {
                 LOG.debug("Killing integration process");
                 appProcess.destroy();
                 try {
-                    WaitUtils.waitFor(() -> !isReady(), 600, 100, "Waiting until the process is stopped");
+                    WaitUtils.waitFor(new Waiter(() -> !isReady(), "Waiting until the process is stopped").timeout(600, 100));
                 } catch (TimeoutException e) {
                     LOG.warn("Integration process did not terminate normally, calling force destroy");
                     appProcess.destroyForcibly();
                 }
             }
         }
+
+        super.stop();
+    }
+
+    @Override
+    public void kill() {
+        LOG.info("Killing integration {}", getName());
+        appProcess.destroyForcibly();
     }
 
     @Override

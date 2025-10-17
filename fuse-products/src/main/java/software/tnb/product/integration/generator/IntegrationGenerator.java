@@ -8,6 +8,7 @@ import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.Customizers;
+import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.customizer.byteman.BytemanCustomizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
@@ -70,7 +71,7 @@ public final class IntegrationGenerator {
 
         createApplicationProperties(integrationBuilder, appDir);
 
-        createIntegrationClass(integrationBuilder, appDir);
+        createRouteBuilderClasses(integrationBuilder, appDir);
     }
 
     /**
@@ -94,6 +95,12 @@ public final class IntegrationGenerator {
             new CamelMainCustomizer(),
             new BytemanCustomizer()
         );
+
+        // the http server port customizer should be added by default, however, if there is any other instance of that class already added
+        // (by using .port(port, boolean) method), don't add another one
+        if (integrationBuilder.getCustomizers().stream().noneMatch(c -> c instanceof HTTPServerPortCustomizer)) {
+            integrationBuilder.addCustomizer(new HTTPServerPortCustomizer(true));
+        }
 
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setIntegrationBuilder(integrationBuilder);
@@ -134,7 +141,7 @@ public final class IntegrationGenerator {
                 packageFolder.toFile().mkdirs();
                 fileName = packageFolder.resolve(typeName + ".java");
             }
-            integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+            integrationBuilder.getRouteBuilders().forEach(rb -> {
                 //If the class isn't in the same package, it needs to be imported explicitly
                 rb.addImport(new ImportDeclaration(fqn, false, false));
             });
@@ -170,10 +177,10 @@ public final class IntegrationGenerator {
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
-    public static void createIntegrationClass(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
+    public static void createRouteBuilderClasses(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
         final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
 
-        integrationBuilder.getRouteBuilder().ifPresent(rb -> {
+        integrationBuilder.getRouteBuilders().forEach(rb -> {
             final Path destination;
             if (integrationBuilder.isJBang()) {
                 destination = sources;
@@ -182,9 +189,10 @@ public final class IntegrationGenerator {
                 destination = sources.resolve(packageDeclaration.getName().asString().replace(".", "/"));
                 destination.toFile().mkdirs();
             }
-            String integrationClass = rb.toString();
-            LOG.debug("Integration class:\n{}", integrationClass);
-            IOUtils.writeFile(destination.resolve(integrationBuilder.getFileName()), integrationClass);
+            String routeBuilderSource = rb.toString();
+            String routeBuilderFile = rb.getPrimaryTypeName().orElse(rb.getType(0).getNameAsString()) + ".java";
+            LOG.debug("RouteBuilder class {}:\n{}", routeBuilderFile, routeBuilderSource);
+            IOUtils.writeFile(destination.resolve(routeBuilderFile), routeBuilderSource);
         });
     }
 }

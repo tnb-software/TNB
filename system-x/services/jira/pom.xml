@@ -20,7 +20,7 @@
         <apache-oltu-oauth2-version>1.0.2</apache-oltu-oauth2-version>
         <jakarta-annotation-version>3.0.0</jakarta-annotation-version>
         <jakarta.ws.rs-api-version>3.1.0</jakarta.ws.rs-api-version>
-        <openapi.maven.plugin.version>7.11.0</openapi.maven.plugin.version>
+        <openapi.maven.plugin.version>7.15.0</openapi.maven.plugin.version>
     </properties>
 
     <dependencies>
@@ -83,15 +83,15 @@
                         <configuration>
                             <inputSpec>${project.basedir}/src/main/resources/jira-v3.v3.formatted.json</inputSpec>
                             <generatorName>java</generatorName>
+                            <generateModelTests>false</generateModelTests>
+                            <generateApiTests>false</generateApiTests>
                             <configOptions>
                                 <apiPackage>software.tnb.jira.validation.generated.api</apiPackage>
                                 <modelPackage>software.tnb.jira.validation.generated.model</modelPackage>
                                 <invokerPackage>software.tnb.jira.validation.generated</invokerPackage>
                                 <groupId>${project.groupId}</groupId>
-                                <artifactId>${project.artifactId}</artifactId>
+                                <artifactId>${project.artifactId}-generated</artifactId>
                                 <artifactVersion>${project.version}</artifactVersion>
-                                <generateModelTests>false</generateModelTests>
-                                <generateApiTests>false</generateApiTests>
                                 <useJakartaEe>true</useJakartaEe>
                                 <openApiNullable>false</openApiNullable>
                             </configOptions>

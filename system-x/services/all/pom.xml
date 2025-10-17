@@ -7,8 +7,8 @@
         <relativePath>../pom.xml</relativePath>
     </parent>
     <properties>
-        <exec.plugin.version>3.5.0</exec.plugin.version>
-        <xml.format.plugin.version>4.0.1</xml.format.plugin.version>
+        <exec.plugin.version>3.6.1</exec.plugin.version>
+        <xml.format.plugin.version>4.1.0</xml.format.plugin.version>
     </properties>
     <modelVersion>4.0.0</modelVersion>
     <name>TNB :: System-X :: Services :: All</name>
@@ -104,6 +104,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-azure-storage-common</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-azure-storage-data-lake</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
@@ -239,6 +243,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-keycloak</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-knative</artifactId>
         </dependency>
         <dependency>
@@ -280,6 +288,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-mysql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-observability</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
@@ -348,6 +360,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-telegram</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-tempo</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

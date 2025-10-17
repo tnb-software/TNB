@@ -1,15 +1,15 @@
 package software.tnb.fhir.service;
 
-import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.ConfigurableService;
 import software.tnb.common.validation.NoValidation;
+import software.tnb.fhir.account.FhirAccount;
 import software.tnb.fhir.service.configuration.FhirConfiguration;
 
 import java.util.Map;
 
-public abstract class Fhir extends ConfigurableService<NoAccount, NoClient, NoValidation, FhirConfiguration> implements WithDockerImage {
+public abstract class Fhir extends ConfigurableService<FhirAccount, NoClient, NoValidation, FhirConfiguration> implements WithDockerImage {
     public static final int PORT = 8080;
 
     public abstract int getPortMapping();
@@ -18,17 +18,20 @@ public abstract class Fhir extends ConfigurableService<NoAccount, NoClient, NoVa
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
-            "hapi.fhir.fhir_version", getConfiguration().fhirVersion(),
-            "hapi.fhir.reuse_cached_search_results_millis", "-1");
+            "FHIR_VERSION", getConfiguration().fhirVersion(),
+            "AUTH_ENABLED", Boolean.toString(getConfiguration().getFhirAuthEnabled()),
+            "AUTH_USERNAME", account().username(),
+            "AUTH_PASSWORD", account().password());
     }
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/hapi:v7.2.0";
+        return "quay.io/fuse_qe/hapi-fhir:v8.2.0";
     }
 
     @Override
     protected void defaultConfiguration() {
         getConfiguration().withFhirVersion("R4");
+        getConfiguration().withFhirAuthEnabled(false);
     }
 }

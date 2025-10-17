@@ -3,6 +3,7 @@ package software.tnb.product.cq.application;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.application.App;
 import software.tnb.product.application.Phase;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
@@ -179,7 +180,7 @@ public abstract class QuarkusApp extends App {
     public void waitUntilReady() {
         super.waitUntilReady();
         if (readinessCheck != null) {
-            WaitUtils.waitFor(readinessCheck, 10, 1000L, "Waiting for endpoint readiness");
+            WaitUtils.waitFor(new Waiter(readinessCheck, "Waiting until the HTTP endpoint is ready").timeout(10, 1000L));
         }
     }
 }
