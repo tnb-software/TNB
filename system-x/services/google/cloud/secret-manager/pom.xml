@@ -13,7 +13,7 @@
     <name>TNB :: System-X :: Services :: Google :: Cloud :: Secret-Manager</name>
 
     <properties>
-        <google.secretmanager.version>2.77.0</google.secretmanager.version>
+        <google.secretmanager.version>2.78.0</google.secretmanager.version>
     </properties>
 
     <dependencies>
