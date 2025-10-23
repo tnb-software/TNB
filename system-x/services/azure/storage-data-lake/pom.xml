@@ -30,11 +30,6 @@
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
-            <artifactId>azure-storage-common</artifactId>
-            <version>${azure.storage.common.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
             <artifactId>azure-storage-file-datalake</artifactId>
             <version>${azure.storage.file.datalake.version}</version>
         </dependency>
