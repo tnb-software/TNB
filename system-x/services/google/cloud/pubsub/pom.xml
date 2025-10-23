@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Google :: PubSub</name>
 
     <properties>
-        <google-cloud-pubsub.version>1.142.0</google-cloud-pubsub.version>
+        <google-cloud-pubsub.version>1.143.0</google-cloud-pubsub.version>
     </properties>
 
     <dependencies>
