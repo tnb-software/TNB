@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Storage :: Queue</name>
 
     <properties>
-        <azure.storage.queue.version>12.26.0</azure.storage.queue.version>
+        <azure.storage.queue.version>12.27.0</azure.storage.queue.version>
     </properties>
 
     <dependencies>
@@ -27,11 +27,6 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-core</artifactId>
             <version>${azure.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-storage-common</artifactId>
-            <version>${azure.storage.common.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>

@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Azure :: Storage :: Blob</name>
 
     <properties>
-        <azure.storage.blob.version>12.31.0</azure.storage.blob.version>
+        <azure.storage.blob.version>12.32.0</azure.storage.blob.version>
     </properties>
 
     <dependencies>
@@ -27,11 +27,6 @@
             <groupId>com.azure</groupId>
             <artifactId>azure-core</artifactId>
             <version>${azure.core.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.azure</groupId>
-            <artifactId>azure-storage-common</artifactId>
-            <version>${azure.storage.common.version}</version>
         </dependency>
         <dependency>
             <groupId>com.azure</groupId>
