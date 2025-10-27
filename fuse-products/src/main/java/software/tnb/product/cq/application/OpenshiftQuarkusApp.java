@@ -143,8 +143,46 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         if (!QuarkusConfiguration.isQuarkusNative()) {
             properties.put("quarkus.openshift.command", getJavaCommand());
         }
+
+        // Add volume configurations from IntegrationBuilder
+        addVolumeProperties(properties);
+
         properties.putAll(QuarkusConfiguration.fromSystemProperties());
         return properties;
+    }
+
+    /**
+     * Adds Quarkus volume and volume mount properties for ConfigMaps, Secrets, and EmptyDirs.
+     */
+    private void addVolumeProperties(Map<String, String> properties) {
+        if (integrationBuilder == null || integrationBuilder.getVolumes().isEmpty()) {
+            return;
+        }
+
+        LOG.info("Adding {} volume(s) to Quarkus OpenShift deployment", integrationBuilder.getVolumes().size());
+
+        // Add volumes
+        for (int i = 0; i < integrationBuilder.getVolumes().size(); i++) {
+            var volume = integrationBuilder.getVolumes().get(i);
+            String volumeName = volume.name();
+
+            if ("configMap".equals(volume.type())) {
+                properties.put(String.format("quarkus.openshift.config-map-volumes.%s.config-map-name", volumeName), volume.source());
+            } else if ("secret".equals(volume.type())) {
+                properties.put(String.format("quarkus.openshift.secret-volumes.%s.secret-name", volumeName), volume.source());
+            } else if ("emptyDir".equals(volume.type())) {
+                properties.put(String.format("quarkus.openshift.empty-dir-volumes.%s.medium", volumeName), "");
+            } else {
+                LOG.warn("Unsupported volume type '{}' for Quarkus OpenShift deployment", volume.type());
+            }
+        }
+
+        // Add volume mounts
+        for (var mount : integrationBuilder.getVolumeMounts()) {
+            String volumeName = mount.volumeName();
+            properties.put(String.format("quarkus.openshift.mounts.%s.path", volumeName), mount.mountPath());
+            properties.put(String.format("quarkus.openshift.mounts.%s.read-only", volumeName), String.valueOf(mount.readOnly()));
+        }
     }
 
     /**

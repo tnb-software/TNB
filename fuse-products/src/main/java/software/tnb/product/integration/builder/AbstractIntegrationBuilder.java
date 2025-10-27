@@ -8,6 +8,8 @@ import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.deploystrategy.impl.custom.OpenshiftCustomDeployer;
 import software.tnb.product.integration.Resource;
+import software.tnb.product.integration.configuration.VolumeConfig;
+import software.tnb.product.integration.configuration.VolumeMountConfig;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.camel.builder.RouteBuilder;
@@ -69,6 +71,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final Properties systemProperties = new Properties();
     private final List<Resource> bytemanRules = new ArrayList<>();
     private final List<CompilationUnit> routeBuilders = new ArrayList<>();
+    private final List<VolumeConfig> volumes = new ArrayList<>();
+    private final List<VolumeMountConfig> volumeMounts = new ArrayList<>();
 
     private String integrationName;
 
@@ -583,5 +587,37 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      */
     public String getStartupRegex() {
         return startupRegex;
+    }
+
+    /**
+     * Add a volume (for OpenShift/Kubernetes deployments)
+     * @param name volume name
+     * @param type volume type (e.g., "configMap", "secret", "emptyDir")
+     * @param source volume source (e.g., ConfigMap name, Secret name)
+     * @return SELF
+     */
+    public SELF addVolume(String name, String type, String source) {
+        volumes.add(new VolumeConfig(name, type, source));
+        return self();
+    }
+
+    /**
+     * Add a volume mount (for OpenShift/Kubernetes deployments)
+     * @param volumeName name of the volume to mount
+     * @param mountPath path where the volume should be mounted
+     * @param readOnly whether the volume should be mounted as read-only
+     * @return SELF
+     */
+    public SELF addVolumeMount(String volumeName, String mountPath, boolean readOnly) {
+        volumeMounts.add(new VolumeMountConfig(volumeName, mountPath, readOnly));
+        return self();
+    }
+
+    public List<VolumeConfig> getVolumes() {
+        return volumes;
+    }
+
+    public List<VolumeMountConfig> getVolumeMounts() {
+        return volumeMounts;
     }
 }
