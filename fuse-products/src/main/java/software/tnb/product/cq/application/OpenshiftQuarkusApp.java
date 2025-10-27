@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -143,8 +144,56 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         if (!QuarkusConfiguration.isQuarkusNative()) {
             properties.put("quarkus.openshift.command", getJavaCommand());
         }
+
+        // Add volume configurations from IntegrationBuilder
+        addVolumeProperties(properties);
+
         properties.putAll(QuarkusConfiguration.fromSystemProperties());
         return properties;
+    }
+
+    /**
+     * Adds Quarkus volume and volume mount properties for ConfigMaps, Secrets, and EmptyDirs.
+     */
+    private void addVolumeProperties(Map<String, String> properties) {
+        if (integrationBuilder == null || integrationBuilder.getVolumes().isEmpty()) {
+            return;
+        }
+
+        LOG.info("Adding {} volume(s) to Quarkus OpenShift deployment", integrationBuilder.getVolumes().size());
+
+        List<String> emptyDirVolumes = new ArrayList<>();
+
+        // Add volumes
+        for (int i = 0; i < integrationBuilder.getVolumes().size(); i++) {
+            var volume = integrationBuilder.getVolumes().get(i);
+            String volumeName = volume.name();
+
+            switch (volume.type()) {
+                case CONFIG_MAP:
+                    properties.put(String.format("quarkus.openshift.config-map-volumes.%s.config-map-name", volumeName), volume.source());
+                    break;
+                case SECRET:
+                    properties.put(String.format("quarkus.openshift.secret-volumes.%s.secret-name", volumeName), volume.source());
+                    break;
+                case EMPTY_DIR:
+                    emptyDirVolumes.add(volumeName);
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected value: " + volume.type());
+            }
+        }
+
+        if (!emptyDirVolumes.isEmpty()) {
+            properties.put("quarkus.openshift.empty-dir-volumes", String.join(",", emptyDirVolumes));
+        }
+
+        // Add volume mounts
+        for (var mount : integrationBuilder.getVolumeMounts()) {
+            String volumeName = mount.volumeName();
+            properties.put(String.format("quarkus.openshift.mounts.%s.path", volumeName), mount.mountPath());
+            properties.put(String.format("quarkus.openshift.mounts.%s.read-only", volumeName), String.valueOf(mount.readOnly()));
+        }
     }
 
     /**

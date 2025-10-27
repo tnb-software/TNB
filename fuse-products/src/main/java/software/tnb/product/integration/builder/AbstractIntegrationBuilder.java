@@ -8,6 +8,8 @@ import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.deploystrategy.impl.custom.OpenshiftCustomDeployer;
 import software.tnb.product.integration.Resource;
+import software.tnb.product.integration.configuration.VolumeConfig;
+import software.tnb.product.integration.configuration.VolumeMountConfig;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.camel.builder.RouteBuilder;
@@ -69,6 +71,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private final Properties systemProperties = new Properties();
     private final List<Resource> bytemanRules = new ArrayList<>();
     private final List<CompilationUnit> routeBuilders = new ArrayList<>();
+    private final List<VolumeConfig> volumes = new ArrayList<>();
+    private final List<VolumeMountConfig> volumeMounts = new ArrayList<>();
 
     private String integrationName;
 
@@ -583,5 +587,57 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      */
     public String getStartupRegex() {
         return startupRegex;
+    }
+
+    /**
+     * Add a ConfigMap volume (for OpenShift/Kubernetes deployments)
+     * @param name volume name
+     * @param configMapName name of the ConfigMap
+     * @return SELF
+     */
+    public SELF addConfigMapVolume(String name, String configMapName) {
+        volumes.add(VolumeConfig.configMap(name, configMapName));
+        return self();
+    }
+
+    /**
+     * Add a Secret volume (for OpenShift/Kubernetes deployments)
+     * @param name volume name
+     * @param secretName name of the Secret
+     * @return SELF
+     */
+    public SELF addSecretVolume(String name, String secretName) {
+        volumes.add(VolumeConfig.secret(name, secretName));
+        return self();
+    }
+
+    /**
+     * Add an emptyDir volume (for OpenShift/Kubernetes deployments)
+     * @param name volume name
+     * @return SELF
+     */
+    public SELF addEmptyDirVolume(String name) {
+        volumes.add(VolumeConfig.emptyDir(name));
+        return self();
+    }
+
+    /**
+     * Add a volume mount (for OpenShift/Kubernetes deployments)
+     * @param volumeName name of the volume to mount
+     * @param mountPath path where the volume should be mounted
+     * @param readOnly whether the volume should be mounted as read-only
+     * @return SELF
+     */
+    public SELF addVolumeMount(String volumeName, String mountPath, boolean readOnly) {
+        volumeMounts.add(new VolumeMountConfig(volumeName, mountPath, readOnly));
+        return self();
+    }
+
+    public List<VolumeConfig> getVolumes() {
+        return volumes;
+    }
+
+    public List<VolumeMountConfig> getVolumeMounts() {
+        return volumeMounts;
     }
 }
