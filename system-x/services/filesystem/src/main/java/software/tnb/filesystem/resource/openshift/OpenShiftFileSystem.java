@@ -83,10 +83,7 @@ public class OpenShiftFileSystem extends FileSystem implements OpenshiftDeployab
                 .inNamespace(OpenshiftClient.get().getNamespace())
                 .withName(podName)
                 .inContainer(integrationContainer).file(srcPath.toString()).read()) {
-                    Files.write(
-                        destPath, 
-                        new BufferedReader(new InputStreamReader(is)).lines().collect(Collectors.joining(System.lineSeparator())).getBytes()
-                    );
+                    Files.copy(is, destPath);
             } catch (IOException e) {
                 throw new RuntimeException(e);
             }
