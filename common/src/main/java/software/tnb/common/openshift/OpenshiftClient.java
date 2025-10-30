@@ -43,6 +43,7 @@ import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.Container;
 import io.fabric8.kubernetes.api.model.ContainerBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.DeletionPropagation;
 import io.fabric8.kubernetes.api.model.LabelSelectorBuilder;
 import io.fabric8.kubernetes.api.model.Namespace;
 import io.fabric8.kubernetes.api.model.NamespaceBuilder;
@@ -63,6 +64,7 @@ import io.fabric8.kubernetes.api.model.rbac.RoleBuilder;
 import io.fabric8.kubernetes.api.model.rbac.RoleRefBuilder;
 import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder;
 import io.fabric8.kubernetes.client.Config;
+import io.fabric8.kubernetes.client.ResourceNotFoundException;
 import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
 import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
@@ -765,13 +767,17 @@ public class OpenshiftClient extends OpenShift {
     public void deleteCustomResource(ResourceDefinitionContext resourceContext, String resourceName) {
         final String namespace = get().getNamespace();
         LOG.debug("deleting resource {}/{}", resourceContext.getKind(), resourceName);
-        final AtomicReference<List<StatusDetails>> status = new AtomicReference<>();
-        get().genericKubernetesResources(resourceContext).inNamespace(namespace)
-            .list().getItems().stream().filter(r -> resourceName.equals(r.getMetadata().getName()))
-            .findFirst()
-            .ifPresent(foundRes -> status.set(get().resource(foundRes).delete()));
-        Optional.ofNullable(status.get()).orElseGet(List::of)
-                .forEach(statusDetails -> LOG.debug("deleted {}/{}/{}", statusDetails.getGroup(), statusDetails.getKind()
+        final List<StatusDetails> status = get().resource(get().genericKubernetesResources(resourceContext)
+                        .inNamespace(namespace)
+                        .list().getItems().stream()
+                        .filter(r -> resourceName.equals(r.getMetadata().getName()))
+                        .findFirst()
+                        .orElseThrow(() -> new ResourceNotFoundException("the resource with name "
+                                + resourceName +  " was not found")))
+                .withPropagationPolicy(DeletionPropagation.FOREGROUND).delete();
+        Optional.ofNullable(status).orElseGet(List::of)
+                .forEach(statusDetails -> LOG.debug("deleted {}/{}/{}", statusDetails.getGroup()
+                        , statusDetails.getKind()
                     , statusDetails.getName()));
     }
 
