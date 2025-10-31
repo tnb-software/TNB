@@ -33,6 +33,10 @@ import io.fabric8.kubernetes.api.model.ServiceAccountBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.ServicePortBuilder;
 import io.fabric8.kubernetes.api.model.ServiceSpecBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import net.schmizz.sshj.SSHClient;
@@ -60,6 +64,9 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     public void create() {
         LOG.info("Deploying OpenShift SFTP");
 
+        // Auto-configure trusted CA keys from resources if not already set
+        configureTrustedCAKeys();
+
         sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
@@ -76,7 +83,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             );
 
         OpenshiftClient.get().addUsersToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT", "AUDIT_WRITE"),
             OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
         OpenshiftClient.get().createDeployment(Map.of(
@@ -85,7 +92,9 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
             "env", containerEnvironment(),
             "ports", ports,
             "serviceAccount", serviceAccountName,
-            "capabilities", List.of("SYS_CHROOT")
+            "capabilities", List.of("SYS_CHROOT", "AUDIT_WRITE"),
+            "volumes", volumes(),
+            "volumeMounts", volumeMounts()
         ));
 
         ServiceSpecBuilder serviceSpecBuilder = new ServiceSpecBuilder().addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name());
@@ -194,5 +203,62 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
     @Override
     public String logs() {
         return OpenshiftClient.get().getLogs(servicePod().get());
+    }
+
+    /**
+     * Automatically configures trusted CA keys from classpath resources if certificate authentication is enabled.
+     * Looks for ssh-certs/ca_key.pub in the classpath and sets it in the account.
+     * Only runs if getConfiguration().isCertificateAuthEnabled() returns true.
+     */
+    private void configureTrustedCAKeys() {
+        // Skip if certificate authentication is not enabled
+        if (!getConfiguration().isCertificateAuthEnabled()) {
+            LOG.debug("Certificate authentication disabled - skipping CA key configuration");
+            return;
+        }
+
+        // Only auto-configure if not already explicitly set
+        if (account().trustedUserCAKeys() != null && !account().trustedUserCAKeys().isEmpty()) {
+            LOG.debug("Trusted CA keys already configured: {}", account().trustedUserCAKeys().substring(0,
+                Math.min(50, account().trustedUserCAKeys().length())) + "...");
+            return;
+        }
+
+        try {
+            java.net.URL caKeyUrl = getClass().getClassLoader().getResource("ssh-certs/ca_key.pub");
+            if (caKeyUrl != null) {
+                String caPublicKey = new String(java.nio.file.Files.readAllBytes(
+                    java.nio.file.Paths.get(caKeyUrl.toURI())));
+                account().setTrustedUserCAKeys(caPublicKey.trim());
+                LOG.info("Auto-configured trusted CA key from classpath: ssh-certs/ca_key.pub");
+            } else {
+                LOG.warn("Certificate authentication enabled but CA key not found at ssh-certs/ca_key.pub");
+            }
+        } catch (Exception e) {
+            LOG.warn("Failed to auto-configure trusted CA keys from resources: {}", e.getMessage());
+        }
+    }
+
+    private List<Volume> volumes() {
+        // Create volumes for SSH certificates ConfigMap
+        return List.of(
+            new VolumeBuilder()
+                .withNewConfigMap()
+                    .withName("sftp-ssh-certs")
+                .endConfigMap()
+                .withName("ssh-certs")
+                .build()
+        );
+    }
+
+    private List<VolumeMount> volumeMounts() {
+        // Create volume mounts
+        return List.of(
+            new VolumeMountBuilder()
+                .withMountPath("/ssh-certs")
+                .withName("ssh-certs")
+                .withReadOnly(true)
+                .build()
+        );
     }
 }
