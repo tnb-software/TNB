@@ -9,7 +9,7 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v2
     - name: Run check style
-      uses: nikitasavinov/checkstyle-action@master
+      uses: mcarlett/checkstyle-action@new-image
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         reporter: 'github-pr-review'
