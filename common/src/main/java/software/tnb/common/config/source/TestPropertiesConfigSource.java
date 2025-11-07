@@ -10,6 +10,7 @@ import com.google.auto.service.AutoService;
 
 import java.io.File;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 /**
@@ -45,6 +46,11 @@ public class TestPropertiesConfigSource implements ConfigSource {
     @Override
     public Map<String, String> getProperties() {
         return properties;
+    }
+
+    @Override
+    public Set<String> getPropertyNames() {
+        return properties.keySet();
     }
 
     @Override

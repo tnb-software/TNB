@@ -17,8 +17,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <geronimo.config.version>1.2.3</geronimo.config.version>
-        <annotation-api.version>1.3.2</annotation-api.version>
+        <smallrye.version>3.14.1</smallrye.version>
         <json.version>20250517</json.version>
     </properties>
 
@@ -42,15 +41,9 @@
             <artifactId>logging-interceptor</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.apache.geronimo.config</groupId>
-            <artifactId>geronimo-config-impl</artifactId>
-            <version>${geronimo.config.version}</version>
-        </dependency>
-        <!-- needed for geronimo-config -->
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>${annotation-api.version}</version>
+            <groupId>io.smallrye.config</groupId>
+            <artifactId>smallrye-config</artifactId>
+            <version>${smallrye.version}</version>
         </dependency>
         <dependency>
             <groupId>cz.xtf</groupId>
