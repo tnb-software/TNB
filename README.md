@@ -380,6 +380,14 @@ The code style is in the [EditorConfig](https://editorconfig.org/) [file](.edito
     - Use a local checkstyle file from the `checkstyle` directory and set some description (for example `TNB configuration`)
     - Mark the newly added configuration as `active`
 
+## Requirements
+
+To build the project, the following Maven repository must be configured in your `.m2/settings.xml`:
+
+`https://nexus-camel-qe.apps.int.prod-scale-spoke1-aws-us-east-1.itup.redhat.com/repository/fuse-all/`
+
+Note that it requires Red Hat VPN.
+
 ---
 
 For more information see the readme files in the modules.
