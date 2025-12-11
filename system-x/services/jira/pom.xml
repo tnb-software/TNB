@@ -18,7 +18,7 @@
         <jira.client.version>6.0.2</jira.client.version>
         <fugue.version>6.1.2</fugue.version>
         <!-- RESTEasy 3.x uses javax.ws.rs, compatible with Jira client needs -->
-        <resteasy.version>3.15.6.Final</resteasy.version>
+        <resteasy.version>7.0.1.Final</resteasy.version>
     </properties>
 
     <dependencies>
