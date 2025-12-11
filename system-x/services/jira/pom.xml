@@ -15,9 +15,10 @@
     <name>TNB :: System-X :: Services :: Jira</name>
 
     <properties>
-        <!-- 7.0.1 requires java 21 and we still need to support java 17 for now -->
         <jira.client.version>6.0.2</jira.client.version>
         <fugue.version>6.1.2</fugue.version>
+        <!-- RESTEasy 3.x uses javax.ws.rs, compatible with Jira client needs -->
+        <resteasy.version>3.15.6.Final</resteasy.version>
     </properties>
 
     <dependencies>
@@ -25,6 +26,16 @@
             <groupId>com.atlassian.jira</groupId>
             <artifactId>jira-rest-java-client-core</artifactId>
             <version>${jira.client.version}</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.glassfish.jersey.core</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>org.glassfish.jersey.media</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>io.atlassian.fugue</groupId>
@@ -36,6 +47,16 @@
             <groupId>javax.ws.rs</groupId>
             <artifactId>javax.ws.rs-api</artifactId>
             <version>2.1.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-client</artifactId>
+            <version>${resteasy.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jboss.resteasy</groupId>
+            <artifactId>resteasy-jaxb-provider</artifactId>
+            <version>${resteasy.version}</version>
         </dependency>
     </dependencies>
 
