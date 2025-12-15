@@ -21,6 +21,12 @@ public abstract class HTTP extends Service<NoAccount, NoClient, NoValidation> im
 
     public abstract String getLog();
 
+    public abstract String getHost();
+
+    public abstract int getHttpPort();
+
+    public abstract int getHttpsPort();
+
     public byte[] getSignature() {
         byte[] signature;
         try (InputStream is = HTTP.class.getResource("/http-echo/fullchain.pem").openStream()) {
