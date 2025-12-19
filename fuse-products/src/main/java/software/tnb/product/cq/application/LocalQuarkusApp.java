@@ -46,28 +46,50 @@ public class LocalQuarkusApp extends QuarkusApp {
                 }
             }
         );
+
+        Path appDir = TestConfiguration.appLocation().resolve(getName()).toAbsolutePath();
+        Path integrationTarget = appDir.resolve("target");
+        String fileName;
+        if (QuarkusConfiguration.isQuarkusNative()) {
+            fileName = getName() + "-" + TestConfiguration.appVersion() + "-runner";
+        } else {
+            boolean isUberJar = integrationBuilder.getApplicationProperties().entrySet().stream()
+                .anyMatch(e -> "quarkus.package.jar.type".equals(e.getKey()) && "uber-jar".equals(e.getValue()));
+            boolean includeRunnerSuffix = Boolean.parseBoolean(integrationBuilder.getApplicationProperties()
+                .getOrDefault("quarkus.package.jar.add-runner-suffix", "true").toString());
+
+            if (isUberJar) {
+                fileName = String.format("%s-%s" + (includeRunnerSuffix ? "-runner.jar" : ".jar"),
+                    integrationBuilder.getIntegrationName(), TestConfiguration.appVersion());
+            } else {
+                fileName = "quarkus-app/quarkus-run.jar";
+            }
+        }
+        path = integrationTarget.resolve(fileName).toAbsolutePath().toString();
     }
 
     @Override
     public void start() {
-        logCounter++;
-        Path logFile = getLogPath();
-        ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
+        if (shouldRun()) {
+            logCounter++;
+            Path logFile = getLogPath();
+            ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
 
-        LOG.info("Starting integration {}", getName());
-        try {
-            appProcess = processBuilder.start();
-        } catch (IOException e) {
-            throw new RuntimeException("Unable to start integration process: ", e);
-        }
-        WaitUtils.waitFor(new Waiter(() -> logFile.toFile().exists(), "Waiting until the logfile is created"));
+            LOG.info("Starting integration {}", getName());
+            try {
+                appProcess = processBuilder.start();
+            } catch (IOException e) {
+                throw new RuntimeException("Unable to start integration process: ", e);
+            }
+            WaitUtils.waitFor(new Waiter(() -> logFile.toFile().exists(), "Waiting until the logfile is created"));
 
-        log = new FileLog(logFile);
-        logStream = new FileLogStream(logFile, LogStream.marker(getName(), Phase.RUN));
+            log = new FileLog(logFile);
+            logStream = new FileLogStream(logFile, LogStream.marker(getName(), Phase.RUN));
 
-        if (TestConfiguration.appDebug()) {
-            LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
-                TestConfiguration.appDebugPort());
+            if (TestConfiguration.appDebug()) {
+                LOG.warn("App started with debug mode enabled. Connect the debugger to port {}, otherwise the app never reaches ready state",
+                    TestConfiguration.appDebugPort());
+            }
         }
     }
 
@@ -108,13 +130,10 @@ public class LocalQuarkusApp extends QuarkusApp {
 
     private List<String> getCommand() {
         List<String> cmd = new ArrayList<>();
-        String fileName;
         Path appDir = TestConfiguration.appLocation().resolve(getName()).toAbsolutePath();
-        Path integrationTarget = appDir.resolve("target");
 
         if (QuarkusConfiguration.isQuarkusNative()) {
-            fileName = integrationTarget.resolve(getName() + "-1.0.0-SNAPSHOT-runner").toAbsolutePath().toString();
-            cmd.add(fileName);
+            cmd.add(getPath());
             cmd.addAll(systemProperties());
         } else {
             cmd.add(System.getProperty("java.home") + "/bin/java");
@@ -130,12 +149,11 @@ public class LocalQuarkusApp extends QuarkusApp {
             integrationBuilder.getVmArguments().stream().map(vmArgument -> "-" + vmArgument).forEach(cmd::add);
 
             cmd.add("-jar");
-            fileName = integrationTarget.resolve("quarkus-app/quarkus-run.jar").toAbsolutePath().toString();
-            cmd.add(fileName);
+            cmd.add(getPath());
         }
 
-        if (!new File(fileName).exists()) {
-            throw new IllegalArgumentException("Expected file " + fileName + " does not exist, check if the maven build was successful");
+        if (!new File(getPath()).exists()) {
+            throw new IllegalArgumentException("Expected file " + getPath() + " does not exist, check if the maven build was successful");
         }
 
         LOG.debug("ProcessBuilder command: {}", String.join(" ", cmd));
