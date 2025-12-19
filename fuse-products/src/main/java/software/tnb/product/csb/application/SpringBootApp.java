@@ -38,13 +38,6 @@ public abstract class SpringBootApp extends App {
     private static final Logger LOG = LoggerFactory.getLogger(SpringBootApp.class);
     protected MavenGitRepository mavenGitApp = null;
 
-    private boolean shouldRun = true;
-
-    @Override
-    public boolean shouldRun() {
-        return shouldRun;
-    }
-
     public SpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
@@ -55,7 +48,6 @@ public abstract class SpringBootApp extends App {
                 mavenGitApp = new MavenGitRepository((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder
                     , getName(), getLogPath(Phase.BUILD)
                     , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
-                shouldRun = ((AbstractGitIntegrationBuilder<?>) integrationBuilder).runApplication();
             } else {
                 if (integrationBuilder.isJBang()) {
                     createUsingJBang();

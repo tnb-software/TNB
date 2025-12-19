@@ -24,7 +24,6 @@ import java.util.stream.Collectors;
 public class LocalSpringBootApp extends SpringBootApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalSpringBootApp.class);
     private final List<String> command;
-    private final String fileName;
     private Process appProcess;
 
     public LocalSpringBootApp(AbstractIntegrationBuilder<?> integrationBuilder) {
@@ -47,7 +46,7 @@ public class LocalSpringBootApp extends SpringBootApp {
             projectPath = existingJarPath != null ? existingJarPath.getParent().getParent() : TestConfiguration.appLocation().resolve(getName());
         }
 
-        Path integrationTarget = projectPath.resolve("target");
+        path = projectPath.resolve("target").resolve(jarName).toAbsolutePath().toString();
 
         command = new ArrayList<>(List.of(System.getProperty("java.home") + "/bin/java"));
 
@@ -70,9 +69,8 @@ public class LocalSpringBootApp extends SpringBootApp {
         command.add("-Dserver.port=" + integrationBuilder.getPort());
 
         command.add("-jar");
-        fileName = integrationTarget.resolve(jarName).toAbsolutePath().toString();
 
-        command.add(fileName);
+        command.add(path);
 
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
     }
@@ -143,8 +141,8 @@ public class LocalSpringBootApp extends SpringBootApp {
     }
 
     private List<String> getCommand() {
-        if (!new File(fileName).exists()) {
-            throw new IllegalArgumentException("Expected file " + fileName + " does not exist, check if the maven build was successful");
+        if (!new File(getPath()).exists()) {
+            throw new IllegalArgumentException("Expected file " + getPath() + " does not exist, check if the maven build was successful");
         }
 
         LOG.debug("ProcessBuilder command: {}", String.join(" ", command));

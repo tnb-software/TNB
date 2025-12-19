@@ -52,6 +52,9 @@ public abstract class App {
     private static final String JBANG_SCRIPT_NAME = "camel";
     protected static boolean camelInPath = false;
 
+    // path to the final jar file
+    protected String path;
+
     public App(AbstractIntegrationBuilder<?> integrationBuilder) {
         this(integrationBuilder.getIntegrationName());
         this.integrationBuilder = integrationBuilder;
@@ -76,7 +79,7 @@ public abstract class App {
     }
 
     protected boolean shouldRun() {
-        return true;
+        return integrationBuilder.runApplication();
     }
 
     public abstract void start();
@@ -110,7 +113,7 @@ public abstract class App {
     }
 
     public void waitUntilReady() {
-        if (shouldRun()) {
+        if (integrationBuilder.runApplication()) {
             Supplier<FailureConditionMetException> exception = () -> {
                 String message = "The Camel app failed to start";
 
@@ -259,5 +262,9 @@ public abstract class App {
 
     public int getPort() {
         return integrationBuilder.getPort();
+    }
+
+    public String getPath() {
+        return path;
     }
 }

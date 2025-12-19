@@ -89,6 +89,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private String startupRegex = "(?m)^.*Apache Camel.*started in.*$";
 
+    private boolean runApplication = true;
+
     public AbstractIntegrationBuilder(String name) {
         this.integrationName = name;
     }
@@ -599,5 +601,19 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      */
     public String getStartupRegex() {
         return startupRegex;
+    }
+
+    /**
+     * If the application should run after build
+     * @param runApplication boolean
+     * @return self instance
+     */
+    public SELF runApplication(boolean runApplication) {
+        this.runApplication = runApplication;
+        return self();
+    }
+
+    public boolean runApplication() {
+        return runApplication;
     }
 }
