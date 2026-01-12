@@ -1,5 +1,6 @@
 package software.tnb.kafka.validation;
 
+import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.validation.Validation;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,6 +20,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
+
+import io.fabric8.kubernetes.client.dsl.MixedOperation;
+import io.fabric8.kubernetes.client.dsl.Resource;
+import io.strimzi.api.kafka.KafkaList;
 
 public class KafkaValidation<T> implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(KafkaValidation.class);
@@ -87,5 +92,27 @@ public class KafkaValidation<T> implements Validation {
         consumer.subscribe(Collections.singletonList(topic));
         consumer.seekToBeginning(consumer.assignment());
         return StreamSupport.stream(consumer.poll(Duration.ofSeconds(30)).records(topic).spliterator(), false).collect(Collectors.toList());
+    }
+
+    public String getBootstrapServers(String clusterName, String namespace, String listenerType) {
+        MixedOperation<io.strimzi.api.kafka.model.Kafka, KafkaList, Resource<io.strimzi.api.kafka.model.Kafka>> kafkaCrdClient =
+            OpenshiftClient.get().resources(io.strimzi.api.kafka.model.Kafka.class, KafkaList.class);
+
+        io.strimzi.api.kafka.model.Kafka kafka = kafkaCrdClient.inNamespace(namespace).withName(clusterName).get();
+        if (kafka == null) {
+            throw new IllegalArgumentException("Kafka cluster '" + clusterName + "' not found in namespace '" + namespace + "'");
+        }
+
+        return kafka.getStatus().getListeners()
+            .stream()
+            .filter(l -> listenerType.equals(l.getType()) || listenerType.equals(l.getName()))
+            .findFirst()
+            .orElseThrow(() -> new IllegalArgumentException(
+                "Listener type/name '" + listenerType + "' not found in Kafka cluster '" + clusterName + "'"))
+            .getBootstrapServers();
+    }
+
+    public String getBootstrapServers(String clusterName, String listenerType) {
+        return getBootstrapServers(clusterName, OpenshiftClient.get().getNamespace(), listenerType);
     }
 }
