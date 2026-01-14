@@ -30,10 +30,7 @@ public class Tekton extends Service<NoAccount, TektonClient, TektonValidation> i
     }
 
     protected TektonClient client() {
-        if (OpenshiftClient.get().isAdaptable(TektonClient.class)) {
-            return OpenshiftClient.get().adapt(TektonClient.class);
-        }
-        throw new IllegalArgumentException("Unable to adapt OpenshiftClient to TektonClient");
+        return OpenshiftClient.get().adapt(TektonClient.class);
     }
 
     @Override

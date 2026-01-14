@@ -14,10 +14,10 @@ import java.util.Optional;
 
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.tekton.client.TektonClient;
-import io.fabric8.tekton.pipeline.v1beta1.Pipeline;
-import io.fabric8.tekton.pipeline.v1beta1.PipelineRun;
-import io.fabric8.tekton.pipeline.v1beta1.Task;
-import io.fabric8.tekton.pipeline.v1beta1.TaskRun;
+import io.fabric8.tekton.v1.Pipeline;
+import io.fabric8.tekton.v1.PipelineRun;
+import io.fabric8.tekton.v1.Task;
+import io.fabric8.tekton.v1.TaskRun;
 
 public class TektonValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(TektonValidation.class);
@@ -29,55 +29,55 @@ public class TektonValidation implements Validation {
 
     public Task createTektonTask(Task task) {
         LOG.info("Creating Tekton task " + task.getMetadata().getName());
-        return client.v1beta1().tasks().inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(task);
+        return client.v1().tasks().inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(task);
     }
 
     public Task createTektonTask(InputStream isTask) {
-        return createTektonTask(client.v1beta1().tasks().load(isTask).item());
+        return createTektonTask(client.v1().tasks().load(isTask).item());
     }
 
     public Pipeline createTektonPipeline(Pipeline pipeline) {
         LOG.info("Creating Tekton pipeline " + pipeline.getMetadata().getName());
-        return client.v1beta1().pipelines().inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(pipeline);
+        return client.v1().pipelines().inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(pipeline);
     }
 
     public Pipeline createTektonPipeline(InputStream isPipeline) {
-        return createTektonPipeline(client.v1beta1().pipelines().load(isPipeline).item());
+        return createTektonPipeline(client.v1().pipelines().load(isPipeline).item());
     }
 
     public PipelineRun createTektonPipelineRun(PipelineRun pipelineRun) {
         LOG.info("Creating Tekton PipelineRun " + pipelineRun.getMetadata().getName());
-        return client.v1beta1().pipelineRuns()
+        return client.v1().pipelineRuns()
             .inNamespace(OpenshiftClient.get().getNamespace()).createOrReplace(pipelineRun);
     }
 
     public PipelineRun createTektonPipelineRun(InputStream isPipelineRun) {
-        return createTektonPipelineRun(client.v1beta1().pipelineRuns().load(isPipelineRun).item());
+        return createTektonPipelineRun(client.v1().pipelineRuns().load(isPipelineRun).item());
     }
 
     public List<Task> getAllTasks() {
         LOG.info("Getting all Tekton tasks");
-        return client.v1beta1().tasks().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
+        return client.v1().tasks().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
     }
 
     public List<Pipeline> getAllPipelines() {
         LOG.info("Getting all Tekton pipelines");
-        return client.v1beta1().pipelines().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
+        return client.v1().pipelines().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
     }
 
     public List<PipelineRun> getAllPipelineRuns() {
         LOG.info("Getting all Tekton PipelineRuns");
-        return client.v1beta1().pipelineRuns().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
+        return client.v1().pipelineRuns().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
     }
 
     public List<TaskRun> getAllTaskRuns() {
         LOG.info("Getting all Tekton TaskRuns");
-        return client.v1beta1().taskRuns().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
+        return client.v1().taskRuns().inNamespace(OpenshiftClient.get().getNamespace()).list().getItems();
     }
 
     public String getTaskRunLog(PipelineRun pipelineRun, Task task) {
         LOG.info("Getting TaskRun log for task: " + task.getMetadata().getName());
-        List<TaskRun> taskRuns = client.v1beta1().taskRuns()
+        List<TaskRun> taskRuns = client.v1().taskRuns()
             .inNamespace(OpenshiftClient.get().getNamespace())
             .withLabel("tekton.dev/task", task.getMetadata().getName())
             .list()

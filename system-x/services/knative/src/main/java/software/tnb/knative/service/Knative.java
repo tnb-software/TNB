@@ -9,10 +9,7 @@ import io.fabric8.knative.client.KnativeClient;
 
 public abstract class Knative extends Service<NoAccount, KnativeClient, KnativeValidation> {
     protected KnativeClient client() {
-        if (OpenshiftClient.get().isAdaptable(KnativeClient.class)) {
-            return OpenshiftClient.get().adapt(KnativeClient.class);
-        }
-        throw new IllegalArgumentException("Unable to adapt OpenshiftClient to KnativeClient");
+        return OpenshiftClient.get().adapt(KnativeClient.class);
     }
 
     @Override

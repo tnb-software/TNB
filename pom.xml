@@ -78,14 +78,14 @@
         <!--
           Careful when upgrading this version - this version must be compatible with the version in xtf
          -->
-        <kubernetes.client.version>6.14.0</kubernetes.client.version>
+        <kubernetes.client.version>7.5.0</kubernetes.client.version>
         <javaparser.version>3.27.0</javaparser.version>
         <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>2.0.2</testcontainers.version>
-        <xtf.version>0.37</xtf.version>
+        <xtf.version>1.0</xtf.version>
         <maven.surefire.plugin.version>3.5.0</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.12</jacoco.maven.plugin.version>

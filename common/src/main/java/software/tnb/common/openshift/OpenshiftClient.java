@@ -98,11 +98,12 @@ public class OpenshiftClient extends OpenShift {
                 .withUsername(OpenshiftConfiguration.openshiftUsername())
                 .withPassword(OpenshiftConfiguration.openshiftPassword());
         } else if (OpenshiftConfiguration.openshiftKubeconfig() != null) {
-            configBuilder = new OpenShiftConfigBuilder(
-                new OpenShiftConfig(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig()))));
+            configBuilder = new OpenShiftConfigBuilder();
+            LOG.info("Loading config from {}", OpenshiftConfiguration.openshiftKubeconfig());
+            configBuilder.copyInstance(Config.fromKubeconfig(IOUtils.readFile(OpenshiftConfiguration.openshiftKubeconfig())));
         } else {
             LOG.info("Auto-configuring openshift client");
-            configBuilder = new OpenShiftConfigBuilder(new OpenShiftConfig(OpenShiftConfig.autoConfigure(null)));
+            configBuilder = new OpenShiftConfigBuilder().withAutoConfigure();
         }
 
         String namespace = OpenshiftConfiguration.openshiftNamespace();
