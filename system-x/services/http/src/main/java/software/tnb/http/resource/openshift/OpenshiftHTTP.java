@@ -7,6 +7,8 @@ import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.http.service.HTTP;
 
+import org.apache.commons.lang3.RandomStringUtils;
+
 import com.google.auto.service.AutoService;
 
 import java.util.LinkedList;
@@ -26,8 +28,9 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 @AutoService(HTTP.class)
 public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, WithName {
 
-    private static final String HTTP_SVC = "http-echo";
-    private static final String HTTPS_SVC = "https-echo";
+    private final String httpSvc = String.format("http-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
+    private final String httpsSvc = String.format("https-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
+    private final String name = String.format("http-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
 
     @Override
     public void undeploy() {
@@ -80,7 +83,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
         OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
-                .withName(HTTP_SVC)
+                .withName(httpSvc)
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
@@ -97,7 +100,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
         OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
-                .withName(HTTPS_SVC)
+                .withName(httpsSvc)
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
@@ -130,13 +133,28 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
     }
 
     @Override
+    public String getHost() {
+        return OpenshiftClient.get().getClusterHostname(httpSvc);
+    }
+
+    @Override
+    public int getHttpPort() {
+        return 80;
+    }
+
+    @Override
+    public int getHttpsPort() {
+        return getHttpPort();
+    }
+
+    @Override
     public String httpUrl() {
-        return "http://" + OpenshiftClient.get().getClusterHostname(HTTP_SVC) + "/";
+        return "http://" + OpenshiftClient.get().getClusterHostname(httpSvc) + "/";
     }
 
     @Override
     public String httpsUrl() {
-        return "https://" + OpenshiftClient.get().getClusterHostname(HTTPS_SVC) + "/";
+        return "https://" + OpenshiftClient.get().getClusterHostname(httpsSvc) + "/";
     }
 
     @Override
@@ -146,6 +164,6 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
     @Override
     public String name() {
-        return "http-echo";
+        return name;
     }
 }
