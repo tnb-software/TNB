@@ -40,7 +40,6 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Kudu.class)
 public class OpenshiftKudu extends Kudu implements OpenshiftDeployable, WithInClusterHostname {
-
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftKudu.class);
 
     private final List<String> hostNames = List.of(MASTER_PREFIX, TSERVER_PREFIX);
@@ -242,9 +241,9 @@ public class OpenshiftKudu extends Kudu implements OpenshiftDeployable, WithInCl
 
                 EnvVar getHostFrom = new EnvVar("GET_HOSTS_FROM", "dns", null);
                 EnvVar podIp = new EnvVar("POD_IP", null, new EnvVarSource(null
-                    , new ObjectFieldSelector(null, "status.podIP"), null, null));
+                    , new ObjectFieldSelector(null, "status.podIP"), null, null, null));
                 EnvVar podName = new EnvVar("POD_NAME", null, new EnvVarSource(null
-                    , new ObjectFieldSelector(null, "metadata.name"), null, null));
+                    , new ObjectFieldSelector(null, "metadata.name"), null, null, null));
 
                 // @formatter:off
                 LOG.debug("Creating Stateful Set {}", statefulSetName);
