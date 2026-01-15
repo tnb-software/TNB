@@ -10,7 +10,7 @@ import com.google.auto.service.AutoService;
 
 @AutoService(HTTP.class)
 public class LocalHTTP extends HTTP implements Deployable {
-    private static final Logger LOG = LoggerFactory.getLogger(HTTP.class);
+    private static final Logger LOG = LoggerFactory.getLogger(LocalHTTP.class);
     private HTTPContainer container;
 
     @Override

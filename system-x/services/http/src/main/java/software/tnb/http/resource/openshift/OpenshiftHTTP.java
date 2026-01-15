@@ -1,13 +1,12 @@
 package software.tnb.http.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.http.service.HTTP;
-
-import org.apache.commons.lang3.RandomStringUtils;
 
 import com.google.auto.service.AutoService;
 
@@ -15,6 +14,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.function.Supplier;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
@@ -26,27 +26,24 @@ import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 
 @AutoService(HTTP.class)
-public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, WithName {
-
-    private final String httpSvc = String.format("http-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
-    private final String httpsSvc = String.format("https-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
-    private final String name = String.format("http-echo-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
+public class OpenshiftHTTP extends HTTP implements OpenshiftDeployable, WithName {
+    // the configuration only after the instance is created
+    private final Supplier<String> httpSvc = () -> String.format("%s-http", name());
+    private final Supplier<String> httpsSvc = () -> String.format("%s-https", name());
 
     @Override
     public void undeploy() {
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
     public void openResources() {
-
     }
 
     @Override
     public void closeResources() {
-
     }
 
     @Override
@@ -83,7 +80,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
         OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
-                .withName(httpSvc)
+                .withName(httpSvc.get())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
@@ -100,7 +97,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
         OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
-                .withName(httpsSvc)
+                .withName(httpsSvc.get())
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
             .endMetadata()
             .editOrNewSpec()
@@ -134,7 +131,7 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
     @Override
     public String getHost() {
-        return OpenshiftClient.get().getClusterHostname(httpSvc);
+        return OpenshiftClient.get().getClusterHostname(httpSvc.get());
     }
 
     @Override
@@ -149,21 +146,16 @@ public class OpenshiftHTTP extends HTTP implements ReusableOpenshiftDeployable, 
 
     @Override
     public String httpUrl() {
-        return "http://" + OpenshiftClient.get().getClusterHostname(httpSvc) + "/";
+        return "http://" + OpenshiftClient.get().getClusterHostname(httpSvc.get()) + "/";
     }
 
     @Override
     public String httpsUrl() {
-        return "https://" + OpenshiftClient.get().getClusterHostname(httpsSvc) + "/";
-    }
-
-    @Override
-    public void cleanup() {
-
+        return "https://" + OpenshiftClient.get().getClusterHostname(httpsSvc.get()) + "/";
     }
 
     @Override
     public String name() {
-        return name;
+        return getConfiguration().getName();
     }
 }
