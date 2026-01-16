@@ -5,10 +5,15 @@ import software.tnb.common.client.NoClient;
 import software.tnb.common.service.Service;
 import software.tnb.common.validation.NoValidation;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.io.IOException;
 import java.nio.file.Path;
 
 public abstract class FileSystem extends Service<NoAccount, NoClient, NoValidation> {
+    private static final Logger LOG = LoggerFactory.getLogger(FileSystem.class);
+
     public abstract void setAppName(String app);
 
     public abstract String getFileContent(Path path);
@@ -29,5 +34,10 @@ public abstract class FileSystem extends Service<NoAccount, NoClient, NoValidati
     }
 
     public void closeResources() {
+    }
+
+    public String getLogs() {
+        LOG.warn("getLogs method not supported in FileSystem, returning an empty string");
+        return "";
     }
 }

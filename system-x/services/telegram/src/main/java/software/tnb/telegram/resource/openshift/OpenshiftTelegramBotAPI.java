@@ -5,6 +5,7 @@ import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.telegram.service.TelegramBotApi;
 
 import org.slf4j.Logger;
@@ -36,7 +37,6 @@ import io.fabric8.openshift.api.model.RouteTargetReferenceBuilder;
 
 @AutoService(TelegramBotApi.class)
 public class OpenshiftTelegramBotAPI extends TelegramBotApi implements OpenshiftDeployable, WithName {
-
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftTelegramBotAPI.class);
 
     @Override
@@ -48,17 +48,15 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting deployment {}", name());
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
     public void openResources() {
-
     }
 
     @Override
     public void closeResources() {
-
     }
 
     @Override
@@ -173,7 +171,7 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
 
     @Override
     public String getLogs() {
-        return OpenshiftClient.get().getLogs(servicePod().get());
+        return OpenshiftDeployable.super.getLogs();
     }
 
     @Override

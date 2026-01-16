@@ -1,34 +1,20 @@
 package software.tnb.opentelemetry.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.opentelemetry.service.OpenTelemetryCollector;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.auto.service.AutoService;
 
+import java.util.function.Supplier;
+
 @AutoService(OpenTelemetryCollector.class)
-public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implements Deployable, WithDockerImage {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalOpenTelemetryCollector.class);
+public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implements ContainerDeployable<OpenTelemetryCollectorContainer>,
+    WithDockerImage {
+    // configuration is initialized only after the instance is created, so keep a ref to the supplier and initialize the container only when needed
+    private final Supplier<OpenTelemetryCollectorContainer> containerSupplier = () ->
+        new OpenTelemetryCollectorContainer(image(), getConfiguration().toString());
     private OpenTelemetryCollectorContainer container;
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting OpenTelemetryCollector container");
-        container = new OpenTelemetryCollectorContainer(image(), getConfiguration().toString());
-        container.start();
-        LOG.info("OpenTelemetryCollector container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping OpenTelemetryCollector container");
-            container.stop();
-        }
-    }
 
     @Override
     public void openResources() {
@@ -36,11 +22,6 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
 
     @Override
     public void closeResources() {
-    }
-
-    @Override
-    public String getLog() {
-        return container.getLogs();
     }
 
     @Override
@@ -56,5 +37,18 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
     @Override
     public String defaultImage() {
         return "registry.redhat.io/rhosdt/opentelemetry-collector-rhel8:latest";
+    }
+
+    @Override
+    public OpenTelemetryCollectorContainer container() {
+        if (container == null) {
+            container = containerSupplier.get();
+        }
+        return container;
+    }
+
+    @Override
+    public String getLogs() {
+        return ContainerDeployable.super.getLogs();
     }
 }

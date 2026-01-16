@@ -11,18 +11,16 @@ import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
 import com.google.auto.service.AutoService;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import io.fabric8.kubernetes.api.model.ContainerPort;
-import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Probe;
@@ -45,17 +43,6 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
 
     @Override
     public void create() {
-
-        List<ContainerPort> ports = new LinkedList<>();
-        ports.add(new ContainerPortBuilder()
-            .withName("api")
-            .withContainerPort(CONTAINER_API_PORT)
-            .withProtocol("TCP").build());
-        ports.add(new ContainerPortBuilder()
-            .withName("ui")
-            .withContainerPort(CONTAINER_UI_PORT)
-            .withProtocol("TCP").build());
-
         // @formatter:off
         final Probe probe = new ProbeBuilder()
             .withTcpSocket(new TCPSocketActionBuilder()
@@ -112,7 +99,7 @@ public class OpenshiftMinio extends Minio implements OpenshiftDeployable, WithNa
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().persistentVolumeClaims().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override

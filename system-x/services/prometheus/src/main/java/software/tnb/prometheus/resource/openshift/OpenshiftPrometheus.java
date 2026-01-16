@@ -1,0 +1,84 @@
+package software.tnb.prometheus.resource.openshift;
+
+import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.prometheus.service.Prometheus;
+import software.tnb.prometheus.validation.PrometheusMetricsValidation;
+
+import org.junit.jupiter.api.extension.ExtensionContext;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.auto.service.AutoService;
+
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.openshift.api.model.Route;
+
+@AutoService(Prometheus.class)
+public class OpenshiftPrometheus extends Prometheus implements OpenshiftDeployable {
+
+    private static final String OPENSHIFT_MONITORING_NS = "openshift-monitoring";
+    private static final String THANOS_OCP_NAME = "thanos-querier";
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftPrometheus.class);
+
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        Route route = OpenshiftClient.get().inNamespace(OPENSHIFT_MONITORING_NS).routes().withName(THANOS_OCP_NAME)
+                .get();
+        String url = "https://" + route.getSpec().getHost();
+        String token = OpenshiftClient.get().getOauthToken();
+        LOG.info("Prometheus url: {}", url);
+        validation = new PrometheusMetricsValidation(url, token, OpenshiftClient.get().getNamespace());
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+    }
+
+    @Override
+    public boolean isDeployed() {
+        return true;
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return null;
+    }
+
+    @Override
+    public void undeploy() {
+    }
+
+    @Override
+    public void openResources() {
+    }
+
+    @Override
+    public void closeResources() {
+    }
+
+    @Override
+    public void create() {
+    }
+
+    @Override
+    public boolean isReady() {
+        return true;
+    }
+
+    @Override
+    public String getUrl() {
+        //eager init if url is requested
+        if (validation == null) {
+            try {
+                beforeAll(null);
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        }
+        return validation.getUrl();
+    }
+}

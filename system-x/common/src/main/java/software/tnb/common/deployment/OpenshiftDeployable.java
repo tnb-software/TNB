@@ -50,6 +50,11 @@ public interface OpenshiftDeployable extends Deployable {
         }
     }
 
+    @Override
+    default String getLogs() {
+        return servicePod().getLog();
+    }
+
     Predicate<Pod> podSelector();
 
     @Override

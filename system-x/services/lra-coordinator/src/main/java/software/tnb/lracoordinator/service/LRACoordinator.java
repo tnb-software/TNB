@@ -3,12 +3,13 @@ package software.tnb.lracoordinator.service;
 import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
+import software.tnb.common.deployment.WithLogs;
 import software.tnb.common.service.Service;
 import software.tnb.common.validation.NoValidation;
 
 import java.util.Map;
 
-public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
+public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage, WithLogs {
 
     public static final int DEFAULT_PORT = 8888;
 
@@ -35,6 +36,4 @@ public abstract class LRACoordinator extends Service<NoAccount, NoClient, NoVali
     public abstract String getUrl();
 
     public abstract String getExternalUrl();
-
-    public abstract String getLog();
 }

@@ -94,7 +94,7 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
         portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         LOG.debug("Creating new MongoClient instance");
-        client = MongoClients.create(replicaSetUrl().replace("@" + host(), "@" + externalHostname()).replace(DEFAULT_PORT + "", localPort + ""));
+        client = MongoClients.create(replicaSetUrl().replace("@" + host(), "@" + externalHostname()).replace(PORT + "", localPort + ""));
     }
 
     @Override

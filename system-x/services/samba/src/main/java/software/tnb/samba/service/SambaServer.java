@@ -32,8 +32,6 @@ public abstract class SambaServer extends Service<SambaAccount, SMBClient, Samba
 
     public abstract String shareName();
 
-    public abstract String getLog();
-
     public Map<String, String> containerEnvironment() {
         return Map.of();
     }

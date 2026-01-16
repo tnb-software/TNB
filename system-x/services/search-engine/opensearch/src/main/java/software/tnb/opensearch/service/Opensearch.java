@@ -3,7 +3,6 @@ package software.tnb.opensearch.service;
 import software.tnb.opensearch.validation.OpensearchValidation;
 import software.tnb.searchengine.common.account.SearchAccount;
 import software.tnb.searchengine.common.service.Search;
-import software.tnb.searchengine.common.validation.SearchValidation;
 
 import org.opensearch.client.RestClient;
 import org.opensearch.client.json.jackson.JacksonJsonpMapper;
@@ -41,11 +40,8 @@ public abstract class Opensearch extends Search<OpenSearchClient> {
     }
 
     @Override
-    public SearchValidation validation() {
-        if (validation == null) {
-            validation = new OpensearchValidation(client());
-        }
-        return validation;
+    public void openResources() {
+        validation = new OpensearchValidation(client());
     }
 
     @Override

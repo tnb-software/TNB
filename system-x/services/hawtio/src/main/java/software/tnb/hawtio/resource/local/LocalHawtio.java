@@ -1,6 +1,6 @@
 package software.tnb.hawtio.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.hawtio.client.local.LocalHawtioClient;
@@ -12,26 +12,10 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 @AutoService(Hawtio.class)
-public class LocalHawtio extends Hawtio implements Deployable, WithDockerImage {
+public class LocalHawtio extends Hawtio implements ContainerDeployable<HawtioContainer>, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LocalHawtio.class);
-    private HawtioContainer container;
     private final int port = NetworkUtils.getFreePort();
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting Hawtio");
-        container = new HawtioContainer(image(), port);
-        container.start();
-        LOG.info("Hawtio container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping Hawtio container");
-            container.stop();
-        }
-    }
+    private final HawtioContainer container = new HawtioContainer(image(), port);
 
     @Override
     public void openResources() {
@@ -50,5 +34,10 @@ public class LocalHawtio extends Hawtio implements Deployable, WithDockerImage {
     @Override
     public String getHawtioUrl() {
         return String.format("http://localhost:%s", port);
+    }
+
+    @Override
+    public HawtioContainer container() {
+        return container;
     }
 }

@@ -3,7 +3,12 @@ package software.tnb.common.deployment;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.util.ReflectionUtil;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface RemoteService extends Deployable {
+    Logger LOG = LoggerFactory.getLogger(RemoteService.class);
+
     @Override
     default boolean enabled() {
         return propertyValue("host") != null;
@@ -32,5 +37,10 @@ public interface RemoteService extends Deployable {
 
     default String host() {
         return propertyValue("host");
+    }
+
+    default String getLogs() {
+        LOG.warn("getLogs method not supported in RemoteService, returning an empty string");
+        return "";
     }
 }

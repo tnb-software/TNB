@@ -1,6 +1,6 @@
 package software.tnb.flink.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.flink.service.Flink;
 
 import org.slf4j.Logger;
@@ -9,11 +9,16 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 @AutoService(Flink.class)
-public class LocalFlink extends Flink implements Deployable {
+public class LocalFlink extends Flink implements ContainerDeployable<FlinkJobManagerContainer> {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalFlink.class);
     private FlinkTaskManagerContainer flinkTaskManagerContainer;
     private FlinkJobManagerContainer flinkJobManagerContainer;
+
+    @Override
+    public FlinkJobManagerContainer container() {
+        return flinkJobManagerContainer;
+    }
 
     @Override
     public void deploy() {
@@ -58,6 +63,5 @@ public class LocalFlink extends Flink implements Deployable {
 
     @Override
     protected void defaultConfiguration() {
-
     }
 }

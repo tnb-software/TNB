@@ -1,6 +1,5 @@
 package software.tnb.searchengine.common.service;
 
-import software.tnb.common.account.AccountFactory;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.service.Service;
@@ -26,20 +25,12 @@ public abstract class Search<C> extends Service<SearchAccount, C, SearchValidati
     private static final Logger LOG = LoggerFactory.getLogger(Search.class);
     protected static final int PORT = 9200;
 
+    public SearchAccount account() {
+        return super.account();
+    }
+
     public SearchValidation validation() {
         return validation;
-    }
-
-    protected Class<SearchAccount> accountClass() {
-        return SearchAccount.class;
-    }
-
-    @Override
-    public SearchAccount account() {
-        if (account == null) {
-            account = AccountFactory.create(accountClass());
-        }
-        return account;
     }
 
     public abstract C client();
@@ -47,8 +38,6 @@ public abstract class Search<C> extends Service<SearchAccount, C, SearchValidati
     public abstract Closeable transport();
 
     public void openResources() {
-        account = account();
-        client = client();
     }
 
     public void closeResources() {
@@ -62,19 +51,14 @@ public abstract class Search<C> extends Service<SearchAccount, C, SearchValidati
         }
     }
 
-    public static String version() {
-        return "latest";
-    }
-
     public HttpAsyncClientBuilder httpClientBuilder(HttpAsyncClientBuilder self) {
         final CredentialsProvider credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(account.user(), account.password()));
+        credentialsProvider.setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(account().user(), account().password()));
 
         return self
             .setSSLHostnameVerifier(NoopHostnameVerifier.INSTANCE)
             .setSSLContext(HTTPUtils.getSslContext())
             .setDefaultCredentialsProvider(credentialsProvider);
-
     }
 
     public HttpHost httpHost() {

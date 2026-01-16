@@ -12,12 +12,4 @@
     <artifactId>system-x-mllp</artifactId>
     <version>1.0-SNAPSHOT</version>
     <name>TNB :: System-X :: Services :: MLLP</name>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers</artifactId>
-        </dependency>
-    </dependencies>
-
 </project>

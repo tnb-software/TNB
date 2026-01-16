@@ -1,11 +1,8 @@
 package software.tnb.jms.rabbitmq.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.jms.rabbitmq.service.RabbitMQ;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 import com.rabbitmq.jms.admin.RMQConnectionFactory;
@@ -13,26 +10,8 @@ import com.rabbitmq.jms.admin.RMQConnectionFactory;
 import jakarta.jms.Connection;
 
 @AutoService(RabbitMQ.class)
-public class LocalRabbitMQBroker extends RabbitMQ implements Deployable, WithDockerImage {
-    private static final Logger LOG = LoggerFactory.getLogger(RabbitMQ.class);
-    private RabbitMQBrokerContainer container;
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting RabbitMQ container");
-        container = new RabbitMQBrokerContainer(image(), containerEnvironment(), containerPorts());
-        container.start();
-
-        LOG.info("RabbitMQ broker container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping RabbitMQ broker container");
-            container.stop();
-        }
-    }
+public class LocalRabbitMQBroker extends RabbitMQ implements ContainerDeployable<RabbitMQBrokerContainer>, WithDockerImage {
+    private final RabbitMQBrokerContainer container = new RabbitMQBrokerContainer(image(), containerEnvironment(), containerPorts());
 
     @Override
     public void openResources() {
@@ -78,5 +57,10 @@ public class LocalRabbitMQBroker extends RabbitMQ implements Deployable, WithDoc
         } catch (Exception e) {
             throw new RuntimeException("Can't create jms connection", e);
         }
+    }
+
+    @Override
+    public RabbitMQBrokerContainer container() {
+        return container;
     }
 }

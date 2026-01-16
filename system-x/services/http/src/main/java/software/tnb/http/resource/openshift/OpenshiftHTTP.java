@@ -125,11 +125,6 @@ public class OpenshiftHTTP extends HTTP implements OpenshiftDeployable, WithName
     }
 
     @Override
-    public String getLog() {
-        return OpenshiftClient.get().getLogs(servicePod().get());
-    }
-
-    @Override
     public String getHost() {
         return OpenshiftClient.get().getClusterHostname(httpSvc.get());
     }
@@ -142,6 +137,11 @@ public class OpenshiftHTTP extends HTTP implements OpenshiftDeployable, WithName
     @Override
     public int getHttpsPort() {
         return getHttpPort();
+    }
+
+    @Override
+    public String getLogs() {
+        return OpenshiftDeployable.super.getLogs();
     }
 
     @Override

@@ -2,37 +2,15 @@ package software.tnb.aws.s3.service.local.minio;
 
 import software.tnb.aws.s3.service.Minio;
 import software.tnb.aws.s3.validation.S3Validation;
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(Minio.class)
-public class LocalMinio extends Minio implements Deployable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(LocalMinio.class);
-
-    private MinioContainer container;
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting Minio container");
-        container = new MinioContainer(image(), CONTAINER_API_PORT, containerEnvironment());
-        container.start();
-        LOG.info("Minio container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping Minio container");
-            container.stop();
-        }
-    }
+public class LocalMinio extends Minio implements ContainerDeployable<MinioContainer> {
+    private final MinioContainer container = new MinioContainer(image(), CONTAINER_API_PORT, containerEnvironment());
 
     @Override
     public void openResources() {
@@ -44,9 +22,10 @@ public class LocalMinio extends Minio implements Deployable {
         // nothing to do
     }
 
+    // because Minio extends AWS service that by default deploys nothing, we need to override the before and afterall methods to the correct ones
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        Deployable.super.beforeAll(extensionContext);
+        ContainerDeployable.super.beforeAll(extensionContext);
     }
 
     @Override
@@ -63,5 +42,10 @@ public class LocalMinio extends Minio implements Deployable {
     @Override
     protected String clientHostname() {
         return hostname(); //With local minio deployment, S3 client uses the same hostname as a connection for camel
+    }
+
+    @Override
+    public MinioContainer container() {
+        return container;
     }
 }

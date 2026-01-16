@@ -1,19 +1,13 @@
 package software.tnb.telegram.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.telegram.service.TelegramBotApi;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(TelegramBotApi.class)
-public class LocalTelegramBotAPI extends TelegramBotApi implements Deployable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(LocalTelegramBotAPI.class);
-
-    private TelegramBotAPIContainer container;
+public class LocalTelegramBotAPI extends TelegramBotApi implements ContainerDeployable<TelegramBotAPIContainer> {
+    private final TelegramBotAPIContainer container = new TelegramBotAPIContainer(image(), getEnv(), startupParams(), getPort());
 
     @Override
     public String externalHostname() {
@@ -31,29 +25,20 @@ public class LocalTelegramBotAPI extends TelegramBotApi implements Deployable {
     }
 
     @Override
+    public TelegramBotAPIContainer container() {
+        return container;
+    }
+
+    @Override
     public String getLogs() {
-        return container.getLogs();
-    }
-
-    @Override
-    public void deploy() {
-        LOG.debug("Starting Telegram Bot API container");
-        container = new TelegramBotAPIContainer(image(), getEnv(), startupParams(), getPort());
-        container.start();
-    }
-
-    @Override
-    public void undeploy() {
-        container.stop();
+        return ContainerDeployable.super.getLogs();
     }
 
     @Override
     public void openResources() {
-
     }
 
     @Override
     public void closeResources() {
-
     }
 }

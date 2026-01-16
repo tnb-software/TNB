@@ -1,36 +1,14 @@
 package software.tnb.hyperfoil.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.hyperfoil.service.Hyperfoil;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import com.google.auto.service.AutoService;
 
-import java.util.HashMap;
-
 @AutoService(Hyperfoil.class)
-public class LocalHyperfoil extends Hyperfoil implements Deployable, WithDockerImage {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalHyperfoil.class);
-    private HyperfoilContainer container;
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting Hyperfoil");
-        container = new HyperfoilContainer(image(), new HashMap<>());
-        container.start();
-        LOG.info("Hyperfoil container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping Hyperfoil container");
-            container.stop();
-        }
-    }
+public class LocalHyperfoil extends Hyperfoil implements ContainerDeployable<HyperfoilContainer>, WithDockerImage {
+    private final HyperfoilContainer container = new HyperfoilContainer(image());
 
     @Override
     public void openResources() {
@@ -58,5 +36,10 @@ public class LocalHyperfoil extends Hyperfoil implements Deployable, WithDockerI
     @Override
     public String defaultImage() {
         return "quay.io/hyperfoil/hyperfoil:latest";
+    }
+
+    @Override
+    public HyperfoilContainer container() {
+        return container;
     }
 }

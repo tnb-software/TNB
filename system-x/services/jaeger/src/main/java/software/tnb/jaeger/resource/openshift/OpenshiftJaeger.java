@@ -92,7 +92,7 @@ public class OpenshiftJaeger extends Jaeger implements OpenshiftDeployable, With
     }
 
     @Override
-    public String getLog() {
+    public String getLogs() {
         return OpenshiftClient.get().getPodLog(servicePod().get(), "jaeger");
     }
 

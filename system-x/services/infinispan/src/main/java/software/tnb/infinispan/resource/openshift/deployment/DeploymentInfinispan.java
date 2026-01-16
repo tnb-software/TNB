@@ -2,10 +2,10 @@ package software.tnb.infinispan.resource.openshift.deployment;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.MicroshiftDeployable;
-import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.infinispan.service.Infinispan;
 
 import org.apache.commons.io.IOUtils;
@@ -33,7 +33,7 @@ import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
 
 @AutoService(Infinispan.class)
-public class DeploymentInfinispan extends Infinispan implements MicroshiftDeployable, WithDockerImage, WithName {
+public class DeploymentInfinispan extends Infinispan implements MicroshiftDeployable, WithName {
 
     protected static final String CONFIG_MAP_NAME = "infinispan-config";
 
@@ -42,7 +42,7 @@ public class DeploymentInfinispan extends Infinispan implements MicroshiftDeploy
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         OpenshiftClient.get().configMaps().withName(CONFIG_MAP_NAME).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
@@ -142,10 +142,4 @@ public class DeploymentInfinispan extends Infinispan implements MicroshiftDeploy
     public String getHost() {
         return name();
     }
-
-    @Override
-    public String defaultImage() {
-        return Infinispan.DEFAULT_IMAGE;
-    }
-
 }

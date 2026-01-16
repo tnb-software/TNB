@@ -2,17 +2,7 @@ package software.tnb.searchengine.common.account;
 
 import software.tnb.common.account.Account;
 
-/*public interface SearchAccount extends Account {
-
-    String user();
-
-    String password();
-
-    void setPassword(String password);
-}*/
-
 public class SearchAccount implements Account {
-
     private String user;
     private String password;
 

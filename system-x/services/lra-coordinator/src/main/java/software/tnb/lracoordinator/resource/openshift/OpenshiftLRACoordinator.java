@@ -7,6 +7,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.lracoordinator.service.LRACoordinator;
 
 import org.slf4j.Logger;
@@ -53,12 +54,7 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         LOG.debug("Deleting deployment {}", name());
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-    }
-
-    @Override
-    public String getLog() {
-        return OpenshiftClient.get().getLogs(servicePod().get());
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
@@ -188,5 +184,10 @@ public class OpenshiftLRACoordinator extends LRACoordinator implements Openshift
     @Override
     public String externalHostname() {
         return "lra-coordinator";
+    }
+
+    @Override
+    public String getLogs() {
+        return OpenshiftDeployable.super.getLogs();
     }
 }
