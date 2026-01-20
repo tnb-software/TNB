@@ -13,9 +13,6 @@ import java.util.Map;
 import java.util.Optional;
 
 public abstract class Jaeger extends ConfigurableService<NoAccount, JaegerClient, JaegerValidation, JaegerConfiguration> {
-
-    public abstract String getLog();
-
     public abstract String getCollectorUrl(JaegerConfiguration.CollectorPort port);
 
     public abstract String getQueryUrl(JaegerConfiguration.QueryPort port);

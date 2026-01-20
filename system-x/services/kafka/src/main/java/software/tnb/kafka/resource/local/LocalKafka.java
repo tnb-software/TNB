@@ -1,6 +1,6 @@
 package software.tnb.kafka.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.kafka.service.Kafka;
 
@@ -11,7 +11,7 @@ import org.testcontainers.containers.Network;
 import com.google.auto.service.AutoService;
 
 @AutoService(Kafka.class)
-public class LocalKafka extends Kafka implements Deployable, WithDockerImage {
+public class LocalKafka extends Kafka implements ContainerDeployable<StrimziContainer>, WithDockerImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalKafka.class);
     private StrimziContainer strimziContainer;
@@ -30,6 +30,11 @@ public class LocalKafka extends Kafka implements Deployable, WithDockerImage {
     @Override
     public void createTopic(String name, int partitions, int replicas) {
         // no-op
+    }
+
+    @Override
+    public StrimziContainer container() {
+        return strimziContainer;
     }
 
     @Override

@@ -1,93 +1,103 @@
 package software.tnb.ldap.service;
 
-import software.tnb.common.account.AccountFactory;
+import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.ConfigurableService;
-import software.tnb.common.service.Service;
-import software.tnb.common.service.ServiceFactory;
 import software.tnb.ldap.account.LDAPAccount;
-import software.tnb.ldap.account.LocalLDAPAccount;
-import software.tnb.ldap.account.RemoteLDAPAccount;
 import software.tnb.ldap.service.configuration.LDAPConfiguration;
 import software.tnb.ldap.validation.LDAPValidation;
 
-import org.junit.jupiter.api.extension.ExtensionContext;
+import org.apache.commons.lang3.StringUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import com.unboundid.ldap.sdk.LDAPConnection;
 import com.unboundid.ldap.sdk.LDAPConnectionPool;
+import com.unboundid.ldap.sdk.LDAPException;
 
-public class LDAP<A extends LDAPAccount, C extends LDAPConnectionPool, V extends LDAPValidation>
-    extends ConfigurableService<A, C, V, LDAPConfiguration> {
+import java.util.Map;
 
-    protected LDAPLocalStack localStack;
+public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnectionPool, LDAPValidation, LDAPConfiguration> implements
+    WithDockerImage {
+    private static final Logger LOG = LoggerFactory.getLogger(LDAP.class);
+    protected static final int PORT = 389;
+    protected boolean reachable = true;
+    protected String host;
+    protected int port;
 
-    protected LDAPRemoteStack remoteStack;
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().useRemoteServer(false);
+    }
+
+    @Override
+    public LDAPAccount account() {
+        if (account == null) {
+            if (getConfiguration().isRemoteServer()) {
+                account = super.account();
+            } else {
+                account = new LDAPAccount();
+            }
+        }
+
+        return account;
+    }
 
     public String url() {
-        return getConfiguration().isRemoteUrl()
-            ? remoteStack.url()
-            : localStack.url();
+        return String.format("ldap://%s:%s", host, port);
     }
 
-    public LDAPConnectionPool getConnection() {
-        return getConfiguration().isRemoteUrl()
-            ? remoteStack.getConnection()
-            : localStack.getConnection();
+    public boolean isReachable() {
+        return reachable;
     }
 
-    public C client() {
-        return (C) getConnection();
+    public Map<String, String> environmentVariables() {
+        return Map.of(
+            "OPENLDAP_ROOT_DN_SUFFIX", StringUtils.substringAfter(account().username(), ","),
+            "OPENLDAP_ROOT_DN_PREFIX", StringUtils.substringBefore(account().username(), ","),
+            "OPENLDAP_ROOT_PASSWORD", account().password()
+        );
     }
 
-    public V validation() {
+    @Override
+    public String defaultImage() {
+        return "quay.io/fuse_qe/ocp-openldap:latest";
+    }
+
+    public LDAPValidation validation() {
         if (validation == null) {
-            validation = (V) new LDAPValidation(client());
+            validation = new LDAPValidation(client());
         }
         return validation;
     }
 
-    @Override
-    public A account() {
-        if (account == null) {
-            account = getConfiguration().isRemoteUrl()
-                ? (A) AccountFactory.create(RemoteLDAPAccount.class)
-                : (A) AccountFactory.create(LocalLDAPAccount.class);
-        }
-        return account;
-    }
+    protected void initializeClient(LDAPAccount account) {
+        final LDAPConnection ldapConnection = new LDAPConnection();
 
-    @Override
-    protected void defaultConfiguration() {
-        getConfiguration().useRemoteUrl(false);
-    }
-
-    public Service getCurrentStack() {
-        Service ldapService = getConfiguration().isRemoteUrl()
-            ? remoteStack
-            : localStack;
-        return ldapService;
-    }
-
-    @Override
-    public void afterAll(ExtensionContext extensionContext) throws Exception {
-        if (client != null) {
-            client.close();
-            client = null;
-        }
-
-        if (!getConfiguration().isRemoteUrl()) {
-            localStack.afterAll(extensionContext);
+        if (getConfiguration().isRemoteServer()) {
+            for (String remoteHost : account().host().split(",")) {
+                try {
+                    ldapConnection.connect(remoteHost, PORT, 20000);
+                    ldapConnection.bind(account().username(), account().password());
+                    client = new LDAPConnectionPool(ldapConnection, 1);
+                    host = remoteHost;
+                    reachable = true;
+                    break;
+                } catch (LDAPException e) {
+                    LOG.error("Error when connecting to LDAP server: {}", e.getMessage());
+                    reachable = false;
+                }
+            }
         } else {
-            remoteStack.afterAll(extensionContext);
+            host = account.host();
+            try {
+                ldapConnection.connect(host, port, 20000);
+                ldapConnection.bind(account().username(), account().password());
+                client = new LDAPConnectionPool(ldapConnection, 1);
+            } catch (LDAPException e) {
+                LOG.error("Error when connecting to LDAP server: {}", e.getMessage());
+                throw new RuntimeException("Error when connecting to LDAP server", e);
+            }
         }
-    }
 
-    @Override
-    public void beforeAll(ExtensionContext extensionContext) throws Exception {
-        if (!getConfiguration().isRemoteUrl()) {
-            localStack = ServiceFactory.create(LDAPLocalStack.class);
-            localStack.beforeAll(extensionContext);
-        } else {
-            remoteStack = ServiceFactory.create(LDAPRemoteStack.class);
-            remoteStack.beforeAll(extensionContext);
-        }
     }
 }

@@ -1,6 +1,6 @@
 package software.tnb.jms.ibm.mq.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.jms.ibm.mq.service.IBMMQ;
 import software.tnb.jms.ibm.mq.validation.IBMMQValidation;
 
@@ -13,25 +13,22 @@ import com.google.auto.service.AutoService;
 import java.io.IOException;
 
 @AutoService(IBMMQ.class)
-public class LocalIBMMQ extends IBMMQ implements Deployable {
+public class LocalIBMMQ extends IBMMQ implements ContainerDeployable<IBMMQContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(LocalIBMMQ.class);
     private IBMMQContainer container;
 
     @Override
-    public void deploy() {
-        LOG.info("Starting IBM MQ container");
-        container = new IBMMQContainer(image(), DEFAULT_PORT, containerEnvironment(), mqscConfig()
-            , getConfiguration().keyPath(), getConfiguration().certPath());
-        container.start();
-        generateKeystore();
-        LOG.info("IBM MQ container started");
+    public IBMMQContainer container() {
+        return container;
     }
 
     @Override
-    public void undeploy() {
-        if (container != null) {
-            container.stop();
-        }
+    public void deploy() {
+        // the container environment is in the configuration, therefore we must delay creating container instance
+        container = new IBMMQContainer(image(), DEFAULT_PORT, containerEnvironment(), mqscConfig()
+            , getConfiguration().keyPath(), getConfiguration().certPath());
+        ContainerDeployable.super.deploy();
+        generateKeystore();
     }
 
     @Override

@@ -46,7 +46,7 @@
         <module>hyperfoil</module>
         <module>cryostat</module>
         <module>horreum</module>
-        <module>prometheus-metrics</module>
+        <module>prometheus</module>
         <module>redis</module>
         <module>lra-coordinator</module>
         <module>mllp</module>

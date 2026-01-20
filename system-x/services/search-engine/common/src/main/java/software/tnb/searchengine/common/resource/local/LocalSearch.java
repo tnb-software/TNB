@@ -1,13 +1,8 @@
 package software.tnb.searchengine.common.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-public class LocalSearch implements Deployable {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalSearch.class);
-
+public class LocalSearch implements ContainerDeployable<SearchContainer> {
     private final SearchContainer container;
 
     public LocalSearch(SearchContainer container) {
@@ -17,18 +12,8 @@ public class LocalSearch implements Deployable {
     }
 
     @Override
-    public void deploy() {
-        LOG.info("Starting container");
-        container.start();
-        LOG.info("Container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping the container");
-            container.stop();
-        }
+    public SearchContainer container() {
+        return container;
     }
 
     @Override

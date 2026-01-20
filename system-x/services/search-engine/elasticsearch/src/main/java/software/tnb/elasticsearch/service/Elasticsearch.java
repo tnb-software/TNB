@@ -3,7 +3,6 @@ package software.tnb.elasticsearch.service;
 import software.tnb.elasticsearch.validation.ElasticsearchValidation;
 import software.tnb.searchengine.common.account.SearchAccount;
 import software.tnb.searchengine.common.service.Search;
-import software.tnb.searchengine.common.validation.SearchValidation;
 
 import org.elasticsearch.client.RestClient;
 import org.testcontainers.utility.Base58;
@@ -43,11 +42,8 @@ public abstract class Elasticsearch extends Search<ElasticsearchClient> {
     }
 
     @Override
-    public SearchValidation validation() {
-        if (validation == null) {
-            validation = new ElasticsearchValidation(client());
-        }
-        return validation;
+    public void openResources() {
+        validation = new ElasticsearchValidation(client());
     }
 
     @Override

@@ -1,33 +1,13 @@
 package software.tnb.mail.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.mail.service.MailServer;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(MailServer.class)
-public class LocalMailServer extends MailServer implements Deployable {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalMailServer.class);
-    private JamesServerContainer container;
-
-    @Override
-    public void deploy() {
-        LOG.info("Starting James container");
-        container = new JamesServerContainer(image(), SMTP_PORT, HTTP_PORT, IMAP_PORT, POP3_PORT);
-        container.start();
-        LOG.info("James container started");
-    }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping James container");
-            container.stop();
-        }
-    }
+public class LocalMailServer extends MailServer implements ContainerDeployable<MailServerContainer> {
+    private final MailServerContainer container = new MailServerContainer(image(), SMTP_PORT, HTTP_PORT, IMAP_PORT, POP3_PORT);
 
     @Override
     public void openResources() {
@@ -66,5 +46,10 @@ public class LocalMailServer extends MailServer implements Deployable {
     @Override
     public String smtpValidationHostname() {
         return smtpHostname();
+    }
+
+    @Override
+    public MailServerContainer container() {
+        return container;
     }
 }

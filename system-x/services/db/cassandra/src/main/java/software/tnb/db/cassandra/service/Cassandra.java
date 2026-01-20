@@ -14,7 +14,7 @@ import java.time.Duration;
 import java.util.Map;
 
 public abstract class Cassandra extends Service<CassandraAccount, CqlSession, CassandraValidation> implements WithDockerImage {
-    protected static final int CASSANDRA_PORT = 9042;
+    protected static final int PORT = 9042;
 
     public String defaultImage() {
         // official library image required hacks in openshift, bitnami works out of the box
@@ -29,7 +29,7 @@ public abstract class Cassandra extends Service<CassandraAccount, CqlSession, Ca
     }
 
     public int port() {
-        return CASSANDRA_PORT;
+        return PORT;
     }
 
     public abstract String host();

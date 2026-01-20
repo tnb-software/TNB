@@ -15,7 +15,7 @@ import java.util.Map;
 
 public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, MongoDBValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(MongoDB.class);
-    protected static final int DEFAULT_PORT = 27017;
+    protected static final int PORT = 27017;
 
     public abstract String host();
 
@@ -44,7 +44,7 @@ public abstract class MongoDB extends Service<MongoDBAccount, MongoClient, Mongo
     }
 
     public int port() {
-        return DEFAULT_PORT;
+        return PORT;
     }
 
     public String defaultImage() {

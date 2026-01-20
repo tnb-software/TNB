@@ -200,11 +200,6 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
         return "localhost";
     }
 
-    @Override
-    public String logs() {
-        return OpenshiftClient.get().getLogs(servicePod().get());
-    }
-
     /**
      * Automatically configures trusted CA keys from classpath resources if certificate authentication is enabled.
      * Looks for ssh-certs/ca_key.pub in the classpath and sets it in the account.

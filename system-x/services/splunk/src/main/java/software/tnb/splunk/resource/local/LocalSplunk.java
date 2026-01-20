@@ -1,11 +1,8 @@
 package software.tnb.splunk.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.splunk.service.Splunk;
 import software.tnb.splunk.service.configuration.SplunkProtocol;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
@@ -15,10 +12,7 @@ import java.util.List;
 import java.util.Map;
 
 @AutoService(Splunk.class)
-public class LocalSplunk extends Splunk implements Deployable {
-
-    private static final Logger LOG = LoggerFactory.getLogger(LocalSplunk.class);
-
+public class LocalSplunk extends Splunk implements ContainerDeployable<SplunkContainer> {
     private SplunkContainer container;
 
     @Override
@@ -27,11 +21,15 @@ public class LocalSplunk extends Splunk implements Deployable {
     }
 
     @Override
+    public SplunkContainer container() {
+        return container;
+    }
+
+    @Override
     public void deploy() {
         if (SplunkProtocol.HTTPS == getConfiguration().getProtocol()) {
             throw new IllegalStateException("HTTPS protocol is not implemented for Local Splunk service! Use HTTP.");
         }
-        LOG.info("Starting Splunk container");
         Map<String, String> envs = containerEnvironment();
         List<Integer> ports = new ArrayList<>();
         ports.add(UI_PORT);
@@ -41,16 +39,8 @@ public class LocalSplunk extends Splunk implements Deployable {
             ports.add(HEC_PORT);
         }
         container = new SplunkContainer(image(), ports, envs);
-        container.start();
-        LOG.info("Splunk container started");
-    }
 
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping Splunk container");
-            container.stop();
-        }
+        ContainerDeployable.super.deploy();
     }
 
     @Override

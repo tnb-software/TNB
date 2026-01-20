@@ -1,6 +1,6 @@
 package software.tnb.elasticsearch.resource.local;
 
-import software.tnb.common.deployment.Deployable;
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.elasticsearch.service.Elasticsearch;
 import software.tnb.searchengine.common.resource.local.LocalSearch;
 import software.tnb.searchengine.common.resource.local.SearchContainer;
@@ -8,7 +8,7 @@ import software.tnb.searchengine.common.resource.local.SearchContainer;
 import com.google.auto.service.AutoService;
 
 @AutoService(Elasticsearch.class)
-public class LocalElasticsearch extends Elasticsearch implements Deployable {
+public class LocalElasticsearch extends Elasticsearch implements ContainerDeployable<SearchContainer> {
 
     private final SearchContainer container;
     private final LocalSearch localSearch;
@@ -17,6 +17,11 @@ public class LocalElasticsearch extends Elasticsearch implements Deployable {
         container = new SearchContainer(image(), port(),
             containerEnv(), containerStartRegex(), getNetworkAliases());
         localSearch = new LocalSearch(container);
+    }
+
+    @Override
+    public SearchContainer container() {
+        return container;
     }
 
     @Override

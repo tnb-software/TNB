@@ -3,14 +3,16 @@ package software.tnb.http.service;
 import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.service.Service;
+import software.tnb.common.deployment.WithLogs;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.common.validation.NoValidation;
+import software.tnb.http.service.configuration.HTTPConfiguration;
 
 import java.io.InputStream;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
 
-public abstract class HTTP extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
+public abstract class HTTP extends ConfigurableService<NoAccount, NoClient, NoValidation, HTTPConfiguration> implements WithDockerImage, WithLogs {
 
     public static final int HTTP_PORT = 8080;
     public static final int HTTPS_PORT = 8443;
@@ -18,8 +20,6 @@ public abstract class HTTP extends Service<NoAccount, NoClient, NoValidation> im
     public abstract String httpUrl();
 
     public abstract String httpsUrl();
-
-    public abstract String getLog();
 
     public abstract String getHost();
 
@@ -41,5 +41,10 @@ public abstract class HTTP extends Service<NoAccount, NoClient, NoValidation> im
 
     public String defaultImage() {
         return "quay.io/fuse_qe/http-https-echo:latest";
+    }
+
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().name("http-echo");
     }
 }

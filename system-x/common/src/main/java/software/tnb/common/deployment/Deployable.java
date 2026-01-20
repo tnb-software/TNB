@@ -19,6 +19,8 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
      */
     void closeResources();
 
+    String getLogs();
+
     default void beforeAll(ExtensionContext extensionContext) throws Exception {
         try {
             deploy();
@@ -49,4 +51,5 @@ public interface Deployable extends BeforeAllCallback, AfterAllCallback {
     default int priority() {
         return 0;
     }
+
 }

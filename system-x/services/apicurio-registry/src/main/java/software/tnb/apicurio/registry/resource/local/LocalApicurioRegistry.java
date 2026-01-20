@@ -1,17 +1,13 @@
 package software.tnb.apicurio.registry.resource.local;
 
 import software.tnb.apicurio.registry.service.ApicurioRegistry;
-import software.tnb.common.deployment.Deployable;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import software.tnb.common.deployment.ContainerDeployable;
 
 import com.google.auto.service.AutoService;
 
 @AutoService(ApicurioRegistry.class)
-public class LocalApicurioRegistry extends ApicurioRegistry implements Deployable {
-    private static final Logger LOG = LoggerFactory.getLogger(LocalApicurioRegistry.class);
-    private ApicurioRegistryContainer container;
+public class LocalApicurioRegistry extends ApicurioRegistry implements ContainerDeployable<ApicurioRegistryContainer> {
+    private final ApicurioRegistryContainer container = new ApicurioRegistryContainer(image());
 
     @Override
     public String url() {
@@ -24,19 +20,7 @@ public class LocalApicurioRegistry extends ApicurioRegistry implements Deployabl
     }
 
     @Override
-    public void deploy() {
-        LOG.info("Starting Apicurio Registry container");
-        container = new ApicurioRegistryContainer(image());
-        container.start();
-        LOG.info("Apicurio Registry container started");
+    public ApicurioRegistryContainer container() {
+        return container;
     }
-
-    @Override
-    public void undeploy() {
-        if (container != null) {
-            LOG.info("Stopping Apicurio Registry container");
-            container.stop();
-        }
-    }
-
 }

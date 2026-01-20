@@ -307,7 +307,7 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-prometheus-metrics</artifactId>
+            <artifactId>system-x-prometheus</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

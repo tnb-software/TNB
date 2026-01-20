@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,7 +42,7 @@ public class OpenshiftApicurioRegistry extends ApicurioRegistry implements Opens
         OpenshiftClient.get().services().withName(name()).delete();
         LOG.debug("Deleting deployment {}", name());
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
