@@ -1,12 +1,13 @@
 package software.tnb.fhir.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
-import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.OpenshiftDeployable;
 import software.tnb.common.deployment.WithExternalHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.fhir.service.FHIR;
 
 import org.junit.jupiter.api.BeforeAll;
@@ -30,7 +31,7 @@ import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(FHIR.class)
-public class OpenshiftFHIR extends FHIR implements ReusableOpenshiftDeployable, WithName, WithExternalHostname {
+public class OpenshiftFHIR extends FHIR implements OpenshiftDeployable, WithName, WithExternalHostname {
 
     static String sccName = String.format("tnb-fhir-%s", RandomStringUtils.randomAlphabetic(4).toLowerCase());
     static String serviceAccountName = "fhir-sa";
@@ -50,7 +51,7 @@ public class OpenshiftFHIR extends FHIR implements ReusableOpenshiftDeployable, 
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
         OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
         OpenshiftClient.get().routes().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
@@ -143,11 +144,6 @@ public class OpenshiftFHIR extends FHIR implements ReusableOpenshiftDeployable, 
     @Override
     public Predicate<Pod> podSelector() {
         return WithName.super.podSelector();
-    }
-
-    @Override
-    public void cleanup() {
-
     }
 
     @Override
