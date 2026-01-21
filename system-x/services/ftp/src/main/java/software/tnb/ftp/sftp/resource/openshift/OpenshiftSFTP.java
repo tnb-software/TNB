@@ -9,6 +9,7 @@ import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.ftp.sftp.service.SFTP;
 
 import org.slf4j.Logger;
@@ -25,6 +26,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Predicate;
 
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
@@ -46,10 +48,11 @@ import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 @AutoService(SFTP.class)
 public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName, WithInClusterHostname, WithExternalHostname {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftSFTP.class);
+    private static final String CERTIFICATES_CM_NAME = "sftp-ssh-certs";
 
     private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
-    private String sccName;
+    private final String sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
 
     private PortForward portForward;
     private int localPort;
@@ -67,7 +70,6 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
         // Auto-configure trusted CA keys from resources if not already set
         configureTrustedCAKeys();
 
-        sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
             .withName("sftp")
@@ -84,7 +86,18 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
         OpenshiftClient.get().addUsersToSecurityContext(
             OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT", "AUDIT_WRITE"),
-            OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName)
+        );
+
+        if (OpenshiftClient.get().configMaps().withName(CERTIFICATES_CM_NAME).get() == null) {
+            OpenshiftClient.get().configMaps().resource(
+                new ConfigMapBuilder()
+                    .withNewMetadata()
+                    .withName(CERTIFICATES_CM_NAME)
+                    .endMetadata()
+                    .build()
+            ).serverSideApply();
+        }
 
         OpenshiftClient.get().createDeployment(Map.of(
             "name", name(),
@@ -132,7 +145,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
         OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
         OpenshiftClient.get().services().withName(name()).delete();
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
@@ -239,7 +252,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
         return List.of(
             new VolumeBuilder()
                 .withNewConfigMap()
-                    .withName("sftp-ssh-certs")
+                    .withName(CERTIFICATES_CM_NAME)
                 .endConfigMap()
                 .withName("ssh-certs")
                 .build()
