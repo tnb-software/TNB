@@ -34,16 +34,6 @@ public class LocalOpensearch extends Opensearch implements ContainerDeployable<S
     }
 
     @Override
-    public void openResources() {
-        localSearch.openResources();
-    }
-
-    @Override
-    public void closeResources() {
-        localSearch.closeResources();
-    }
-
-    @Override
     public String host() {
         return container.getHost();
     }
