@@ -35,16 +35,6 @@ public class LocalElasticsearch extends Elasticsearch implements ContainerDeploy
     }
 
     @Override
-    public void openResources() {
-        localSearch.openResources();
-    }
-
-    @Override
-    public void closeResources() {
-        localSearch.closeResources();
-    }
-
-    @Override
     public String host() {
         return container.getHost();
     }

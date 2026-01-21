@@ -19,7 +19,8 @@ public class LocalSNMPServer extends SNMPServer implements ContainerDeployable<S
 
     @Override
     public String host() {
-        return container.getHost();
+        // here it is needed to return 172.17... and not localhost
+        return container.getContainerInfo().getNetworkSettings().getIpAddress();
     }
 
     @Override
