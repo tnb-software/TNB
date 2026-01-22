@@ -52,7 +52,7 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
     private final ExecutorService executor = Executors.newFixedThreadPool(1);
 
-    private final String sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
+    private String sccName;
 
     private PortForward portForward;
     private int localPort;
@@ -69,6 +69,8 @@ public class OpenshiftSFTP extends SFTP implements OpenshiftDeployable, WithName
 
         // Auto-configure trusted CA keys from resources if not already set
         configureTrustedCAKeys();
+
+        sccName = "tnb-sftp-" + OpenshiftClient.get().getNamespace();
 
         List<ContainerPort> ports = new LinkedList<>();
         ports.add(new ContainerPortBuilder()
