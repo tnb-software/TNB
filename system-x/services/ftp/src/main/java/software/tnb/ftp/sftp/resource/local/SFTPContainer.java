@@ -11,6 +11,6 @@ public class SFTPContainer extends GenericContainer<SFTPContainer> {
         super(image);
         withEnv(env);
         addFixedExposedPort(port, port);
-        waitingFor(Wait.forLogMessage(".*Server listening on.*", 1));
+        waitingFor(Wait.forLogMessage(".*Server listening on.*", 3));
     }
 }
