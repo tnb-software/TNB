@@ -2,7 +2,6 @@ package software.tnb.ftp.sftp.service;
 
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.ConfigurableService;
-import software.tnb.common.utils.WaitUtils;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.sftp.account.SFTPAccount;
 import software.tnb.ftp.sftp.service.configuration.SFTPConfiguration;
@@ -13,8 +12,9 @@ import org.slf4j.LoggerFactory;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import net.schmizz.sshj.sftp.SFTPClient;
 
@@ -22,7 +22,7 @@ public abstract class SFTP extends ConfigurableService<SFTPAccount, SFTPClient, 
     implements FileTransferService, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SFTP.class);
 
-    protected final ExecutorService executor = Executors.newFixedThreadPool(1);
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     protected abstract SFTPClient makeClient();
 
@@ -38,15 +38,12 @@ public abstract class SFTP extends ConfigurableService<SFTPAccount, SFTPClient, 
             client = makeClient();
 
             // Create a heartbeat that keeps the session alive, otherwise it would timeout after 10 minutes
-            executor.submit((Runnable) () -> {
-                while (true) {
-                    try {
-                        LOG.trace("SFTP client heartbeat");
-                        client.ls("/");
-                    } catch (Exception ignored) { }
-                    WaitUtils.sleep(300000L);
-                }
-            });
+            executor.scheduleAtFixedRate(() -> {
+                try {
+                    LOG.trace("SFTP client heartbeat");
+                    client.ls("/");
+                } catch (Exception ignored) { }
+            }, 0, 5, TimeUnit.MINUTES);
         }
         return client;
     }
