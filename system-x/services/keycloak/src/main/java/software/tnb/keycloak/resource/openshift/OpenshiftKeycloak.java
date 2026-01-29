@@ -122,7 +122,7 @@ public class OpenshiftKeycloak extends software.tnb.keycloak.service.Keycloak
         keycloak.getMetadata().setName(name());
         keycloak.getMetadata().setNamespace(targetNamespace());
         keycloak.getMetadata().setLabels(Map.of("app", "keycloak", "app.kubernetes.io/instance", name()));
-        spec.setImage(defaultImage());
+        spec.setImage(image());
         Unsupported unsupportedSpec = new Unsupported();
         PodTemplate podTemplate = new PodTemplate();
         Spec podTemplateSpec = new Spec();
