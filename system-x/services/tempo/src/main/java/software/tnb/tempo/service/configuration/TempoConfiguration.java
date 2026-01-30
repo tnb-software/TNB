@@ -4,8 +4,18 @@ import software.tnb.common.service.configuration.ServiceConfiguration;
 
 public class TempoConfiguration extends ServiceConfiguration {
 
+    private static final String USE_MONOLITHIC = "tempo.use.monolithic";
     private static final String RESOURCE_LIMITS_CPU = "tempo.resource.limits.cpu";
     private static final String RESOURCE_LIMITS_MEMORY = "tempo.resource.limits.memory";
+
+    public TempoConfiguration useMonolithic(boolean value) {
+        set(USE_MONOLITHIC, value);
+        return this;
+    }
+
+    public boolean isMonolithic() {
+        return get(USE_MONOLITHIC, Boolean.class);
+    }
 
     public TempoConfiguration withResourceLimitsCpu(String cpu) {
         set(RESOURCE_LIMITS_CPU, cpu);

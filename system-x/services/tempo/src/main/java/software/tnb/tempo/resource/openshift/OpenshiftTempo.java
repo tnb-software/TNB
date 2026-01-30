@@ -26,9 +26,11 @@ import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
+import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.fabric8.kubernetes.api.model.Secret;
 import io.fabric8.kubernetes.api.model.SecretBuilder;
+import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Tempo.class)
 public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOperatorHub, WithCustomResource {
@@ -39,19 +41,27 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     private static final String MINIO_BUCKET = "tempo";
     private static final String STORAGE_TYPE = "s3";
     private static final String STORAGE_SIZE = "1Gi";
+    private static final String KIND_TEMPOSTACK = "TempoStack";
+    private static final String KIND_TEMPOMONOLITHIC = "TempoMonolithic";
 
     private final Minio minio = ServiceFactory.create(Minio.class);
 
     @Override
     public void beforeAll(ExtensionContext context) throws Exception {
-        minio.beforeAll(context);
+        // Only start MinIO if using TempoStack
+        if (!getConfiguration().isMonolithic()) {
+            minio.beforeAll(context);
+        }
         OpenshiftDeployable.super.beforeAll(context);
     }
 
     @Override
     public void afterAll(ExtensionContext context) throws Exception {
         OpenshiftDeployable.super.afterAll(context);
-        minio.afterAll(context);
+        // Only clean up MinIO if it was started
+        if (!getConfiguration().isMonolithic()) {
+            minio.afterAll(context);
+        }
     }
 
     @Override
@@ -64,7 +74,8 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     public TempoValidation validation() {
         validation = Optional.ofNullable(validation)
             .orElseGet(() -> new TempoValidation(getGatewayExternalUrl()
-                , OpenshiftClient.get().getServiceAccountAuthToken(getGatewayHostname())));
+                , OpenshiftClient.get().getServiceAccountAuthToken(getConfiguration().isMonolithic()
+                    ? "tempo-" + INSTANCE_NAME : getGatewayHostname())));
         return validation;
     }
 
@@ -94,13 +105,20 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
         // Create Roles to allow the traces to be read/written
         createRoles();
 
-        //create minio storage
-        createMinioStorage();
+        // Create MinIO storage only for TempoStack
+        if (!getConfiguration().isMonolithic()) {
+            createMinioStorage();
+        }
 
         //create stack in the current namespace
         OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind())
             .inNamespace(OpenshiftClient.get().getNamespace())
             .resource(customResource()).create();
+
+        // Create route for TempoMonolithic
+        if (getConfiguration().isMonolithic()) {
+            createRoute();
+        }
     }
 
     private void createRoles() {
@@ -133,7 +151,11 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public String getDistributorHostname() {
-        return "tempo-%s-distributor".formatted(INSTANCE_NAME);
+        if (getConfiguration().isMonolithic()) {
+            return "tempo-" + INSTANCE_NAME;
+        } else {
+            return "tempo-%s-distributor".formatted(INSTANCE_NAME);
+        }
     }
 
     @Override
@@ -143,7 +165,13 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public String getGatewayUrl() {
-        return "%s:8090".formatted(getGatewayHostname());
+        if (getConfiguration().isMonolithic()) {
+            // TempoMonolithic uses port 4317 for Tempo API/Gateway GRPC
+            return "%s:4317".formatted(getGatewayHostname());
+        } else {
+            // TempoStack gateway uses port 8090
+            return "%s:8090".formatted(getGatewayHostname());
+        }
     }
 
     @Override
@@ -154,7 +182,7 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public String kind() {
-        return "TempoStack";
+        return getConfiguration().isMonolithic() ? KIND_TEMPOMONOLITHIC : KIND_TEMPOSTACK;
     }
 
     @Override
@@ -164,7 +192,59 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public GenericKubernetesResource customResource() {
+        if (getConfiguration().isMonolithic()) {
+            return createTempoMonolithicResource();
+        } else {
+            return createTempoStackResource();
+        }
+    }
 
+    private GenericKubernetesResource createTempoMonolithicResource() {
+        Map<String, Object> spec = new HashMap<>();
+
+        // Resources
+        Map<String, Object> resources = new HashMap<>();
+        resources.put("limits", Map.of(
+            "cpu", getConfiguration().getResourceLimitsCpu(),
+            "memory", getConfiguration().getResourceLimitsMemory()
+        ));
+        spec.put("resources", resources);
+
+        // Storage - use in-memory backend
+        Map<String, Object> storage = new HashMap<>();
+        Map<String, Object> traces = new HashMap<>();
+        traces.put("backend", "memory");
+        storage.put("traces", traces);
+        spec.put("storage", storage);
+
+        // Multitenancy (from reference tempo.yaml)
+        Map<String, Object> multitenancy = new HashMap<>();
+        multitenancy.put("enabled", true);
+        multitenancy.put("mode", "openshift");
+        multitenancy.put("authentication", List.of(
+            Map.of("tenantId", "application", "tenantName", "application")
+        ));
+        spec.put("multitenancy", multitenancy);
+
+        // Tenants (required for multitenancy)
+        Map<String, Object> tenants = new HashMap<>();
+        tenants.put("mode", "openshift");
+        tenants.put("authentication", List.of(
+            Map.of("tenantId", "application", "tenantName", "application")
+        ));
+        spec.put("tenants", tenants);
+
+        return new GenericKubernetesResourceBuilder()
+            .withKind(KIND_TEMPOMONOLITHIC)
+            .withApiVersion(apiVersion())
+            .withNewMetadata()
+            .withName(INSTANCE_NAME)
+            .endMetadata()
+            .withAdditionalProperties(Map.of("spec", spec))
+            .build();
+    }
+
+    private GenericKubernetesResource createTempoStackResource() {
         Map<String, Object> spec = new HashMap<>();
         Map<String, Object> resources = new HashMap<>();
         Map<String, Object> resourcesTotal = new HashMap<>();
@@ -188,7 +268,7 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
         spec.put("tenants", tenants);
 
         return new GenericKubernetesResourceBuilder()
-            .withKind(kind())
+            .withKind(KIND_TEMPOSTACK)
             .withApiVersion(apiVersion())
             .withNewMetadata()
             .withName(INSTANCE_NAME)
@@ -213,5 +293,29 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
             .endMetadata().build();
         OpenshiftClient.get().secrets().inNamespace(OpenshiftClient.get().getNamespace())
             .resource(storageSecret).create();
+    }
+
+    private void createRoute() {
+        if (OpenshiftClient.get().routes().withName(getGatewayHostname()).get() == null) {
+            OpenshiftClient.get().routes().resource(new RouteBuilder()
+                .editOrNewMetadata()
+                .withName(getGatewayHostname())
+                .endMetadata()
+                .editOrNewSpec()
+                    .withNewTo()
+                        .withKind("Service")
+                        .withName(getGatewayHostname())
+                        .withWeight(100)
+                    .endTo()
+                    .editOrNewPort()
+                        .withTargetPort(new IntOrString(8080))
+                    .endPort()
+                    .withNewTls()
+                        .withTermination("passthrough")
+                    .endTls()
+                    .withWildcardPolicy("None")
+                .endSpec()
+                .build()).create();
+        }
     }
 }
