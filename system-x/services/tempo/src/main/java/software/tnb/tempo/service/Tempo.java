@@ -19,6 +19,7 @@ public abstract class Tempo extends ConfigurableService<NoAccount, NoClient, Tem
     @Override
     protected void defaultConfiguration() {
         getConfiguration()
+            .useMonolithic(true)
             .withResourceLimitsCpu("2000m")
             .withResourceLimitsMemory("2Gi");
     }
