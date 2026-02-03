@@ -15,19 +15,19 @@ import java.util.Optional;
 
 public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
+    public static final String FILTER_OTTL = "filter/ottl";
+    public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
+    public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
     protected static final String KEY_PORTS = "ports";
     protected static final String KEY_REPLICAS = "replicas";
-    public static final String FILTER_OTTL = "filter/ottl";
+    private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
+    private static final String HTTP_RECEIVER_PORT = "otel.http.port";
+    private static final String USES_TEMPOSTACK = "otel.tempostack";
     private Map<String, Object> receivers = new LinkedHashMap<>();
     private Map<String, Object> processors = new LinkedHashMap<>();
     private Map<String, Object> exporters = new LinkedHashMap<>();
     private Map<String, Object> service = new LinkedHashMap<>();
     private Map<String, Object> extensions = new LinkedHashMap<>();
-    public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
-    public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
-    private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
-    private static final String HTTP_RECEIVER_PORT = "otel.http.port";
-    private static final String USES_TEMPOSTACK = "otel.tempostack";
 
     public OpenTelemetryCollectorConfiguration withDefaultReceivers() {
         Map<String, Object> protocols = new HashMap<>();
