@@ -12,22 +12,23 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Supplier;
 
 public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
+    public static final String FILTER_OTTL = "filter/ottl";
+    public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
+    public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
     protected static final String KEY_PORTS = "ports";
     protected static final String KEY_REPLICAS = "replicas";
-    public static final String FILTER_OTTL = "filter/ottl";
+    private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
+    private static final String HTTP_RECEIVER_PORT = "otel.http.port";
+    private static final String USES_TEMPOSTACK = "otel.tempostack";
     private Map<String, Object> receivers = new LinkedHashMap<>();
     private Map<String, Object> processors = new LinkedHashMap<>();
     private Map<String, Object> exporters = new LinkedHashMap<>();
     private Map<String, Object> service = new LinkedHashMap<>();
     private Map<String, Object> extensions = new LinkedHashMap<>();
-    public static final int DEFAULT_GRPC_RECEIVER_PORT = 4317;
-    public static final int DEFAULT_HTTP_RECEIVER_PORT = 4318;
-    private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
-    private static final String HTTP_RECEIVER_PORT = "otel.http.port";
-    private static final String USES_TEMPOSTACK = "otel.tempostack";
 
     public OpenTelemetryCollectorConfiguration withDefaultReceivers() {
         Map<String, Object> protocols = new HashMap<>();
@@ -155,7 +156,7 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         return this;
     }
 
-    public OpenTelemetryCollectorConfiguration withOtlpTracesExporter(String otlpEndpoint) {
+    public OpenTelemetryCollectorConfiguration withOtlpTracesExporter(Supplier<String> otlpEndpoint) {
         Map<String, Object> otlpTracesConfiguration = new HashMap<>();
         otlpTracesConfiguration.put("endpoint", otlpEndpoint);
 
@@ -207,11 +208,11 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
             service.put("extensions", List.of("bearertokenauth"));
         }
 
-        return Map.of("receivers", receivers
+        return resolveSuppliers(Map.of("receivers", receivers
             , "processors", processors
             , "exporters", exporters
             , "service", service
-            , "extensions", extensions);
+            , "extensions", extensions));
     }
 
     public OpenTelemetryCollectorConfiguration useTempostack(Boolean useTempostack) {
@@ -229,5 +230,20 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         StringWriter stringWriter = new StringWriter();
         confYaml.dump(getCollectorConfigurationAsMap(), stringWriter);
         return stringWriter.toString();
+    }
+
+    public Map<String, Object> resolveSuppliers(Map<String, Object> map) {
+        Map<String, Object> result = new HashMap<>(map);
+
+        result.replaceAll((key, value) -> {
+            if (value instanceof Map<?, ?> nestedMap) {
+                return resolveSuppliers((Map<String, Object>) nestedMap);
+            } else if (value instanceof Supplier<?> supplier) {
+                return supplier.get();
+            }
+            return value;
+        });
+
+        return result;
     }
 }

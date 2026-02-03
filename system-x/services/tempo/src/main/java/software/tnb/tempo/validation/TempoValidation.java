@@ -1,6 +1,5 @@
 package software.tnb.tempo.validation;
 
-import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.validation.Validation;
 import software.tnb.tempo.validation.model.FoundTrace;
 import software.tnb.tempo.validation.model.SearchResult;
@@ -28,26 +27,17 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
-import io.fabric8.kubernetes.client.http.HttpClient;
-import io.fabric8.kubernetes.client.http.HttpRequest;
-import io.fabric8.kubernetes.client.http.HttpResponse;
-
-public class TempoValidation implements Validation {
+public abstract class TempoValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(TempoValidation.class);
-    public static final String GATEWAY_TEMPO_BASE_URL = "/api/traces/v1/application/tempo";
-
-    private final HttpClient client;
     private final ObjectMapper objectMapper;
-    private final String token;
+
     private final String searchUrl;
     private final String traceUrl;
 
-    public TempoValidation(String gatewayUrl, String token) {
-        this.token = token;
-        this.client = OpenshiftClient.get().authorization().getHttpClient();
-        this.searchUrl = gatewayUrl + GATEWAY_TEMPO_BASE_URL + "/api/search";
-        this.traceUrl = gatewayUrl + GATEWAY_TEMPO_BASE_URL + "/api/traces";
+    public TempoValidation(String gatewayUrl, String gatewayTempoBaseUrl) {
+        this.searchUrl = gatewayUrl + gatewayTempoBaseUrl + "/api/search";
+        this.traceUrl = gatewayUrl + gatewayTempoBaseUrl + "/api/traces";
         this.objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
 
@@ -60,17 +50,19 @@ public class TempoValidation implements Validation {
     public SearchResult search(String query) {
         try {
             LOG.debug("search traces with query {}", query);
-            HttpResponse<String> resp = callWithRetry(new URL("%s?%s".formatted(searchUrl, URLEncoder.encode("q=%s".formatted(query)
+            String body = callWithRetry(new URL("%s?%s".formatted(searchUrl, URLEncoder.encode("q=%s".formatted(query)
                 , StandardCharsets.UTF_8))));
-            LOG.debug("query result:\n{}", resp.body());
-            return objectMapper.readValue(resp.body(), new TypeReference<SearchResult>() { });
+            LOG.debug("query result:\n{}", body);
+            return objectMapper.readValue(body, new TypeReference<SearchResult>() {
+            });
         } catch (IOException e) {
-            throw new RuntimeException("unable to read value from " + searchUrl);
+            throw new RuntimeException("unable to read value from " + searchUrl, e);
         }
     }
 
     /**
      * Returns the map with spanId as key and @{@link software.tnb.tempo.validation.model.Span} as value
+     *
      * @param traceId String, the trace id
      * @return Map
      */
@@ -78,9 +70,10 @@ public class TempoValidation implements Validation {
         try {
             final Map<String, Span> fullTrace = new HashMap<>();
             LOG.debug("search for trace {}", traceId);
-            HttpResponse<String> resp = callWithRetry(new URL("%s/%s".formatted(traceUrl, traceId)));
-            LOG.debug("trace result:\n{}", resp.body());
-            Trace trace = objectMapper.readValue(resp.body(), new TypeReference<Trace>() { });
+            String body = callWithRetry(new URL("%s/%s".formatted(traceUrl, traceId)));
+            LOG.debug("trace result:\n{}", body);
+            Trace trace = objectMapper.readValue(body, new TypeReference<Trace>() {
+            });
             trace.getBatches().forEach(batch -> batch.getScopeSpans().forEach(scopeSpan -> scopeSpan.getSpans()
                 .forEach(span -> fullTrace.put(span.getSpanId(), span))));
             return fullTrace;
@@ -111,17 +104,5 @@ public class TempoValidation implements Validation {
         return traces;
     }
 
-    private HttpResponse<String> callWithRetry(URL url) {
-        final HttpRequest.Builder proxyReqBuilder = client.newHttpRequestBuilder()
-            .header("Authorization", "Bearer %s".formatted(token))
-            .url(url);
-        final HttpRequest proxyReq = proxyReqBuilder.build();
-        final AtomicReference<HttpResponse<String>> resp = new AtomicReference<>();
-        Awaitility.await("wait for response on " + url).atMost(30, TimeUnit.SECONDS)
-            .untilAsserted(() -> {
-                resp.set(client.sendAsync(proxyReq, String.class).get());
-                Assertions.assertTrue(resp.get().isSuccessful(), "Check response code " + url + " : " + resp.get().code());
-            });
-        return resp.get();
-    }
+    protected abstract String callWithRetry(URL url);
 }
