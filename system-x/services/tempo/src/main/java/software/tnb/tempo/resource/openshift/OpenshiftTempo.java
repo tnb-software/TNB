@@ -9,6 +9,7 @@ import software.tnb.common.service.ServiceFactory;
 import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.tempo.service.Tempo;
+import software.tnb.tempo.validation.OpenshiftTempoValidation;
 import software.tnb.tempo.validation.TempoValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
@@ -79,9 +80,9 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     @Override
     public TempoValidation validation() {
         validation = Optional.ofNullable(validation)
-            .orElseGet(() -> new TempoValidation(getGatewayExternalUrl()
+            .orElseGet(() -> new OpenshiftTempoValidation(getGatewayExternalUrl()
                 , OpenshiftClient.get().getServiceAccountAuthToken(getConfiguration().isMonolithic()
-                    ? "tempo-" + INSTANCE_NAME : getGatewayHostname())));
+                ? "tempo-" + INSTANCE_NAME : getGatewayHostname())));
         return validation;
     }
 
@@ -308,18 +309,18 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
                 .withName(getGatewayHostname())
                 .endMetadata()
                 .editOrNewSpec()
-                    .withNewTo()
-                        .withKind("Service")
-                        .withName(getGatewayHostname())
-                        .withWeight(100)
-                    .endTo()
-                    .editOrNewPort()
-                        .withTargetPort(new IntOrString(8080))
-                    .endPort()
-                    .withNewTls()
-                        .withTermination("passthrough")
-                    .endTls()
-                    .withWildcardPolicy("None")
+                .withNewTo()
+                .withKind("Service")
+                .withName(getGatewayHostname())
+                .withWeight(100)
+                .endTo()
+                .editOrNewPort()
+                .withTargetPort(new IntOrString(8080))
+                .endPort()
+                .withNewTls()
+                .withTermination("passthrough")
+                .endTls()
+                .withWildcardPolicy("None")
                 .endSpec()
                 .build()).create();
         }
