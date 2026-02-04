@@ -9,6 +9,8 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.opentelemetry.service.OpenTelemetryCollector;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,6 +36,18 @@ public class OpenshiftOpenTelemetryCollector extends OpenTelemetryCollector impl
     private static final String OTEL_INSTANCE_NAME = "otel-tnb";
     private final String saName = "otel-collector";
     private final String roleBindingName = "tempostack-traces-" + StringUtils.getRandomAlphanumStringOfLength(4);
+
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        runTempoIfNeeded(context);
+        OpenshiftDeployable.super.beforeAll(context);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        cleanTempoIfNeeded(context);
+        OpenshiftDeployable.super.afterAll(context);
+    }
 
     @Override
     public void undeploy() {

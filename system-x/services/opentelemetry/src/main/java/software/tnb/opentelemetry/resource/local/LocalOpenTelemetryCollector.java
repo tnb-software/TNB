@@ -4,6 +4,8 @@ import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.opentelemetry.service.OpenTelemetryCollector;
 
+import org.junit.jupiter.api.extension.ExtensionContext;
+
 import com.google.auto.service.AutoService;
 
 import java.util.function.Supplier;
@@ -15,6 +17,18 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
     private final Supplier<OpenTelemetryCollectorContainer> containerSupplier = () ->
         new OpenTelemetryCollectorContainer(image(), getConfiguration().toString());
     private OpenTelemetryCollectorContainer container;
+
+    @Override
+    public void beforeAll(ExtensionContext context) throws Exception {
+        runTempoIfNeeded(context);
+        ContainerDeployable.super.beforeAll(context);
+    }
+
+    @Override
+    public void afterAll(ExtensionContext context) throws Exception {
+        cleanTempoIfNeeded(context);
+        ContainerDeployable.super.afterAll(context);
+    }
 
     @Override
     public void openResources() {

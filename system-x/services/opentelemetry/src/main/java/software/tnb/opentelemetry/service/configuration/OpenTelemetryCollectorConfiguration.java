@@ -12,7 +12,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
 
 public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
 
@@ -24,6 +23,7 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
     private static final String GRPC_RECEIVER_PORT = "otel.grpc.port";
     private static final String HTTP_RECEIVER_PORT = "otel.http.port";
     private static final String USES_TEMPOSTACK = "otel.tempostack";
+    private static final String USES_TEMPO = "otel.tempo";
     private Map<String, Object> receivers = new LinkedHashMap<>();
     private Map<String, Object> processors = new LinkedHashMap<>();
     private Map<String, Object> exporters = new LinkedHashMap<>();
@@ -156,7 +156,7 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         return this;
     }
 
-    public OpenTelemetryCollectorConfiguration withOtlpTracesExporter(Supplier<String> otlpEndpoint) {
+    public OpenTelemetryCollectorConfiguration withOtlpTracesExporter(String otlpEndpoint) {
         Map<String, Object> otlpTracesConfiguration = new HashMap<>();
         otlpTracesConfiguration.put("endpoint", otlpEndpoint);
 
@@ -208,11 +208,11 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
             service.put("extensions", List.of("bearertokenauth"));
         }
 
-        return resolveSuppliers(Map.of("receivers", receivers
+        return Map.of("receivers", receivers
             , "processors", processors
             , "exporters", exporters
             , "service", service
-            , "extensions", extensions));
+            , "extensions", extensions);
     }
 
     public OpenTelemetryCollectorConfiguration useTempostack(Boolean useTempostack) {
@@ -224,26 +224,20 @@ public class OpenTelemetryCollectorConfiguration extends ServiceConfiguration {
         return get(USES_TEMPOSTACK, Boolean.class);
     }
 
+    public OpenTelemetryCollectorConfiguration useTempo(Boolean useTempo) {
+        set(USES_TEMPO, useTempo);
+        return this;
+    }
+
+    public Boolean isTempo() {
+        return get(USES_TEMPO, Boolean.class);
+    }
+
     @Override
     public String toString() {
         Yaml confYaml = new Yaml();
         StringWriter stringWriter = new StringWriter();
         confYaml.dump(getCollectorConfigurationAsMap(), stringWriter);
         return stringWriter.toString();
-    }
-
-    public Map<String, Object> resolveSuppliers(Map<String, Object> map) {
-        Map<String, Object> result = new HashMap<>(map);
-
-        result.replaceAll((key, value) -> {
-            if (value instanceof Map<?, ?> nestedMap) {
-                return resolveSuppliers((Map<String, Object>) nestedMap);
-            } else if (value instanceof Supplier<?> supplier) {
-                return supplier.get();
-            }
-            return value;
-        });
-
-        return result;
     }
 }
