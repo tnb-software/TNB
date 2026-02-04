@@ -18,7 +18,7 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
       - name: Setup maven
-        uses: stCarolas/setup-maven@v4.3
+        uses: stCarolas/setup-maven@v5
         with:
           maven-version: ${{ env.MAVEN_VERSION }}
       - name: Compile
@@ -36,7 +36,7 @@ jobs:
           java-version: '17'
           distribution: 'adopt'
       - name: Setup maven
-        uses: stCarolas/setup-maven@v4.3
+        uses: stCarolas/setup-maven@v5
         with:
           maven-version: ${{ env.MAVEN_VERSION }}
       - name: Run tests
