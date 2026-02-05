@@ -36,7 +36,7 @@ public class LocalTempo extends Tempo implements ContainerDeployable<TempoContai
 
     @Override
     public void closeResources() {
-
+        this.validation = null;
     }
 
     @Override

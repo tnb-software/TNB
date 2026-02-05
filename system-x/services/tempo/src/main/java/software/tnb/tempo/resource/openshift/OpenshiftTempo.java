@@ -97,7 +97,7 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public void closeResources() {
-
+        this.validation = null;
     }
 
     @Override
