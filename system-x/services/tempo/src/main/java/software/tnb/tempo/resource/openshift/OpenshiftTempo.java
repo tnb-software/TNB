@@ -67,14 +67,9 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
 
     @Override
     public void undeploy() {
-        // Only undeploy if the resource exists
-        if (OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind())
-            .inNamespace(OpenshiftClient.get().getNamespace())
-            .withName(INSTANCE_NAME)
-            .get() != null) {
-            OpenshiftClient.get().deleteCustomResource(apiVersion().split("/")[0], apiVersion().split("/")[1], kind(), INSTANCE_NAME);
-            WaitUtils.waitFor(() -> servicePods().isEmpty(), 60, 5000L, "wait until tempo pods are terminated");
-        }
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).inNamespace(OpenshiftClient.get().getNamespace())
+            .withName(INSTANCE_NAME).delete();
+        WaitUtils.waitFor(() -> servicePods().isEmpty(), 60, 5000L, "wait until tempo pods are terminated");
     }
 
     @Override
