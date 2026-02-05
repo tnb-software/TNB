@@ -38,7 +38,8 @@ public class OpenshiftOpenTelemetryCollector extends OpenTelemetryCollector impl
     @Override
     public void undeploy() {
 
-        OpenshiftClient.get().deleteCustomResource(apiVersion().split("/")[0], apiVersion().split("/")[1], kind(), OTEL_INSTANCE_NAME);
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).inNamespace(OpenshiftClient.get().getNamespace())
+            .withName(OTEL_INSTANCE_NAME).delete();
         WaitUtils.waitFor(new Waiter(() -> servicePods().isEmpty(), "wait until collector pods are terminated"));
 
         if (getConfiguration().isTempostack()) {
