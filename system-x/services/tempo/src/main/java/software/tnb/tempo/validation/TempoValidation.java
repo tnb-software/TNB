@@ -50,7 +50,7 @@ public abstract class TempoValidation implements Validation {
     public SearchResult search(String query) {
         try {
             LOG.debug("search traces with query {}", query);
-            String body = callWithRetry(new URL("%s?%s".formatted(searchUrl, URLEncoder.encode("q=%s".formatted(query)
+            String body = callWithRetry(new URL("%s?q=%s".formatted(searchUrl, URLEncoder.encode("%s".formatted(query)
                 , StandardCharsets.UTF_8))));
             LOG.debug("query result:\n{}", body);
             return objectMapper.readValue(body, new TypeReference<SearchResult>() {
