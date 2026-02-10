@@ -17,7 +17,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <smallrye.version>3.15.0</smallrye.version>
+        <smallrye.version>3.16.0</smallrye.version>
         <json.version>20251224</json.version>
     </properties>
 
