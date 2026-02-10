@@ -15,7 +15,7 @@
 
     <properties>
         <!-- Align the version, as blob and queue may contain different versions -->
-        <azure.storage.common.version>12.31.0</azure.storage.common.version>
+        <azure.storage.common.version>12.32.1</azure.storage.common.version>
     </properties>
 
     <dependencies>
