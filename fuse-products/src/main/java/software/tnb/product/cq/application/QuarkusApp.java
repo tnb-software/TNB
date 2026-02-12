@@ -47,6 +47,10 @@ public abstract class QuarkusApp extends App {
         customizeProject(integrationBuilder.getDependencies());
         customizePlugins(integrationBuilder.getPlugins());
 
+        buildApp();
+    }
+
+    protected void buildApp() {
         Map<String, String> properties = new HashMap<>(Map.of(
             "skipTests", "true",
             "quarkus.native.container-build", "true"

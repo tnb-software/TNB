@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
+import software.tnb.product.cq.application.LocalPackagedQuarkusApp;
 import software.tnb.product.cq.application.LocalQuarkusApp;
 import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.util.maven.Maven;
@@ -40,7 +41,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
 
     @Test
     public void shouldCreateQuarkusAppTest() {
-        LocalQuarkusApp app = new LocalQuarkusApp(dummyIb());
+        LocalQuarkusApp app = new LocalPackagedQuarkusApp(dummyIb());
 
         assertThat(app.getName()).isEqualTo(name());
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
@@ -78,7 +79,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
     public void shouldAddNativeProfileTest() {
         System.setProperty(QuarkusConfiguration.QUARKUS_NATIVE_BUILD, "true");
 
-        new LocalQuarkusApp(dummyIb());
+        new LocalPackagedQuarkusApp(dummyIb());
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 
         InvocationRequest request = TEST_INVOKER.getRequests().get(1);
@@ -90,7 +91,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
         final String groupId = "com.test";
         final String artifactId = "example";
         final String version = "1.0";
-        new LocalQuarkusApp(dummyIb().dependencies(groupId + ":" + artifactId + ":" + version));
+        new LocalPackagedQuarkusApp(dummyIb().dependencies(groupId + ":" + artifactId + ":" + version));
         verifyDependencies(groupId, artifactId, version);
     }
 
@@ -113,7 +114,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
             Maven.writePom(POM_PATH.toFile(), model);
         });
 
-        new LocalQuarkusApp(dummyIb());
+        new LocalPackagedQuarkusApp(dummyIb());
 
         final Model pom = Maven.loadPom(TestConfiguration.appLocation().resolve(name()).resolve("pom.xml").toFile());
         assertThat(pom.getDependencyManagement().getDependencies()).hasSize(2);
@@ -140,7 +141,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
             Maven.writePom(POM_PATH.toFile(), model);
         });
 
-        new LocalQuarkusApp(dummyIb());
+        new LocalPackagedQuarkusApp(dummyIb());
 
         Model pom = Maven.loadPom(POM_PATH.toFile());
         assertThat(pom.getDependencies()).hasSize(1);
@@ -151,7 +152,7 @@ public class QuarkusAppTest extends LocalAppTestParent {
     public void shouldAddOpenshiftExtensionTest() {
         System.setProperty(OpenshiftConfiguration.USE_OPENSHIFT, "true");
 
-        new LocalQuarkusApp(dummyIb());
+        new LocalPackagedQuarkusApp(dummyIb());
 
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 
