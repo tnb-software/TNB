@@ -2,6 +2,12 @@
 //DEPS software.tnb:system-x-all:1.0-SNAPSHOT
 //DEPS org.jline:jline-groovy:3.22.0
 //DEPS org.slf4j:slf4j-nop:1.7.36
+//DEPS org.jboss.logging:jboss-logging:3.6.1.Final
+//DEPS io.netty:netty-common:4.1.131.Final
+//DEPS io.netty:netty-transport:4.1.131.Final
+//DEPS io.netty:netty-handler:4.1.131.Final
+//DEPS io.netty:netty-buffer:4.1.131.Final
+//DEPS io.netty:netty-codec:4.1.131.Final
 //RUNTIME_OPTIONS --add-opens java.base/java.lang=ALL-UNNAMED
 
 import static org.jline.builtins.SyntaxHighlighter.DEFAULT_NANORC_FILE;
@@ -110,7 +116,7 @@ import java.util.zip.ZipFile;
 
 import groovy.lang.Closure;
 import io.fabric8.kubernetes.client.Config;
-import io.fabric8.openshift.client.OpenShiftConfig;
+import io.fabric8.openshift.client.OpenShiftConfigBuilder;
 
 //CHECKSTYLE:OFF
 public class tnb {
@@ -550,7 +556,7 @@ public class tnb {
             return;
         }
         try {
-            final Config config = OpenShiftConfig.fromKubeconfig(IOUtils.readFile(Path.of(OpenShiftConfig.getKubeconfigFilename())));
+            final Config config = new OpenShiftConfigBuilder().withAutoConfigure().build();
             final String namespace = config.getNamespace();
             if ("default".equalsIgnoreCase(namespace)) {
                 final boolean autoGenerate = "yes".equals(
