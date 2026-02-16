@@ -1,14 +1,14 @@
 package software.tnb.tempo.resource.local;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.utils.NetworkUtils;
 import software.tnb.tempo.service.Tempo;
 import software.tnb.tempo.validation.LocalTempoValidation;
 import software.tnb.tempo.validation.TempoValidation;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
@@ -28,7 +28,8 @@ public class LocalTempo extends Tempo implements ContainerDeployable<TempoContai
     private static final int HOST_OTLP_GATEWAY_PORT_GRPC = NetworkUtils.getFreePort();
 
     private TempoContainer container =
-        new TempoContainer(image(), List.of(OTLP_GATEWAY_PORT_HTTP, TEMPO_PORT, GRAFANA_PORT), Map.of(HOST_OTLP_GATEWAY_PORT_GRPC, OTLP_GATEWAY_PORT_GRPC));
+        new TempoContainer(image(), List.of(OTLP_GATEWAY_PORT_HTTP, TEMPO_PORT, GRAFANA_PORT),
+            Map.of(HOST_OTLP_GATEWAY_PORT_GRPC, OTLP_GATEWAY_PORT_GRPC));
 
     @Override
     public TempoContainer container() {

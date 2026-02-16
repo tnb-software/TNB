@@ -47,7 +47,7 @@ public class LocalDevModeQuarkusApp extends LocalQuarkusApp {
         if (shouldRun()) {
             final Path logFile = getLogPath(Phase.RUN);
             BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
-                .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
+                .withBaseDirectory(appDir)
                 .withArgs("compile", "quarkus:dev")
                 // configure the debug port
                 .withProperties(Map.of(

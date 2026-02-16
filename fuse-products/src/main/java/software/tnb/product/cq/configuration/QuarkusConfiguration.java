@@ -40,6 +40,10 @@ public class QuarkusConfiguration extends CamelConfiguration {
 
     public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel-quarkus-bom";
 
+    public static final String CAMEL_QUARKUS_EXAMPLES_REPO = "camel.quarkus.examples.repo";
+
+    public static final String CAMEL_QUARKUS_EXAMPLES_BRANCH = "camel.quarkus.examples.branch";
+
     public static String quarkusVersion() {
         return getProperty(QUARKUS_VERSION);
     }
@@ -74,6 +78,14 @@ public class QuarkusConfiguration extends CamelConfiguration {
 
     public static String camelQuarkusPlatformVersion() {
         return getProperty(CAMEL_QUARKUS_PLATFORM_VERSION);
+    }
+
+    public static String getCamelQuarkusExamplesRepo() {
+        return getProperty(CAMEL_QUARKUS_EXAMPLES_REPO, "https://github.com/apache/camel-quarkus-examples");
+    }
+
+    public static String getCamelQuarkusExamplesBranch() {
+        return getProperty(CAMEL_QUARKUS_EXAMPLES_BRANCH, "main");
     }
 
     /**
