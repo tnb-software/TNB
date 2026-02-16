@@ -1,5 +1,8 @@
 package software.tnb.tempo.resource.local;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.utils.NetworkUtils;
@@ -16,13 +19,16 @@ import java.util.Optional;
 @AutoService(Tempo.class)
 public class LocalTempo extends Tempo implements ContainerDeployable<TempoContainer>, WithDockerImage {
 
+    private static final Logger LOG = LoggerFactory.getLogger(LocalTempo.class);
+
     public static final int OTLP_GATEWAY_PORT_GRPC = 4317;
     public static final int OTLP_GATEWAY_PORT_HTTP = 4318;
+    public static final int GRAFANA_PORT = 3000;
     public static final int TEMPO_PORT = 3200;
     private static final int HOST_OTLP_GATEWAY_PORT_GRPC = NetworkUtils.getFreePort();
 
     private TempoContainer container =
-        new TempoContainer(image(), List.of(OTLP_GATEWAY_PORT_HTTP, TEMPO_PORT), Map.of(HOST_OTLP_GATEWAY_PORT_GRPC, OTLP_GATEWAY_PORT_GRPC));
+        new TempoContainer(image(), List.of(OTLP_GATEWAY_PORT_HTTP, TEMPO_PORT, GRAFANA_PORT), Map.of(HOST_OTLP_GATEWAY_PORT_GRPC, OTLP_GATEWAY_PORT_GRPC));
 
     @Override
     public TempoContainer container() {
@@ -31,7 +37,7 @@ public class LocalTempo extends Tempo implements ContainerDeployable<TempoContai
 
     @Override
     public void openResources() {
-
+        LOG.info("Grafana URL available at http://localhost:" + container.getMappedPort(GRAFANA_PORT));
     }
 
     @Override
