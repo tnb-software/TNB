@@ -5,6 +5,7 @@ import software.tnb.aws.common.service.AWSService;
 import software.tnb.aws.redshift.account.RedshiftAccount;
 import software.tnb.aws.redshift.validation.RedshiftValidation;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
@@ -45,12 +46,12 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
 
     private void resumeCluster() {
         //resume cluster
-        if (!cluster().clusterAvailabilityStatus().equalsIgnoreCase("available")) {
+        if (!"available".equalsIgnoreCase(cluster().clusterAvailabilityStatus())) {
             redshiftClient
                 .resumeCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
             //wait for available
-            WaitUtils.waitFor(() -> cluster().clusterAvailabilityStatus().equalsIgnoreCase("available"), 60, 30000,
-                "Waiting for Cluster " + cluster().clusterIdentifier() + " to be available");
+            WaitUtils.waitFor(new Waiter(() -> "available".equalsIgnoreCase(cluster().clusterAvailabilityStatus()),
+                "Waiting for Cluster " + cluster().clusterIdentifier() + " to be available").timeout(60, 30000));
         }
     }
 
@@ -59,11 +60,10 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
             try {
                 redshiftClient.pauseCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
                 //wait for paused
-                WaitUtils
-                    .waitFor(() -> cluster().clusterAvailabilityStatus().equalsIgnoreCase("paused"), 60, 30000,
-                        "Waiting for Cluster " + cluster().clusterIdentifier() + " to be paused");
+                WaitUtils.waitFor(new Waiter(() -> "paused".equalsIgnoreCase(cluster().clusterAvailabilityStatus()),
+                        "Waiting for Cluster " + cluster().clusterIdentifier() + " to be paused").timeout(60, 30000));
             } catch (RedshiftException e) {
-                throw new RuntimeException("Failed to stop redshift cluster, needs to be stopped manually");
+                throw new RuntimeException("Failed to stop redshift cluster, needs to be stopped manually", e);
             }
         }
     }
