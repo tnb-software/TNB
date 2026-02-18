@@ -30,8 +30,8 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
     public LocalPackagedQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
-        Path appDir = TestConfiguration.appLocation().resolve(getName()).toAbsolutePath();
-        Path integrationTarget = appDir.resolve("target");
+        Path appDirAbsolutePath = appDir.toAbsolutePath();
+        Path integrationTarget = appDirAbsolutePath.resolve("target");
         String fileName;
         if (QuarkusConfiguration.isQuarkusNative()) {
             fileName = getName() + "-" + TestConfiguration.appVersion() + "-runner";
@@ -113,7 +113,7 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
 
     private List<String> getCommand() {
         List<String> cmd = new ArrayList<>();
-        Path appDir = TestConfiguration.appLocation().resolve(getName()).toAbsolutePath();
+        Path appDirAbsolutePath = appDir.toAbsolutePath();
 
         if (QuarkusConfiguration.isQuarkusNative()) {
             cmd.add(getPath());
@@ -128,7 +128,7 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
             }
 
             cmd.addAll(integrationBuilder.getJavaAgents().stream().map(a -> "-javaagent:"
-                + (a.contains(appDir.toString()) ? a : appDir.resolve(a).toAbsolutePath())).toList());
+                + (a.contains(appDirAbsolutePath.toString()) ? a : appDirAbsolutePath.resolve(a).toAbsolutePath())).toList());
             integrationBuilder.getVmArguments().stream().map(vmArgument -> "-" + vmArgument).forEach(cmd::add);
 
             cmd.add("-jar");

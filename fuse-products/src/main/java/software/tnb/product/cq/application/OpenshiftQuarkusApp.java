@@ -1,6 +1,5 @@
 package software.tnb.product.cq.application;
 
-import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.application.Phase;
@@ -9,6 +8,7 @@ import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
@@ -64,7 +64,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         OpenshiftClient.get().serviceAccounts().resource(sa).serverSideApply();
 
         final BuildRequest.Builder builder = new BuildRequest.Builder()
-            .withBaseDirectory(TestConfiguration.appLocation().resolve(getName()))
+            .withBaseDirectory(appDir)
             .withArgs("package")
             .withProperties(getProperties())
             .withLogFile(getLogPath(Phase.DEPLOY))
@@ -145,6 +145,10 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
             properties.put("quarkus.openshift.command", getJavaCommand());
         }
 
+        if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder) {
+            properties.putAll(gitIntegrationBuilder.getMavenProperties());
+        }
+
         // Add volume configurations from IntegrationBuilder
         addVolumeProperties(properties);
 
@@ -215,7 +219,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         OpenshiftClient.get().routes().withName(getName()).delete();
         OpenshiftClient.get().services().withName(getName()).delete();
         OpenshiftClient.get().serviceAccounts().withName(getName()).delete();
-        Path openshiftResources = TestConfiguration.appLocation().resolve(getName()).resolve("target").resolve("kubernetes/openshift.yml");
+        Path openshiftResources = appDir.resolve("target").resolve("kubernetes/openshift.yml");
 
         try (InputStream is = IOUtils.toInputStream(Files.readString(openshiftResources), "UTF-8")) {
             LOG.info("Deleting openshift resources for integration from file {}", openshiftResources.toAbsolutePath());
