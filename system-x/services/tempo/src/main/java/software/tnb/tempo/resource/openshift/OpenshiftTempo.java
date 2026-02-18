@@ -75,9 +75,7 @@ public class OpenshiftTempo extends Tempo implements OpenshiftDeployable, WithOp
     @Override
     public TempoValidation validation() {
         validation = Optional.ofNullable(validation)
-            .orElseGet(() -> new OpenshiftTempoValidation(getGatewayExternalUrl()
-                , OpenshiftClient.get().getServiceAccountAuthToken(getConfiguration().isMonolithic()
-                ? "tempo-" + INSTANCE_NAME : getGatewayHostname())));
+            .orElseGet(() -> new OpenshiftTempoValidation(getGatewayExternalUrl(), OpenshiftClient.get().getOauthToken()));
         return validation;
     }
 
