@@ -10,7 +10,9 @@ import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -34,7 +36,8 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
         Path integrationTarget = appDirAbsolutePath.resolve("target");
         String fileName;
         if (QuarkusConfiguration.isQuarkusNative()) {
-            fileName = getName() + "-" + TestConfiguration.appVersion() + "-runner";
+            Model pomModel = Maven.loadPom(appDir.resolve("pom.xml").toFile());
+            fileName = pomModel.getArtifactId() + "-" + pomModel.getVersion() + "-runner";
         } else {
             boolean isUberJar = integrationBuilder.getApplicationProperties().entrySet().stream()
                 .anyMatch(e -> "quarkus.package.jar.type".equals(e.getKey()) && "uber-jar".equals(e.getValue()));
@@ -42,8 +45,9 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
                 .getOrDefault("quarkus.package.jar.add-runner-suffix", "true").toString());
 
             if (isUberJar) {
+                Model pomModel = Maven.loadPom(appDir.resolve("pom.xml").toFile());
                 fileName = String.format("%s-%s" + (includeRunnerSuffix ? "-runner.jar" : ".jar"),
-                    integrationBuilder.getIntegrationName(), TestConfiguration.appVersion());
+                    pomModel.getArtifactId(), pomModel.getVersion());
             } else {
                 fileName = "quarkus-app/quarkus-run.jar";
             }
