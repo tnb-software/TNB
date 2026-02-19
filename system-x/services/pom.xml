@@ -35,6 +35,7 @@
         <module>kafka</module>
         <module>kudu</module>
         <module>infinispan</module>
+        <module>ai</module>
         <module>db</module>
         <module>mail</module>
         <module>search-engine</module>
