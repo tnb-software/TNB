@@ -38,4 +38,9 @@ public class LocalFileSystem extends FileSystem implements Deployable {
     public Path createTempDirectory() throws IOException {
         return Files.createTempDirectory("tnb-filesystem");
     }
+
+    @Override
+    public void deleteFile(Path directory, String filename) throws IOException {
+        java.nio.file.Files.deleteIfExists(directory.resolve(filename));
+    }
 }
