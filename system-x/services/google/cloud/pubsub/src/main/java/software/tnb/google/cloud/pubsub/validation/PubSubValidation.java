@@ -6,18 +6,18 @@ import software.tnb.google.cloud.pubsub.client.PubSubClients;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.api.core.ApiFuture;
 import com.google.cloud.pubsub.v1.AckReplyConsumer;
 import com.google.cloud.pubsub.v1.MessageReceiver;
 import com.google.cloud.pubsub.v1.Publisher;
 import com.google.cloud.pubsub.v1.Subscriber;
 import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.DeadLetterPolicy;
 import com.google.pubsub.v1.ProjectSubscriptionName;
+import com.google.pubsub.v1.ProjectTopicName;
 import com.google.pubsub.v1.PubsubMessage;
 import com.google.pubsub.v1.PushConfig;
 import com.google.pubsub.v1.Subscription;
 import com.google.pubsub.v1.SubscriptionName;
-import com.google.pubsub.v1.Topic;
 import com.google.pubsub.v1.TopicName;
 
 import java.util.ArrayList;
@@ -26,7 +26,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class PubSubValidation implements Validation {
-
     private static final Logger LOG = LoggerFactory.getLogger(PubSubValidation.class);
 
     private final PubSubClients clients;
@@ -37,44 +36,59 @@ public class PubSubValidation implements Validation {
         this.projectId = projectId;
     }
 
-    public Topic createNewTopic(String topicId) {
-        Topic topic = clients.topicAdminClient().createTopic(TopicName.of(projectId, topicId));
-        LOG.info("Created google pubsub topic: " + topic.getName());
-        return topic;
+    public void createTopic(String name) {
+        clients.topicAdminClient().createTopic(TopicName.of(projectId, name));
+        LOG.info("Created google pubsub topic: {}", name);
     }
 
-    public void deleteTopic(String topicId) {
-        clients.topicAdminClient().deleteTopic(TopicName.of(projectId, topicId));
-        LOG.info("Deleted google pubsub topic: " + topicId);
+    public void deleteTopic(String name) {
+        clients.topicAdminClient().deleteTopic(TopicName.of(projectId, name));
+        LOG.info("Deleted google pubsub topic: {}", name);
     }
 
-    public Subscription createNewSubscription(String subscriptionId, String topicId) {
-        SubscriptionName subscriptionName = SubscriptionName.of(projectId, subscriptionId);
-        TopicName topicName = TopicName.of(projectId, topicId);
-
-        Subscription subscription =
-            clients.subscriptionAdminClient().createSubscription(subscriptionName, topicName, PushConfig.getDefaultInstance(), 10);
-        LOG.info("Created google pubsub subscription: " + subscription.getName());
-        return subscription;
+    public void createSubscription(String name, String topicName) {
+        clients.subscriptionAdminClient().createSubscription(
+            SubscriptionName.of(projectId, name),
+            TopicName.of(projectId, topicName),
+            PushConfig.getDefaultInstance(),
+            10
+        );
+        LOG.info("Created google pubsub subscription: {}", name);
     }
 
-    public void deleteSubscription(String subscriptionId) {
-        clients.subscriptionAdminClient().deleteSubscription(SubscriptionName.of(projectId, subscriptionId));
-        LOG.info("Deleted google pubsub subscription: " + subscriptionId);
+    /*
+        DLQ requires the automatically created service account named "service-<accountid>@gcp-sa-pubsub.iam.gserviceaccount.com"
+         to have at least publisher role for the pub/sub topics
+     */
+    public void createSubscriptionWithDLQ(String name, String topicName, String dlqTopic, int retries) {
+        clients.subscriptionAdminClient().createSubscription(Subscription.newBuilder()
+                .setName(SubscriptionName.of(projectId, name).toString())
+                .setTopic(ProjectTopicName.of(projectId, topicName).toString())
+                .setDeadLetterPolicy(DeadLetterPolicy.newBuilder()
+                    .setDeadLetterTopic(ProjectTopicName.of(projectId, dlqTopic).toString())
+                    .setMaxDeliveryAttempts(retries)
+                    .build())
+            .build());
+        LOG.info("Created google pubsub subscription: {} with DLQ topic {}", name, dlqTopic);
     }
 
-    public void publishMessage(String topicId, String message) {
+    public void deleteSubscription(String name) {
+        clients.subscriptionAdminClient().deleteSubscription(SubscriptionName.of(projectId, name));
+        LOG.info("Deleted google pubsub subscription: {}", name);
+    }
+
+    public void publishMessage(String topic, String message) {
         Publisher publisher = null;
         try {
             // Create a publisher instance with default settings bound to the topic
-            publisher = Publisher.newBuilder(TopicName.of(projectId, topicId)).setCredentialsProvider(clients.credentialsProvider()).build();
+            publisher = Publisher.newBuilder(TopicName.of(projectId, topic)).setCredentialsProvider(clients.credentialsProvider()).build();
 
             ByteString data = ByteString.copyFromUtf8(message);
             PubsubMessage pubsubMessage = PubsubMessage.newBuilder().setData(data).build();
 
-            ApiFuture<String> messageIdFuture = publisher.publish(pubsubMessage);
-            if (!messageIdFuture.get().isEmpty()) {
-                LOG.info("Published message {} into topic {}", message, topicId);
+            String messageId = publisher.publish(pubsubMessage).get();
+            if (!messageId.isEmpty()) {
+                LOG.info("Published message {} into topic {}", message, topic);
             }
         } catch (Exception e) {
             throw new RuntimeException("Unable to publish message to topic", e);
@@ -85,7 +99,7 @@ public class PubSubValidation implements Validation {
                 try {
                     publisher.awaitTermination(1, TimeUnit.MINUTES);
                 } catch (InterruptedException e) {
-                    throw new RuntimeException("Unable to terminate publisher", e);
+                    LOG.warn("Unable to terminate publisher", e);
                 }
             }
         }
@@ -94,13 +108,12 @@ public class PubSubValidation implements Validation {
     /**
      * will listen on the specified subscription for specified duration of seconds
      *
-     * @param seconds
-     * @param subscriptionId
-     * @return
+     * @param seconds wait duration
+     * @param subscriptionId subscription id
+     * @return list of messages
      */
-    public List<PubsubMessage> receiveMessageFor(int seconds, String subscriptionId) {
-        ProjectSubscriptionName subscriptionName =
-            ProjectSubscriptionName.of(projectId, subscriptionId);
+    public List<String> receiveMessageFor(int seconds, String subscriptionId) {
+        ProjectSubscriptionName subscriptionName = ProjectSubscriptionName.of(projectId, subscriptionId);
 
         List<PubsubMessage> messageList = new ArrayList<>();
 
@@ -123,6 +136,6 @@ public class PubSubValidation implements Validation {
             subscriber.stopAsync();
         }
 
-        return messageList;
+        return messageList.stream().map(m -> m.getData().toStringUtf8()).toList();
     }
 }
