@@ -24,7 +24,6 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -59,6 +58,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     @Override
     public void start() {
         logCounter++;
+        setOpenshiftProperties(properties);
         LOG.trace("Creating service account for the integration {}", getName());
         ServiceAccount sa = new ServiceAccountBuilder().withNewMetadata().withName(getName()).endMetadata().build();
         OpenshiftClient.get().serviceAccounts().resource(sa).serverSideApply();
@@ -66,7 +66,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         final BuildRequest.Builder builder = new BuildRequest.Builder()
             .withBaseDirectory(appDir)
             .withArgs("package")
-            .withProperties(getProperties())
+            .withProperties(properties)
             .withLogFile(getLogPath(Phase.DEPLOY))
             .withLogMarker(LogStream.marker(getName(), Phase.DEPLOY));
         if (QuarkusConfiguration.isQuarkusNative()) {
@@ -129,18 +129,19 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         logStream = new OpenshiftLogStream(podSelector, LogStream.marker(getName()));
     }
 
-    private Map<String, String> getProperties() {
-        final Map<String, String> properties = new HashMap<>(Map.of(
-            "quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
+    private void setOpenshiftProperties(Map<String, String> properties) {
+        properties.putAll(Map.of("quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
             "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getAutoOAuthToken(),
             "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
             "quarkus.kubernetes-client.trust-certs", "true",
             "quarkus.kubernetes.deploy", "true",
             "quarkus.native.container-build", "true",
             "quarkus.openshift.build-strategy", "docker",
-            "quarkus.openshift.service-account", getName(),
-            "skipTests", "true"
-        ));
+            "quarkus.openshift.service-account", getName()));
+        boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
+        if (isMac) {
+            properties.put("quarkus.native.container-runtime-options", "--platform=linux/amd64");
+        }
         if (!QuarkusConfiguration.isQuarkusNative()) {
             properties.put("quarkus.openshift.command", getJavaCommand());
         }
@@ -153,7 +154,6 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
         addVolumeProperties(properties);
 
         properties.putAll(QuarkusConfiguration.fromSystemProperties());
-        return properties;
     }
 
     /**
