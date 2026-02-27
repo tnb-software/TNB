@@ -37,11 +37,20 @@ public abstract class QuarkusApp extends App {
 
     protected BooleanSupplier readinessCheck;
     protected Path appDir;
+    protected Map<String, String> properties = new HashMap<>();
 
     public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
         this.integrationBuilder = integrationBuilder;
+
+        boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
+        boolean isLocal = !OpenshiftConfiguration.isOpenshift();
+        this.properties.put("quarkus.native.container-build", (isMac && isLocal) ? "false" : "true");
+        if (!isLocal) {
+            this.properties.put("quarkus.native.container-runtime-options", "--platform=linux/amd64");
+        }
+            this.properties.put("skipTests", "true");
 
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?> gitIntegrationBuilder) {
             Path gitClonedDirectory = new GitRepository(gitIntegrationBuilder).getPath();
@@ -53,7 +62,6 @@ public abstract class QuarkusApp extends App {
             } else {
                 createWithMaven();
             }
-
             customizeProject(integrationBuilder.getDependencies());
             customizePlugins(integrationBuilder.getPlugins());
         }
@@ -62,20 +70,15 @@ public abstract class QuarkusApp extends App {
     }
 
     protected void buildApp() {
-        Map<String, String> properties = new HashMap<>(Map.of(
-            "skipTests", "true",
-            "quarkus.native.container-build", "true"
-        ));
-        properties.putAll(QuarkusConfiguration.fromSystemProperties());
-
+        this.properties.putAll(QuarkusConfiguration.fromSystemProperties());
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder) {
-            properties.putAll(gitIntegrationBuilder.getMavenProperties());
+            this.properties.putAll(gitIntegrationBuilder.getMavenProperties());
         }
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(appDir)
             .withArgs("clean", "package")
-            .withProperties(properties)
+            .withProperties(this.properties)
             .withLogFile(getLogPath(Phase.BUILD))
             .withLogMarker(LogStream.marker(getName(), Phase.BUILD));
         if (QuarkusConfiguration.isQuarkusNative() && !OpenshiftConfiguration.isOpenshift()) {
