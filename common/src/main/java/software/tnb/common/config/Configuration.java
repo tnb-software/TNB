@@ -24,10 +24,6 @@ public abstract class Configuration {
         return config.getOptionalValue(name, String.class).orElseGet(defaultValue);
     }
 
-    public static void setProperty(String name, String value) {
-        System.setProperty(name, value);
-    }
-
     public static boolean getBoolean(String name) {
         return getBoolean(name, false);
     }
