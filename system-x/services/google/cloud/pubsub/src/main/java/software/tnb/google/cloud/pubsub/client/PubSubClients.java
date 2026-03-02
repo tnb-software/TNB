@@ -40,7 +40,7 @@ public class PubSubClients {
     }
 
     private TopicAdminClient newTopicAdminClient() {
-        LOG.debug("Creating new Google cloud topic admin client");
+        LOG.debug("Creating new pub/sub topic admin client");
 
         try {
             TopicAdminSettings topicAdminSettings =
@@ -52,7 +52,7 @@ public class PubSubClients {
     }
 
     private SubscriptionAdminClient newSubscriptionAdminClient() {
-        LOG.debug("Creating new Google subscription admin client");
+        LOG.debug("Creating new pub/sub subscription admin client");
 
         try {
             SubscriptionAdminSettings subscriptionAdminSettings =
