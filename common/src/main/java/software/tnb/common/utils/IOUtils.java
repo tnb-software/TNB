@@ -14,7 +14,7 @@ import java.io.Closeable;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -72,7 +72,10 @@ public final class IOUtils {
 
     public static String readFile(Path file) {
         try {
-            return Files.readString(file, Charset.defaultCharset());
+            // first read all the bytes and then construct the UTF-8 string out of those
+            // reading string directly may fail on windows (based on the original encoding of the file)
+            final byte[] s = Files.readAllBytes(file);
+            return new String(s, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Unable to read file " + file, e);
         }
