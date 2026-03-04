@@ -3,6 +3,7 @@ package software.tnb.product.integration.generator;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.product.cq.customizer.QuarkusEncodingCustomizer;
 import software.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
@@ -93,7 +94,8 @@ public final class IntegrationGenerator {
             new RemoveQuarkusAnnotationsCustomizer(),
             new ComponentCustomizer(),
             new CamelMainCustomizer(),
-            new BytemanCustomizer()
+            new BytemanCustomizer(),
+            new QuarkusEncodingCustomizer()
         );
 
         // the http server port customizer should be added by default, however, if there is any other instance of that class already added
