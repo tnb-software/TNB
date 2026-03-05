@@ -139,6 +139,14 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-ollama</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-qdrant</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-elasticsearch</artifactId>
         </dependency>
         <dependency>
@@ -296,10 +304,6 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-observability</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
-            <artifactId>system-x-ollama</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
