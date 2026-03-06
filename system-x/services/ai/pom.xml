@@ -16,5 +16,6 @@
 
     <modules>
         <module>docling</module>
+        <module>ollama</module>
     </modules>
 </project>
