@@ -20,7 +20,7 @@ import java.util.List;
 @AutoService(FTP.class)
 public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
     private static final Logger LOG = LoggerFactory.getLogger(LocalFTP.class);
-    private final FTPContainer container = new FTPContainer(image(), containerEnvironment(), containerPorts());
+    private FTPContainer container;
     private final CustomFTPClient client = new TestContainerFTPOutOfBandClient();
 
     @Override
@@ -40,7 +40,7 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
 
     @Override
     public String host() {
-        return container.getHost();
+        return container().getHost();
     }
 
     @Override
@@ -50,7 +50,15 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
 
     @Override
     public FTPContainer container() {
+        if (container == null) {
+            container = new FTPContainer(image(), containerEnvironment(), containerPorts());
+        }
         return container;
+    }
+
+    @Override
+    public String getLogs() {
+        return container().getLogs();
     }
 
     /**
@@ -60,7 +68,7 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
 
         @Override
         public void storeFile(String fileName, InputStream fileContent) throws IOException {
-            container.copyFileToContainer(Transferable.of(fileContent.readAllBytes(), 040777),
+            container().copyFileToContainer(Transferable.of(fileContent.readAllBytes(), 040777),
                 basePath() + "/" + fileName);
         }
 
@@ -68,7 +76,7 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
         public void retrieveFile(String fileName, OutputStream local) throws IOException {
             Path tempFile = Files.createTempFile(null, null);
             try {
-                container.copyFileFromContainer(basePath() + "/" + fileName, tempFile.toString());
+                container().copyFileFromContainer(basePath() + "/" + fileName, tempFile.toString());
                 org.apache.commons.io.IOUtils.copy(Files.newInputStream(tempFile), local);
             } finally {
                 tempFile.toFile().delete();
@@ -78,7 +86,7 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
         @Override
         public void makeDirectory(String dirName) throws IOException {
             try {
-                container.execInContainer("mkdir", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
+                container().execInContainer("mkdir", "-m", "a=rwx", String.format("%s/%s", basePath(), dirName));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);
             }
@@ -87,7 +95,7 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
         @Override
         public List<String> listFolder(String dirName) throws IOException {
             try {
-                return List.of(container.execInContainer("/bin/bash", "-c", String.format("ls -p %s/%s | grep -v /", basePath(), dirName))
+                return List.of(container().execInContainer("/bin/bash", "-c", String.format("ls -p %s/%s | grep -v /", basePath(), dirName))
                     .getStdout().split("\n"));
             } catch (InterruptedException e) {
                 throw new RuntimeException(e);

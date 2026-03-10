@@ -1,9 +1,10 @@
 package software.tnb.ftp.ftp.service;
 
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.service.Service;
+import software.tnb.common.service.ConfigurableService;
 import software.tnb.ftp.common.FileTransferService;
 import software.tnb.ftp.ftp.account.FTPAccount;
+import software.tnb.ftp.ftp.service.configuration.FTPConfiguration;
 import software.tnb.ftp.ftp.validation.FTPValidation;
 
 import org.slf4j.Logger;
@@ -14,7 +15,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValidation> implements FileTransferService, WithDockerImage {
+public abstract class FTP extends ConfigurableService<FTPAccount, CustomFTPClient, FTPValidation, FTPConfiguration>
+    implements FileTransferService, WithDockerImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(FTP.class);
 
@@ -31,7 +33,8 @@ public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValida
         return Map.of(
             "FTP_USERNAME", account().username(),
             "FTP_PASSWORD", account().password(),
-            "USERS", String.format("%s|%s", account().username(), account().password())
+            "USERS", String.format("%s|%s", account().username(), account().password()),
+            "FTP_IDLE_TIMEOUT", String.valueOf(getConfiguration().getIdleTimeout())
         );
     }
 
@@ -51,4 +54,11 @@ public abstract class FTP extends Service<FTPAccount, CustomFTPClient, FTPValida
     public int port() {
         return 2121;
     }
+
+    @Override
+    protected void defaultConfiguration() {
+        getConfiguration().idleTimeout(300);
+    }
+
+    public abstract String getLogs();
 }
