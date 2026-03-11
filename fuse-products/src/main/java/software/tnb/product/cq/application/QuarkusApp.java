@@ -37,12 +37,16 @@ public abstract class QuarkusApp extends App {
 
     protected BooleanSupplier readinessCheck;
     protected Path appDir;
+    protected Map<String, String> properties = new HashMap<>();
 
     public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
         super(integrationBuilder);
 
         this.integrationBuilder = integrationBuilder;
-
+        this.properties.put("skipTests", "true");
+        boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
+        boolean isLocal = !OpenshiftConfiguration.isOpenshift();
+        this.properties.put("quarkus.native.container-build", (isMac && isLocal) ? "false" : "true");
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?> gitIntegrationBuilder) {
             Path gitClonedDirectory = new GitRepository(gitIntegrationBuilder).getPath();
             this.appDir = gitIntegrationBuilder.getSubDirectory().map(gitClonedDirectory::resolve).orElse(gitClonedDirectory);
@@ -53,7 +57,6 @@ public abstract class QuarkusApp extends App {
             } else {
                 createWithMaven();
             }
-
             customizeProject(integrationBuilder.getDependencies());
             customizePlugins(integrationBuilder.getPlugins());
         }
@@ -62,12 +65,7 @@ public abstract class QuarkusApp extends App {
     }
 
     protected void buildApp() {
-        Map<String, String> properties = new HashMap<>(Map.of(
-            "skipTests", "true",
-            "quarkus.native.container-build", "true"
-        ));
         properties.putAll(QuarkusConfiguration.fromSystemProperties());
-
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder) {
             properties.putAll(gitIntegrationBuilder.getMavenProperties());
         }
@@ -115,7 +113,7 @@ public abstract class QuarkusApp extends App {
         String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
             QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
 
-        Map<String, String> properties = new HashMap<>(Map.of(
+        Map<String, String> mavenProperties = new HashMap<>(Map.of(
             "projectGroupId", TestConfiguration.appGroupId(),
             "projectArtifactId", getName(),
             "projectVersion", TestConfiguration.appVersion(),
@@ -125,12 +123,12 @@ public abstract class QuarkusApp extends App {
             "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
         ));
 
-        properties.putAll(QuarkusConfiguration.fromSystemProperties());
+        mavenProperties.putAll(QuarkusConfiguration.fromSystemProperties());
 
         Maven.invoke(new BuildRequest.Builder()
             .withBaseDirectory(TestConfiguration.appLocation())
             .withArgs(quarkusMavenPluginCreate)
-            .withProperties(properties)
+            .withProperties(mavenProperties)
             .withLogFile(getLogPath(Phase.GENERATE))
             .withLogMarker(LogStream.marker(getName(), Phase.GENERATE))
             .build()
