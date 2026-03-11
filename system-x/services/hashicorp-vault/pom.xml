@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Hashicorp Vault</name>
 
     <properties>
-        <spring-vault-core-version>3.2.0</spring-vault-core-version>
+        <spring-vault-core-version>4.0.1</spring-vault-core-version>
     </properties>
 
     <dependencies>
