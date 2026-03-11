@@ -95,7 +95,7 @@ public class DeploymentAMQBroker extends AMQBroker implements MicroshiftDeployab
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/amq7/amq-broker-rhel8:7.11.0";
+        return "registry.redhat.io/amq7/amq-broker-rhel9:7.13.3";
     }
 
     @Override

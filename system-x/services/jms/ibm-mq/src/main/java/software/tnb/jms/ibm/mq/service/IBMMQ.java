@@ -45,7 +45,7 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
 
     // In 9.4 the environment variable for password is deprecated, so for the next bump it will be needed to migrate to docker secrets
     public String defaultImage() {
-        return "icr.io/ibm-messaging/mq:9.4.2.0-r2";
+        return "icr.io/ibm-messaging/mq:9.4.5.0-r1";
     }
 
     /**
