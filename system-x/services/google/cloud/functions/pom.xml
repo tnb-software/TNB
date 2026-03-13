@@ -13,7 +13,7 @@
     <name>TNB :: System-X :: Services :: Google :: Functions</name>
 
     <properties>
-        <google.functions.version>2.88.0</google.functions.version>
+        <google.functions.version>2.89.0</google.functions.version>
     </properties>
 
     <dependencies>
