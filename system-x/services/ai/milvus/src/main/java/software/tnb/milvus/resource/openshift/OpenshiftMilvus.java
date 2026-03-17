@@ -1,0 +1,193 @@
+package software.tnb.milvus.resource.openshift;
+
+import software.tnb.common.config.OpenshiftConfiguration;
+import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.deployment.WithName;
+import software.tnb.common.openshift.OpenshiftClient;
+import software.tnb.common.utils.NetworkUtils;
+import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
+import software.tnb.milvus.service.Milvus;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import com.google.auto.service.AutoService;
+
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+
+import io.fabric8.kubernetes.api.model.ConfigMapBuilder;
+import io.fabric8.kubernetes.api.model.ContainerPort;
+import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.IntOrString;
+import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.ServiceBuilder;
+import io.fabric8.kubernetes.api.model.Volume;
+import io.fabric8.kubernetes.api.model.VolumeBuilder;
+import io.fabric8.kubernetes.api.model.VolumeMount;
+import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.client.PortForward;
+import io.fabric8.openshift.api.model.RouteBuilder;
+
+@AutoService(Milvus.class)
+public class OpenshiftMilvus extends Milvus implements OpenshiftDeployable, WithName {
+    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMilvus.class);
+
+    private static final String CONFIGMAP_NAME = "milvus-config";
+
+    private PortForward portForward;
+    private int localPort;
+
+    @Override
+    public void undeploy() {
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
+        OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        OpenshiftClient.get().routes().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        OpenshiftClient.get().configMaps().withName(CONFIGMAP_NAME).delete();
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
+    }
+
+    @Override
+    public void openResources() {
+        localPort = NetworkUtils.getFreePort();
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
+    }
+
+    @Override
+    public void closeResources() {
+        NetworkUtils.releasePort(localPort);
+        if (portForward != null) {
+            try {
+                portForward.close();
+            } catch (Exception e) {
+                LOG.warn("Unable to close Milvus port forward", e);
+            }
+        }
+    }
+
+    @Override
+    public void create() {
+        OpenshiftClient.get().configMaps().resource(new ConfigMapBuilder()
+            .withNewMetadata()
+                .withName(CONFIGMAP_NAME)
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .endMetadata()
+            .addToData("embedEtcd.yaml", embedEtcdConfig())
+            .build()
+        ).serverSideApply();
+
+        List<ContainerPort> ports = new LinkedList<>();
+        ports.add(new ContainerPortBuilder()
+            .withName("api")
+            .withProtocol("TCP")
+            .withContainerPort(PORT)
+            .build());
+
+        List<Volume> volumes = new LinkedList<>();
+        volumes.add(new VolumeBuilder()
+            .withName("milvus-data")
+            .withNewEmptyDir()
+            .endEmptyDir()
+            .build());
+        volumes.add(new VolumeBuilder()
+            .withName("milvus-config")
+            .withNewConfigMap()
+                .withName(CONFIGMAP_NAME)
+            .endConfigMap()
+            .build());
+
+        List<VolumeMount> volumeMounts = new LinkedList<>();
+        volumeMounts.add(new VolumeMountBuilder()
+            .withName("milvus-data")
+            .withMountPath("/var/lib/milvus")
+            .build());
+        volumeMounts.add(new VolumeMountBuilder()
+            .withName("milvus-config")
+            .withMountPath("/milvus/configs/embedEtcd.yaml")
+            .withSubPath("embedEtcd.yaml")
+            .build());
+
+        // @formatter:off
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "ports", ports,
+            "volumes", volumes,
+            "volumeMounts", volumeMounts,
+            "env", MILVUS_ENV,
+            "args", List.of("milvus", "run", "standalone")
+        ));
+
+        OpenshiftClient.get().services().resource(new ServiceBuilder()
+            .editOrNewMetadata()
+                .withName(name())
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .endMetadata()
+            .editOrNewSpec()
+                .addToSelector(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+                .addNewPort()
+                    .withName("api")
+                    .withProtocol("TCP")
+                    .withPort(PORT)
+                    .withTargetPort(new IntOrString(PORT))
+                .endPort()
+            .endSpec()
+            .build()
+        ).serverSideApply();
+
+        OpenshiftClient.get().routes().resource(new RouteBuilder()
+            .editOrNewMetadata()
+                .withName(name())
+                .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
+            .endMetadata()
+            .editOrNewSpec()
+                .withNewTo()
+                    .withKind("Service")
+                    .withName(name())
+                .endTo()
+                .withNewPort()
+                    .withNewTargetPort(PORT)
+                .endPort()
+                .withNewTls()
+                    .withTermination("edge")
+                    .withInsecureEdgeTerminationPolicy("Redirect")
+                .endTls()
+            .endSpec()
+            .build()
+        ).serverSideApply();
+        // @formatter:on
+    }
+
+    @Override
+    public boolean isDeployed() {
+        return WithName.super.isDeployed();
+    }
+
+    @Override
+    public Predicate<Pod> podSelector() {
+        return WithName.super.podSelector();
+    }
+
+    @Override
+    public String host() {
+        return "localhost";
+    }
+
+    @Override
+    public int port() {
+        return localPort;
+    }
+
+    @Override
+    public String getLogs() {
+        return OpenshiftDeployable.super.getLogs();
+    }
+
+    @Override
+    public String name() {
+        return "milvus";
+    }
+}
