@@ -71,12 +71,12 @@ public final class HTTPUtils {
         return execute(new Request.Builder().patch(body).url(url).build(), true);
     }
 
-    public void delete(String url) {
-        execute(new Request.Builder().url(url).delete().build(), true);
+    public Response delete(String url) {
+        return execute(new Request.Builder().url(url).delete().build(), true);
     }
 
-    public void delete(String url, Map<String, String> headers) {
-        execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build(), true);
+    public Response delete(String url, Map<String, String> headers) {
+        return execute(new Request.Builder().url(url).delete().headers(Headers.of(headers)).build(), true);
     }
 
     private Response execute(Request request, boolean throwError, int attempts) {
