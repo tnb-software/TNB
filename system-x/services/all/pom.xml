@@ -279,6 +279,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-milvus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-mllp</artifactId>
         </dependency>
         <dependency>
