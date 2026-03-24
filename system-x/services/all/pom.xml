@@ -139,14 +139,6 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-ollama</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
-            <artifactId>system-x-qdrant</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
             <artifactId>system-x-elasticsearch</artifactId>
         </dependency>
         <dependency>
@@ -311,6 +303,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-ollama</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-opensearch</artifactId>
         </dependency>
         <dependency>
@@ -324,6 +320,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-prometheus</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-qdrant</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
