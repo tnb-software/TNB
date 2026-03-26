@@ -33,7 +33,7 @@ public class LocalHawtio extends Hawtio implements ContainerDeployable<HawtioCon
 
     @Override
     public String getHawtioUrl() {
-        return String.format("http://localhost:%s", port);
+        return String.format("http://%s:%s", container.getHost(), port);
     }
 
     @Override
