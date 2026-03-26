@@ -38,7 +38,7 @@ public class LocalTempo extends Tempo implements ContainerDeployable<TempoContai
 
     @Override
     public void openResources() {
-        LOG.info("Grafana URL available at http://localhost:" + container.getMappedPort(GRAFANA_PORT));
+        LOG.info("Grafana URL available at {}:{}", getGatewayHostname(), container.getMappedPort(GRAFANA_PORT));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class LocalTempo extends Tempo implements ContainerDeployable<TempoContai
 
     @Override
     public String getGatewayHostname() {
-        return "http://localhost";
+        return "http://" + container.getHost();
     }
 
     @Override

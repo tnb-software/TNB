@@ -26,12 +26,12 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
 
     @Override
     public String getGrpcEndpoint() {
-        return "http://localhost:" + getConfiguration().getGrpcReceiverPort();
+        return String.format("http://%s:%s", this.container.getHost(), getConfiguration().getGrpcReceiverPort());
     }
 
     @Override
     public String getHttpEndpoint() {
-        return "http://localhost:" + getConfiguration().getHttpReceiverPort();
+        return String.format("http://%s:%s", this.container.getHost(), getConfiguration().getHttpReceiverPort());
     }
 
     @Override
