@@ -80,7 +80,7 @@ public class LocalSpringBootApp extends SpringBootApp {
         if (shouldRun()) {
             logCounter++;
             Path logFile = getLogPath();
-            ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile());
+            ProcessBuilder processBuilder = new ProcessBuilder(getCommand()).redirectOutput(logFile.toFile()).redirectError(logFile.toFile());
 
             LOG.info("Starting integration {}", getName());
             try {
