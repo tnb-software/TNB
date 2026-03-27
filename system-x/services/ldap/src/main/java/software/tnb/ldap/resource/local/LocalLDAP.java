@@ -32,7 +32,11 @@ public class LocalLDAP extends LDAP implements ContainerDeployable<LDAPContainer
 
     @Override
     public void openResources() {
-        port = getConfiguration().isRemoteServer() ? PORT : ldapContainer.getMappedPort(PORT);
+        boolean isRemoteServer = getConfiguration().isRemoteServer();
+        port = isRemoteServer ? PORT : ldapContainer.getMappedPort(PORT);
+        if (!isRemoteServer) {
+            account().setHost(ldapContainer.getHost());
+        }
         initializeClient(account());
     }
 
