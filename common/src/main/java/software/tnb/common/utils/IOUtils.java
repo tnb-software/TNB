@@ -38,9 +38,13 @@ public final class IOUtils {
     }
 
     public static void writeFile(Path file, String content) {
+        writeFile(file, content.getBytes());
+    }
+
+    public static void writeFile(Path file, byte[] content) {
         try {
             Files.createDirectories(file.getParent());
-            Files.write(file, content.getBytes());
+            Files.write(file, content);
         } catch (IOException e) {
             throw new RuntimeException("Unable to write to " + file, e);
         }
