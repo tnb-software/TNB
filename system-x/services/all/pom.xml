@@ -135,7 +135,7 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-docling</artifactId>
+            <artifactId>system-x-docling-serve</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

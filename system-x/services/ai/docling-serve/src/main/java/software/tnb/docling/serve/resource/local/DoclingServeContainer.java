@@ -1,4 +1,4 @@
-package software.tnb.docling.resource.local;
+package software.tnb.docling.serve.resource.local;
 
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
