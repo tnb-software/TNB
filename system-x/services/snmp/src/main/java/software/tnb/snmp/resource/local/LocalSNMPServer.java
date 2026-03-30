@@ -3,6 +3,7 @@ package software.tnb.snmp.resource.local;
 import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.snmp.service.SNMPServer;
 
+import com.github.dockerjava.api.model.ExposedPort;
 import com.google.auto.service.AutoService;
 
 @AutoService(SNMPServer.class)
@@ -19,13 +20,15 @@ public class LocalSNMPServer extends SNMPServer implements ContainerDeployable<S
 
     @Override
     public String host() {
-        // here it is needed to return 172.17... and not localhost
-        return container.getContainerInfo().getNetworkSettings().getIpAddress();
+        return container.getHost();
     }
 
     @Override
     public int port() {
-        return SNMPServer.SNMPD_LISTENING_PORT;
+        // hack to retrieve mapped UDP port
+        // https://github.com/testcontainers/testcontainers-java/blob/2.0.2/core/src/main/java/org/testcontainers/containers/ContainerState.java#L169
+        return Integer.valueOf(container.getContainerInfo().getNetworkSettings().getPorts().getBindings()
+            .get(ExposedPort.udp(SNMPServer.SNMPD_LISTENING_PORT))[0].getHostPortSpec());
     }
 
     @Override
@@ -35,7 +38,7 @@ public class LocalSNMPServer extends SNMPServer implements ContainerDeployable<S
 
     @Override
     public int trapPort() {
-        return SNMPServer.SNMPD_LISTENING_PORT;
+        return SNMPServer.SNMPTRAPD_LISTENING_PORT;
     }
 
     @Override
