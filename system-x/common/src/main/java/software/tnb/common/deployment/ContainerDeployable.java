@@ -11,6 +11,8 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
     T container();
 
     default void deploy() {
+        // Increase pull timeout to 10 minutes
+        System.setProperty("testcontainers.pull.timeout", "600");
         LOG.info("Starting {} container", serviceName());
         container().start();
         LOG.info("{} container started", serviceName());

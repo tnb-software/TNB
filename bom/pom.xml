@@ -191,7 +191,7 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-docling</artifactId>
+                <artifactId>system-x-docling-serve</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
