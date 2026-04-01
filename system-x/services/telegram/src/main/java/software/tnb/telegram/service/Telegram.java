@@ -15,11 +15,11 @@ public abstract class Telegram extends Service<TelegramAccount, NoClient, Telegr
         return "quay.io/fuse_qe/telegram-client:latest";
     }
 
-    public abstract String execInContainer(String... commands);
+    protected abstract String getHttpEndpoint();
 
     public TelegramValidation validation() {
         if (validation == null) {
-            validation = new TelegramValidation(this);
+            validation = new TelegramValidation(getHttpEndpoint());
         }
         return validation;
     }

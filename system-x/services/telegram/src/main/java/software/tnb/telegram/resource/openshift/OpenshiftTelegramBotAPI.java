@@ -80,7 +80,8 @@ public class OpenshiftTelegramBotAPI extends TelegramBotApi implements Openshift
             "ports", containerPorts,
             "args", Arrays.stream(startupParams()).toList(),
             "livenessProbe", probe,
-            "readinessProbe", probe
+            "readinessProbe", probe,
+            "replicas", 1
         ));
 
         // @formatter:off
