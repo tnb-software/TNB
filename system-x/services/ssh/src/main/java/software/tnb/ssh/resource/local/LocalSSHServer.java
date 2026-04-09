@@ -5,18 +5,29 @@ import software.tnb.ssh.service.SSHServer;
 
 import com.google.auto.service.AutoService;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 @AutoService(SSHServer.class)
 public class LocalSSHServer extends SSHServer implements ContainerDeployable<SSHServerContainer> {
-    private final SSHServerContainer container = new SSHServerContainer(image(), containerEnvironment());
+    private SSHServerContainer container;
 
     @Override
-    public void openResources() {
-
+    protected String clientHostname() {
+        return host();
     }
 
     @Override
-    public void closeResources() {
+    protected int clientPort() {
+        return port();
+    }
 
+    public void openResources() {
+        super.openResources();
+    }
+
+    public void closeResources() {
+        super.closeResources();
     }
 
     @Override
@@ -32,5 +43,18 @@ public class LocalSSHServer extends SSHServer implements ContainerDeployable<SSH
     @Override
     public SSHServerContainer container() {
         return container;
+    }
+
+    @Override
+    public void deploy() {
+        // Validate public key file exists if configured
+        Path keyPath = getConfiguration().publicKeyPath();
+        if (keyPath != null && !Files.exists(keyPath)) {
+            throw new RuntimeException("SSH public key file not found: " + keyPath.toAbsolutePath());
+        }
+
+        container = new SSHServerContainer(image(), containerEnvironment(), keyPath);
+
+        ContainerDeployable.super.deploy();
     }
 }
