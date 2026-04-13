@@ -61,6 +61,7 @@
         <module>tekton</module>
         <module>flink</module>
         <module>ssh</module>
+        <module>mina</module>
         <module>hawtio</module>
         <module>keycloak</module>
         <module>tempo</module>
