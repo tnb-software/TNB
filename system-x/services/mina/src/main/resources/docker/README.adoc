@@ -1,0 +1,93 @@
+= Apache Mina SSHD Server
+
+Source image for `quay.io/fuse_qe/mina-sshd:2.14.0`.
+
+This image provides an SSH server based on https://mina.apache.org/sshd-project/[Apache Mina SSHD] (Java-based SSH server).
+
+== Why a custom MinaSshdServer
+
+The upstream `SshServerMain` CLI tool (from the `sshd-cli` module) hardcodes
+`AcceptAllPublickeyAuthenticator`, which accepts any public key without verification.
+There is no CLI flag to configure an authorized keys file.
+
+To support real public key verification (required for testing SSH certificate authentication
+through the Apache Camel SSH component), `MinaSshdServer` is a minimal (~40 lines) custom
+entry point that:
+
+* Reads `/home/test/.ssh/authorized_keys` if present and verifies client keys using
+  `AuthorizedKeysAuthenticator` (the correct upstream API for parsing OpenSSH-format keys)
+* Falls back to `AcceptAllPublickeyAuthenticator` if no authorized keys file is mounted
+* Supports password authentication where username equals password
+
+This replaces an earlier custom server that used `X509EncodedKeySpec` to parse SSH public keys,
+which is the wrong format (SSH keys use RFC 4253 wire format, not X.509/DER) and caused
+authentication failures.
+
+== Features
+
+* Password authentication (username == password, enabled by default)
+* Public key authentication with key verification (when authorized keys file is mounted)
+* Shell access and command execution
+
+== Authentication
+
+=== Password
+
+By default, the server accepts password authentication where the password matches the username.
+The default user is `test` with password `test`.
+
+=== Public key (certificate)
+
+To enable public key verification, mount an OpenSSH `authorized_keys` file at
+`/home/test/.ssh/authorized_keys`.
+
+==== Local (Testcontainers)
+
+The TNB framework automatically copies the public key into the container when
+`MinaConfiguration.withPublicKeyPath()` is set:
+
+[source,java]
+----
+mina.getConfiguration().withPublicKeyPath(Paths.get("/path/to/id_rsa.pub"));
+----
+
+==== OpenShift
+
+On OpenShift, the TNB framework creates a ConfigMap containing the public key and mounts it
+at `/home/test/.ssh/authorized_keys` in the pod.
+
+==== Manual (docker run)
+
+[source,shell]
+----
+docker run -d \
+  -v /path/to/authorized_keys:/home/test/.ssh/authorized_keys:ro \
+  -p 2222:22 \
+  quay.io/fuse_qe/mina-sshd:2.14.0
+----
+
+The server logs `Public key authentication enabled from /home/test/.ssh/authorized_keys`
+when the file is detected, or `No authorized_keys found, accepting all public keys` otherwise.
+
+== Environment Variables
+
+[cols="1,1,1"]
+|===
+|Variable |Default |Description
+
+|`MINA_SSH_PORT`
+|`22`
+|SSH server listening port
+|===
+
+== Build
+
+Use the `build.sh` script to build and push multi-platform images (amd64, arm64, ppc64le, s390x):
+
+[source,shell]
+----
+./build.sh
+----
+
+The builder stage is pinned to `--platform=linux/amd64` because Java bytecode is
+platform-independent, avoiding QEMU emulation issues when cross-compiling for other architectures.
