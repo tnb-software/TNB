@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: JMS :: IBM-MQ</name>
 
     <properties>
-        <ibm.mq.version>9.4.2.0</ibm.mq.version>
+        <ibm.mq.version>9.4.5.0</ibm.mq.version>
     </properties>
 
     <dependencies>

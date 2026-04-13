@@ -50,8 +50,8 @@ public class OpenshiftAMQBroker extends AMQBroker implements OpenshiftDeployable
     WithName {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftAMQBroker.class);
     private static final String SSL_SECRET_NAME = "tnb-ssl-secret";
-    public static final String OPERATOR_NAME = "amq-broker-rhel8";
-    public static final String OPERATOR_CHANNEL = "7.12.x";
+    public static final String OPERATOR_NAME = "amq-broker-rhel9";
+    public static final String OPERATOR_CHANNEL = "7.13.x";
 
     @Override
     public void create() {
