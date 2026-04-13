@@ -26,7 +26,7 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
     public static final String KEYS_FOLDER = "/etc/mqm/pki/keys/mykey";
     public static final String SSL_FOLDER = "/mnt/mqm/data/qmgrs/%s/ssl";
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
-    public static final String SSLCIPHERSUITE = "TLS_RSA_WITH_AES_128_CBC_SHA256";
+    public static final String SSLCIPHERSUITE = "TLS_AES_128_GCM_SHA256";
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
