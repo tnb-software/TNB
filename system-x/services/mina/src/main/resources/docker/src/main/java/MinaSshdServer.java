@@ -4,10 +4,12 @@ import org.apache.sshd.server.config.keys.AuthorizedKeysAuthenticator;
 import org.apache.sshd.server.keyprovider.SimpleGeneratorHostKeyProvider;
 import org.apache.sshd.server.shell.InteractiveProcessShellFactory;
 import org.apache.sshd.server.shell.ProcessShellCommandFactory;
+import org.apache.sshd.sftp.server.SftpSubsystemFactory;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 
 public final class MinaSshdServer {
 
@@ -38,6 +40,7 @@ public final class MinaSshdServer {
 
         sshd.setShellFactory(InteractiveProcessShellFactory.INSTANCE);
         sshd.setCommandFactory(ProcessShellCommandFactory.INSTANCE);
+        sshd.setSubsystemFactories(Collections.singletonList(new SftpSubsystemFactory()));
 
         sshd.start();
         System.err.println("Starting SSHD on port " + port);
