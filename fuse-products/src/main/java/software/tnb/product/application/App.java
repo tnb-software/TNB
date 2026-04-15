@@ -217,11 +217,15 @@ public abstract class App {
         IntegrationGenerator.createAdditionalClasses(integrationBuilder, appDir);
         IntegrationGenerator.createRouteBuilderClasses(integrationBuilder, appDir);
 
+        // also pass the java version to the command, as the default is 21 and we also support 17
+        String javaVersion = Runtime.version().feature() + "";
+
         command = new ArrayList<>(List.of(
             "camel", "export",
             "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
-            "--logging"
+            "--logging",
+            "--java-version", javaVersion
         ));
 
         command.addAll(arguments);
