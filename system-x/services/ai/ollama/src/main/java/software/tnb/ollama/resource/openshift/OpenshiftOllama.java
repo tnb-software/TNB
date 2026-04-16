@@ -83,7 +83,8 @@ public class OpenshiftOllama extends Ollama implements OpenshiftDeployable, With
         OpenshiftClient.get().createDeployment(Map.of(
             "name", name(),
             "image", image(),
-            "ports", ports
+            "ports", ports,
+            "env", Map.of("HOME", "/tmp")
         ));
 
         OpenshiftClient.get().services().resource(new ServiceBuilder()
