@@ -15,7 +15,7 @@
     <packaging>pom</packaging>
 
     <modules>
-        <module>docling</module>
+        <module>docling-serve</module>
         <module>milvus</module>
         <module>ollama</module>
         <module>qdrant</module>

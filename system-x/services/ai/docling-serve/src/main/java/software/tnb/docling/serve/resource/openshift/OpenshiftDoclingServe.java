@@ -1,17 +1,13 @@
-package software.tnb.docling.resource.openshift;
+package software.tnb.docling.serve.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
-import software.tnb.docling.service.DoclingServe;
-
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import software.tnb.docling.serve.service.DoclingServe;
 
 import com.google.auto.service.AutoService;
 
@@ -29,16 +25,10 @@ import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(DoclingServe.class)
-public class OpenshiftDoclingServe extends DoclingServe implements OpenshiftDeployable, WithName {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftDoclingServe.class);
-
-    private PortForward portForward;
-    private int localPort;
-
+public class OpenshiftDoclingServe extends DoclingServe implements OpenshiftDeployable, WithName, WithInClusterHostname {
     @Override
     public void undeploy() {
         OpenshiftClient.get().apps().deployments().withName(name()).delete();
@@ -49,28 +39,10 @@ public class OpenshiftDoclingServe extends DoclingServe implements OpenshiftDepl
 
     @Override
     public void openResources() {
-        localPort = NetworkUtils.getFreePort();
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
-        client = HttpClients.createDefault();
     }
 
     @Override
     public void closeResources() {
-        NetworkUtils.releasePort(localPort);
-        if (portForward != null) {
-            try {
-                portForward.close();
-            } catch (Exception e) {
-                LOG.warn("Unable to close DoclingServe port forward", e);
-            }
-        }
-        if (client != null) {
-            try {
-                client.close();
-            } catch (Exception e) {
-                LOG.warn("Unable to close DoclingServe client", e);
-            }
-        }
     }
 
     @Override
@@ -165,22 +137,17 @@ public class OpenshiftDoclingServe extends DoclingServe implements OpenshiftDepl
     }
 
     @Override
-    public String host() {
-        return "localhost";
-    }
-
-    @Override
-    public int port() {
-        return localPort;
-    }
-
-    @Override
     public String getLogs() {
         return OpenshiftDeployable.super.getLogs();
     }
 
     @Override
     public String name() {
-        return "docling";
+        return "docling-serve";
+    }
+
+    @Override
+    public String url() {
+        return String.format("http://%s:%s", inClusterHostname(), PORT);
     }
 }
