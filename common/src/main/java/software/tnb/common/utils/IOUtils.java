@@ -38,7 +38,7 @@ public final class IOUtils {
     }
 
     public static void writeFile(Path file, String content) {
-        writeFile(file, content.getBytes());
+        writeFile(file, content.getBytes(StandardCharsets.UTF_8));
     }
 
     public static void writeFile(Path file, byte[] content) {
