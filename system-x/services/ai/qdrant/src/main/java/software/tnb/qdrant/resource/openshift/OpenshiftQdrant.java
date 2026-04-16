@@ -36,7 +36,9 @@ public class OpenshiftQdrant extends Qdrant implements OpenshiftDeployable, With
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftQdrant.class);
 
     private PortForward portForward;
+    private PortForward grpcPortForward;
     private int localPort;
+    private int localGrpcPort;
 
     @Override
     public void undeploy() {
@@ -49,17 +51,27 @@ public class OpenshiftQdrant extends Qdrant implements OpenshiftDeployable, With
     @Override
     public void openResources() {
         localPort = NetworkUtils.getFreePort();
+        localGrpcPort = NetworkUtils.getFreePort();
         portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
+        grpcPortForward = OpenshiftClient.get().services().withName(name()).portForward(GRPC_PORT, localGrpcPort);
     }
 
     @Override
     public void closeResources() {
         NetworkUtils.releasePort(localPort);
+        NetworkUtils.releasePort(localGrpcPort);
         if (portForward != null) {
             try {
                 portForward.close();
             } catch (Exception e) {
-                LOG.warn("Unable to close Qdrant port forward", e);
+                LOG.warn("Unable to close Qdrant HTTP port forward", e);
+            }
+        }
+        if (grpcPortForward != null) {
+            try {
+                grpcPortForward.close();
+            } catch (Exception e) {
+                LOG.warn("Unable to close Qdrant gRPC port forward", e);
             }
         }
     }
@@ -71,6 +83,11 @@ public class OpenshiftQdrant extends Qdrant implements OpenshiftDeployable, With
             .withName("http")
             .withProtocol("TCP")
             .withContainerPort(PORT)
+            .build());
+        ports.add(new ContainerPortBuilder()
+            .withName("grpc")
+            .withProtocol("TCP")
+            .withContainerPort(GRPC_PORT)
             .build());
 
         List<Volume> volumes = new LinkedList<>();
@@ -117,6 +134,12 @@ public class OpenshiftQdrant extends Qdrant implements OpenshiftDeployable, With
                     .withPort(PORT)
                     .withTargetPort(new IntOrString(PORT))
                 .endPort()
+                .addNewPort()
+                    .withName("grpc")
+                    .withProtocol("TCP")
+                    .withPort(GRPC_PORT)
+                    .withTargetPort(new IntOrString(GRPC_PORT))
+                .endPort()
             .endSpec()
             .build()
         ).serverSideApply();
@@ -162,6 +185,11 @@ public class OpenshiftQdrant extends Qdrant implements OpenshiftDeployable, With
     @Override
     public int port() {
         return localPort;
+    }
+
+    @Override
+    public int grpcPort() {
+        return localGrpcPort;
     }
 
     @Override
