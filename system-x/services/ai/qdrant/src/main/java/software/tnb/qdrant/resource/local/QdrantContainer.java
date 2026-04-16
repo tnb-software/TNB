@@ -5,9 +5,9 @@ import org.testcontainers.containers.wait.strategy.Wait;
 
 public class QdrantContainer extends GenericContainer<QdrantContainer> {
 
-    public QdrantContainer(String image, int port) {
+    public QdrantContainer(String image, int port, int grpcPort) {
         super(image);
-        this.withExposedPorts(port);
+        this.withExposedPorts(port, grpcPort);
         this.waitingFor(Wait.forLogMessage(".*starting in Actix runtime.*", 1));
     }
 }

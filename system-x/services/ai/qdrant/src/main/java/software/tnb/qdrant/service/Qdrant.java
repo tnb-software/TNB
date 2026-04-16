@@ -9,10 +9,13 @@ import software.tnb.qdrant.validation.QdrantValidation;
 public abstract class Qdrant extends Service<NoAccount, NoClient, QdrantValidation> implements WithDockerImage {
 
     protected static final int PORT = 6333;
+    protected static final int GRPC_PORT = 6334;
 
     public abstract String host();
 
     public abstract int port();
+
+    public abstract int grpcPort();
 
     public String url() {
         return String.format("http://%s:%d", host(), port());

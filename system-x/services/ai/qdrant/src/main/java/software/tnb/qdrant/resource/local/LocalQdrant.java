@@ -8,7 +8,7 @@ import com.google.auto.service.AutoService;
 @AutoService(Qdrant.class)
 public class LocalQdrant extends Qdrant implements ContainerDeployable<QdrantContainer> {
 
-    private final QdrantContainer container = new QdrantContainer(defaultImage(), PORT);
+    private final QdrantContainer container = new QdrantContainer(defaultImage(), PORT, GRPC_PORT);
 
     @Override
     public String host() {
@@ -18,6 +18,11 @@ public class LocalQdrant extends Qdrant implements ContainerDeployable<QdrantCon
     @Override
     public int port() {
         return container.getMappedPort(PORT);
+    }
+
+    @Override
+    public int grpcPort() {
+        return container.getMappedPort(GRPC_PORT);
     }
 
     @Override
