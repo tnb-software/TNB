@@ -10,7 +10,9 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.ollama.service.Ollama;
 
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +50,11 @@ public class OpenshiftOllama extends Ollama implements OpenshiftDeployable, With
     public void openResources() {
         localPort = NetworkUtils.getFreePort();
         portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
-        client = HttpClients.createDefault();
+        client = HttpClients.custom()
+            .setDefaultRequestConfig(RequestConfig.custom()
+                .setResponseTimeout(Timeout.ofMinutes(10))
+                .build())
+            .build();
     }
 
     @Override

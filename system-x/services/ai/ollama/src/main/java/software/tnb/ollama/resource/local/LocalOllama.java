@@ -3,7 +3,9 @@ package software.tnb.ollama.resource.local;
 import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.ollama.service.Ollama;
 
+import org.apache.hc.client5.http.config.RequestConfig;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.core5.util.Timeout;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +29,11 @@ public class LocalOllama extends Ollama implements ContainerDeployable<OllamaCon
 
     @Override
     public void openResources() {
-        client = HttpClients.createDefault();
+        client = HttpClients.custom()
+            .setDefaultRequestConfig(RequestConfig.custom()
+                .setResponseTimeout(Timeout.ofMinutes(10))
+                .build())
+            .build();
     }
 
     @Override
