@@ -38,6 +38,7 @@ public class LocalOllama extends Ollama implements ContainerDeployable<OllamaCon
 
     @Override
     public void closeResources() {
+        validation = null;
         if (client != null) {
             try {
                 client.close();
