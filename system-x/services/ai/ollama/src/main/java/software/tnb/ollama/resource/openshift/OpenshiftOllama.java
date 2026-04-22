@@ -59,6 +59,7 @@ public class OpenshiftOllama extends Ollama implements OpenshiftDeployable, With
 
     @Override
     public void closeResources() {
+        validation = null;
         NetworkUtils.releasePort(localPort);
         if (portForward != null) {
             try {
