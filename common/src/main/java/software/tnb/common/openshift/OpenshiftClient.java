@@ -896,8 +896,9 @@ public class OpenshiftClient extends OpenShift {
      * @return boolean, if the pods are found and if the status is ready for all matching pods
      */
     public boolean arePodsWithLabelReady(String namespace, String labelKey, String labelValue) {
-        return OpenshiftClient.get().pods().inNamespace(namespace).withLabel(labelKey, labelValue)
-            .list().getItems().stream()
+        List<Pod> pods = OpenshiftClient.get().pods().inNamespace(namespace).withLabel(labelKey, labelValue)
+            .list().getItems();
+        return !pods.isEmpty() && pods.stream()
             .filter(pod -> pod.getStatus() != null)
             .filter(pod -> pod.getStatus().getConditions() != null)
             .allMatch(pod -> pod.getStatus().getConditions().stream()

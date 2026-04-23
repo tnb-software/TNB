@@ -92,7 +92,6 @@ public class OpenshiftObservability extends Observability implements OpenshiftDe
         if (getConfiguration().isDeployTracesUiPlugin()) {
             traceUIPluginReady = OpenshiftClient.get().arePodsWithLabelReady(targetNamespace()
                 , "app.kubernetes.io/instance", "distributed-tracing");
-
         }
 
         return operatorReady && traceUIPluginReady;
