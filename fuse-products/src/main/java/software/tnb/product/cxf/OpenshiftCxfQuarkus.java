@@ -3,6 +3,7 @@ package software.tnb.product.cxf;
 import software.tnb.product.OpenshiftProduct;
 import software.tnb.product.Product;
 import software.tnb.product.application.App;
+import software.tnb.product.cq.application.OpenshiftQuarkusApp;
 import software.tnb.product.cxf.app.PlainQuarkusApp;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.util.maven.Maven;
@@ -33,6 +34,6 @@ public class OpenshiftCxfQuarkus extends OpenshiftProduct {
 
     @Override
     protected App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        return new PlainQuarkusApp(integrationBuilder);
+        return new OpenshiftQuarkusApp(integrationBuilder);
     }
 }
