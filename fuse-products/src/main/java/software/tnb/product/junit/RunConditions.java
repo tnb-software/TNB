@@ -5,10 +5,10 @@ import static software.tnb.common.config.TestConfiguration.jiraAccessToken;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.HTTPUtils;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.junit.jira.Jira;
 import software.tnb.product.junit.jira.Jiras;
 import software.tnb.product.junit.product.RunOn;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 
 import org.junit.jupiter.api.extension.ConditionEvaluationResult;
 import org.junit.jupiter.api.extension.ExecutionCondition;

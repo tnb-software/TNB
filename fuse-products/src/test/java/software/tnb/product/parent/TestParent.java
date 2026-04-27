@@ -4,8 +4,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.integration.builder.IntegrationBuilder;
+import software.tnb.product.quarkus.camel.configuration.CamelQuarkusConfiguration;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.routebuilder.DummyRouteBuilder;
 
 import org.junit.jupiter.api.AfterAll;
@@ -31,10 +32,12 @@ public class TestParent {
         System.setProperty(QuarkusConfiguration.QUARKUS_PLATFORM_GROUP_ID,  QuarkusConfiguration.DEFAULT_QUARKUS_PLATFORM_GROUP_ID);
         System.setProperty(QuarkusConfiguration.QUARKUS_PLATFORM_ARTIFACT_ID,  QuarkusConfiguration.DEFAULT_QUARKUS_PLATFORM_ARTIFACT_ID);
         System.setProperty(QuarkusConfiguration.QUARKUS_PLATFORM_VERSION,  QuarkusConfiguration.DEFAULT_QUARKUS_VERSION);
-        System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_VERSION, QuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_VERSION);
-        System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_GROUP_ID,  QuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_PLATFORM_GROUP_ID);
-        System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID,  QuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID);
-        System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_VERSION,  QuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_VERSION);
+        System.setProperty(CamelQuarkusConfiguration.CAMEL_QUARKUS_VERSION, CamelQuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_VERSION);
+        System.setProperty(CamelQuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_GROUP_ID,
+            CamelQuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_PLATFORM_GROUP_ID);
+        System.setProperty(CamelQuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID,
+            CamelQuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID);
+        System.setProperty(CamelQuarkusConfiguration.CAMEL_QUARKUS_PLATFORM_VERSION,  CamelQuarkusConfiguration.DEFAULT_CAMEL_QUARKUS_VERSION);
 
     }
 

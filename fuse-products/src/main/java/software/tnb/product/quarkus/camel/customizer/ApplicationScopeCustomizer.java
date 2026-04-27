@@ -1,6 +1,5 @@
-package software.tnb.product.cq.utils;
+package software.tnb.product.quarkus.camel.customizer;
 
-import software.tnb.product.cq.customizer.QuarkusCustomizer;
 import software.tnb.product.util.jparser.AnnotationUtils;
 
 import java.util.List;
@@ -8,7 +7,7 @@ import java.util.List;
 /**
  * For camel quarkus we add @ApplicationScoped to RouteBuilder class
  */
-public class ApplicationScopeCustomizer extends QuarkusCustomizer {
+public class ApplicationScopeCustomizer extends CamelQuarkusCustomizer {
     @Override
     public void customize() {
         if (!getIntegrationBuilder().isJBang()) {

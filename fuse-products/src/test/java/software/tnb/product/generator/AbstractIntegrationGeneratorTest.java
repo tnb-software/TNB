@@ -35,7 +35,7 @@ public abstract class AbstractIntegrationGeneratorTest extends TestParent {
         final String key = "hello";
         final String value = "world";
 
-        IntegrationBuilder ib = dummyIb().addCustomizer(Customizers.QUARKUS.customize(i -> i.addToProperties(key, value)));
+        IntegrationBuilder ib = dummyIb().addCustomizer(Customizers.CAMELQUARKUS.customize(i -> i.addToProperties(key, value)));
 
         process(ib);
 

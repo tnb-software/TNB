@@ -3,8 +3,6 @@ package software.tnb.product.integration.generator;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
-import software.tnb.product.cq.customizer.QuarkusEncodingCustomizer;
-import software.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
@@ -13,14 +11,19 @@ import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.customizer.byteman.BytemanCustomizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.camel.customizer.ApplicationScopeCustomizer;
+import software.tnb.product.quarkus.vanilla.customizer.QuarkusEncodingCustomizer;
 import software.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
+import software.tnb.product.util.maven.Maven;
 
+import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.javaparser.ast.ImportDeclaration;
 import com.github.javaparser.ast.PackageDeclaration;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Collectors;
@@ -36,6 +39,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the given resource inside the given path.
+     *
      * @param resourcesPath resources directory path
      * @param resource resource to create
      */
@@ -49,6 +53,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the integration app directory.
+     *
      * @param integrationBuilder integration builder instance
      * @return app directory
      */
@@ -64,7 +69,7 @@ public final class IntegrationGenerator {
      * @param appDir location of the root of the app
      */
     public static void createFiles(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
-        processCustomizers(integrationBuilder);
+        processCustomizers(integrationBuilder, appDir);
 
         createResourceFiles(integrationBuilder, appDir);
 
@@ -77,11 +82,13 @@ public final class IntegrationGenerator {
 
     /**
      * Processes the customizers defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
+     * @param appDir application directory
      */
-    public static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder) {
+    public static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
         if (!integrationBuilder.getResources().isEmpty()) {
-            integrationBuilder.addCustomizer(Customizers.QUARKUS.customize(i ->
+            integrationBuilder.addCustomizer(Customizers.CAMELQUARKUS.customize(i ->
                     i.addToApplicationProperties("quarkus.native.resources.includes",
                         integrationBuilder.getResources().stream().map(Resource::getName).collect(Collectors.joining(","))
                     )
@@ -104,14 +111,31 @@ public final class IntegrationGenerator {
             integrationBuilder.addCustomizer(new HTTPServerPortCustomizer(true));
         }
 
+        // Load pom.xml if it exists
+        File pom = appDir.resolve("pom.xml").toFile();
+        Model model = null;
+        if (pom.exists()) {
+            model = Maven.loadPom(pom);
+        }
+
+        // Set integration builder and model on all customizers
         for (Customizer customizer : integrationBuilder.getCustomizers()) {
             customizer.setIntegrationBuilder(integrationBuilder);
+            if (model != null) {
+                customizer.setModel(model);
+            }
             customizer.doCustomize();
+        }
+
+        // Save pom.xml if it was loaded
+        if (model != null) {
+            Maven.writePom(pom, model);
         }
     }
 
     /**
      * Creates the resource files defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -122,6 +146,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the additional classes defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -154,6 +179,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the application.properties file.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -176,6 +202,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the integration class file.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */

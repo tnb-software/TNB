@@ -44,7 +44,7 @@ public class LocalGeneratorTest extends TestParent {
             .fromRouteBuilder(new DirectToLogRoute())
             .addCustomizer(
                 new AddClassCustomizer(emptyClass),
-                Customizers.QUARKUS.customize(i -> i.addToApplicationProperties("test.prop.not.exists", "not exists"))
+                Customizers.CAMELQUARKUS.customize(i -> i.addToApplicationProperties("test.prop.not.exists", "not exists"))
             )
             .addToApplicationProperties("test.prop", "test prop")
             .dependencies("direct")
