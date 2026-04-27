@@ -1,9 +1,8 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
@@ -12,6 +11,8 @@ import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuild
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
+import software.tnb.product.quarkus.vanilla.variant.QuarkusVariant;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 
@@ -42,8 +43,8 @@ import io.fabric8.openshift.api.model.RoutePort;
 public class OpenshiftQuarkusApp extends QuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftQuarkusApp.class);
 
-    public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder);
+    public OpenshiftQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder, QuarkusVariant variant) {
+        super(integrationBuilder, variant);
 
         Optional<Customizer> restCustomizer = integrationBuilder.getCustomizers().stream().filter(c -> c instanceof RestCustomizer).findFirst();
         // For openshift quarkus app, the HTTP request will return default openshift 503 when the endpoint is not ready

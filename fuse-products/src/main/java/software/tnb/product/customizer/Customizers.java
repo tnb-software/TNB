@@ -1,8 +1,8 @@
 package software.tnb.product.customizer;
 
-import software.tnb.product.cq.customizer.QuarkusCustomizer;
 import software.tnb.product.csb.customizer.SpringBootCustomizer;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.camel.customizer.CamelQuarkusCustomizer;
 
 import java.util.function.Consumer;
 
@@ -21,7 +21,7 @@ public enum Customizers implements Customizable {
     QUARKUS {
         @Override
         public Customizer customize(Consumer<AbstractIntegrationBuilder<?>> i) {
-            return new QuarkusCustomizer() {
+            return new CamelQuarkusCustomizer() {
                 public void customize() {
                     i.accept(this.getIntegrationBuilder());
                 }

@@ -1,16 +1,14 @@
-package software.tnb.product.cq;
+package software.tnb.product.quarkus.vanilla;
 
 import software.tnb.product.OpenshiftProduct;
-import software.tnb.product.Product;
 import software.tnb.product.application.App;
-import software.tnb.product.cq.application.OpenshiftQuarkusApp;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.vanilla.application.OpenshiftQuarkusApp;
+import software.tnb.product.quarkus.vanilla.variant.QuarkusVariant;
+import software.tnb.product.quarkus.vanilla.variant.VanillaQuarkusVariant;
 import software.tnb.product.util.maven.Maven;
 
-import com.google.auto.service.AutoService;
-
-@AutoService(Product.class)
-public class OpenshiftCamelQuarkus extends OpenshiftProduct {
+public class OpenshiftQuarkus extends OpenshiftProduct {
     private static boolean initialized = false;
 
     @Override
@@ -32,6 +30,12 @@ public class OpenshiftCamelQuarkus extends OpenshiftProduct {
 
     @Override
     protected App createIntegrationApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        return new OpenshiftQuarkusApp(integrationBuilder);
+        QuarkusVariant quarkusVariant = quarkusVariant();
+        quarkusVariant.customizeIntegrationBuilder(integrationBuilder);
+        return new OpenshiftQuarkusApp(integrationBuilder, quarkusVariant);
+    }
+
+    protected QuarkusVariant quarkusVariant() {
+        return new VanillaQuarkusVariant();
     }
 }

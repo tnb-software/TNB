@@ -1,4 +1,4 @@
-package software.tnb.product.cq.configuration;
+package software.tnb.product.quarkus.vanilla.configuration;
 
 import software.tnb.product.camel.CamelConfiguration;
 
@@ -35,6 +35,12 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static final String CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel-quarkus.platform.artifact-id";
 
     public static final String CAMEL_QUARKUS_PLATFORM_VERSION = "camel-quarkus.platform.version";
+
+    public static final String CXF_QUARKUS_PLATFORM_GROUP_ID = "cxf-quarkus.platform.group-id";
+
+    public static final String CXF_QUARKUS_PLATFORM_ARTIFACT_ID = "cxf-quarkus.platform.artifact-id";
+
+    public static final String CXF_QUARKUS_PLATFORM_VERSION = "cxf-quarkus.platform.version";
 
     public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_GROUP_ID = "org.apache.camel.quarkus";
 
@@ -78,6 +84,18 @@ public class QuarkusConfiguration extends CamelConfiguration {
 
     public static String camelQuarkusPlatformVersion() {
         return getProperty(CAMEL_QUARKUS_PLATFORM_VERSION);
+    }
+
+    public static String cxfQuarkusPlatformGroupId() {
+        return getProperty(CXF_QUARKUS_PLATFORM_GROUP_ID);
+    }
+
+    public static String cxfQuarkusPlatformArtifactId() {
+        return getProperty(CXF_QUARKUS_PLATFORM_ARTIFACT_ID);
+    }
+
+    public static String cxfQuarkusPlatformVersion() {
+        return getProperty(CXF_QUARKUS_PLATFORM_VERSION);
     }
 
     public static String getCamelQuarkusExamplesRepo() {

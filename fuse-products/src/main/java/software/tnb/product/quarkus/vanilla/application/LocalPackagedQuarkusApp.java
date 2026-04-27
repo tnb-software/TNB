@@ -1,15 +1,16 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.TimeoutException;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
+import software.tnb.product.quarkus.vanilla.variant.QuarkusVariant;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.maven.model.Model;
@@ -29,8 +30,8 @@ public class LocalPackagedQuarkusApp extends LocalQuarkusApp {
     private static final Logger LOG = LoggerFactory.getLogger(LocalPackagedQuarkusApp.class);
     private Process appProcess;
 
-    public LocalPackagedQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder);
+    public LocalPackagedQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder, QuarkusVariant variant) {
+        super(integrationBuilder, variant);
 
         Path appDirAbsolutePath = appDir.toAbsolutePath();
         Path integrationTarget = appDirAbsolutePath.resolve("target");
