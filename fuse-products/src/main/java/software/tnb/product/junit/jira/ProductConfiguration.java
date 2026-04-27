@@ -3,7 +3,7 @@ package software.tnb.product.junit.jira;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 
 public enum ProductConfiguration {
     ALL,

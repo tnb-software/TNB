@@ -24,7 +24,7 @@ public class CustomizerTest extends TestParent {
             case SPRINGBOOT:
                 setProduct(ProductType.CAMEL_QUARKUS);
                 break;
-            case QUARKUS:
+            case CAMELQUARKUS:
                 setProduct(ProductType.CAMEL_SPRINGBOOT);
                 break;
             default:
@@ -45,7 +45,7 @@ public class CustomizerTest extends TestParent {
             case SPRINGBOOT:
                 setProduct(ProductType.CAMEL_SPRINGBOOT);
                 break;
-            case QUARKUS:
+            case CAMELQUARKUS:
                 setProduct(ProductType.CAMEL_QUARKUS);
                 break;
             default:

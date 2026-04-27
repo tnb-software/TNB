@@ -1,4 +1,4 @@
-package software.tnb.product.cq.integration.builder;
+package software.tnb.product.quarkus.vanilla.integration.builder;
 
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 

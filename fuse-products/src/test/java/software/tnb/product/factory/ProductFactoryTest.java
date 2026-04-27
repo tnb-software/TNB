@@ -7,11 +7,11 @@ import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.product.Product;
 import software.tnb.product.ProductFactory;
-import software.tnb.product.cq.LocalCamelQuarkus;
-import software.tnb.product.cq.OpenshiftCamelQuarkus;
 import software.tnb.product.csb.LocalCamelSpringBoot;
 import software.tnb.product.csb.OpenshiftCamelSpringBoot;
 import software.tnb.product.parent.TestParent;
+import software.tnb.product.quarkus.camel.LocalCamelQuarkus;
+import software.tnb.product.quarkus.camel.OpenshiftCamelQuarkus;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
