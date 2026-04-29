@@ -8,6 +8,7 @@ import java.util.Optional;
 public class MinaConfiguration extends ServiceConfiguration {
     private static final String PRIVATE_KEY_PATH = "mina.private-key-path";
     private static final String PUBLIC_KEY_PATH = "mina.public-key-path";
+    private static final String CA_PUBLIC_KEY_PATH = "mina.ca-public-key-path";
 
     public MinaConfiguration withPrivateKeyPath(Path value) {
         set(PRIVATE_KEY_PATH, value.toAbsolutePath().toString());
@@ -27,6 +28,17 @@ public class MinaConfiguration extends ServiceConfiguration {
 
     public Path publicKeyPath() {
         return Optional.ofNullable(get(PUBLIC_KEY_PATH, String.class))
+            .map(Path::of)
+            .orElse(null);
+    }
+
+    public MinaConfiguration withCaPublicKeyPath(Path value) {
+        set(CA_PUBLIC_KEY_PATH, value.toAbsolutePath().toString());
+        return this;
+    }
+
+    public Path caPublicKeyPath() {
+        return Optional.ofNullable(get(CA_PUBLIC_KEY_PATH, String.class))
             .map(Path::of)
             .orElse(null);
     }
