@@ -24,7 +24,7 @@ public abstract class Mina extends ConfigurableService<MinaAccount, SSHClient, M
 
     @Override
     public String defaultImage() {
-        return "quay.io/fuse_qe/mina-sshd:2.14.0";
+        return "quay.io/fuse_qe/mina-sshd:2.17.1";
     }
 
     protected abstract String clientHostname();

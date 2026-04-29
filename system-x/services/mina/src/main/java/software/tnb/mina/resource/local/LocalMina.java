@@ -44,7 +44,7 @@ public class LocalMina extends Mina implements ContainerDeployable<MinaContainer
 
     @Override
     public void deploy() {
-        container = new MinaContainer(image(), getConfiguration().publicKeyPath());
+        container = new MinaContainer(image(), getConfiguration().publicKeyPath(), getConfiguration().caPublicKeyPath());
         ContainerDeployable.super.deploy();
     }
 }
