@@ -54,6 +54,9 @@ public class TestConfiguration extends Configuration {
 
     public static final String KAMELETS_VERSION = "kamelets.version";
 
+    public static final String REMOVE_CONTAINER_IMAGE = "test.remove.container.image";
+    public static final String REMOVE_CONTAINER_IMAGE_THRESHOLD_MB = "test.remove.container.image.threshold.mb";
+
     public static ProductType product() {
         return Arrays.stream(ProductType.values()).filter(p -> p.getValue().equals(getProperty(PRODUCT))).findFirst()
             .orElseThrow(
@@ -197,5 +200,14 @@ public class TestConfiguration extends Configuration {
 
     public static String kameletsVersion() {
         return getProperty(KAMELETS_VERSION);
+    }
+
+    public static boolean removeContainerImage() {
+        // default on jenkins runs
+        return getBoolean(REMOVE_CONTAINER_IMAGE, System.getenv("BUILD_URL") != null);
+    }
+
+    public static long removeContainerImageThresholdMB() {
+        return getInteger(REMOVE_CONTAINER_IMAGE_THRESHOLD_MB, 2048) * 1024 * 1024L;
     }
 }
