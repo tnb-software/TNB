@@ -33,7 +33,9 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftHyperfoil.class);
 
-    private static final String APP_NAME = "hyperfoil-" + OpenshiftClient.get().getNamespace();
+    private static String appName() {
+        return "hyperfoil-" + OpenshiftClient.get().getNamespace();
+    }
 
     @Override
     public void undeploy() {
@@ -83,7 +85,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public Predicate<Pod> podSelector() {
-        return p -> OpenshiftClient.get().hasLabels(p, Map.of("app", APP_NAME));
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("app", appName()));
     }
 
     @Override
@@ -118,7 +120,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
 
     @Override
     public String externalHostname() {
-        return OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost();
+        return OpenshiftClient.get().getRoute(appName()).getSpec().getHost();
     }
 
     @Override
@@ -159,7 +161,7 @@ public class OpenshiftHyperfoil extends Hyperfoil implements ReusableOpenshiftDe
         return new GenericKubernetesResourceBuilder()
             .withKind(kind())
             .withNewMetadata()
-            .withName(APP_NAME)
+            .withName(appName())
             .withNamespace(OpenshiftClient.get().getNamespace())
             .endMetadata()
             .withAdditionalProperties(Map.of("spec", spec)).build();

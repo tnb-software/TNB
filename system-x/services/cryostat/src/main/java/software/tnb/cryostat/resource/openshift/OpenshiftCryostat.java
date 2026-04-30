@@ -31,7 +31,10 @@ import okhttp3.Request;
 public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDeployable, WithOperatorHub, WithCustomResource {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftCryostat.class);
-    private static final String APP_NAME = "cryostat-" + OpenshiftClient.get().getNamespace();
+
+    private static String appName() {
+        return "cryostat-" + OpenshiftClient.get().getNamespace();
+    }
 
     @Override
     public void undeploy() {
@@ -72,7 +75,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
         try {
             return pod != null && pod.isReady()
                 && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
-                , OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost())).build()).execute().isSuccessful();
+                , OpenshiftClient.get().getRoute(appName()).getSpec().getHost())).build()).execute().isSuccessful();
         } catch (IOException e) {
             return false;
         }
@@ -89,12 +92,12 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public Predicate<Pod> podSelector() {
-        return p -> OpenshiftClient.get().hasLabels(p, Map.of("kind", "cryostat", "app", APP_NAME));
+        return p -> OpenshiftClient.get().hasLabels(p, Map.of("kind", "cryostat", "app", appName()));
     }
 
     @Override
     public String connectionUrl() {
-        return String.format("https://%s", OpenshiftClient.get().getRoute(APP_NAME).getSpec().getHost());
+        return String.format("https://%s", OpenshiftClient.get().getRoute(appName()).getSpec().getHost());
     }
 
     @Override
@@ -133,7 +136,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
             .withKind(kind())
             .withApiVersion(apiVersion())
             .withNewMetadata()
-            .withName(APP_NAME)
+            .withName(appName())
             .withNamespace(OpenshiftClient.get().getNamespace())
             .endMetadata()
             .withAdditionalProperties(Map.of("spec", Map.of(
