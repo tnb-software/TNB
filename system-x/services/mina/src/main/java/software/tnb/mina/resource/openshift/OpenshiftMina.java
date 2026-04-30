@@ -120,8 +120,9 @@ public class OpenshiftMina extends Mina implements OpenshiftDeployable, WithName
         deploymentMap.put("ports", ports);
 
         Path publicKeyPath = getConfiguration().publicKeyPath();
-        if (publicKeyPath != null) {
-            createPublicKeyConfigMap(publicKeyPath);
+        Path caPublicKeyPath = getConfiguration().caPublicKeyPath();
+        if (publicKeyPath != null || caPublicKeyPath != null) {
+            createPublicKeyConfigMap(publicKeyPath, caPublicKeyPath);
 
             List<Volume> volumes = List.of(
                 new VolumeBuilder().withName(PUBKEY_CONFIGMAP_NAME)
@@ -162,19 +163,25 @@ public class OpenshiftMina extends Mina implements OpenshiftDeployable, WithName
         // @formatter:on
     }
 
-    private void createPublicKeyConfigMap(Path publicKeyPath) {
+    private void createPublicKeyConfigMap(Path publicKeyPath, Path caPublicKeyPath) {
         try {
-            String publicKeyContent = Files.readString(publicKeyPath);
+            StringBuilder authorizedKeys = new StringBuilder();
+            if (publicKeyPath != null) {
+                authorizedKeys.append(Files.readString(publicKeyPath).trim()).append("\n");
+            }
+            if (caPublicKeyPath != null) {
+                authorizedKeys.append("cert-authority ").append(Files.readString(caPublicKeyPath).trim()).append("\n");
+            }
             OpenshiftClient.get().configMaps().resource(new ConfigMapBuilder()
                 .withNewMetadata()
                 .withName(PUBKEY_CONFIGMAP_NAME)
                 .addToLabels(OpenshiftConfiguration.openshiftDeploymentLabel(), name())
                 .endMetadata()
-                .addToData("authorized_keys", publicKeyContent)
+                .addToData("authorized_keys", authorizedKeys.toString())
                 .build()
             ).serverSideApply();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read public key file: " + publicKeyPath, e);
+            throw new RuntimeException("Failed to read SSH key files", e);
         }
     }
 
