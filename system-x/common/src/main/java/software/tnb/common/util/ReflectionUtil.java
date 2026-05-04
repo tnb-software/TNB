@@ -40,9 +40,8 @@ public final class ReflectionUtil {
      */
     public static String getSuperClassName(Class<?> current) {
         final Class<?> superclass = current.getSuperclass();
-        if (Object.class.equals(superclass)) {
-            throw new IllegalStateException("Current class " + current.getSimpleName() + " does not extend any other class"
-                + " and was expected to do so, check what's wrong as this shouldn't happen");
+        if (superclass == null || Object.class.equals(superclass)) {
+            return current.getSimpleName();
         }
         return superclass.getSimpleName();
     }

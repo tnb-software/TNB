@@ -1,8 +1,8 @@
 package software.tnb.common.deployment;
 
 import software.tnb.common.config.TestConfiguration;
+import software.tnb.common.service.WithServiceDefinition;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testcontainers.DockerClientFactory;
@@ -14,7 +14,7 @@ import com.github.dockerjava.api.model.Image;
 import java.util.Arrays;
 import java.util.Optional;
 
-public interface ContainerDeployable<T extends GenericContainer<?>> extends Deployable {
+public interface ContainerDeployable<T extends GenericContainer<?>> extends Deployable, WithServiceDefinition {
     Logger LOG = LoggerFactory.getLogger(ContainerDeployable.class);
 
     T container();
@@ -58,7 +58,4 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
         return container().getLogs();
     }
 
-    private String serviceName() {
-        return StringUtils.substringAfter(this.getClass().getSimpleName(), "Local");
-    }
 }
