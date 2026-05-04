@@ -8,7 +8,7 @@ import software.tnb.common.validation.Validation;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.BeforeAllCallback;
 
-public abstract class Service<A extends Account, C, V extends Validation> implements BeforeAllCallback, AfterAllCallback {
+public abstract class Service<A extends Account, C, V extends Validation> implements BeforeAllCallback, AfterAllCallback, WithServiceDefinition {
     protected A account;
     protected C client;
     protected V validation;

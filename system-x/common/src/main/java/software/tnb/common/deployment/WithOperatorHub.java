@@ -10,7 +10,9 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 
 import io.fabric8.kubernetes.api.model.EnvVar;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.Subscription;
 import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionConfig;
+import io.fabric8.openshift.api.model.operatorhub.v1alpha1.SubscriptionStatus;
 
 public interface WithOperatorHub {
     String operatorName();
@@ -69,6 +71,18 @@ public interface WithOperatorHub {
 
     default List<EnvVar> getOperatorEnvVariables() {
         return null;
+    }
+
+    default String currentCSV() {
+        try {
+            return Optional.ofNullable(OpenshiftClient.get().operatorHub().subscriptions()
+                    .inNamespace(targetNamespace()).withName(subscriptionName()).get())
+                .map(Subscription::getStatus)
+                .map(SubscriptionStatus::getCurrentCSV)
+                .orElse(null);
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     default void deleteSubscription(BooleanSupplier waitCondition) {

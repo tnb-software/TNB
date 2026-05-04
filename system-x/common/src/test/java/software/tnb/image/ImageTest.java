@@ -1,7 +1,6 @@
 package software.tnb.image;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.image.util.ChildClass;
@@ -13,9 +12,9 @@ import org.junit.jupiter.api.Test;
 @Tag("unit")
 public class ImageTest {
     @Test
-    public void shouldThrowExceptionWhenThereIsNoSuperclassTest() {
+    public void shouldReturnDefaultImageWhenThereIsNoSuperclassTest() {
         ParentClass tc = new ParentClass();
-        assertThatExceptionOfType(IllegalStateException.class).isThrownBy(tc::image);
+        assertThat(tc.image()).isEqualTo("parentclassdefaultimage");
     }
 
     @Test
