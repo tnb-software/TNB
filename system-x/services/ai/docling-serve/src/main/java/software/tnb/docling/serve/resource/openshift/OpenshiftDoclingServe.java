@@ -18,8 +18,11 @@ import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
 import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
+import io.fabric8.kubernetes.api.model.HTTPGetActionBuilder;
 import io.fabric8.kubernetes.api.model.IntOrString;
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Probe;
+import io.fabric8.kubernetes.api.model.ProbeBuilder;
 import io.fabric8.kubernetes.api.model.ServiceBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
@@ -76,12 +79,20 @@ public class OpenshiftDoclingServe extends DoclingServe implements OpenshiftDepl
             "TRANSFORMERS_CACHE", "/tmp/.cache/transformers"
         );
 
+        final Probe probe = new ProbeBuilder()
+            .withHttpGet(new HTTPGetActionBuilder()
+                .withPort(new IntOrString(PORT))
+                .withPath("/health")
+                .build()
+            ).build();
+
         // @formatter:off
         OpenshiftClient.get().createDeployment(Map.of(
             "name", name(),
             "image", image(),
             "ports", ports,
             "env", env,
+            "readinessProbe", probe,
             "volumes", volumes,
             "volumeMounts", volumeMounts
         ));
