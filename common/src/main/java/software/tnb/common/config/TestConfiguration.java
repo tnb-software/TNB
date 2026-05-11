@@ -16,6 +16,7 @@ public class TestConfiguration extends Configuration {
     public static final String PRODUCT = "test.product";
     public static final String CREDENTIALS_FILE = "test.credentials.file";
     public static final String CREDENTIALS = "test.credentials";
+    public static final String CREDENTIALS_ROOT_KEY = "test.credentials.root.key";
     public static final String VAULT_TOKEN = "test.credentials.vault.token";
     public static final String VAULT_SECRET_ID = "test.credentials.vault.secret.id";
     public static final String VAULT_ROLE_ID = "test.credentials.vault.role.id";
@@ -90,6 +91,14 @@ public class TestConfiguration extends Configuration {
 
     public static String credentials() {
         return getProperty(CREDENTIALS);
+    }
+
+    /**
+     * A root key under which the credentials are stored in the yaml file.
+     * @return value or null
+     */
+    public static String credentialsRootKey() {
+        return getProperty(CREDENTIALS_ROOT_KEY, "services");
     }
 
     public static String appGroupId() {
