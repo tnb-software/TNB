@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.fail;
 
 import software.tnb.common.account.loader.CredentialsLoader;
 import software.tnb.common.account.loader.DelegatingCredentialsLoader;
+import software.tnb.common.account.loader.EnvCredentialsLoader;
 import software.tnb.common.account.loader.VaultCredentialsLoader;
 import software.tnb.common.account.loader.YamlCredentialsLoader;
 import software.tnb.common.config.TestConfiguration;
@@ -50,8 +51,19 @@ public final class AccountFactory {
         }
     }
 
-    public static CredentialsLoader defaultLoader() throws Exception {
+    /**
+     * Tries to load credentials from the hierarchy of credentials loaders.
+     * <p/>
+     * The current order is:
+     *   - environment variables
+     *   - hashicorp vault
+     *   - credentials file
+     *   - credentials string
+     * @return delegating credentials loader that tries until success
+     */
+    public static CredentialsLoader defaultLoader() {
         List<CredentialsLoader> availableLoaders = new ArrayList<>();
+        availableLoaders.add(new EnvCredentialsLoader());
         if (TestConfiguration.vaultToken() != null) {
             availableLoaders.add(new VaultCredentialsLoader(
                 TestConfiguration.vaultAddress(),
@@ -67,11 +79,11 @@ public final class AccountFactory {
                 TestConfiguration.vaultSecretId()
             ));
         }
-        if (TestConfiguration.credentials() != null) {
-            availableLoaders.add(new YamlCredentialsLoader(TestConfiguration.credentials()));
-        }
         if (TestConfiguration.credentialsFile() != null) {
-            availableLoaders.add(new YamlCredentialsLoader(new File(TestConfiguration.credentialsFile())));
+            availableLoaders.add(new YamlCredentialsLoader(new File(TestConfiguration.credentialsFile()), TestConfiguration.credentialsRootKey()));
+        }
+        if (TestConfiguration.credentials() != null) {
+            availableLoaders.add(new YamlCredentialsLoader(TestConfiguration.credentials(), TestConfiguration.credentialsRootKey()));
         }
         return new DelegatingCredentialsLoader(availableLoaders);
     }
