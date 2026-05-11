@@ -15,14 +15,28 @@ public class YamlCredentialsLoader extends CredentialsLoader {
 
     private final Map<String, Map<String, Object>> credentials;
 
-    public YamlCredentialsLoader(String credentialsAsString) throws Exception {
-        credentials = (Map) ((Map) new Yaml().load(credentialsAsString)).get("services");
+    public YamlCredentialsLoader(String credentialsAsString, String rootKey) {
+        credentials = loadCredentialsFromYaml(new Yaml().load(credentialsAsString), rootKey);
     }
 
-    public YamlCredentialsLoader(File credentialsFile) throws Exception {
+    public YamlCredentialsLoader(File credentialsFile, String rootKey) {
         try (FileInputStream fs = new FileInputStream(credentialsFile.getAbsolutePath())) {
-            LOG.info("Loading credentials file from {}", credentialsFile.getAbsolutePath());
-            credentials = (Map) ((Map) new Yaml().load(fs)).get("services");
+            LOG.trace("Loading credentials file from {}", credentialsFile.getAbsolutePath());
+            credentials = loadCredentialsFromYaml(new Yaml().load(fs), rootKey);
+        } catch (Exception e) {
+            throw new RuntimeException("Unable to load credentials from file", e);
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, Map<String, Object>> loadCredentialsFromYaml(Object yamlContent, String rootKey) {
+        if (yamlContent instanceof Map m) {
+            if (rootKey != null && !rootKey.isEmpty()) {
+                yamlContent = m.get(rootKey);
+            }
+            return (Map) yamlContent;
+        } else {
+            throw new RuntimeException("YAML content was not an instance of a map, was: " + yamlContent);
         }
     }
 

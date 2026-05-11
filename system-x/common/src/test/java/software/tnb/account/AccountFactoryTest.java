@@ -23,6 +23,8 @@ public class AccountFactoryTest {
     @BeforeAll
     public static void beforeAll() {
         System.setProperty(TestConfiguration.CREDENTIALS_FILE, Paths.get("src", "test", "resources", "credentials.yaml").toAbsolutePath().toString());
+        // ensure clean state not affected by other tests
+        AccountFactory.setCredentialsLoader(null);
     }
 
     @AfterAll
@@ -33,7 +35,7 @@ public class AccountFactoryTest {
     @Test
     public void shouldParseAccountTest() {
         TestAccountWithId acc = AccountFactory.create(TestAccountWithId.class);
-        assertThat(acc.getUsername()).isEqualTo("John");
+        assertThat(acc.getUserName()).isEqualTo("John");
         assertThat(acc.getPassword()).isEqualTo("Secret");
         assertThat(acc.accountId()).isEqualTo(999);
     }
@@ -89,7 +91,7 @@ public class AccountFactoryTest {
         System.setProperty(String.format(WithId.SYSTEM_PROPERTY_FORMAT, "testaccountwithid"), "test-acc-property");
         try {
             TestAccountWithId acc = AccountFactory.create(TestAccountWithId.class);
-            assertThat(acc.getUsername()).isEqualTo("John");
+            assertThat(acc.getUserName()).isEqualTo("John");
             assertThat(acc.getPassword()).isEqualTo("Secret");
             assertThat(acc.accountId()).isEqualTo(999);
         } finally {
