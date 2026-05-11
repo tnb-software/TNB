@@ -15,22 +15,26 @@ public class VaultCredentialsLoader extends CredentialsLoader {
     private final VaultConfig config;
     private ThrowingSupplier<AuthResponse> authSupplier;
 
-    private VaultCredentialsLoader(String address, String pathPattern) throws VaultException {
-        config = new VaultConfig()
-            .address(address)
-            .engineVersion(2)
-            .build();
+    private VaultCredentialsLoader(String address, String pathPattern) {
+        try {
+            config = new VaultConfig()
+                .address(address)
+                .engineVersion(2)
+                .build();
+        } catch (VaultException e) {
+            throw new RuntimeException("Unable to connect to the vault", e);
+        }
         vault = new Vault(config);
 
         this.pathPattern = pathPattern;
     }
 
-    public VaultCredentialsLoader(String address, String pathPattern, String ghToken) throws VaultException {
+    public VaultCredentialsLoader(String address, String pathPattern, String ghToken) {
         this(address, pathPattern);
         authSupplier = () -> vault.auth().loginByGithub(ghToken);
     }
 
-    public VaultCredentialsLoader(String address, String pathPattern, String roleId, String secretId) throws VaultException {
+    public VaultCredentialsLoader(String address, String pathPattern, String roleId, String secretId) {
         this(address, pathPattern);
         authSupplier = () -> vault.auth().loginByAppRole(roleId, secretId);
     }
