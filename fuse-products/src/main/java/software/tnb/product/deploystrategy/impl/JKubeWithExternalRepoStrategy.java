@@ -67,18 +67,12 @@ public class JKubeWithExternalRepoStrategy extends CustomJKubeStrategy {
         Optional.ofNullable(DockerConfiguration.dockerRegistryUsername())
             .filter(StringUtils::isNotBlank)
             .map(String::trim)
-            .ifPresent(v -> {
-                props.put("jkube.docker.push.username", v);
-                props.put("jkube.docker.pull.username", v);
-            });
+            .ifPresent(v -> props.put("jkube.docker.push.username", v));
 
         Optional.ofNullable(DockerConfiguration.dockerRegistryPassword())
             .filter(StringUtils::isNotBlank)
             .map(String::trim)
-            .ifPresent(v -> {
-                props.put("jkube.docker.push.password", v);
-                props.put("jkube.docker.pull.password", v);
-            });
+            .ifPresent(v -> props.put("jkube.docker.push.password", v));
 
         return props;
     }
