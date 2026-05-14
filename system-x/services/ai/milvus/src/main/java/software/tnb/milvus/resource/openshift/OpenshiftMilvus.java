@@ -2,15 +2,12 @@ package software.tnb.milvus.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.OpenshiftDeployable;
+import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
-import software.tnb.common.utils.NetworkUtils;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.milvus.service.Milvus;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
 
@@ -29,17 +26,12 @@ import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
 import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
-import io.fabric8.kubernetes.client.PortForward;
 import io.fabric8.openshift.api.model.RouteBuilder;
 
 @AutoService(Milvus.class)
-public class OpenshiftMilvus extends Milvus implements OpenshiftDeployable, WithName {
-    private static final Logger LOG = LoggerFactory.getLogger(OpenshiftMilvus.class);
+public class OpenshiftMilvus extends Milvus implements OpenshiftDeployable, WithName, WithInClusterHostname {
 
     private static final String CONFIGMAP_NAME = "milvus-config";
-
-    private PortForward portForward;
-    private int localPort;
 
     @Override
     public void undeploy() {
@@ -52,20 +44,10 @@ public class OpenshiftMilvus extends Milvus implements OpenshiftDeployable, With
 
     @Override
     public void openResources() {
-        localPort = NetworkUtils.getFreePort();
-        portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, localPort);
     }
 
     @Override
     public void closeResources() {
-        NetworkUtils.releasePort(localPort);
-        if (portForward != null) {
-            try {
-                portForward.close();
-            } catch (Exception e) {
-                LOG.warn("Unable to close Milvus port forward", e);
-            }
-        }
     }
 
     @Override
@@ -173,12 +155,12 @@ public class OpenshiftMilvus extends Milvus implements OpenshiftDeployable, With
 
     @Override
     public String host() {
-        return "localhost";
+        return inClusterHostname();
     }
 
     @Override
     public int port() {
-        return localPort;
+        return PORT;
     }
 
     @Override
