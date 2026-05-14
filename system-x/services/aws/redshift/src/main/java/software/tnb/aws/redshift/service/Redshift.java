@@ -13,11 +13,13 @@ import com.google.auto.service.AutoService;
 
 import software.amazon.awssdk.services.redshift.RedshiftClient;
 import software.amazon.awssdk.services.redshift.model.Cluster;
+import software.amazon.awssdk.services.redshift.model.DescribeClusterSnapshotsRequest;
 import software.amazon.awssdk.services.redshift.model.RedshiftException;
 import software.amazon.awssdk.services.redshiftdata.RedshiftDataClient;
 
 @AutoService(Redshift.class)
 public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, RedshiftValidation> {
+    private static final String SNAPSHOT_PREFIX = "tnb-snapshot-";
     private RedshiftClient redshiftClient;
 
     @Override
@@ -40,8 +42,7 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
     }
 
     public Cluster cluster() {
-        return redshiftClient.describeClusters().clusters().stream()
-            .filter(cluster -> cluster.clusterIdentifier().equals(account.clusterIdentifier())).findFirst().get();
+        return redshiftClient.describeClusters(b -> b.clusterIdentifier(account().clusterIdentifier())).clusters().get(0);
     }
 
     private void resumeCluster() {
@@ -57,14 +58,47 @@ public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, Re
 
     private void pauseCluster() {
         if (!cluster().clusterAvailabilityStatus().equalsIgnoreCase("paused")) {
+            createSnapshot();
             try {
                 redshiftClient.pauseCluster(builder -> builder.clusterIdentifier(account.clusterIdentifier()).build());
                 //wait for paused
                 WaitUtils.waitFor(new Waiter(() -> "paused".equalsIgnoreCase(cluster().clusterAvailabilityStatus()),
-                        "Waiting for Cluster " + cluster().clusterIdentifier() + " to be paused").timeout(60, 30000));
+                    "Waiting for Cluster " + cluster().clusterIdentifier() + " to be paused").timeout(60, 30000));
             } catch (RedshiftException e) {
                 throw new RuntimeException("Failed to stop redshift cluster, needs to be stopped manually", e);
             }
         }
+    }
+
+    /**
+     * Occasionally the pause operation failed with: You can't pause cluster because no recently available backup was found.
+     */
+    private void createSnapshot() {
+        // delete previous snapshots as we don't really need those
+        redshiftClient.describeClusterSnapshots().snapshots().stream()
+            .filter(s -> s.snapshotIdentifier().startsWith(SNAPSHOT_PREFIX))
+            .forEach(s -> redshiftClient.deleteClusterSnapshot(r -> r.snapshotIdentifier(s.snapshotIdentifier())));
+
+        // create new snapshot
+        String snapshot = SNAPSHOT_PREFIX + System.currentTimeMillis();
+        LOG.info("Creating cluster snapshot {}", snapshot);
+        redshiftClient.createClusterSnapshot(r -> r.clusterIdentifier(account().clusterIdentifier()).snapshotIdentifier(snapshot));
+
+        String status = null;
+
+        while (!"available".equals(status)) {
+            WaitUtils.sleep(30000L);
+
+            status = redshiftClient.describeClusterSnapshots(
+                    DescribeClusterSnapshotsRequest.builder()
+                        .snapshotIdentifier(snapshot)
+                        .build())
+                .snapshots()
+                .get(0)
+                .status();
+        }
+
+        WaitUtils.waitFor(new Waiter(() -> "available".equalsIgnoreCase(cluster().clusterAvailabilityStatus()),
+            "Waiting until the cluster is available after snapshot").timeout(30, 30000L));
     }
 }
