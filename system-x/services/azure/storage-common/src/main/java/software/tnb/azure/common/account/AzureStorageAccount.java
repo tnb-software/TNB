@@ -4,27 +4,27 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class AzureStorageAccount implements Account, WithId {
-    private String access_key;
-    private String account_name;
+    private String accessKey;
+    private String accountName;
 
     @Override
     public String credentialsId() {
-        return "tnb-azure-storage";
+        return "azure_storage";
     }
 
-    public void setAccess_key(String access_key) {
-        this.access_key = access_key;
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 
-    public void setAccount_name(String account_name) {
-        this.account_name = account_name;
+    public void setAccountName(String accountName) {
+        this.accountName = accountName;
     }
 
     public String accessKey() {
-        return access_key;
+        return accessKey;
     }
 
     public String accountName() {
-        return account_name;
+        return accountName;
     }
 }

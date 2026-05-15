@@ -6,20 +6,20 @@ import software.tnb.common.account.WithId;
 import org.apache.commons.lang3.StringUtils;
 
 public class AzureEventHubsAccount implements Account, WithId {
-    private String connection_string;
+    private String connectionString;
 
     @Override
     public String credentialsId() {
-        return "tnb-azure-eventhubs";
+        return "azure_eventhubs";
     }
 
     // Endpoint=sb://<namespace>.servicebus.windows.net/;SharedAccessKeyName=<keyname>;SharedAccessKey=<accesskey>;EntityPath=<eventhub>
     public String connectionString() {
-        return connection_string;
+        return connectionString;
     }
 
-    public void setConnection_string(String connection_string) {
-        this.connection_string = connection_string;
+    public void setConnectionString(String connectionString) {
+        this.connectionString = connectionString;
     }
 
     public String namespace() {

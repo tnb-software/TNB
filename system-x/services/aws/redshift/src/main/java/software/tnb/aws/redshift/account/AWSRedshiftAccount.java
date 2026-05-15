@@ -2,13 +2,13 @@ package software.tnb.aws.redshift.account;
 
 import software.tnb.aws.common.account.AWSAccount;
 
-public class RedshiftAccount extends AWSAccount {
+public class AWSRedshiftAccount extends AWSAccount {
     private String password;
-    private String cluster_identifier;
+    private String clusterIdentifier;
 
     @Override
     public String credentialsId() {
-        return "aws-redshift";
+        return "aws_redshift";
     }
 
     public String password() {
@@ -20,10 +20,10 @@ public class RedshiftAccount extends AWSAccount {
     }
 
     public String clusterIdentifier() {
-        return cluster_identifier;
+        return clusterIdentifier;
     }
 
-    public void setCluster_identifier(String cluster_identifier) {
-        this.cluster_identifier = cluster_identifier;
+    public void setClusterIdentifier(String clusterIdentifier) {
+        this.clusterIdentifier = clusterIdentifier;
     }
 }
