@@ -6,9 +6,9 @@ import software.tnb.common.account.WithId;
 public class SalesforceAccount implements Account, WithId {
     private String topicName;
     private String loginUrl;
-    private String client_id;
-    private String client_secret;
-    private String userName;
+    private String clientId;
+    private String clientSecret;
+    private String username;
     private String password;
     private String secureSocketProtocol;
 
@@ -34,27 +34,27 @@ public class SalesforceAccount implements Account, WithId {
     }
 
     public String clientId() {
-        return client_id;
+        return clientId;
     }
 
-    public void setClient_id(String client_id) {
-        this.client_id = client_id;
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String clientSecret() {
-        return client_secret;
+        return clientSecret;
     }
 
-    public void setClient_secret(String client_secret) {
-        this.client_secret = client_secret;
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
     }
 
     public String userName() {
-        return userName;
+        return username;
     }
 
-    public void setUserName(String userName) {
-        this.userName = userName;
+    public void setUsername(String username) {
+        this.username = username;
     }
 
     public String password() {

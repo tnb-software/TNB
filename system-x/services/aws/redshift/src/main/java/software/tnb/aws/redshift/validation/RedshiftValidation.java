@@ -1,6 +1,6 @@
 package software.tnb.aws.redshift.validation;
 
-import software.tnb.aws.redshift.account.RedshiftAccount;
+import software.tnb.aws.redshift.account.AWSRedshiftAccount;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.validation.Validation;
 
@@ -18,12 +18,12 @@ public class RedshiftValidation implements Validation {
 
     private final RedshiftClient redshiftClient;
     private final RedshiftDataClient redshiftDataClient;
-    private final RedshiftAccount redshiftAccount;
+    private final AWSRedshiftAccount redshiftAccount;
 
     //TODO(anyone): trial cluster expires 02/07/2022, currently uses default setup - cluster identifier ("redshift-cluster-1"), user ("awsuser")
     // and database ("dev")
 
-    public RedshiftValidation(RedshiftClient redshiftClient, RedshiftDataClient redshiftDataClient, RedshiftAccount redshiftAccount) {
+    public RedshiftValidation(RedshiftClient redshiftClient, RedshiftDataClient redshiftDataClient, AWSRedshiftAccount redshiftAccount) {
         this.redshiftClient = redshiftClient;
         this.redshiftDataClient = redshiftDataClient;
         this.redshiftAccount = redshiftAccount;
