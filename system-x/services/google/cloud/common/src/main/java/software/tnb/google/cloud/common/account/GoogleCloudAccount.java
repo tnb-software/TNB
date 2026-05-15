@@ -8,18 +8,17 @@ import org.json.JSONObject;
 import java.util.Base64;
 
 public class GoogleCloudAccount implements Account, WithId {
-
     // this needs to be in base64 in the credentials file
-    private String service_account_key;
+    private String serviceAccountKey;
 
     @Override
     public String credentialsId() {
-        return "google-cloud";
+        return "google_cloud";
     }
 
     private String fromJson(String key) {
         try {
-            return new JSONObject(new String(Base64.getDecoder().decode(service_account_key))).get(key).toString();
+            return new JSONObject(new String(Base64.getDecoder().decode(serviceAccountKey))).get(key).toString();
         } catch (Exception e) {
             throw new RuntimeException("Unable to decode base64 service account json", e);
         }
@@ -42,10 +41,10 @@ public class GoogleCloudAccount implements Account, WithId {
     }
 
     public String serviceAccountKey() {
-        return service_account_key;
+        return serviceAccountKey;
     }
 
-    public void setService_account_key(String service_account_key) {
-        this.service_account_key = service_account_key;
+    public void setServiceAccountKey(String serviceAccountKey) {
+        this.serviceAccountKey = serviceAccountKey;
     }
 }

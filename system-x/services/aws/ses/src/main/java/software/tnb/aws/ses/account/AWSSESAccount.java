@@ -7,12 +7,12 @@ import java.util.Map;
 /**
  * You need to verify that you own either a domain or an email address, so the identities need to be pre-configured in SES
  */
-public class SESAccount extends AWSAccount {
+public class AWSSESAccount extends AWSAccount {
     private Map<String, String> identities;
 
     @Override
     public String credentialsId() {
-        return "aws-ses";
+        return "aws_ses";
     }
 
     public String identity(String key) {

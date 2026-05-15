@@ -2,7 +2,7 @@ package software.tnb.aws.redshift.service;
 
 import software.tnb.aws.common.client.AWSClient;
 import software.tnb.aws.common.service.AWSService;
-import software.tnb.aws.redshift.account.RedshiftAccount;
+import software.tnb.aws.redshift.account.AWSRedshiftAccount;
 import software.tnb.aws.redshift.validation.RedshiftValidation;
 import software.tnb.common.utils.WaitUtils;
 
@@ -16,7 +16,7 @@ import software.amazon.awssdk.services.redshift.model.RedshiftException;
 import software.amazon.awssdk.services.redshiftdata.RedshiftDataClient;
 
 @AutoService(Redshift.class)
-public class Redshift extends AWSService<RedshiftAccount, RedshiftDataClient, RedshiftValidation> {
+public class Redshift extends AWSService<AWSRedshiftAccount, RedshiftDataClient, RedshiftValidation> {
     private RedshiftClient redshiftClient;
 
     @Override

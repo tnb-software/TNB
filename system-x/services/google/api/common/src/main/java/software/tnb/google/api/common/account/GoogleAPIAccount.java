@@ -4,45 +4,36 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class GoogleAPIAccount implements Account, WithId {
-    private String api_client_id;
-    private String api_client_secret;
-    private String api_refresh_token;
-    private String email;
+    private String clientId;
+    private String clientSecret;
+    private String refreshToken;
 
     @Override
     public String credentialsId() {
-        return "google";
+        return "google_api";
     }
 
     public String clientId() {
-        return api_client_id;
+        return clientId;
     }
 
-    public void setApi_client_id(String apiClientId) {
-        this.api_client_id = apiClientId;
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String clientSecret() {
-        return api_client_secret;
+        return clientSecret;
     }
 
-    public void setApi_client_secret(String apiClientSecret) {
-        this.api_client_secret = apiClientSecret;
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
     }
 
     public String refreshToken() {
-        return api_refresh_token;
+        return refreshToken;
     }
 
-    public void setApi_refresh_token(String api_refresh_token) {
-        this.api_refresh_token = api_refresh_token;
-    }
-
-    public String email() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
+    public void setRefreshToken(String refreshToken) {
+        this.refreshToken = refreshToken;
     }
 }
