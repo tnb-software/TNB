@@ -15,8 +15,8 @@ public abstract class TelegramBotApi extends Service<TelegramAccount, NoClient, 
     private static final String VERBOSITY = System.getProperty("telegram-bot-api.verbosity", "9");
 
     protected Map<String, String> getEnv() {
-        return Map.of("TELEGRAM_API_ID", account().getAppId(),
-            "TELEGRAM_API_HASH", account().getAppHash());
+        return Map.of("TELEGRAM_API_ID", account().appId(),
+            "TELEGRAM_API_HASH", account().appHash());
     }
 
     protected String[] startupParams() {
