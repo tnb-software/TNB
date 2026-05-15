@@ -25,7 +25,7 @@ public class SNS extends AWSService<SNSAccount, SnsClient, SNSValidation> {
             account = AccountFactory.create(SNSAccount.class);
 
             if (getConfiguration().isLocalstack()) {
-                account.setAccount_id("000000000000");
+                account.setAccountId("000000000000");
             }
 
             // There two are derived other values

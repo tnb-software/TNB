@@ -8,14 +8,14 @@ import java.util.Map;
 /**
  * Requires following slack account definition:
  *
- *   slack-tnb:
+ *   slack:
  *     credentials:
  *       token: [token]
  *       channels:
  *         [identifier]:
  *           name: [channelName] (optional, if not present, identifier is used)
- *           webhook_url: [webhook url]
- *           channel_id: [channel id]
+ *           webhookUrl: [webhook url]
+ *           channelId: [channel id]
  *         ...
  */
 public class SlackAccount implements Account, WithId {
@@ -24,7 +24,7 @@ public class SlackAccount implements Account, WithId {
 
     @Override
     public String credentialsId() {
-        return "slack-tnb";
+        return "slack";
     }
 
     public String token() {
@@ -62,8 +62,8 @@ public class SlackAccount implements Account, WithId {
 
     public static class ChannelAccount {
         private String name;
-        private String webhook_url;
-        private String channel_id;
+        private String webhookUrl;
+        private String channelId;
 
         public String name() {
             return name;
@@ -74,19 +74,19 @@ public class SlackAccount implements Account, WithId {
         }
 
         public String webhookUrl() {
-            return webhook_url;
+            return webhookUrl;
         }
 
-        public void setWebhook_url(String webhook_url) {
-            this.webhook_url = webhook_url;
+        public void setWebhookUrl(String webhookUrl) {
+            this.webhookUrl = webhookUrl;
         }
 
         public String channelId() {
-            return channel_id;
+            return channelId;
         }
 
-        public void setChannel_id(String channel_id) {
-            this.channel_id = channel_id;
+        public void setChannelId(String channelId) {
+            this.channelId = channelId;
         }
     }
 

@@ -25,9 +25,9 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
         if (account == null) {
             LOG.debug("Creating new Minio account");
             account = new AWSAccount();
-            account.setAccount_id("minio");
-            account.setAccess_key("minio");
-            account.setSecret_key("minio123minio123minio123");
+            account.setAccountId("minio");
+            account.setAccessKey("minio");
+            account.setSecretKey("minio123minio123minio123");
             account.setRegion("us-west-1");
         }
         return account;
