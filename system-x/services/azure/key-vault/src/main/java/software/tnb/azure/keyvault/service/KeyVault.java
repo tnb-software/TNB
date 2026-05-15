@@ -1,6 +1,6 @@
 package software.tnb.azure.keyvault.service;
 
-import software.tnb.azure.keyvault.account.KeyVaultAccount;
+import software.tnb.azure.keyvault.account.AzureKeyVaultAccount;
 import software.tnb.azure.keyvault.validation.KeyVaultValidation;
 import software.tnb.common.service.Service;
 
@@ -14,7 +14,7 @@ import com.azure.identity.ClientSecretCredentialBuilder;
 import com.azure.security.keyvault.secrets.SecretClient;
 import com.azure.security.keyvault.secrets.SecretClientBuilder;
 
-public class KeyVault extends Service<KeyVaultAccount, SecretClient, KeyVaultValidation> {
+public class KeyVault extends Service<AzureKeyVaultAccount, SecretClient, KeyVaultValidation> {
     private static final Logger LOG = LoggerFactory.getLogger(KeyVault.class);
 
     @Override

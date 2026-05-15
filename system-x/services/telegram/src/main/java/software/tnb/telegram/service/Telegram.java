@@ -26,10 +26,10 @@ public abstract class Telegram extends Service<TelegramAccount, NoClient, Telegr
 
     public Map<String, String> getEnv() {
         Map<String, String> env = new HashMap<>();
-        env.put("TELEGRAM_API_ID", account().getAppId());
-        env.put("TELEGRAM_API_HASH", account().getAppHash());
-        env.put("TELEGRAM_SESSION", account().getSessionString());
-        env.put("TELEGRAM_USERNAME", account().getUsername());
+        env.put("TELEGRAM_API_ID", account().appId());
+        env.put("TELEGRAM_API_HASH", account().appHash());
+        env.put("TELEGRAM_SESSION", account().sessionString());
+        env.put("TELEGRAM_USERNAME", account().username());
         return env;
     }
 }

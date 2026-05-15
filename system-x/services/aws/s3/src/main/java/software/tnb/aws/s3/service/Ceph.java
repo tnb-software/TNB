@@ -24,8 +24,8 @@ public abstract class Ceph extends AWSService<AWSAccount, S3Client, S3Validation
         if (account == null) {
             LOG.debug("Creating new Ceph account");
             account = new AWSAccount();
-            account.setAccess_key("ceph");
-            account.setSecret_key("ceph123ceph123ceph123");
+            account.setAccessKey("ceph");
+            account.setSecretKey("ceph123ceph123ceph123");
             // this needs to be us-east-1 otherwise the bucket creation does not work
             account.setRegion("us-east-1");
         }

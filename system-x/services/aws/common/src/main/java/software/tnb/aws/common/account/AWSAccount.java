@@ -4,38 +4,38 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class AWSAccount implements Account, WithId {
-    private String access_key;
-    private String secret_key;
-    private String region;
-    private String account_id;
+    private String accessKey;
+    private String secretKey;
+    private String region = "us-west-1";
+    private String accountId;
 
     @Override
     public String credentialsId() {
         return "aws";
     }
 
-    public void setAccess_key(String access_key) {
-        this.access_key = access_key;
+    public void setAccessKey(String accessKey) {
+        this.accessKey = accessKey;
     }
 
-    public void setSecret_key(String secret_key) {
-        this.secret_key = secret_key;
+    public void setSecretKey(String secretKey) {
+        this.secretKey = secretKey;
     }
 
     public void setRegion(String region) {
         this.region = region;
     }
 
-    public void setAccount_id(String account_id) {
-        this.account_id = account_id;
+    public void setAccountId(String accountId) {
+        this.accountId = accountId;
     }
 
     public String accessKey() {
-        return access_key;
+        return accessKey;
     }
 
     public String secretKey() {
-        return secret_key;
+        return secretKey;
     }
 
     public String region() {
@@ -43,6 +43,6 @@ public class AWSAccount implements Account, WithId {
     }
 
     public String accountId() {
-        return account_id;
+        return accountId;
     }
 }
