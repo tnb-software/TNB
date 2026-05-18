@@ -1,6 +1,6 @@
 package software.tnb.aws.ses.validation;
 
-import software.tnb.aws.ses.account.SESAccount;
+import software.tnb.aws.ses.account.AWSSESAccount;
 import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
@@ -12,9 +12,9 @@ public class SESValidation implements Validation {
     private static final Logger LOG = LoggerFactory.getLogger(SESValidation.class);
 
     private final SesClient client;
-    private final SESAccount account;
+    private final AWSSESAccount account;
 
-    public SESValidation(SesClient client, SESAccount account) {
+    public SESValidation(SesClient client, AWSSESAccount account) {
         this.client = client;
         this.account = account;
     }

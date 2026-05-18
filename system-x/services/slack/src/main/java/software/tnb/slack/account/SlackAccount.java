@@ -24,7 +24,7 @@ public class SlackAccount implements Account, WithId {
 
     @Override
     public String credentialsId() {
-        return "slack-tnb";
+        return "slack";
     }
 
     public String token() {
@@ -62,8 +62,8 @@ public class SlackAccount implements Account, WithId {
 
     public static class ChannelAccount {
         private String name;
-        private String webhook_url;
-        private String channel_id;
+        private String webhookUrl;
+        private String channelId;
 
         public String name() {
             return name;
@@ -74,19 +74,19 @@ public class SlackAccount implements Account, WithId {
         }
 
         public String webhookUrl() {
-            return webhook_url;
+            return webhookUrl;
         }
 
-        public void setWebhook_url(String webhook_url) {
-            this.webhook_url = webhook_url;
+        public void setWebhookUrl(String webhook_url) {
+            this.webhookUrl = webhook_url;
         }
 
         public String channelId() {
-            return channel_id;
+            return channelId;
         }
 
-        public void setChannel_id(String channel_id) {
-            this.channel_id = channel_id;
+        public void setChannelId(String channelId) {
+            this.channelId = channelId;
         }
     }
 
