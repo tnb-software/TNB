@@ -35,7 +35,7 @@ Again, there are multiple customizers you can use:
 - [ProductsCustomizer](src/main/java/software/tnb/product/customizer/ProductsCustomizer.java) - when you want to do modifications for two
 or more products
 - [SpringBootCustomizer](src/main/java/software/tnb/product/csb/customizer/SpringbootCustomizer.java),
-[QuarkusCustomizer](src/main/java/software/tnb/product/cq/customizer/QuarkusCustomizer.java)
+[QuarkusCustomizer](src/main/java/software/tnb/product/quarkus/vanilla/customizer/QuarkusCustomizer.java)
 
 Instead of creating `new SpringBoot|Quarkus customizers`, you can use
 [Customizers](src/main/java/software/tnb/product/customizer/Customizers.java) enum, for example:
@@ -71,7 +71,7 @@ and based on `openshift.url` property presence (determines if the deployment is 
 If you want a specific instance of a given fuse product, you can use:
 
 ```java
-import software.tnb.product.cq.LocalCamelQuarkus;
+import software.tnb.product.quarkus.camel.LocalCamelQuarkus;
 
 @RegisterExtension
 public static LocalCamelQuarkus cq = ProductFactory.create(LocalCamelQuarkus.class);

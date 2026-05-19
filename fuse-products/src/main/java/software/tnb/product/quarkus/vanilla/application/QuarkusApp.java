@@ -1,4 +1,4 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
@@ -6,13 +6,14 @@ import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.application.App;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.git.GitRepository;
 import software.tnb.product.integration.builder.AbstractGitIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
+import software.tnb.product.quarkus.vanilla.variant.QuarkusVariant;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 
@@ -38,11 +39,13 @@ public abstract class QuarkusApp extends App {
     protected BooleanSupplier readinessCheck;
     protected Path appDir;
     protected Map<String, String> properties = new HashMap<>();
+    protected final QuarkusVariant variant;
 
-    public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
+    public QuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder, QuarkusVariant variant) {
         super(integrationBuilder);
 
         this.integrationBuilder = integrationBuilder;
+        this.variant = variant;
         this.properties.put("skipTests", "true");
         boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
         boolean isLocal = !OpenshiftConfiguration.isOpenshift();
@@ -96,9 +99,13 @@ public abstract class QuarkusApp extends App {
             "--quarkus-version", QuarkusConfiguration.quarkusPlatformVersion()
         ));
 
-        if (OpenshiftConfiguration.isOpenshift()) {
-            arguments.add("--dep");
-            arguments.add("io.quarkus:quarkus-openshift");
+        // Add extensions from variant
+        String extensions = variant.getExtensions();
+        if (!extensions.isEmpty()) {
+            for (String extension : extensions.split(",")) {
+                arguments.add("--dep");
+                arguments.add("io.quarkus:quarkus-" + extension.trim());
+            }
         }
 
         super.createUsingJBang(arguments);
@@ -108,7 +115,7 @@ public abstract class QuarkusApp extends App {
      * Creates the application skeleton using quarkus-maven-plugin.
      */
     private void createWithMaven() {
-        LOG.info("Creating Camel Quarkus application project for integration {}", getName());
+        LOG.info("Creating Quarkus application project for integration {}", getName());
 
         String quarkusMavenPluginCreate = String.format("%s:%s:%s:create",
             QuarkusConfiguration.quarkusPlatformGroupId(), "quarkus-maven-plugin", QuarkusConfiguration.quarkusPlatformVersion());
@@ -120,7 +127,7 @@ public abstract class QuarkusApp extends App {
             "platformGroupId", QuarkusConfiguration.quarkusPlatformGroupId(),
             "platformArtifactId", QuarkusConfiguration.quarkusPlatformArtifactId(),
             "platformVersion", QuarkusConfiguration.quarkusPlatformVersion(),
-            "extensions", OpenshiftConfiguration.isOpenshift() ? "openshift" : ""
+            "extensions", variant.getExtensions()
         ));
 
         mavenProperties.putAll(QuarkusConfiguration.fromSystemProperties());
@@ -161,19 +168,19 @@ public abstract class QuarkusApp extends App {
         File pom = appDir.resolve("pom.xml").toFile();
         Model model = Maven.loadPom(pom);
 
-        // Append the camel platform bom (quarkus bom already present)
-        // Check if the cq bom is already present in the dependencies management, if it is, then it is overriden
+        // Append the additional platform bom (quarkus bom already present)
+        // Check if the additional bom is already present in the dependencies management, if it is, then it is overriden
         model.getDependencyManagement().getDependencies().stream()
-            .filter(d -> d.getArtifactId().equals(QuarkusConfiguration.camelQuarkusPlatformArtifactId())).findFirst()
+            .filter(d -> d.getArtifactId().equals(variant.additionalBomArtifactId())).findFirst()
             .ifPresent(d -> model.getDependencyManagement().getDependencies().remove(d));
 
-        Dependency camelQuarkusBom = new Dependency();
-        camelQuarkusBom.setGroupId(QuarkusConfiguration.camelQuarkusPlatformGroupId());
-        camelQuarkusBom.setArtifactId(QuarkusConfiguration.camelQuarkusPlatformArtifactId());
-        camelQuarkusBom.setVersion(QuarkusConfiguration.camelQuarkusPlatformVersion());
-        camelQuarkusBom.setType("pom");
-        camelQuarkusBom.setScope("import");
-        model.getDependencyManagement().getDependencies().add(camelQuarkusBom);
+        Dependency additionalBom = new Dependency();
+        additionalBom.setGroupId(variant.additionalBomGroupId());
+        additionalBom.setArtifactId(variant.additionalBomArtifactId());
+        additionalBom.setVersion(variant.additionalBomVersion());
+        additionalBom.setType("pom");
+        additionalBom.setScope("import");
+        model.getDependencyManagement().getDependencies().add(additionalBom);
 
         if (!OpenshiftConfiguration.isOpenshift()) {
             // quarkus-resteasy is needed for the openshift.yml to be generated, but the resteasy itself is not used anywhere
@@ -200,4 +207,5 @@ public abstract class QuarkusApp extends App {
             WaitUtils.waitFor(new Waiter(readinessCheck, "Waiting until the HTTP endpoint is ready").timeout(10, 1000L));
         }
     }
+
 }

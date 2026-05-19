@@ -3,8 +3,6 @@ package software.tnb.product.integration.generator;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
-import software.tnb.product.cq.customizer.QuarkusEncodingCustomizer;
-import software.tnb.product.cq.utils.ApplicationScopeCustomizer;
 import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
@@ -13,6 +11,8 @@ import software.tnb.product.customizer.app.HTTPServerPortCustomizer;
 import software.tnb.product.customizer.byteman.BytemanCustomizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.camel.utils.ApplicationScopeCustomizer;
+import software.tnb.product.quarkus.vanilla.customizer.QuarkusEncodingCustomizer;
 import software.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 
 import org.slf4j.Logger;
@@ -36,6 +36,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the given resource inside the given path.
+     *
      * @param resourcesPath resources directory path
      * @param resource resource to create
      */
@@ -49,6 +50,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the integration app directory.
+     *
      * @param integrationBuilder integration builder instance
      * @return app directory
      */
@@ -77,6 +79,7 @@ public final class IntegrationGenerator {
 
     /**
      * Processes the customizers defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
      */
     public static void processCustomizers(AbstractIntegrationBuilder<?> integrationBuilder) {
@@ -112,6 +115,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the resource files defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -122,6 +126,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the additional classes defined in the integration builder.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -154,6 +159,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the application.properties file.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */
@@ -176,6 +182,7 @@ public final class IntegrationGenerator {
 
     /**
      * Creates the integration class file.
+     *
      * @param integrationBuilder integration builder
      * @param appDir app directory
      */

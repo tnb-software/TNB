@@ -1,7 +1,7 @@
 package software.tnb.product.customizer.component.bean;
 
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.ProductsCustomizer;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.util.jparser.AnnotationUtils;
 
 import com.github.javaparser.ast.CompilationUnit;

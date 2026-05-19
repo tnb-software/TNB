@@ -4,8 +4,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.integration.builder.IntegrationBuilder;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.routebuilder.DummyRouteBuilder;
 
 import org.junit.jupiter.api.AfterAll;

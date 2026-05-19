@@ -1,16 +1,17 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.vanilla.variant.QuarkusVariant;
 
 import java.util.Optional;
 
 public abstract class LocalQuarkusApp extends QuarkusApp {
-    public LocalQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder) {
-        super(integrationBuilder);
+    public LocalQuarkusApp(AbstractIntegrationBuilder<?> integrationBuilder, QuarkusVariant variant) {
+        super(integrationBuilder, variant);
 
         endpoint = new Endpoint(() -> "http://localhost:" + integrationBuilder.getPort());
 
