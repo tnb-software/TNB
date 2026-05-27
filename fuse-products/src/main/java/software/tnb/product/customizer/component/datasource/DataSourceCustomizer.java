@@ -111,7 +111,8 @@ public class DataSourceCustomizer extends ProductsCustomizer {
         MARIADB("org.mariadb.jdbc.Driver"),
         MYSQL("com.mysql.jdbc.Driver"),
         POSTGRESQL("org.postgresql.Driver"),
-        MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver");
+        MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver"),
+        ORACLE("oracle.jdbc.OracleDriver");
         private final String driverClass;
 
         DatabaseType(String driverClass) {

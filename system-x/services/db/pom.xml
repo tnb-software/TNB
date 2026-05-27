@@ -22,5 +22,6 @@
         <module>postgresql</module>
         <module>cassandra</module>
         <module>mongodb</module>
+        <module>oracle</module>
     </modules>
 </project>
