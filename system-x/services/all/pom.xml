@@ -323,6 +323,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-oracle</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-postgresql</artifactId>
         </dependency>
         <dependency>
