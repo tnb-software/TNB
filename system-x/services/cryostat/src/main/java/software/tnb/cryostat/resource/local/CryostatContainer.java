@@ -1,37 +1,44 @@
 package software.tnb.cryostat.resource.local;
 
-import software.tnb.common.utils.IOUtils;
-
-import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 
-import java.nio.file.Path;
+import java.time.Duration;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class CryostatContainer extends GenericContainer<CryostatContainer> {
-    private static final Path CONF_PATH;
-    private static final Path PROBES_PATH;
-    private static final Path RECORDINGS_PATH;
-    private static final Path TEMPLATES_PATH;
-    private static final Path CLIENTLIB_PATH;
 
-    static {
-        CONF_PATH = IOUtils.createTempFolderStructure("cryostat-conf", Stream.of("rules", "metadata"));
-        PROBES_PATH = IOUtils.createTempFolderStructure("cryostat-probes");
-        RECORDINGS_PATH = IOUtils.createTempFolderStructure("cryostat-recordings", Stream.of("file-uploads"));
-        TEMPLATES_PATH = IOUtils.createTempFolderStructure("cryostat-templates");
-        CLIENTLIB_PATH = IOUtils.createTempFolderStructure("cryostat-clientlib");
-    }
+    static final int PORT = 8181;
 
-    public CryostatContainer(String image, Map<String, String> env) {
+    public CryostatContainer(String image, CryostatDbContainer db, CryostatStorageContainer s3) {
         super(image);
-        this.withEnv(env);
-        this.withFileSystemBind(CONF_PATH.toAbsolutePath().toString(), "/opt/cryostat.d/conf.d", BindMode.READ_WRITE);
-        this.withFileSystemBind(PROBES_PATH.toAbsolutePath().toString(), "/opt/cryostat.d/probes.d", BindMode.READ_WRITE);
-        this.withFileSystemBind(RECORDINGS_PATH.toAbsolutePath().toString(), "/opt/cryostat.d/recordings.d", BindMode.READ_WRITE);
-        this.withFileSystemBind(TEMPLATES_PATH.toAbsolutePath().toString(), "/opt/cryostat.d/templates.d", BindMode.READ_WRITE);
-        this.withFileSystemBind(CLIENTLIB_PATH.toAbsolutePath().toString(), "/opt/cryostat.d/clientlib.d", BindMode.READ_WRITE);
-        this.withNetworkMode("host"); // using host network
+        this.withNetworkMode("host");
+        int dbPort = db.getMappedPort(CryostatDbContainer.PORT);
+        int s3Port = s3.getMappedPort(CryostatStorageContainer.PORT);
+        this.withEnv(Map.ofEntries(
+            Map.entry("QUARKUS_HTTP_HOST", "0.0.0.0"),
+            Map.entry("QUARKUS_HTTP_PORT", String.valueOf(PORT)),
+            Map.entry("QUARKUS_DATASOURCE_JDBC_URL",
+                "jdbc:postgresql://localhost:" + dbPort + "/" + CryostatDbContainer.DB_NAME),
+            Map.entry("QUARKUS_DATASOURCE_USERNAME", CryostatDbContainer.DB_USER),
+            Map.entry("QUARKUS_DATASOURCE_PASSWORD", CryostatDbContainer.DB_PASSWORD),
+            Map.entry("QUARKUS_S3_ENDPOINT_OVERRIDE", "http://localhost:" + s3Port),
+            Map.entry("QUARKUS_S3_PATH_STYLE_ACCESS", "true"),
+            Map.entry("QUARKUS_S3_AWS_REGION", "us-east-1"),
+            Map.entry("AWS_ACCESS_KEY_ID", CryostatStorageContainer.ACCESS_KEY),
+            Map.entry("AWS_SECRET_ACCESS_KEY", CryostatStorageContainer.SECRET_KEY),
+            Map.entry("STORAGE_BUCKETS_ARCHIVES_NAME", "archivedrecordings"),
+            Map.entry("CRYOSTAT_SERVICES_REPORTS_STORAGE_CACHE_NAME", "archivedreports"),
+            Map.entry("STORAGE_BUCKETS_EVENT_TEMPLATES_NAME", "eventtemplates"),
+            Map.entry("STORAGE_BUCKETS_PROBE_TEMPLATES_NAME", "probetemplates"),
+            Map.entry("STORAGE_BUCKETS_HEAP_DUMPS_NAME", "heapdumps"),
+            Map.entry("STORAGE_BUCKETS_THREAD_DUMPS_NAME", "threaddumps"),
+            Map.entry("STORAGE_BUCKETS_METADATA_NAME", "cryostatmeta"),
+            Map.entry("CRYOSTAT_DISCOVERY_JDP_ENABLED", "true"),
+            Map.entry("CRYOSTAT_AGENT_TLS_REQUIRED", "false"),
+            Map.entry("CRYOSTAT_DISABLE_SSL", "true")
+        ));
+        this.waitingFor(Wait.forLogMessage(".*Listening on.*", 1)
+            .withStartupTimeout(Duration.ofMinutes(2)));
     }
 }

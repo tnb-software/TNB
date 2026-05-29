@@ -16,11 +16,9 @@ import org.slf4j.LoggerFactory;
 import com.google.auto.service.AutoService;
 
 import java.io.IOException;
-import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 
-import cz.xtf.core.openshift.helpers.ResourceParsers;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResource;
 import io.fabric8.kubernetes.api.model.GenericKubernetesResourceBuilder;
 import io.fabric8.kubernetes.api.model.Pod;
@@ -38,10 +36,9 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public void undeploy() {
-        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).delete();
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind())
+            .inNamespace(OpenshiftClient.get().getNamespace()).delete();
         WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
-        deleteSubscription(() -> OpenshiftClient.get().getLabeledPods("control-plane", "controller-manager")
-            .stream().noneMatch(p -> p.getMetadata().getName().contains("cryostat")));
     }
 
     /**
@@ -62,20 +59,26 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public void create() {
-        LOG.debug("Creating Cryostat instance");
-        // Create subscription
-        createSubscription();
+        if (OpenshiftClient.get().apps().deployments().inNamespace(targetNamespace())
+            .list().getItems().stream().noneMatch(d -> d.getMetadata().getName().contains("cryostat"))) {
+            LOG.debug("Cryostat operator not found in {}, creating subscription", targetNamespace());
+            createSubscription();
+        } else {
+            LOG.debug("Cryostat operator already installed in {}, skipping subscription", targetNamespace());
+        }
 
-        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).resource(customResource()).create();
+        LOG.debug("Creating Cryostat custom resource in namespace {}", OpenshiftClient.get().getNamespace());
+        OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind())
+            .inNamespace(OpenshiftClient.get().getNamespace()).resource(customResource()).create();
     }
 
     @Override
     public boolean isReady() {
         final PodResource pod = servicePod();
         try {
-            return pod != null && pod.isReady()
-                && HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health"
-                , OpenshiftClient.get().getRoute(appName()).getSpec().getHost())).build()).execute().isSuccessful();
+            int code = HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health/liveness"
+                , OpenshiftClient.get().getRoute(appName()).getSpec().getHost())).build()).execute().code();
+            return pod != null && pod.isReady() && (code == 200 || code == 204);
         } catch (IOException e) {
             return false;
         }
@@ -83,11 +86,10 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public boolean isDeployed() {
-        // Cryostat / Hyperfoil operators do not have any unique label, so the pod name is used as well
-        List<Pod> pods = OpenshiftClient.get().pods().withLabel("control-plane", "controller-manager").list().getItems().stream()
-            .filter(p -> p.getMetadata().getName().contains("cryostat")).toList();
-        return pods.size() == 1 && ResourceParsers.isPodReady(pods.get(0))
-            && OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).list().getItems().size() == 1;
+        return OpenshiftClient.get().apps().deployments().inNamespace(targetNamespace())
+            .list().getItems().stream().anyMatch(d -> d.getMetadata().getName().contains("cryostat"))
+            && OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind())
+            .inNamespace(OpenshiftClient.get().getNamespace()).list().getItems().size() == 1;
     }
 
     @Override
@@ -116,6 +118,16 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     }
 
     @Override
+    public boolean clusterWide() {
+        return true;
+    }
+
+    @Override
+    public String targetNamespace() {
+        return "openshift-operators";
+    }
+
+    @Override
     public String operatorName() {
         return "cryostat-operator";
     }
@@ -127,7 +139,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
 
     @Override
     public String apiVersion() {
-        return "operator.cryostat.io/v1beta1";
+        return "operator.cryostat.io/v1beta2";
     }
 
     @Override
@@ -141,7 +153,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
             .endMetadata()
             .withAdditionalProperties(Map.of("spec", Map.of(
                 "enableCertManager", false
-                , "minimal", true
+                , "targetNamespaces", java.util.List.of(OpenshiftClient.get().getNamespace())
             )))
             .build();
     }
