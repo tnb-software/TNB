@@ -112,7 +112,8 @@ public class DataSourceCustomizer extends ProductsCustomizer {
         MYSQL("com.mysql.jdbc.Driver"),
         POSTGRESQL("org.postgresql.Driver"),
         MSSQL("com.microsoft.sqlserver.jdbc.SQLServerDriver"),
-        ORACLE("oracle.jdbc.OracleDriver");
+        ORACLE("oracle.jdbc.OracleDriver"),
+        DB2("com.ibm.db2.jcc.DB2Driver");
         private final String driverClass;
 
         DatabaseType(String driverClass) {
