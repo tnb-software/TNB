@@ -9,39 +9,62 @@ import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.client.local.LocalCryostatClient;
 import software.tnb.cryostat.service.Cryostat;
 
-import com.google.auto.service.AutoService;
+import org.testcontainers.containers.Network;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import com.google.auto.service.AutoService;
 
 @AutoService(Cryostat.class)
 public class LocalCryostat extends Cryostat implements ContainerDeployable<CryostatContainer>, WithDockerImage {
-    private static final String JMX_DB_PASSWORD = UUID.randomUUID().toString();
-    private final CryostatContainer container = new CryostatContainer(image(), containerEnvironment());
 
-    /**
-     * Open all resources needed after the service is deployed - initialize clients and stuff.
-     */
+    private Network network;
+    private CryostatDbContainer dbContainer;
+    private CryostatStorageContainer storageContainer;
+    private CryostatContainer cryostatContainer;
+
+    @Override
+    public void deploy() {
+        network = Network.newNetwork();
+        dbContainer = new CryostatDbContainer(network);
+        dbContainer.start();
+        storageContainer = new CryostatStorageContainer(network);
+        storageContainer.start();
+        cryostatContainer = new CryostatContainer(image(), dbContainer, storageContainer);
+        cryostatContainer.start();
+    }
+
+    @Override
+    public void undeploy() {
+        if (cryostatContainer != null) {
+            cryostatContainer.stop();
+        }
+        if (storageContainer != null) {
+            storageContainer.stop();
+        }
+        if (dbContainer != null) {
+            dbContainer.stop();
+        }
+        if (network != null) {
+            network.close();
+        }
+    }
+
     @Override
     public void openResources() {
         final HTTPUtils client = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient());
-        WaitUtils.waitFor(new Waiter(() -> client.get(String.format("%s/health", connectionUrl()), false).isSuccessful()
-            , "wait for container ready"));
+        WaitUtils.waitFor(new Waiter(() -> {
+            int code = client.get(String.format("%s/health/liveness", connectionUrl()), false).getResponseCode();
+            return code == 200 || code == 204;
+        }, "wait for container ready"));
         validation().init();
     }
 
-    /**
-     * Close all resources used after before the service is undeployed.
-     */
     @Override
     public void closeResources() {
-
     }
 
     @Override
     public String connectionUrl() {
-        return String.format("http://%s:%d", container.getHost(), getPortMapping(8181));
+        return String.format("http://%s:%d", cryostatContainer.getHost(), CryostatContainer.PORT);
     }
 
     @Override
@@ -51,24 +74,15 @@ public class LocalCryostat extends Cryostat implements ContainerDeployable<Cryos
 
     @Override
     public int getPortMapping(int port) {
-        return port; //use fixed port because of the cryostat container using host net
-    }
-
-    protected Map<String, String> containerEnvironment() {
-        final Map<String, String> env = new HashMap<>();
-        env.put("CRYOSTAT_DISABLE_JMX_AUTH", "true");
-        env.put("CRYOSTAT_ALLOW_UNTRUSTED_SSL", "true");
-        env.put("CRYOSTAT_DISABLE_SSL", "true");
-        env.put("CRYOSTAT_JMX_CREDENTIALS_DB_PASSWORD", JMX_DB_PASSWORD);
-        return env;
+        return port;
     }
 
     public String defaultImage() {
-        return "registry.redhat.io/cryostat-tech-preview/cryostat-rhel8:latest";
+        return "registry.redhat.io/cryostat/cryostat-rhel9:latest";
     }
 
     @Override
     public CryostatContainer container() {
-        return container;
+        return cryostatContainer;
     }
 }

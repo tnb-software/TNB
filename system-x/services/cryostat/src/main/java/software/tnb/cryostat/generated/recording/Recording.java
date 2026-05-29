@@ -3,6 +3,7 @@ package software.tnb.cryostat.generated.recording;
 import com.fasterxml.jackson.annotation.JsonAnyGetter;
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
@@ -13,6 +14,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonPropertyOrder({
     "downloadUrl",
     "reportUrl",
@@ -34,7 +36,9 @@ public class Recording {
     @JsonProperty("reportUrl")
     private String reportUrl;
     @JsonProperty("id")
-    private Integer id;
+    private Long id;
+    @JsonProperty("remoteId")
+    private Long remoteId;
     @JsonProperty("name")
     private String name;
     @JsonProperty("state")
@@ -75,13 +79,23 @@ public class Recording {
     }
 
     @JsonProperty("id")
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
     @JsonProperty("id")
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
+    }
+
+    @JsonProperty("remoteId")
+    public Long getRemoteId() {
+        return remoteId;
+    }
+
+    @JsonProperty("remoteId")
+    public void setRemoteId(Long remoteId) {
+        this.remoteId = remoteId;
     }
 
     @JsonProperty("name")

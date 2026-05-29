@@ -40,7 +40,11 @@ public class LocalCryostatClient extends BaseCryostatClient {
 
     public LocalCryostatClient(String connectionUrl) {
         this.connectionUrl = connectionUrl;
-        this.apiClient = new OkHttpClient();
+        this.apiClient = new OkHttpClient.Builder()
+            .connectTimeout(2, java.util.concurrent.TimeUnit.MINUTES)
+            .readTimeout(2, java.util.concurrent.TimeUnit.MINUTES)
+            .writeTimeout(2, java.util.concurrent.TimeUnit.MINUTES)
+            .build();
     }
 
     @Override
@@ -57,40 +61,54 @@ public class LocalCryostatClient extends BaseCryostatClient {
 
     @Override
     public List<Target> targets(String apiContextUrl) throws IOException {
-        return ((List<Map>) get(apiContextUrl, "unable to retrieve targets: %s %s", new TypeReference<List>() { }))
-            .stream().map(m -> {
+        Request request = getRequestForUrl(apiContextUrl).build();
+        try (Response resp = apiClient.newCall(request).execute()) {
+            if (!resp.isSuccessful()) {
+                throw new RuntimeException(String.format("unable to retrieve targets: %s %s", resp.code(), resp.message()));
+            }
+            String body = resp.body().string();
+            LOG.info("GET {} response: {}", apiContextUrl, body);
+            List<Map> rawList = mapper.readValue(body, new TypeReference<List<Map>>() { });
+            return rawList.stream().map(m -> {
                 try {
                     return mapper.readValue(mapper.writeValueAsString(m), Target.class);
                 } catch (JsonProcessingException e) {
                     throw new RuntimeException(e.getMessage());
                 }
             }).collect(Collectors.toList());
+        }
     }
 
     @Override
     public void addTarget(String apiContextUrl, String alias, String appName) throws IOException {
         String ip = getIp(appName);
         String port = getPort();
-        String podName = getPodName(appName);
-        post(apiContextUrl, Map.of("connectUrl", String.format("service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ip, port)
-            , "alias", alias
-            , "annotations.cryostat.HOST", ip
-            , "annotations.cryostat.PORT", port
-            , "annotations.cryostat.POD_NAME", podName
-        ), Map.class);
+        String connectUrl = String.format("service:jmx:rmi:///jndi/rmi://%s:%s/jmxrmi", ip, port);
+        LOG.info("Adding Cryostat target: alias={}, connectUrl={}", alias, connectUrl);
+        String json = mapper.writeValueAsString(Map.of("connectUrl", connectUrl, "alias", alias));
+        post(apiContextUrl, "application/json", json.getBytes(StandardCharsets.UTF_8), Map.class);
     }
 
     @Override
     public List<Recording> recordings(String apiContextUrl) throws IOException {
-        return get(apiContextUrl, "unable to retrieve recordings: %s %s", new TypeReference<List<Recording>>() { });
+        Request request = getRequestForUrl(apiContextUrl).build();
+        try (Response resp = apiClient.newCall(request).execute()) {
+            if (!resp.isSuccessful()) {
+                throw new RuntimeException(String.format("unable to retrieve recordings: %s %s", resp.code(), resp.message()));
+            }
+            String body = resp.body().string();
+            return mapper.readValue(body, new TypeReference<List<Recording>>() { });
+        }
     }
 
     @Override
     public void startRecording(String apiContextUrl, String name, Map<String, String> labels) throws IOException {
+        LOG.info("Starting recording: url={}, name={}, template={}", apiContextUrl, name, getJfrTemplate());
         final Response result = post(apiContextUrl, Map.of("recordingName", name
-                , "events", "template=" + getJfrTemplate()
+                , "events", "template=" + getJfrTemplate() + ",type=TARGET"
                 , "metadata", "{\"labels\":" + mapper.writeValueAsString(labels) + "}")
             , Reader.class);
+        LOG.info("Start recording response: HTTP {}", result.code());
         if (result.code() != 201) {
             throw new IOException("Unable to start recording :" + result.code());
         }
@@ -178,7 +196,8 @@ public class LocalCryostatClient extends BaseCryostatClient {
     private <T> Response postRequest(String apiContextUrl, Class<T> returnType, Request req) throws IOException {
         final Response resp = apiClient.newCall(req).execute();
         if (!resp.isSuccessful()) {
-            LOG.error("error sending POST to {}: {}", apiContextUrl, resp.body() != null ? resp.body().string() : "no body");
+            String body = resp.body() != null ? resp.body().string() : "no body";
+            LOG.error("error sending POST to {} (HTTP {}): {}", apiContextUrl, resp.code(), body);
             throw new RuntimeException(String.format("error on posting on %s: %s %s", apiContextUrl, resp.code(), resp.message()));
         }
         return resp;
