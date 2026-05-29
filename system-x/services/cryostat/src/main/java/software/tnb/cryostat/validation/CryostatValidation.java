@@ -3,7 +3,6 @@ package software.tnb.cryostat.validation;
 import software.tnb.common.validation.Validation;
 import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.generated.recording.Recording;
-import software.tnb.cryostat.generated.targets.Cryostat;
 import software.tnb.cryostat.generated.targets.Target;
 
 import org.slf4j.Logger;
@@ -19,10 +18,10 @@ public class CryostatValidation implements Validation {
 
     private static final Logger LOG = LoggerFactory.getLogger(CryostatValidation.class);
 
-    private static final String API_AUTH = "/api/v1/auth";
-    private static final String API_TARGET = "/api/v1/targets";
-    private static final String API_RECORDING = "/api/v1/targets/%s/recordings";
-    private static final String API_TARGET_CREATE = "/api/v2/targets";
+    private static final String API_AUTH = "/api/v4/auth";
+    private static final String API_TARGET = "/api/v4/targets";
+    private static final String API_RECORDING = "/api/v4/targets/%s/recordings";
+    private static final String API_TARGET_CREATE = "/api/v4/targets";
     private final CryostatClient delegate;
 
     public CryostatValidation(CryostatClient client) {
@@ -66,35 +65,56 @@ public class CryostatValidation implements Validation {
             LOG.debug("Starting recording {} using template {}", recordingInfo.getRecordingName(), recordingInfo.getJfrTemplateName());
             delegate.setJfrTemplate(recordingInfo.getJfrTemplateName());
             delegate.startRecording(String.format(API_RECORDING, recordingInfo.getTargetId()), recordingInfo.getRecordingName(), Map.of("app", app));
+            try {
+                List<Recording> recordings = getRecordings(recordingInfo.getTargetId());
+                LOG.info("Found {} recordings for target {}", recordings.size(), recordingInfo.getTargetId());
+                recordings.stream()
+                    .filter(r -> recordingInfo.getRecordingName().equals(r.getName()))
+                    .findFirst()
+                    .ifPresent(r -> {
+                        int rid = r.getRemoteId() != null ? r.getRemoteId().intValue() : r.getId().intValue();
+                        LOG.info("Recording {} has remoteId {}, downloadUrl {}", r.getName(), rid, r.getDownloadUrl());
+                        recordingInfo.setRemoteId(rid);
+                        recordingInfo.setDownloadUrl(r.getDownloadUrl());
+                    });
+            } catch (Exception e) {
+                LOG.warn("Failed to retrieve remoteId for recording {}: {}", recordingInfo.getRecordingName(), e.getMessage());
+            }
+            LOG.debug("Recording {} started with remoteId {}", recordingInfo.getRecordingName(), recordingInfo.getRemoteId());
         } catch (IOException e) {
             throw new RuntimeException("unable to start recording", e);
         }
     }
 
+    private String recordingPath(RecordingInfo recordingInfo) {
+        return String.format(API_RECORDING + "/%s", recordingInfo.getTargetId(), recordingInfo.getRemoteId());
+    }
+
     public void stopRecording(RecordingInfo recordingInfo) {
         try {
             LOG.debug("Stop recording {}", recordingInfo.getRecordingName());
-            delegate.stopRecording(String.format(API_RECORDING + "/%s", recordingInfo.getTargetId(), recordingInfo.getRecordingName()));
-        } catch (IOException e) {
-            throw new RuntimeException("unable to stop recording", e);
+            delegate.stopRecording(recordingPath(recordingInfo));
+        } catch (Exception e) {
+            LOG.warn("Failed to stop recording {} (target may have been shut down): {}", recordingInfo.getRecordingName(), e.getMessage());
         }
     }
 
     public void deleteRecording(RecordingInfo recordingInfo) {
         try {
             LOG.debug("Delete recording {}", recordingInfo.getRecordingName());
-            delegate.deleteRecording(String.format(API_RECORDING + "/%s", recordingInfo.getTargetId(), recordingInfo.getRecordingName()));
-        } catch (IOException e) {
-            throw new RuntimeException("unable to delete recording", e);
+            delegate.deleteRecording(recordingPath(recordingInfo));
+        } catch (Exception e) {
+            LOG.warn("Failed to delete recording {} (target may have been shut down): {}", recordingInfo.getRecordingName(), e.getMessage());
         }
     }
 
     public void downloadRecording(RecordingInfo recordingInfo, String destinationFile) {
         try {
-            delegate.downloadRecording(String.format(API_RECORDING + "/%s", recordingInfo.getTargetId(), recordingInfo.getRecordingName())
-                , destinationFile);
+            String path = recordingInfo.getDownloadUrl() != null ? recordingInfo.getDownloadUrl() : recordingPath(recordingInfo);
+            LOG.debug("Downloading recording from {}", path);
+            delegate.downloadRecording(path, destinationFile);
             LOG.debug("JFR recording saved to {}", destinationFile);
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new RuntimeException("unable to download recording", e);
         }
     }
@@ -107,10 +127,14 @@ public class CryostatValidation implements Validation {
         AtomicReference<RecordingInfo> info = new AtomicReference<>();
         String targetAlias = getPodName(appName);
         addTarget(targetAlias, appName);
-        getTargets().stream().filter(t -> t.getAlias().equals(targetAlias))
+        List<Target> targets = getTargets();
+        LOG.info("Discovered targets: {}", targets.stream().map(t -> "alias=" + t.getAlias() + " id=" + t.getAdditionalProperties().get("id"))
+            .collect(java.util.stream.Collectors.joining(", ")));
+        targets.stream().filter(t -> t.getAlias().equals(targetAlias))
             .findFirst().ifPresent(target -> {
-                Cryostat cry = target.getAnnotations().getCryostat();
-                info.set(new RecordingInfo(cry.getHost() + ":" + cry.getPort()
+                String targetId = String.valueOf(target.getId());
+                LOG.info("Found target: alias={}, id={}", target.getAlias(), targetId);
+                info.set(new RecordingInfo(targetId
                     , appName + "-" + UUID.randomUUID().toString().substring(0, 4), jfrTemplateName));
                 startRecording(info.get(), appName);
             });
@@ -125,6 +149,8 @@ public class CryostatValidation implements Validation {
         final String targetId;
         final String recordingName;
         final String jfrTemplateName;
+        private Integer remoteId;
+        private String downloadUrl;
 
         public RecordingInfo(final String targetId, final String recordingName, final String jfrTemplateName) {
             this.targetId = targetId;
@@ -142,6 +168,22 @@ public class CryostatValidation implements Validation {
 
         public String getJfrTemplateName() {
             return jfrTemplateName;
+        }
+
+        public Integer getRemoteId() {
+            return remoteId;
+        }
+
+        public void setRemoteId(Integer remoteId) {
+            this.remoteId = remoteId;
+        }
+
+        public String getDownloadUrl() {
+            return downloadUrl;
+        }
+
+        public void setDownloadUrl(String downloadUrl) {
+            this.downloadUrl = downloadUrl;
         }
     }
 }
