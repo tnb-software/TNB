@@ -135,6 +135,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-db2</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-docling-serve</artifactId>
         </dependency>
         <dependency>
@@ -324,10 +328,6 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-oracle</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
-            <artifactId>system-x-db2</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
