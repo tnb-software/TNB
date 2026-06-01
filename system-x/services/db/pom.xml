@@ -23,5 +23,6 @@
         <module>cassandra</module>
         <module>mongodb</module>
         <module>oracle</module>
+        <module>db2</module>
     </modules>
 </project>
