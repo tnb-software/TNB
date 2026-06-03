@@ -75,10 +75,17 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
     @Override
     public boolean isReady() {
         final PodResource pod = servicePod();
+        if (pod == null || !pod.isReady()) {
+            return false;
+        }
         try {
+            var route = OpenshiftClient.get().getRoute(appName());
+            if (route == null) {
+                return false;
+            }
             int code = HTTPUtils.trustAllSslClient().newCall(new Request.Builder().get().url(String.format("https://%s/health/liveness"
-                , OpenshiftClient.get().getRoute(appName()).getSpec().getHost())).build()).execute().code();
-            return pod != null && pod.isReady() && (code == 200 || code == 204);
+                , route.getSpec().getHost())).build()).execute().code();
+            return code == 200 || code == 204;
         } catch (IOException e) {
             return false;
         }
@@ -154,6 +161,7 @@ public class OpenshiftCryostat extends Cryostat implements ReusableOpenshiftDepl
             .withAdditionalProperties(Map.of("spec", Map.of(
                 "enableCertManager", false
                 , "targetNamespaces", java.util.List.of(OpenshiftClient.get().getNamespace())
+                , "reportOptions", Map.of("replicas", 1)
             )))
             .build();
     }

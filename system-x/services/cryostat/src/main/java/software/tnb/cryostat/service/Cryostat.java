@@ -14,9 +14,13 @@ public abstract class Cryostat extends Service<Account, CryostatClient, Cryostat
 
     public abstract int getPortMapping(int port);
 
+    public String reportsUrl() {
+        return null;
+    }
+
     public CryostatValidation validation() {
         validation = Optional.ofNullable(validation)
-            .orElseGet(() -> new CryostatValidation(client()));
+            .orElseGet(() -> new CryostatValidation(client(), reportsUrl()));
         return validation;
     }
 }
