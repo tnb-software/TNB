@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 
+import org.apache.maven.model.Model;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,6 +21,8 @@ public abstract class Customizer {
     protected static final Logger LOG = LoggerFactory.getLogger(Customizer.class);
 
     private ProductType product;
+    private AbstractIntegrationBuilder<?> integrationBuilder;
+    private Model model;
 
     public Customizer() {
     }
@@ -27,8 +30,6 @@ public abstract class Customizer {
     public Customizer(ProductType product) {
         this.product = product;
     }
-
-    private AbstractIntegrationBuilder<?> integrationBuilder;
 
     public void doCustomize() {
         if (product == null || TestConfiguration.product() == product) {
@@ -68,5 +69,13 @@ public abstract class Customizer {
 
     public void setIntegrationBuilder(AbstractIntegrationBuilder<?> integrationBuilder) {
         this.integrationBuilder = integrationBuilder;
+    }
+
+    public Model getModel() {
+        return model;
+    }
+
+    public void setModel(Model model) {
+        this.model = model;
     }
 }

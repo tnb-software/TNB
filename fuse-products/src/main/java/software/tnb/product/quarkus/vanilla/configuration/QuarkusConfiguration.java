@@ -1,4 +1,4 @@
-package software.tnb.product.cq.configuration;
+package software.tnb.product.quarkus.vanilla.configuration;
 
 import software.tnb.product.camel.CamelConfiguration;
 
@@ -6,6 +6,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+/**
+ * Configuration for vanilla Quarkus (without Camel or CXF).
+ */
 public class QuarkusConfiguration extends CamelConfiguration {
     // All properties starting with "quarkus." are propagated to the maven builds (to allow customizing quarkus build "globally")
     // To include only properties passed as system properties, this list contains properties that are defined in this class
@@ -13,9 +16,6 @@ public class QuarkusConfiguration extends CamelConfiguration {
     // if you're adding a new property and it starts with "quarkus.", consider adding it to this set
     private static final Set<String> ignoredQuarkusProperties =
         Set.of("quarkus.version", "quarkus.native", "quarkus.platform.group-id", "quarkus.platform.artifact-id", "quarkus.platform.version");
-    public static final String CAMEL_QUARKUS_VERSION = "camel-quarkus.version";
-
-    public static final String DEFAULT_CAMEL_QUARKUS_VERSION = "3.26.0";
 
     public static final String QUARKUS_VERSION = "quarkus.version";
 
@@ -30,26 +30,8 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static final String DEFAULT_QUARKUS_PLATFORM_GROUP_ID = "io.quarkus";
     public static final String DEFAULT_QUARKUS_PLATFORM_ARTIFACT_ID = "quarkus-bom";
 
-    public static final String CAMEL_QUARKUS_PLATFORM_GROUP_ID = "camel-quarkus.platform.group-id";
-
-    public static final String CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel-quarkus.platform.artifact-id";
-
-    public static final String CAMEL_QUARKUS_PLATFORM_VERSION = "camel-quarkus.platform.version";
-
-    public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_GROUP_ID = "org.apache.camel.quarkus";
-
-    public static final String DEFAULT_CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID = "camel-quarkus-bom";
-
-    public static final String CAMEL_QUARKUS_EXAMPLES_REPO = "camel.quarkus.examples.repo";
-
-    public static final String CAMEL_QUARKUS_EXAMPLES_BRANCH = "camel.quarkus.examples.branch";
-
     public static String quarkusVersion() {
         return getProperty(QUARKUS_VERSION);
-    }
-
-    public static String camelQuarkusVersion() {
-        return getProperty(CAMEL_QUARKUS_VERSION);
     }
 
     public static boolean isQuarkusNative() {
@@ -66,26 +48,6 @@ public class QuarkusConfiguration extends CamelConfiguration {
 
     public static String quarkusPlatformVersion() {
         return getProperty(QUARKUS_PLATFORM_VERSION);
-    }
-
-    public static String camelQuarkusPlatformGroupId() {
-        return getProperty(CAMEL_QUARKUS_PLATFORM_GROUP_ID);
-    }
-
-    public static String camelQuarkusPlatformArtifactId() {
-        return getProperty(CAMEL_QUARKUS_PLATFORM_ARTIFACT_ID);
-    }
-
-    public static String camelQuarkusPlatformVersion() {
-        return getProperty(CAMEL_QUARKUS_PLATFORM_VERSION);
-    }
-
-    public static String getCamelQuarkusExamplesRepo() {
-        return getProperty(CAMEL_QUARKUS_EXAMPLES_REPO, "https://github.com/apache/camel-quarkus-examples");
-    }
-
-    public static String getCamelQuarkusExamplesBranch() {
-        return getProperty(CAMEL_QUARKUS_EXAMPLES_BRANCH, "main");
     }
 
     /**

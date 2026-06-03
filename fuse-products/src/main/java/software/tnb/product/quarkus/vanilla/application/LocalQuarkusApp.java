@@ -1,4 +1,4 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.customizer.Customizer;

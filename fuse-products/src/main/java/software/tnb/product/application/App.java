@@ -213,7 +213,7 @@ public abstract class App {
 
         final Path appDir = IntegrationGenerator.createApplicationDirectory(integrationBuilder);
 
-        IntegrationGenerator.processCustomizers(integrationBuilder);
+        IntegrationGenerator.processCustomizers(integrationBuilder, appDir);
         IntegrationGenerator.createAdditionalClasses(integrationBuilder, appDir);
         IntegrationGenerator.createRouteBuilderClasses(integrationBuilder, appDir);
 

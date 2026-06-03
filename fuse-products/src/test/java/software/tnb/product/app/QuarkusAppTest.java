@@ -5,9 +5,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.product.ProductType;
-import software.tnb.product.cq.application.LocalPackagedQuarkusApp;
-import software.tnb.product.cq.application.LocalQuarkusApp;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
+import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
+import software.tnb.product.quarkus.camel.configuration.CamelQuarkusConfiguration;
+import software.tnb.product.quarkus.camel.variant.CamelQuarkusVariant;
+import software.tnb.product.quarkus.vanilla.application.LocalPackagedQuarkusApp;
+import software.tnb.product.quarkus.vanilla.application.LocalQuarkusApp;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.util.maven.Maven;
 import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
 
@@ -33,15 +36,23 @@ public class QuarkusAppTest extends LocalAppTestParent {
         return ProductType.CAMEL_QUARKUS;
     }
 
+    private void applyVariant(AbstractIntegrationBuilder<?> ib, software.tnb.product.quarkus.vanilla.variant.QuarkusVariant variant) {
+        ib.startupRegex(variant.getStartupRegex());
+        ib.addCustomizers(variant.getCustomizers());
+        ib.dependencies(variant.getAdditionalDependencies());
+    }
+
     @AfterEach
     public void clearProperties() {
-        List.of(QuarkusConfiguration.QUARKUS_NATIVE_BUILD, QuarkusConfiguration.CAMEL_QUARKUS_VERSION, OpenshiftConfiguration.USE_OPENSHIFT)
+        List.of(QuarkusConfiguration.QUARKUS_NATIVE_BUILD, CamelQuarkusConfiguration.CAMEL_QUARKUS_VERSION, OpenshiftConfiguration.USE_OPENSHIFT)
             .forEach(System::clearProperty);
     }
 
     @Test
     public void shouldCreateQuarkusAppTest() {
-        LocalQuarkusApp app = new LocalPackagedQuarkusApp(dummyIb());
+        AbstractIntegrationBuilder<?> ib = dummyIb();
+        applyVariant(ib, new CamelQuarkusVariant());
+        LocalQuarkusApp app = new LocalPackagedQuarkusApp(ib);
 
         assertThat(app.getName()).isEqualTo(name());
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
@@ -79,7 +90,9 @@ public class QuarkusAppTest extends LocalAppTestParent {
     public void shouldAddNativeProfileTest() {
         System.setProperty(QuarkusConfiguration.QUARKUS_NATIVE_BUILD, "true");
 
-        new LocalPackagedQuarkusApp(dummyIb());
+        AbstractIntegrationBuilder<?> ib = dummyIb();
+        applyVariant(ib, new CamelQuarkusVariant());
+        new LocalPackagedQuarkusApp(ib);
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 
         InvocationRequest request = TEST_INVOKER.getRequests().get(1);
@@ -91,14 +104,16 @@ public class QuarkusAppTest extends LocalAppTestParent {
         final String groupId = "com.test";
         final String artifactId = "example";
         final String version = "1.0";
-        new LocalPackagedQuarkusApp(dummyIb().dependencies(groupId + ":" + artifactId + ":" + version));
+        AbstractIntegrationBuilder<?> ib = dummyIb().dependencies(groupId + ":" + artifactId + ":" + version);
+        applyVariant(ib, new CamelQuarkusVariant());
+        new LocalPackagedQuarkusApp(ib);
         verifyDependencies(groupId, artifactId, version);
     }
 
     @Test
     public void shouldAppendCamelQuarkusBomTest() {
         final String productizedVersion = "1.0.redhat-1";
-        System.setProperty(QuarkusConfiguration.CAMEL_QUARKUS_VERSION, productizedVersion);
+        System.setProperty(CamelQuarkusConfiguration.CAMEL_QUARKUS_VERSION, productizedVersion);
 
         TEST_INVOKER.mockExecution(() -> {
             Model model = Maven.loadPom(POM_PATH.toFile());
@@ -114,15 +129,17 @@ public class QuarkusAppTest extends LocalAppTestParent {
             Maven.writePom(POM_PATH.toFile(), model);
         });
 
-        new LocalPackagedQuarkusApp(dummyIb());
+        AbstractIntegrationBuilder<?> ib = dummyIb();
+        applyVariant(ib, new CamelQuarkusVariant());
+        new LocalPackagedQuarkusApp(ib);
 
         final Model pom = Maven.loadPom(TestConfiguration.appLocation().resolve(name()).resolve("pom.xml").toFile());
         assertThat(pom.getDependencyManagement().getDependencies()).hasSize(2);
 
         Dependency d = pom.getDependencyManagement().getDependencies().get(1);
-        assertThat(d.getGroupId()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformGroupId());
-        assertThat(d.getArtifactId()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformArtifactId());
-        assertThat(d.getVersion()).isEqualTo(QuarkusConfiguration.camelQuarkusPlatformVersion());
+        assertThat(d.getGroupId()).isEqualTo(CamelQuarkusConfiguration.camelQuarkusPlatformGroupId());
+        assertThat(d.getArtifactId()).isEqualTo(CamelQuarkusConfiguration.camelQuarkusPlatformArtifactId());
+        assertThat(d.getVersion()).isEqualTo(CamelQuarkusConfiguration.camelQuarkusPlatformVersion());
         assertThat(d.getType()).isEqualTo("pom");
         assertThat(d.getScope()).isEqualTo("import");
     }
@@ -141,7 +158,9 @@ public class QuarkusAppTest extends LocalAppTestParent {
             Maven.writePom(POM_PATH.toFile(), model);
         });
 
-        new LocalPackagedQuarkusApp(dummyIb());
+        AbstractIntegrationBuilder<?> ib = dummyIb();
+        applyVariant(ib, new CamelQuarkusVariant());
+        new LocalPackagedQuarkusApp(ib);
 
         Model pom = Maven.loadPom(POM_PATH.toFile());
         assertThat(pom.getDependencies()).hasSize(1);
@@ -152,7 +171,9 @@ public class QuarkusAppTest extends LocalAppTestParent {
     public void shouldAddOpenshiftExtensionTest() {
         System.setProperty(OpenshiftConfiguration.USE_OPENSHIFT, "true");
 
-        new LocalPackagedQuarkusApp(dummyIb());
+        AbstractIntegrationBuilder<?> ib = dummyIb();
+        applyVariant(ib, new CamelQuarkusVariant());
+        new LocalPackagedQuarkusApp(ib);
 
         Assertions.assertThat(TEST_INVOKER.getRequests()).hasSize(2);
 

@@ -1,9 +1,8 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.customizer.Customizer;
 import software.tnb.product.customizer.component.rest.RestCustomizer;
 import software.tnb.product.endpoint.Endpoint;
@@ -12,6 +11,7 @@ import software.tnb.product.integration.builder.AbstractMavenGitIntegrationBuild
 import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.log.stream.OpenshiftLogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 

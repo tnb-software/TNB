@@ -57,6 +57,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegrationBuilder<SELF>> {
     public static final String ROUTE_BUILDER_METHOD_NAME = "configure";
+    public static final String DEFAULT_STARTUP_REGEX = "(?m)^.*Apache Camel.*started in.*$";
 
     private static final Logger LOG = LoggerFactory.getLogger(AbstractIntegrationBuilder.class);
     private static final Set<String> DEFAULT_IGNORED_PACKAGES = Set.of("software.tnb", "org.junit", "io.fabric8");
@@ -76,6 +77,8 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private String integrationName;
 
+    private String startupRegex = DEFAULT_STARTUP_REGEX;
+
     // use a random port locally if not specified otherwise
     private int port = OpenshiftConfiguration.isOpenshift() ? 8080 : NetworkUtils.getFreePort();
 
@@ -87,8 +90,6 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
     private OpenshiftCustomDeployer customStrategy;
 
     private boolean useJBang = false;
-
-    private String startupRegex = "(?m)^.*Apache Camel.*started in.*$";
 
     private boolean runApplication = true;
 
@@ -402,6 +403,11 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         if (others != null) {
             customizers.addAll(Arrays.asList(others));
         }
+        return self();
+    }
+
+    public SELF addCustomizers(List<Customizer> customizers) {
+        this.customizers.addAll(customizers);
         return self();
     }
 

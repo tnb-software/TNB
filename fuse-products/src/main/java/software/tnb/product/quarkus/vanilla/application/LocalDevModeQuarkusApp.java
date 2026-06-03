@@ -1,13 +1,13 @@
-package software.tnb.product.cq.application;
+package software.tnb.product.quarkus.vanilla.application;
 
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.application.Phase;
-import software.tnb.product.cq.configuration.QuarkusConfiguration;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.log.FileLog;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.util.maven.BuildRequest;
 import software.tnb.product.util.maven.Maven;
 
