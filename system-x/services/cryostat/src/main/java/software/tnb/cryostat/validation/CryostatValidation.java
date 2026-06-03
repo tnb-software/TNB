@@ -1,5 +1,7 @@
 package software.tnb.cryostat.validation;
 
+import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.common.validation.Validation;
 import software.tnb.cryostat.client.CryostatClient;
 import software.tnb.cryostat.generated.recording.Recording;
@@ -8,7 +10,16 @@ import software.tnb.cryostat.generated.targets.Target;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -23,9 +34,15 @@ public class CryostatValidation implements Validation {
     private static final String API_RECORDING = "/api/v4/targets/%s/recordings";
     private static final String API_TARGET_CREATE = "/api/v4/targets";
     private final CryostatClient delegate;
+    private final String reportsUrl;
 
     public CryostatValidation(CryostatClient client) {
+        this(client, null);
+    }
+
+    public CryostatValidation(CryostatClient client, String reportsUrl) {
         this.delegate = client;
+        this.reportsUrl = reportsUrl;
     }
 
     public void init() {
@@ -76,6 +93,7 @@ public class CryostatValidation implements Validation {
                         LOG.info("Recording {} has remoteId {}, downloadUrl {}", r.getName(), rid, r.getDownloadUrl());
                         recordingInfo.setRemoteId(rid);
                         recordingInfo.setDownloadUrl(r.getDownloadUrl());
+                        recordingInfo.setReportUrl(r.getReportUrl());
                     });
             } catch (Exception e) {
                 LOG.warn("Failed to retrieve remoteId for recording {}: {}", recordingInfo.getRecordingName(), e.getMessage());
@@ -119,6 +137,81 @@ public class CryostatValidation implements Validation {
         }
     }
 
+    public void downloadReport(RecordingInfo recordingInfo, String jfrFile, String destinationFile) {
+        if (reportsUrl != null) {
+            downloadReportDirect(jfrFile, destinationFile);
+        } else {
+            downloadReportViaCryostat(recordingInfo, destinationFile);
+        }
+    }
+
+    private void downloadReportDirect(String jfrFile, String destinationFile) {
+        try {
+            LOG.debug("Generating report from {} via {}", jfrFile, reportsUrl);
+            Path jfrPath = Paths.get(jfrFile);
+            String boundary = UUID.randomUUID().toString();
+            byte[] fileBytes = Files.readAllBytes(jfrPath);
+
+            byte[] body = buildMultipartBody(boundary, jfrPath.getFileName().toString(), fileBytes);
+
+            HttpClient httpClient = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(reportsUrl + "/report"))
+                .header("Content-Type", "multipart/form-data; boundary=" + boundary)
+                .header("Accept", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofByteArray(body))
+                .build();
+
+            HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+            if (response.statusCode() != 200) {
+                throw new RuntimeException("Report generation failed with HTTP " + response.statusCode());
+            }
+
+            Files.createDirectories(Paths.get(destinationFile).getParent());
+            try (FileOutputStream out = new FileOutputStream(destinationFile); InputStream in = response.body()) {
+                in.transferTo(out);
+            }
+            LOG.debug("JFR report saved to {}", destinationFile);
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException("unable to download report", e);
+        }
+    }
+
+    private void downloadReportViaCryostat(RecordingInfo recordingInfo, String destinationFile) {
+        String path = String.format("/api/v4/targets/%s/reports/%s", recordingInfo.getTargetId(), recordingInfo.getRemoteId());
+        LOG.debug("Downloading report via Cryostat API: {}", path);
+        WaitUtils.waitFor(new Waiter(() -> {
+            try {
+                delegate.downloadRecording(path, destinationFile);
+                String content = Files.readString(Paths.get(destinationFile)).trim();
+                if (content.startsWith("{")) {
+                    LOG.debug("JFR report saved to {}", destinationFile);
+                    return true;
+                }
+                LOG.debug("Report generation in progress (job {})", content);
+            } catch (Exception e) {
+                LOG.debug("Report not ready yet: {}", e.getMessage());
+            }
+            return false;
+        }, "Waiting for report to be generated").timeout(10, 5000));
+    }
+
+    private byte[] buildMultipartBody(String boundary, String fileName, byte[] fileContent) {
+        String header = "--" + boundary + "\r\n"
+            + "Content-Disposition: form-data; name=\"file\"; filename=\"" + fileName + "\"\r\n"
+            + "Content-Type: application/octet-stream\r\n\r\n";
+        String footer = "\r\n--" + boundary + "--\r\n";
+        byte[] headerBytes = header.getBytes();
+        byte[] footerBytes = footer.getBytes();
+        byte[] body = new byte[headerBytes.length + fileContent.length + footerBytes.length];
+        System.arraycopy(headerBytes, 0, body, 0, headerBytes.length);
+        System.arraycopy(fileContent, 0, body, headerBytes.length, fileContent.length);
+        System.arraycopy(footerBytes, 0, body, headerBytes.length + fileContent.length, footerBytes.length);
+        return body;
+    }
+
     public String getPodName(String appName) {
         return delegate.getPodName(appName);
     }
@@ -151,6 +244,7 @@ public class CryostatValidation implements Validation {
         final String jfrTemplateName;
         private Integer remoteId;
         private String downloadUrl;
+        private String reportUrl;
 
         public RecordingInfo(final String targetId, final String recordingName, final String jfrTemplateName) {
             this.targetId = targetId;
@@ -184,6 +278,14 @@ public class CryostatValidation implements Validation {
 
         public void setDownloadUrl(String downloadUrl) {
             this.downloadUrl = downloadUrl;
+        }
+
+        public String getReportUrl() {
+            return reportUrl;
+        }
+
+        public void setReportUrl(String reportUrl) {
+            this.reportUrl = reportUrl;
         }
     }
 }

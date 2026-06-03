@@ -19,6 +19,7 @@ public class LocalCryostat extends Cryostat implements ContainerDeployable<Cryos
     private Network network;
     private CryostatDbContainer dbContainer;
     private CryostatStorageContainer storageContainer;
+    private CryostatReportsContainer reportsContainer;
     private CryostatContainer cryostatContainer;
 
     @Override
@@ -28,6 +29,8 @@ public class LocalCryostat extends Cryostat implements ContainerDeployable<Cryos
         dbContainer.start();
         storageContainer = new CryostatStorageContainer(network);
         storageContainer.start();
+        reportsContainer = new CryostatReportsContainer(reportsImage());
+        reportsContainer.start();
         cryostatContainer = new CryostatContainer(image(), dbContainer, storageContainer);
         cryostatContainer.start();
     }
@@ -36,6 +39,9 @@ public class LocalCryostat extends Cryostat implements ContainerDeployable<Cryos
     public void undeploy() {
         if (cryostatContainer != null) {
             cryostatContainer.stop();
+        }
+        if (reportsContainer != null) {
+            reportsContainer.stop();
         }
         if (storageContainer != null) {
             storageContainer.stop();
@@ -79,6 +85,19 @@ public class LocalCryostat extends Cryostat implements ContainerDeployable<Cryos
 
     public String defaultImage() {
         return "registry.redhat.io/cryostat/cryostat-rhel9:latest";
+    }
+
+    @Override
+    public String reportsUrl() {
+        if (reportsContainer != null) {
+            return String.format("http://%s:%d", reportsContainer.getHost(),
+                reportsContainer.getMappedPort(CryostatReportsContainer.PORT));
+        }
+        return null;
+    }
+
+    public String reportsImage() {
+        return System.getProperty("tnb.cryostat.reports.image", "quay.io/cryostat/cryostat-reports:latest");
     }
 
     @Override
