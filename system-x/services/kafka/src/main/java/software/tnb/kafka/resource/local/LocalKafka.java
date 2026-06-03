@@ -6,7 +6,6 @@ import software.tnb.kafka.service.Kafka;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.Network;
 
 import com.google.auto.service.AutoService;
 
@@ -15,7 +14,6 @@ public class LocalKafka extends Kafka implements ContainerDeployable<StrimziCont
 
     private static final Logger LOG = LoggerFactory.getLogger(LocalKafka.class);
     private StrimziContainer strimziContainer;
-    private ZookeeperContainer zookeeperContainer;
 
     @Override
     public String bootstrapServers() {
@@ -39,15 +37,8 @@ public class LocalKafka extends Kafka implements ContainerDeployable<StrimziCont
 
     @Override
     public void deploy() {
-        Network network = Network.newNetwork();
-
-        LOG.info("Starting Zookeeper container");
-        zookeeperContainer = new ZookeeperContainer(image(), network);
-        zookeeperContainer.start();
-        LOG.info("Zookeeper container started");
-
-        LOG.info("Starting Kafka container");
-        strimziContainer = new StrimziContainer(image(), network);
+        LOG.info("Starting Kafka container (KRaft mode)");
+        strimziContainer = new StrimziContainer(image());
         strimziContainer.start();
         LOG.info("Kafka container started");
     }
@@ -58,11 +49,6 @@ public class LocalKafka extends Kafka implements ContainerDeployable<StrimziCont
             LOG.info("Stopping Kafka container");
             strimziContainer.stop();
         }
-
-        if (zookeeperContainer != null) {
-            LOG.info("Stopping Zookeeper container");
-            zookeeperContainer.stop();
-        }
     }
 
     @Override
@@ -72,6 +58,6 @@ public class LocalKafka extends Kafka implements ContainerDeployable<StrimziCont
     }
 
     public String defaultImage() {
-        return "registry.redhat.io/amq-streams/kafka-36-rhel9:2.7.0-17";
+        return "registry.redhat.io/amq-streams/kafka-41-rhel9:3.2.0-13";
     }
 }

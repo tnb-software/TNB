@@ -6,7 +6,6 @@ import software.tnb.common.utils.NetworkUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.TestcontainersConfiguration;
 
@@ -15,10 +14,8 @@ public class StrimziContainer extends GenericContainer<StrimziContainer> {
     private static final String CONTAINER_NAME = "kafka" + RandomStringUtils.randomAlphabetic(5);
     private static final int KAFKA_PORT = NetworkUtils.getFreePort();
 
-    public StrimziContainer(String image, Network network) {
+    public StrimziContainer(String image) {
         super(image);
-
-        withNetwork(network);
 
         withCreateContainerCmdModifier(
             cmd -> {
@@ -34,12 +31,15 @@ public class StrimziContainer extends GenericContainer<StrimziContainer> {
         }
         addFixedExposedPort(KAFKA_PORT, KAFKA_PORT);
         withEnv("LOG_DIR", "/tmp/log");
-        withCommand("sh", "-c", String.format("bin/kafka-server-start.sh config/server.properties "
-                + "--override zookeeper.connect=%s:%d "
-                + "--override advertised.listeners=PLAINTEXT://%s:%d "
-                + "--override listeners=PLAINTEXT://:%d",
-            ZookeeperContainer.CONTAINER_NAME, ZookeeperContainer.ZOOKEEPER_PORT,
-            listenerAddress, KAFKA_PORT, KAFKA_PORT));
+        withCommand("sh", "-c", String.format(
+            "sed"
+                + " -e 's|^listeners=.*|listeners=PLAINTEXT://:%d,CONTROLLER://:9093|'"
+                + " -e 's|^advertised.listeners=.*|advertised.listeners=PLAINTEXT://%s:%d|'"
+                + " config/server.properties > /tmp/server.properties"
+                + " && CLUSTER_ID=$(bin/kafka-storage.sh random-uuid)"
+                + " && bin/kafka-storage.sh format --standalone -t $CLUSTER_ID -c /tmp/server.properties"
+                + " && bin/kafka-server-start.sh /tmp/server.properties",
+            KAFKA_PORT, listenerAddress, KAFKA_PORT));
 
         waitingFor(Wait.forListeningPort());
     }
