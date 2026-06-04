@@ -1,6 +1,7 @@
 package software.tnb.kafka.service;
 
 import software.tnb.common.client.NoClient;
+import software.tnb.common.deployment.Deployable;
 import software.tnb.common.service.Service;
 import software.tnb.kafka.account.KafkaAccount;
 import software.tnb.kafka.validation.KafkaValidation;
@@ -18,10 +19,31 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class Kafka extends Service<KafkaAccount, NoClient, KafkaValidation<?>> {
+    private static final Pattern KAFKA_VERSION_PATTERN = Pattern.compile("Kafka version: (\\S+)");
+
     protected Map<Class<?>, KafkaValidation> validations;
     protected Properties props = defaultClientProperties();
+
+    @Override
+    public String serviceVersion() {
+        if (this instanceof Deployable) {
+            try {
+                String logs = ((Deployable) this).getLogs();
+                if (logs != null) {
+                    Matcher matcher = KAFKA_VERSION_PATTERN.matcher(logs);
+                    if (matcher.find()) {
+                        return matcher.group(1);
+                    }
+                }
+            } catch (Exception ignored) {
+            }
+        }
+        return super.serviceVersion();
+    }
 
     public abstract String bootstrapServers();
 
