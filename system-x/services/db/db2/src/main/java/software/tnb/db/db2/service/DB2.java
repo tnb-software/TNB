@@ -24,7 +24,10 @@ public abstract class DB2 extends SQL {
         return Map.of(
             "LICENSE", "accept",
             "DB2INST1_PASSWORD", account().password(),
-            "DBNAME", account().database()
+            "DBNAME", account().database(),
+            "PERSISTENT_HOME", "false",
+            "ARCHIVE_LOGS", "false",
+            "AUTOCONFIG", "false"
         );
     }
 
