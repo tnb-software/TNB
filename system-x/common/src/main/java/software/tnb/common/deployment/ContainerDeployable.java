@@ -13,10 +13,39 @@ import com.github.dockerjava.api.DockerClient;
 import com.github.dockerjava.api.model.Image;
 
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
 
 public interface ContainerDeployable<T extends GenericContainer<?>> extends Deployable, WithServiceDefinition {
     Logger LOG = LoggerFactory.getLogger(ContainerDeployable.class);
+    Map<ContainerDeployable<?>, String> VERSION_CACHE = new ConcurrentHashMap<>();
+
+    default String containerServiceVersion() {
+        return null;
+    }
+
+    default String resolveAndCacheServiceVersion() {
+        String cached = VERSION_CACHE.get(this);
+        if (cached != null) {
+            return cached;
+        }
+        String version = WithServiceDefinition.super.serviceVersion();
+        if (version == null || "latest".equals(version)) {
+            String fromContainer = containerServiceVersion();
+            if (fromContainer != null) {
+                VERSION_CACHE.put(this, fromContainer);
+                return fromContainer;
+            }
+        }
+        return version;
+    }
+
+    @Override
+    default String serviceVersion() {
+        String cached = VERSION_CACHE.get(this);
+        return cached != null ? cached : WithServiceDefinition.super.serviceVersion();
+    }
 
     T container();
 
@@ -29,6 +58,7 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
             throw e;
         }
         LOG.info("{} container started", serviceName());
+        resolveAndCacheServiceVersion();
     }
 
     default void undeploy() {
@@ -39,6 +69,7 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
 
             removeImage();
         }
+        VERSION_CACHE.remove(this);
     }
 
     default String getLogs() {

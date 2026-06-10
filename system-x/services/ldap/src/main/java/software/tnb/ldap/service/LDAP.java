@@ -2,6 +2,7 @@ package software.tnb.ldap.service;
 
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.ConfigurableService;
+import software.tnb.common.util.VersionUtils;
 import software.tnb.ldap.account.LDAPAccount;
 import software.tnb.ldap.service.configuration.LDAPConfiguration;
 import software.tnb.ldap.validation.LDAPValidation;
@@ -15,11 +16,21 @@ import com.unboundid.ldap.sdk.LDAPConnectionPool;
 import com.unboundid.ldap.sdk.LDAPException;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnectionPool, LDAPValidation, LDAPConfiguration> implements
     WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LDAP.class);
+    private static final Pattern VERSION_PATTERN = Pattern.compile("slapd (\\d[\\d.]*)");
+
     protected static final int PORT = 389;
+
+    @Override
+    public String serviceVersion() {
+        String version = VersionUtils.extractFromLogs(this, VERSION_PATTERN);
+        return version != null ? version : super.serviceVersion();
+    }
+
     protected boolean reachable = true;
     protected String host;
     protected int port;

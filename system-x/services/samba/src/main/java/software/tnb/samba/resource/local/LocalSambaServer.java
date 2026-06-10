@@ -10,6 +10,19 @@ public class LocalSambaServer extends SambaServer implements ContainerDeployable
     private final SambaServerContainer container = new SambaServerContainer(image(), containerEnvironment());
 
     @Override
+    public String containerServiceVersion() {
+        try {
+            String v = container().execInContainer("sh", "-c",
+                "smbd --version 2>/dev/null | sed 's|Version ||'")
+                .getStdout().trim();
+            return v.isEmpty() ? null : v;
+        } catch (Exception e) {
+            LOG.debug("Failed to detect Samba version from container", e);
+            return null;
+        }
+    }
+
+    @Override
     public int port() {
         return container.getMappedPort(SambaServer.SAMBA_PORT_DEFAULT);
     }

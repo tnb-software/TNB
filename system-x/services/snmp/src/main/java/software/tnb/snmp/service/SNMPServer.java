@@ -4,14 +4,23 @@ import software.tnb.common.account.NoAccount;
 import software.tnb.common.client.NoClient;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.service.Service;
+import software.tnb.common.util.VersionUtils;
 import software.tnb.common.validation.NoValidation;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public abstract class SNMPServer extends Service<NoAccount, NoClient, NoValidation> implements WithDockerImage {
+    private static final Pattern VERSION_PATTERN = Pattern.compile("NET-SNMP version (\\S+)");
 
     public static final int SNMPD_LISTENING_PORT = 1163;
     public static final int SNMPTRAPD_LISTENING_PORT = 1162;
+
+    @Override
+    public String serviceVersion() {
+        String version = VersionUtils.extractFromLogs(this, VERSION_PATTERN);
+        return version != null ? version : super.serviceVersion();
+    }
 
     @Override
     public String defaultImage() {
