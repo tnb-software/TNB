@@ -3,6 +3,9 @@ package software.tnb.db.common.validation;
 import software.tnb.common.validation.Validation;
 import software.tnb.db.common.account.SQLAccount;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
@@ -10,6 +13,8 @@ import java.sql.SQLException;
 import java.util.function.Consumer;
 
 public class SQLValidation implements Validation {
+    private static final Logger LOG = LoggerFactory.getLogger(SQLValidation.class);
+
     private final String jdbcConnectionUrl;
     private final SQLAccount account;
 
@@ -39,6 +44,19 @@ public class SQLValidation implements Validation {
             check.accept(conn.createStatement().executeQuery(sql));
         } catch (SQLException e) {
             throw new RuntimeException("Unable to execute query", e);
+        }
+    }
+
+    public record DatabaseMetadata(String dbVersion, String driverVersion) {
+    }
+
+    public DatabaseMetadata getDatabaseMetadata() {
+        try (Connection conn = DriverManager.getConnection(jdbcConnectionUrl, account.username(), account.password())) {
+            java.sql.DatabaseMetaData meta = conn.getMetaData();
+            return new DatabaseMetadata(meta.getDatabaseProductVersion(), meta.getDriverVersion());
+        } catch (SQLException e) {
+            LOG.debug("Could not query database metadata", e);
+            return null;
         }
     }
 }

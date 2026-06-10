@@ -16,10 +16,17 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public abstract class SQL extends ConfigurableService<SQLAccount, NoClient, SQLValidation, SQLConfiguration>
     implements WithName, WithExternalHostname, WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(SQL.class);
+    private static final Pattern VERSION_EXTRACT = Pattern.compile("(\\d+(?:\\.\\d+)*)");
+
+    private String cachedDbVersion;
+    private String cachedDriverVersion;
+    private boolean metadataResolved;
 
     protected abstract Class<? extends SQLAccount> accountClass();
 
@@ -38,6 +45,41 @@ public abstract class SQL extends ConfigurableService<SQLAccount, NoClient, SQLV
 
     public int localPort() {
         return port();
+    }
+
+    @Override
+    public String serviceVersion() {
+        resolveMetadata();
+        if (cachedDbVersion != null) {
+            return cachedDbVersion;
+        }
+        return super.serviceVersion();
+    }
+
+    @Override
+    public String driverVersion() {
+        resolveMetadata();
+        return cachedDriverVersion;
+    }
+
+    private void resolveMetadata() {
+        if (metadataResolved) {
+            return;
+        }
+        if (validation == null) {
+            return;
+        }
+        metadataResolved = true;
+        try {
+            SQLValidation.DatabaseMetadata meta = validation.getDatabaseMetadata();
+            if (meta != null && meta.dbVersion() != null) {
+                Matcher m = VERSION_EXTRACT.matcher(meta.dbVersion());
+                cachedDbVersion = m.find() ? m.group(1) : meta.dbVersion();
+                cachedDriverVersion = meta.driverVersion();
+            }
+        } catch (Exception e) {
+            LOG.debug("Could not resolve database metadata", e);
+        }
     }
 
     @Override

@@ -2,6 +2,7 @@ package software.tnb.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.common.deployment.WithDockerImage;
 import software.tnb.common.deployment.WithOperatorHub;
 import software.tnb.common.service.WithServiceDefinition;
@@ -9,6 +10,8 @@ import software.tnb.common.service.WithServiceDefinition;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.api.Test;
+
+import org.testcontainers.containers.GenericContainer;
 
 @Tag("unit")
 public class ServiceDefinitionTest {
@@ -20,6 +23,7 @@ public class ServiceDefinitionTest {
     void clearProperties() {
         System.clearProperty(nameProperty);
         System.clearProperty(versionProperty);
+        ContainerDeployable.VERSION_CACHE.clear();
     }
 
     // --- serviceName tests ---
@@ -108,6 +112,32 @@ public class ServiceDefinitionTest {
         assertThat(new PlainChild().serviceVersion()).isEqualTo("99.0");
     }
 
+    // --- containerServiceVersion tests ---
+
+    @Test
+    void resolveAndCacheShouldOverrideLatestTag() {
+        ContainerChildWithVersion child = new ContainerChildWithVersion();
+        child.resolveAndCacheServiceVersion();
+        assertThat(child.serviceVersion()).isEqualTo("3.0.5");
+    }
+
+    @Test
+    void resolveAndCacheShouldNotOverridePinnedTag() {
+        assertThat(new ContainerChildPinnedWithVersion().resolveAndCacheServiceVersion()).isEqualTo("26.0-6");
+    }
+
+    @Test
+    void resolveAndCacheNullShouldFallBackToLatest() {
+        assertThat(new ContainerChildWithoutVersion().resolveAndCacheServiceVersion()).isEqualTo("latest");
+    }
+
+    // --- driverVersion tests ---
+
+    @Test
+    void driverVersionShouldBeNullByDefault() {
+        assertThat(new PlainChild().driverVersion()).isNull();
+    }
+
     // --- test stubs ---
 
     abstract static class PlainParent implements WithServiceDefinition {
@@ -192,6 +222,59 @@ public class ServiceDefinitionTest {
     static class OperatorDockerChild extends OperatorDockerParent {
         OperatorDockerChild(String csv, String image) {
             super(csv, image);
+        }
+    }
+
+    // --- container stubs for containerServiceVersion tests ---
+
+    abstract static class ContainerParent implements ContainerDeployable<GenericContainer<?>>, WithDockerImage {
+        @Override
+        public GenericContainer<?> container() {
+            return null;
+        }
+
+        @Override
+        public void openResources() {
+        }
+
+        @Override
+        public void closeResources() {
+        }
+
+        @Override
+        public String getLogs() {
+            return null;
+        }
+    }
+
+    static class ContainerChildWithVersion extends ContainerParent {
+        @Override
+        public String defaultImage() {
+            return "quay.io/fuse_qe/apache-ftp:latest";
+        }
+
+        @Override
+        public String containerServiceVersion() {
+            return "3.0.5";
+        }
+    }
+
+    static class ContainerChildPinnedWithVersion extends ContainerParent {
+        @Override
+        public String defaultImage() {
+            return "quay.io/fuse_qe/keycloak:26.0-6";
+        }
+
+        @Override
+        public String containerServiceVersion() {
+            return "99.0";
+        }
+    }
+
+    static class ContainerChildWithoutVersion extends ContainerParent {
+        @Override
+        public String defaultImage() {
+            return "quay.io/fuse_qe/apache-ftp:latest";
         }
     }
 }

@@ -24,6 +24,18 @@ public class LocalFTP extends FTP implements ContainerDeployable<FTPContainer> {
     private final CustomFTPClient client = new TestContainerFTPOutOfBandClient();
 
     @Override
+    public String containerServiceVersion() {
+        try {
+            String v = container().execInContainer("sh", "-c", "ls -d /opt/apache-ftpserver-* | sed 's|.*/apache-ftpserver-||'")
+                .getStdout().trim();
+            return v.isEmpty() ? null : v;
+        } catch (Exception e) {
+            LOG.debug("Failed to detect FTP server version from container", e);
+            return null;
+        }
+    }
+
+    @Override
     public void openResources() {
         // noop
     }
