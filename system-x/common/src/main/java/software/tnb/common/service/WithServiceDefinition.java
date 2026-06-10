@@ -19,6 +19,10 @@ public interface WithServiceDefinition {
         return TestConfiguration.getProperty(String.format(VERSION_PROPERTY_FORMAT, key), defaultServiceVersion());
     }
 
+    default String driverVersion() {
+        return null;
+    }
+
     private String defaultServiceName() {
         String csvName = csvPart(0);
         if (csvName != null) {

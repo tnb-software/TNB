@@ -13,6 +13,18 @@ public class LocalSSHServer extends SSHServer implements ContainerDeployable<SSH
     private SSHServerContainer container;
 
     @Override
+    public String containerServiceVersion() {
+        try {
+            String v = container().execInContainer("sh", "-c", "ssh -V 2>&1 | head -1 | sed 's|.*OpenSSH_||;s|[, ].*||'")
+                .getStdout().trim();
+            return v.isEmpty() ? null : v;
+        } catch (Exception e) {
+            LOG.debug("Failed to detect OpenSSH version from container", e);
+            return null;
+        }
+    }
+
+    @Override
     protected String clientHostname() {
         return host();
     }
