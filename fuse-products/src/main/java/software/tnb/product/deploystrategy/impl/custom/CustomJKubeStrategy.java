@@ -94,6 +94,8 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
             , "jkube.enricher.jkube-service.expose", "true"
             , "jkube.build.switchToDeployment", String.valueOf(SpringBootConfiguration.forceOpenshiftDeployment())
         ));
+        SpringBootConfiguration.openshiftBuildStrategy().ifPresent(strategy ->
+            props.put("jkube.build.strategy", strategy));
         if (ports.size() > 1) {
             props.put("jkube.enricher.jkube-service.multiPort", "true");
             //make the port configuration on the pod
@@ -187,6 +189,15 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
                  new InputStreamReader(OpenshiftSpringBootApp.class.getResourceAsStream("/openshift/csb/jkube-fileset-config.xml"))) {
 
             final Xpp3Dom ompConfig = Xpp3DomBuilder.build(reader);
+
+            SpringBootConfiguration.openshiftBuildStrategy().ifPresent(strategy -> {
+                if ("docker".equalsIgnoreCase(strategy)) {
+                    Xpp3Dom buildDom = ompConfig.getChild("images").getChild("image").getChild("build");
+                    Xpp3Dom cmd = new Xpp3Dom("cmd");
+                    cmd.setValue("java ${JAVA_OPTS_APPEND} -jar /deployments/*.jar");
+                    buildDom.addChild(cmd);
+                }
+            });
 
             final Model model = Maven.loadPom(pomFile);
 

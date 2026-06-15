@@ -5,6 +5,8 @@ import software.tnb.product.camel.CamelConfiguration;
 
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Optional;
+
 public class SpringBootConfiguration extends CamelConfiguration {
     public static final String CAMEL_SPRINGBOOT_VERSION = "camel.springboot.version";
     public static final String SPRINGBOOT_VERSION = "springboot.version";
@@ -33,6 +35,8 @@ public class SpringBootConfiguration extends CamelConfiguration {
     public static final String OPENSHIFT_SB_RESULT_IMAGE_REPOSITORY = "openshift-sb.result-image.repo";
 
     public static final String OPENSHIFT_SB_DEPLOYMENT_FORCE = "openshift-sb.deployment.force";
+
+    public static final String OPENSHIFT_SB_BUILD_STRATEGY = "openshift-sb.build-strategy";
 
     public static String springBootVersion() {
         return getProperty(SPRINGBOOT_VERSION, "3.5.5");
@@ -114,5 +118,9 @@ public class SpringBootConfiguration extends CamelConfiguration {
      */
     public static boolean forceOpenshiftDeployment() {
         return getBoolean(OPENSHIFT_SB_DEPLOYMENT_FORCE, true);
+    }
+
+    public static Optional<String> openshiftBuildStrategy() {
+        return Optional.ofNullable(getProperty(OPENSHIFT_SB_BUILD_STRATEGY));
     }
 }
