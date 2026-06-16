@@ -40,6 +40,7 @@ public class TestConfiguration extends Configuration {
     public static final String STREAM_LOGS = "stream.logs";
     public static final String JIRA_ALLOWED_RESOLUTIONS = "jira.allowed.resolutions";
     public static final String JIRA_ACCESS_TOKEN = "jira.token";
+    public static final String JIRA_USERNAME = "jira.username";
     public static final String PARALLEL = "test.parallel";
     public static final String TEST_USE_GLOBAL_OPENSHIFT_KAFKA = "test.use.global.openshift.kafka";
 
@@ -180,6 +181,10 @@ public class TestConfiguration extends Configuration {
 
     public static String jiraAccessToken() {
         return getProperty(JIRA_ACCESS_TOKEN, "");
+    }
+
+    public static String jiraUsername() {
+        return getProperty(JIRA_USERNAME, "");
     }
 
     public static boolean parallel() {
