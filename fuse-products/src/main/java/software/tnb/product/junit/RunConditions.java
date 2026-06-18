@@ -1,6 +1,7 @@
 package software.tnb.product.junit;
 
 import static software.tnb.common.config.TestConfiguration.jiraAccessToken;
+import static software.tnb.common.config.TestConfiguration.jiraUsername;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.config.TestConfiguration;
@@ -32,7 +33,7 @@ import java.util.Optional;
 
 public class RunConditions implements ExecutionCondition {
     private static final Logger LOG = LoggerFactory.getLogger(RunConditions.class);
-    private static final String JIRA_URL_PREFIX = "https://issues.redhat.com/rest/api/latest/issue/";
+    private static final String JIRA_URL_PREFIX = "https://redhat.atlassian.net/rest/api/latest/issue/";
 
     @Override
     public ConditionEvaluationResult evaluateExecutionCondition(ExtensionContext context) {
@@ -107,7 +108,7 @@ public class RunConditions implements ExecutionCondition {
         for (String jiraKey : jira.keys()) {
             LOG.trace("Checking JIRA {}, allowed resolutions: {}", jiraKey, TestConfiguration.jiraAllowedResolutions());
             final Map<String, String> headers = StringUtils.isNotBlank(jiraAccessToken()) ? Map.of(
-                "Authorization", String.format("Bearer %s", jiraAccessToken())
+                "Authorization", okhttp3.Credentials.basic(jiraUsername(), jiraAccessToken())
             ) : Map.of();
             final HTTPUtils.Response response = HTTPUtils.getInstance().get(JIRA_URL_PREFIX + jiraKey, headers);
             if (response.getResponseCode() == 200) {

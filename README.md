@@ -382,6 +382,25 @@ The code style is in the [EditorConfig](https://editorconfig.org/) [file](.edito
 
 ---
 
+### Jira issue check
+
+Tests can be annotated with `@Jira` to skip execution when a linked Jira issue is still open. The annotation queries the Jira Cloud REST API to check the issue status and skips the test if the status is not in the allowed resolutions list.
+
+```java
+@Jira(keys = "CSB-1234")
+public class MyITCase { ... }
+```
+
+The following system properties control the behavior:
+
+| Property | Description |
+|----------|-------------|
+| `jira.username` | Jira Cloud email address (used for Basic auth) |
+| `jira.token` | Jira Cloud API token |
+| `jira.allowed.resolutions` | Comma-separated list of statuses that allow the test to run (default: `Resolved, Closed, Done, Validation Backlog, In Validation`) |
+
+---
+
 For more information see the readme files in the modules.
 
 [common](common/README.md)
