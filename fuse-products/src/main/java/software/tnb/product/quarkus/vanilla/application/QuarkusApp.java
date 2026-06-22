@@ -52,8 +52,8 @@ public abstract class QuarkusApp extends App {
             this.appDir = gitIntegrationBuilder.getSubDirectory().map(gitClonedDirectory::resolve).orElse(gitClonedDirectory);
         } else {
             this.appDir = TestConfiguration.appLocation().resolve(getName());
-            if (integrationBuilder.isJBang()) {
-                createUsingJBang();
+            if (integrationBuilder.usesCLI()) {
+                createUsingCLI();
             } else {
                 createWithMaven();
             }
@@ -88,7 +88,7 @@ public abstract class QuarkusApp extends App {
     /**
      * Creates the application skeleton using camel export command.
      */
-    private void createUsingJBang() {
+    private void createUsingCLI() {
         List<String> arguments = new ArrayList<>(List.of(
             "--runtime", "quarkus",
             "--quarkus-group-id", QuarkusConfiguration.quarkusPlatformGroupId(),
@@ -102,7 +102,7 @@ public abstract class QuarkusApp extends App {
             arguments.add("io.quarkus:quarkus-" + extension);
         }
 
-        super.createUsingJBang(arguments);
+        super.createUsingCLI(arguments);
     }
 
     /**

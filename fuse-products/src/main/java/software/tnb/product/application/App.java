@@ -5,6 +5,7 @@ import software.tnb.common.config.WindowsConfiguration;
 import software.tnb.common.exception.FailureConditionMetException;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
+import software.tnb.product.camel.CamelConfiguration;
 import software.tnb.product.endpoint.Endpoint;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.integration.generator.IntegrationGenerator;
@@ -26,16 +27,12 @@ import com.github.javaparser.ast.CompilationUnit;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public abstract class App {
@@ -52,9 +49,6 @@ public abstract class App {
     private final String name;
     // Append the counter to the log file name in case the app is restarted during the test
     protected int logCounter = 0;
-
-    private static final String JBANG_SCRIPT_NAME = "camel";
-    protected static boolean camelInPath = false;
 
     // path to the final jar file
     protected String path;
@@ -186,30 +180,23 @@ public abstract class App {
      *
      * @param arguments command to execute. "camel export --kamelets-version xxx --dir xxx --gav xxx integrationClass.java" are added automatically.
      */
-    protected void createUsingJBang(List<String> arguments) {
-        if (!camelInPath) {
-            if (Arrays.stream(System.getenv("PATH").split(Pattern.quote(File.pathSeparator))).map(Paths::get)
-                .noneMatch(dir -> Files.exists(dir.resolve(JBANG_SCRIPT_NAME)))) {
-                throw new RuntimeException("To use JBang a script named '" + JBANG_SCRIPT_NAME + "' must be in your PATH");
-            }
-
-            camelInPath = true;
+    protected void createUsingCLI(List<String> arguments) {
+        if (CamelConfiguration.cliVersion() == null) {
+            throw new RuntimeException("Property " + CamelConfiguration.CLI_VERSION + " was not supplied");
         }
 
-        List<String> command = List.of("camel", "--version");
-        if (WindowsConfiguration.isWindows()) {
-            command = convertToWindowsBashCommand(null, command);
-        }
-        ProcessBuilder processBuilder = new ProcessBuilder(command);
-        String version;
-        try {
-            Process process = processBuilder.start();
-            version = new String(process.getInputStream().readAllBytes());
-        } catch (IOException e) {
-            version = "N/A";
-        }
+        String cliJar = Maven.downloadArtifact(
+            CamelConfiguration.cliDirectory(),
+            CamelConfiguration.cliGroupId(),
+            CamelConfiguration.cliArtifactId(),
+            CamelConfiguration.cliVersion(),
+            "jar"
+        );
 
-        LOG.info("Creating {} application project for integration {} using Camel JBang {}", TestConfiguration.product(), getName(), version);
+        List<String> cli = List.of("java", "-jar", cliJar);
+
+        LOG.info("Creating {} application project for integration {} using Camel CLI {}", TestConfiguration.product(), getName(),
+            CamelConfiguration.cliVersion());
 
         final Path appDir = IntegrationGenerator.createApplicationDirectory(integrationBuilder);
 
@@ -220,8 +207,9 @@ public abstract class App {
         // also pass the java version to the command, as the default is 21 and we also support 17
         String javaVersion = Runtime.version().feature() + "";
 
-        command = new ArrayList<>(List.of(
-            "camel", "export",
+        List<String> command = new ArrayList<>(cli);
+        command.addAll(List.of(
+            "export",
             "--gav", TestConfiguration.appGroupId() + ":" + getName() + ":" + TestConfiguration.appVersion(),
             "--dir", ".",
             "--logging",
@@ -271,7 +259,7 @@ public abstract class App {
             command = convertToWindowsBashCommand(appDir, command);
         }
 
-        LOG.trace("Camel JBang command: {}", String.join(" ", command));
+        LOG.trace("Camel CLI command: {}", String.join(" ", command));
 
         try {
             ProcessBuilder pb = new ProcessBuilder(command);
@@ -284,7 +272,7 @@ public abstract class App {
                 exitCode = process.exitValue();
             }
         } catch (Exception e) {
-            throw new RuntimeException("Unable to export integration using Camel JBang: ", e);
+            throw new RuntimeException("Unable to export integration using Camel CLI: ", e);
         } finally {
             generateLogStream.stop();
         }
@@ -312,6 +300,7 @@ public abstract class App {
 
     /**
      * Converts the command to be executed by cygwin's bash
+     *
      * @param targetDirectory directory to cd into
      * @param command command to invoke
      * @return new command
