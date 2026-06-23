@@ -152,7 +152,7 @@ public final class IntegrationGenerator {
      */
     public static void createAdditionalClasses(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
         // For Camel JBang, place all additional files in the app root dir alongside the routebuilder class
-        final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
+        final Path sources = integrationBuilder.usesCLI() ? appDir : appDir.resolve("src/main/java");
 
         // Add additional classes to the application
         integrationBuilder.getAdditionalClasses().forEach(cu -> {
@@ -161,7 +161,7 @@ public final class IntegrationGenerator {
             final String packageName = cu.getPackageDeclaration().get().getNameAsString();
             final String fqn = packageName + "." + typeName;
 
-            if (integrationBuilder.isJBang()) {
+            if (integrationBuilder.usesCLI()) {
                 fileName = sources.resolve(typeName + ".java");
             } else {
                 final Path packageFolder = sources.resolve(packageName.replace(".", "/"));
@@ -184,7 +184,7 @@ public final class IntegrationGenerator {
      * @param appDir app directory
      */
     public static void createApplicationProperties(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
-        appDir = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/resources");
+        appDir = integrationBuilder.usesCLI() ? appDir : appDir.resolve("src/main/resources");
         Path propertiesFile = appDir.resolve("application.properties");
 
         if (propertiesFile.toFile().exists()) {
@@ -207,11 +207,11 @@ public final class IntegrationGenerator {
      * @param appDir app directory
      */
     public static void createRouteBuilderClasses(AbstractIntegrationBuilder<?> integrationBuilder, Path appDir) {
-        final Path sources = integrationBuilder.isJBang() ? appDir : appDir.resolve("src/main/java");
+        final Path sources = integrationBuilder.usesCLI() ? appDir : appDir.resolve("src/main/java");
 
         integrationBuilder.getRouteBuilders().forEach(rb -> {
             final Path destination;
-            if (integrationBuilder.isJBang()) {
+            if (integrationBuilder.usesCLI()) {
                 destination = sources;
             } else {
                 final PackageDeclaration packageDeclaration = rb.getPackageDeclaration().get();

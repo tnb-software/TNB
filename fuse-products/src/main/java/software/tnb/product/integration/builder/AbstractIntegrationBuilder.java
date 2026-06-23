@@ -89,7 +89,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private OpenshiftCustomDeployer customStrategy;
 
-    private boolean useJBang = false;
+    private boolean useCLI = false;
 
     private boolean runApplication = true;
 
@@ -557,13 +557,13 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
         return customStrategy;
     }
 
-    public SELF useJBang() {
-        this.useJBang = true;
+    public SELF useCLI() {
+        this.useCLI = true;
         return self();
     }
 
-    public boolean isJBang() {
-        return useJBang;
+    public boolean usesCLI() {
+        return useCLI;
     }
 
     public List<Resource> getBytemanRules() {

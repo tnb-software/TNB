@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.product.application.Phase;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
@@ -38,6 +39,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -426,5 +428,52 @@ public class Maven {
         }
 
         return xpp3Dom;
+    }
+
+    /**
+     * Downloads the maven artifact into the directory specified.
+     *
+     * @param directory target directory
+     * @param g groupId
+     * @param a artifactId
+     * @param v version
+     * @param p packaging
+     * @return target file path
+     */
+    public static String downloadArtifact(Path directory, String g, String a, String v, String p) {
+        String artifactString = String.format("%s:%s:%s:%s", g, a, v, p);
+        if (g == null || a == null || v == null || p == null || directory == null) {
+            throw new IllegalArgumentException("Some of the arguments were null: directory: " + directory + ", gavp: " + artifactString);
+        }
+
+        final File file = directory.resolve(a + "-" + v + "." + p).toFile();
+        if (file.exists() && file.length() > 0 && file.canRead()) {
+            LOG.trace("File {} already exists, not downloading again", file.getAbsolutePath());
+            return file.getAbsolutePath();
+        }
+
+        try {
+            Files.createDirectories(directory);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to create directory " + directory.toAbsolutePath(), e);
+        }
+
+        invoke(new BuildRequest.Builder()
+            .withBaseDirectory(directory)
+            .withArgs("dependency:copy")
+            .withProperties(Map.of(
+                "artifact", artifactString,
+                "outputDirectory", "."
+            ))
+            .withLogFile(TestConfiguration.appLocation().resolve(a + "-download.log"))
+            .withLogMarker(LogStream.marker(a, Phase.DOWNLOAD))
+            .build()
+        );
+
+        if (!file.exists() || file.length() == 0 || !file.canRead()) {
+            throw new RuntimeException("Unable to correctly download " + a + " file - either file size was 0 or the file was not readable");
+        }
+
+        return file.getAbsolutePath();
     }
 }

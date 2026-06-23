@@ -49,8 +49,8 @@ public abstract class SpringBootApp extends App {
                     , getName(), getLogPath(Phase.BUILD)
                     , ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).buildProject());
             } else {
-                if (integrationBuilder.isJBang()) {
-                    createUsingJBang();
+                if (integrationBuilder.usesCLI()) {
+                    createUsingCLI();
                 } else {
                     createUsingMaven();
                 }
@@ -84,7 +84,7 @@ public abstract class SpringBootApp extends App {
         }
     }
 
-    private void createUsingJBang() {
+    private void createUsingCLI() {
         List<String> arguments = new ArrayList<>(List.of(
             "--runtime", "spring-boot",
             "--build-property", "openshift-maven-plugin-version=" + SpringBootConfiguration.openshiftMavenPluginVersion(),
@@ -93,7 +93,7 @@ public abstract class SpringBootApp extends App {
             "--camel-spring-boot-version", SpringBootConfiguration.camelSpringBootVersion(),
             "--spring-boot-version", SpringBootConfiguration.springBootVersion()
             ));
-        super.createUsingJBang(arguments);
+        super.createUsingCLI(arguments);
     }
 
     private void createUsingMaven() {
