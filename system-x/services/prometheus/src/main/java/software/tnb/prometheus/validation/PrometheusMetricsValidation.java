@@ -273,7 +273,7 @@ public class PrometheusMetricsValidation implements Validation {
 
     public enum PodMetric {
         MEMORY("sum(container_memory_working_set_bytes{namespace=\"%s\",pod=~\"%s\"})"),
-        CPU("pod:container_cpu_usage:sum{namespace=\"%s\",pod=~\"%s\"}");
+        CPU("sum(rate(container_cpu_usage_seconds_total{namespace=\"%s\",pod=~\"%s\",container!=\"\",container!=\"POD\"}[1m]))");
 
         String query;
 
