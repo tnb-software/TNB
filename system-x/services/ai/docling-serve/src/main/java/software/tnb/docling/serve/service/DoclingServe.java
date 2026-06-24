@@ -14,6 +14,6 @@ public abstract class DoclingServe extends Service<NoAccount, NoClient, NoValida
 
     @Override
     public String defaultImage() {
-        return "quay.io/docling-project/docling-serve:v1.16.1";
+        return "quay.io/docling-project/docling-serve:v1.25.0";
     }
 }
