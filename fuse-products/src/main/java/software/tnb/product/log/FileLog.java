@@ -2,7 +2,7 @@ package software.tnb.product.log;
 
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.StringUtils;
-import software.tnb.product.rp.Attachments;
+import software.tnb.product.log.artifacts.Artifacts;
 
 import java.nio.file.Path;
 
@@ -20,6 +20,6 @@ public class FileLog extends Log {
 
     @Override
     public void save() {
-        Attachments.addAttachment(logFile);
+        Artifacts.add(logFile);
     }
 }

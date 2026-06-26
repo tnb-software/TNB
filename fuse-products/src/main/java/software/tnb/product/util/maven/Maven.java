@@ -5,6 +5,7 @@ import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.product.application.Phase;
+import software.tnb.product.log.artifacts.Artifacts;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
 import software.tnb.product.util.maven.handler.MavenFileOutputHandler;
@@ -195,6 +196,9 @@ public class Maven {
         String marker = buildRequest.getLogMarker() != null ? buildRequest.getLogMarker() : "[MARKER-MISSING]";
 
         LogStream logStream = new FileLogStream(file, marker);
+        // add the logfile to the artifacts, in case of no error, it is removed later
+        Artifacts.add(file);
+
         try {
             result = invoker.execute(request);
         } catch (MavenInvocationException e) {
@@ -223,6 +227,9 @@ public class Maven {
                 throw new RuntimeException(exceptionMessage);
             }
         }
+
+        // no error, remove the log file from artifacts
+        Artifacts.remove(file);
     }
 
     /**

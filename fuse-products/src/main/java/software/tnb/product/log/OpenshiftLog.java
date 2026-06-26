@@ -5,7 +5,7 @@ import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.StringUtils;
 import software.tnb.common.utils.WaitUtils;
-import software.tnb.product.rp.Attachments;
+import software.tnb.product.log.artifacts.Artifacts;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -44,7 +44,7 @@ public class OpenshiftLog extends Log {
             try {
                 return StringUtils.removeColorCodes(OpenshiftClient.get().getLogs(podOptional.get()));
             } catch (Exception e) {
-                LOG.error("Exception while getting logs: " + e.getMessage() + ", returning empty string");
+                LOG.error("Exception while getting logs: {}, returning empty string", e.getMessage());
                 return "";
             }
         }
@@ -93,7 +93,7 @@ public class OpenshiftLog extends Log {
             logPath,
             toString(started)
         );
-        Attachments.addAttachment(logPath);
+        Artifacts.add(logPath);
     }
 
     @Override
