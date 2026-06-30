@@ -96,10 +96,15 @@ public class OpenshiftFHIR extends FHIR implements OpenshiftDeployable, WithName
         ).serverSideApply();
 
         final Probe probe = new ProbeBuilder()
-            .editOrNewExec()
-            .withCommand("curl", "http://0.0.0.0:8080/fhir/metadata",
-                "--header", "\"Authorization: Basic " + authToken + "\"")
-            .endExec()
+            .editOrNewHttpGet()
+                .withPath("/fhir/metadata")
+                .withPort(new IntOrString(PORT))
+                .withScheme("HTTP")
+                .addNewHttpHeader()
+                    .withName("Authorization")
+                    .withValue("Basic " + authToken)
+                .endHttpHeader()
+            .endHttpGet()
             .withInitialDelaySeconds(60)
             .withTimeoutSeconds(5)
             .withFailureThreshold(10)
