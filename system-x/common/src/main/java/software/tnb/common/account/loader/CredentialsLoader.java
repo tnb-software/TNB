@@ -31,7 +31,7 @@ public abstract class CredentialsLoader {
                 Object credentials = loadCredentials(id);
                 if (credentials != null) {
                     if (account == null) {
-                        LOG.trace("Creating {} instance from credentials {}", accountClass.getSimpleName(), id);
+                        LOG.trace("Creating {} instance", accountClass.getSimpleName());
                         account = mapper.readValue(toJson(credentials), accountClass);
                     } else {
                         LOG.trace("Updating {} instance with credentials {}", accountClass.getSimpleName(), id);
@@ -42,7 +42,7 @@ public abstract class CredentialsLoader {
                 }
             }
         } catch (Exception e) {
-            throw new RuntimeException("Couldnt get credentials from ids: " + String.join(",", credentialsIds), e);
+            throw new RuntimeException("Unexpected exception while getting credentials from ids: " + String.join(",", credentialsIds), e);
         }
 
         if (account == null) {

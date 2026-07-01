@@ -5,9 +5,9 @@ import software.tnb.common.account.WithId;
 
 public class MicrosoftAccount implements Account, WithId {
     private String username;
-    private String client_id;
-    private String client_secret;
-    private String tenant_id;
+    private String clientId;
+    private String clientSecret;
+    private String tenantId;
 
     @Override
     public String credentialsId() {
@@ -23,26 +23,26 @@ public class MicrosoftAccount implements Account, WithId {
     }
 
     public String clientId() {
-        return client_id;
+        return clientId;
     }
 
-    public void setClient_id(String client_id) {
-        this.client_id = client_id;
+    public void setClientId(String clientId) {
+        this.clientId = clientId;
     }
 
     public String clientSecret() {
-        return client_secret;
+        return clientSecret;
     }
 
-    public void setClient_secret(String client_secret) {
-        this.client_secret = client_secret;
+    public void setClientSecret(String clientSecret) {
+        this.clientSecret = clientSecret;
     }
 
     public String tenantId() {
-        return tenant_id;
+        return tenantId;
     }
 
-    public void setTenant_id(String tenant_id) {
-        this.tenant_id = tenant_id;
+    public void setTenantId(String tenant_id) {
+        this.tenantId = tenant_id;
     }
 }

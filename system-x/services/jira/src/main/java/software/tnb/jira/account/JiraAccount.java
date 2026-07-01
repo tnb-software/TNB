@@ -4,7 +4,7 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class JiraAccount implements Account, WithId {
-    private String jira_url;
+    private String url;
     private String username;
     private String password;
 
@@ -13,24 +13,24 @@ public class JiraAccount implements Account, WithId {
         return "jira";
     }
 
-    public String getJiraUrl() {
-        return jira_url;
+    public String url() {
+        return url;
     }
 
-    public void setJira_url(String jira_url) {
-        this.jira_url = jira_url;
-    }
-
-    public String getUsername() {
+    public String username() {
         return username;
+    }
+
+    public String password() {
+        return password;
+    }
+
+    public void setUrl(String url) {
+        this.url = url;
     }
 
     public void setUsername(String username) {
         this.username = username;
-    }
-
-    public String getPassword() {
-        return password;
     }
 
     public void setPassword(String password) {

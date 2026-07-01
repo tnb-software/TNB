@@ -32,14 +32,14 @@ public class JiraValidation implements Validation {
         this.account = account;
         this.httpUtils = HTTPUtils.getInstance();
         this.headers = Map.of(
-            "Authorization", Credentials.basic(account.getUsername(), account.getPassword()),
+            "Authorization", Credentials.basic(account.username(), account.password()),
             "Content-Type", "application/json",
             "Accept", "application/json"
         );
     }
 
     private String apiUrl(String path) {
-        return account.getJiraUrl() + API_PATH + path;
+        return account.url() + API_PATH + path;
     }
 
     /**
