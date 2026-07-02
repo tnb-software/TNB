@@ -16,7 +16,7 @@ public class LocalKeycloak extends Keycloak implements ContainerDeployable<Keycl
 
     @Override
     public int port() {
-        return PORT;
+        return container.getMappedPort(PORT);
     }
 
     @Override
