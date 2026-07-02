@@ -3,6 +3,7 @@ package software.tnb.product.application;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.config.WindowsConfiguration;
 import software.tnb.common.exception.FailureConditionMetException;
+import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.product.camel.CamelConfiguration;
@@ -14,6 +15,7 @@ import software.tnb.product.log.OpenshiftLog;
 import software.tnb.product.log.artifacts.Artifacts;
 import software.tnb.product.log.stream.FileLogStream;
 import software.tnb.product.log.stream.LogStream;
+import software.tnb.product.quarkus.vanilla.configuration.QuarkusConfiguration;
 import software.tnb.product.util.maven.Maven;
 
 import org.apache.commons.io.FileUtils;
@@ -193,7 +195,15 @@ public abstract class App {
             "jar"
         );
 
-        List<String> cli = List.of("java", "-jar", cliJar);
+        List<String> cli = new ArrayList<>();
+        cli.add("java");
+
+        if (TestConfiguration.product() == ProductType.CAMEL_QUARKUS && QuarkusConfiguration.quarkusRegistryUrl() != null) {
+            cli.add("-Dcamel.jbang.quarkus.platform.url="
+                + QuarkusConfiguration.quarkusRegistryUrl() + "/" + QuarkusConfiguration.quarkusRegistryPath());
+        }
+        cli.add("-jar");
+        cli.add(cliJar);
 
         LOG.info("Creating {} application project for integration {} using Camel CLI {}", TestConfiguration.product(), getName(),
             CamelConfiguration.cliVersion());
