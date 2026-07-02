@@ -4,18 +4,16 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
 import java.time.Duration;
-import java.util.List;
 import java.util.Map;
 
 public class KeycloakContainer extends GenericContainer<KeycloakContainer> {
 
     public KeycloakContainer(String image, Map<String, String> env, String[] startupParameters, int port) {
         super(image);
-        this.setPortBindings(List.of("8080:8080"));
         this.withEnv(env);
-        this.withNetworkMode("host");
+        this.addExposedPort(port);
         this.withNetworkAliases("keycloak");
         setCommandParts(startupParameters);
-        this.waitingFor(Wait.forLogMessage(".*Keycloak.*started.*", 1)).withStartupTimeout(Duration.ofMinutes(2));
+        this.waitingFor(Wait.forLogMessage(".*Keycloak.*started.*", 1)).withStartupTimeout(Duration.ofMinutes(5));
     }
 }

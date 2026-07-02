@@ -29,13 +29,14 @@ public class KeycloakValidation implements Validation {
     private static final String openIDClientForm = "grant_type=password&client_id=%s&client_secret=%s";
 
     public KeycloakValidation(String host, int port) {
-        if ("localhost".equals(host)) {
+        if ("localhost".equals(host) || host.matches("\\d+\\.\\d+\\.\\d+\\.\\d+")) {
             serviceHost = String.format("http://%s:%s", host, port);
         } else {
             serviceHost = String.format("https://%s", host);
         }
 
         httpUtils = HTTPUtils.getInstance(HTTPUtils.trustAllSslClient()).withRetry();
+        LOG.debug("Keycloak service host: {}", serviceHost);
     }
 
     public String getServiceHost() {
@@ -51,11 +52,12 @@ public class KeycloakValidation implements Validation {
                 try {
                     resp.set(postServerRealmsApi(tokenApiUrl, realm, body, "application/x-www-form-urlencoded"));
                 } catch (RuntimeException e) {
-                    LOG.warn("Waiting for service availability");
+                    LOG.warn("Waiting for Keycloak token endpoint availability: {}",
+                        e.getCause() != null ? e.getCause().toString() : e.getMessage());
                 }
                 return (resp.get() != null && resp.get().isSuccessful());
             }, 5, 60000
-            , "Wait until the call is successful");
+            , "Waiting for Keycloak token for realm " + realm);
 
         JsonObject jsonResp = new Gson().fromJson(resp.get().getBody(), JsonObject.class);
 
@@ -73,11 +75,11 @@ public class KeycloakValidation implements Validation {
                 try {
                     resp.set(postServerApi(realmsUrl, bodyRealmContent, "application/json", headers));
                 } catch (RuntimeException e) {
-                    LOG.warn("Waiting for service availability");
+                    LOG.warn("Waiting for Keycloak realm upload availability: {}", e.getMessage());
                 }
                 return (resp.get() != null && resp.get().isSuccessful());
             }, 5, 60000
-            , "Wait until the call is successful");
+            , "Waiting for Keycloak realm upload");
 
         return resp.get();
     }
@@ -88,12 +90,12 @@ public class KeycloakValidation implements Validation {
                 try {
                     postServerApi(realmsUrl, realmName, "application/json", headers);
                 } catch (RuntimeException e) {
-                    LOG.warn("Waiting for service availability");
+                    LOG.warn("Waiting for Keycloak realm deletion availability: {}", e.getMessage());
                     return false;
                 }
                 return true;
             }, 5, 60000
-            , "Wait until the call is successful");
+            , "Waiting for Keycloak realm deletion");
     }
 
     private HTTPUtils.Response postServerRealmsApi(String url, String realm, String body, String mediaType) {
