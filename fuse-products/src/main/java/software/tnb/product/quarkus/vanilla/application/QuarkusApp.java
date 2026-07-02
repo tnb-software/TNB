@@ -90,10 +90,7 @@ public abstract class QuarkusApp extends App {
      */
     private void createUsingCLI() {
         List<String> arguments = new ArrayList<>(List.of(
-            "--runtime", "quarkus",
-            "--quarkus-group-id", QuarkusConfiguration.quarkusPlatformGroupId(),
-            "--quarkus-artifact-id", QuarkusConfiguration.quarkusPlatformArtifactId(),
-            "--quarkus-version", QuarkusConfiguration.quarkusPlatformVersion()
+            "--runtime", "quarkus"
         ));
 
         // Add extensions from BOM customizer
