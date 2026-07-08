@@ -14,8 +14,10 @@ public class QuarkusConfiguration extends CamelConfiguration {
     // To include only properties passed as system properties, this list contains properties that are defined in this class
     // and are filtered out and not passed to the maven build (or are passed as different properties)
     // if you're adding a new property and it starts with "quarkus.", consider adding it to this set
-    private static final Set<String> ignoredQuarkusProperties =
-        Set.of("quarkus.version", "quarkus.native", "quarkus.platform.group-id", "quarkus.platform.artifact-id", "quarkus.platform.version");
+    private static final Set<String> ignoredQuarkusProperties = Set.of(
+        "quarkus.version", "quarkus.native", "quarkus.platform.group-id",
+        "quarkus.platform.artifact-id", "quarkus.platform.version", "quarkus.registry.url"
+    );
 
     public static final String QUARKUS_VERSION = "quarkus.version";
 
@@ -29,6 +31,10 @@ public class QuarkusConfiguration extends CamelConfiguration {
 
     public static final String DEFAULT_QUARKUS_PLATFORM_GROUP_ID = "io.quarkus";
     public static final String DEFAULT_QUARKUS_PLATFORM_ARTIFACT_ID = "quarkus-bom";
+
+    public static final String QUARKUS_REGISTRY_URL = "quarkus.registry.url";
+    public static final String QUARKUS_REGISTRY_PATH = "quarkus.registry.path";
+
 
     public static String quarkusVersion() {
         return getProperty(QUARKUS_VERSION);
@@ -49,6 +55,15 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static String quarkusPlatformVersion() {
         return getProperty(QUARKUS_PLATFORM_VERSION);
     }
+
+    public static String quarkusRegistryUrl() {
+        return getProperty(QUARKUS_REGISTRY_URL);
+    }
+
+    public static String quarkusRegistryPath() {
+        return getProperty(QUARKUS_REGISTRY_PATH, "client/platforms");
+    }
+
 
     /**
      * Collect all "quarkus." properties defined as system properties and filter out properties from QuarkusConfiguration class.

@@ -35,7 +35,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
     public static final String MAVEN_EXTRA_ARGS = "test.maven.extra.args";
     public static final String MAVEN_TRANSFER_PROGRESS = "test.maven.transfer.progress";
-    public static final String REPORT_PORTAL = "test.report.portal.enabled";
+    public static final String ARTIFACTS_ENABLED = "test.artifacts.enabled";
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
     public static final String JIRA_ALLOWED_RESOLUTIONS = "jira.allowed.resolutions";
@@ -152,8 +152,8 @@ public class TestConfiguration extends Configuration {
         return getBoolean(TEST_SKIP_TEARDOWN_OPENSHIFT_AMQSTREAMS, false);
     }
 
-    public static boolean reportPortalEnabled() {
-        return getBoolean(REPORT_PORTAL, false);
+    public static boolean artifactsEnabled() {
+        return getBoolean(ARTIFACTS_ENABLED, false);
     }
 
     public static String user() {

@@ -1,7 +1,6 @@
 package software.tnb.product.util.maven.handler;
 
 import software.tnb.common.utils.IOUtils;
-import software.tnb.product.rp.Attachments;
 
 import java.io.Closeable;
 import java.io.FileWriter;
@@ -21,7 +20,6 @@ public class MavenFileOutputHandler implements MavenOutputHandler, Closeable {
             throw new RuntimeException("Unable to create file", e);
         }
         this.file = outputFile;
-        Attachments.addAttachment(file);
     }
 
     public Path getFile() {
