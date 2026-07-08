@@ -36,6 +36,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import io.fabric8.kubernetes.api.model.Pod;
+import io.fabric8.kubernetes.api.model.Quantity;
+import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
 import io.fabric8.kubernetes.api.model.Volume;
 import io.fabric8.kubernetes.api.model.VolumeBuilder;
 import io.fabric8.kubernetes.api.model.VolumeMount;
@@ -247,6 +249,7 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
         deploymentContent = StringUtils.replace(deploymentContent, "XX_NODE_HOSTNAME",
                 System.getProperty("node.hostname", ""));
 
+        deploymentContent = addResourceLimits(deploymentContent);
         deploymentContent = addVolumesAndMounts(deploymentContent);
 
         return deploymentContent;
@@ -329,5 +332,39 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
         } else {
             return OpenshiftClient.get().isPodFailed(OpenshiftClient.get().getLabeledPods("app.kubernetes.io/name", name).get(0));
         }
+    }
+
+    private String addResourceLimits(String deploymentContent) {
+        String cpuLimit = System.getProperty("cpu.limit", "");
+        String memoryLimit = System.getProperty("memory.limit", "");
+
+        // Only add resources section if at least one limit is specified
+        if (cpuLimit.isEmpty() && memoryLimit.isEmpty()) {
+            return deploymentContent; // No limits, return as-is
+        }
+
+        // Parse the YAML
+        Deployment deployment = Serialization.unmarshal(deploymentContent, Deployment.class);
+
+        // Build the resource requirements
+        ResourceRequirementsBuilder resourcesBuilder = new ResourceRequirementsBuilder();
+
+        if (!cpuLimit.isEmpty() || !memoryLimit.isEmpty()) {
+            Map<String, Quantity> limits = new HashMap<>();
+            if (!cpuLimit.isEmpty()) {
+                limits.put("cpu", new Quantity(cpuLimit));
+            }
+            if (!memoryLimit.isEmpty()) {
+                limits.put("memory", new Quantity(memoryLimit));
+            }
+            resourcesBuilder.withLimits(limits);
+        }
+
+        // Apply to the first container
+        deployment.getSpec().getTemplate().getSpec().getContainers().get(0)
+            .setResources(resourcesBuilder.build());
+
+        // Serialize back to YAML
+        return Serialization.asYaml(deployment);
     }
 }

@@ -10,7 +10,7 @@ import java.util.List;
 public class ApplicationScopeCustomizer extends CamelQuarkusCustomizer {
     @Override
     public void customize() {
-        if (!getIntegrationBuilder().isJBang()) {
+        if (!getIntegrationBuilder().usesCLI()) {
             getIntegrationBuilder().getRouteBuilders().forEach(rb ->
                 AnnotationUtils.addAnnotationsToRouteBuilder(rb, List.of("jakarta.enterprise.context.ApplicationScoped"),
                     List.of("ApplicationScoped"))

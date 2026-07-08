@@ -12,7 +12,7 @@ public class ComponentCustomizer extends SpringBootCustomizer {
     @Override
     public void customize() {
         // Camel export using JBang adds the annotation automatically
-        if (!getIntegrationBuilder().isJBang()) {
+        if (!getIntegrationBuilder().usesCLI()) {
             getIntegrationBuilder().getRouteBuilders().forEach(rb ->
                 AnnotationUtils.addAnnotationsToRouteBuilder(rb, List.of("org.springframework.stereotype.Component"), List.of("Component")));
         }
