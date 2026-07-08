@@ -35,7 +35,6 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static final String QUARKUS_REGISTRY_URL = "quarkus.registry.url";
     public static final String QUARKUS_REGISTRY_PATH = "quarkus.registry.path";
 
-
     public static String quarkusVersion() {
         return getProperty(QUARKUS_VERSION);
     }
@@ -63,7 +62,6 @@ public class QuarkusConfiguration extends CamelConfiguration {
     public static String quarkusRegistryPath() {
         return getProperty(QUARKUS_REGISTRY_PATH, "client/platforms");
     }
-
 
     /**
      * Collect all "quarkus." properties defined as system properties and filter out properties from QuarkusConfiguration class.
