@@ -4,43 +4,59 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class TelegramAccount implements Account, WithId {
-    private String app_hash;
+    private String appHash;
     private String appId;
     private String sessionString;
     private String token;
     private String username;
-    private String sender_id;
+    private String senderId;
 
-    public String getAppHash() {
-        return app_hash;
+    public String appHash() {
+        return appHash;
     }
 
-    public void setApp_hash(String app_hash) {
-        this.app_hash = app_hash;
-    }
-
-    public String getAppId() {
+    public String appId() {
         return appId;
     }
 
-    public String getSessionString() {
+    public String sessionString() {
         return sessionString;
     }
 
-    public String getToken() {
+    public String token() {
         return token;
     }
 
-    public String getUsername() {
+    public String username() {
         return username;
     }
 
-    public String getSenderId() {
-        return sender_id;
+    public String senderId() {
+        return senderId;
     }
 
-    public void setSender_id(String sender_id) {
-        this.sender_id = sender_id;
+    public void setAppHash(String appHash) {
+        this.appHash = appHash;
+    }
+
+    public void setAppId(String appId) {
+        this.appId = appId;
+    }
+
+    public void setSessionString(String sessionString) {
+        this.sessionString = sessionString;
+    }
+
+    public void setToken(String token) {
+        this.token = token;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public void setSenderId(String senderId) {
+        this.senderId = senderId;
     }
 
     @Override

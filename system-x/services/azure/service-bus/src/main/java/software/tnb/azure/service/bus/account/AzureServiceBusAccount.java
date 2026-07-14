@@ -4,18 +4,18 @@ import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
 public class AzureServiceBusAccount implements Account, WithId {
-    private String connection_string;
+    private String connectionString;
 
     @Override
     public String credentialsId() {
-        return "tnb-azure-servicebus";
+        return "azure_servicebus";
     }
 
-    public void setConnection_string(String connection_string) {
-        this.connection_string = connection_string;
+    public void setConnectionString(String connectionString) {
+        this.connectionString = connectionString;
     }
 
     public String connectionString() {
-        return connection_string;
+        return connectionString;
     }
 }

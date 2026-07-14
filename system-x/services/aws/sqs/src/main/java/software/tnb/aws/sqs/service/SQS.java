@@ -25,7 +25,7 @@ public class SQS extends AWSService<SQSAccount, SqsClient, SQSValidation> {
             account = AccountFactory.create(SQSAccount.class);
 
             if (getConfiguration().isLocalstack()) {
-                account.setAccount_id("000000000000");
+                account.setAccountId("000000000000");
             }
 
             // There two are derived other values
