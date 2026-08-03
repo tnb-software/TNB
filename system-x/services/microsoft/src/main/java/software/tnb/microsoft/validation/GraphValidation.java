@@ -49,13 +49,16 @@ public class GraphValidation implements Validation {
         client.users().byUserId(from).sendMail().post(sendMailPostRequestBody);
     }
 
-    public void deleteEmail(String subject, String content, String from) {
-        final List<Message> value = client.users().byUserId(from).messages().get().getValue();
-        Message top = value.get(0);
-
-        if ("from".equals(top.getSender().getEmailAddress().getAddress()) && subject.equals(top.getSubject())
-            && top.getBodyPreview().equals(content)) {
-            client.users().byUserId(from).messages().byMessageId(top.getId()).delete();
+    public void deleteEmail(String subject, String content, String userId) {
+        final List<Message> messages = client.users().byUserId(userId).messages().get(config ->
+            config.queryParameters.filter = "subject eq '" + subject + "'"
+        ).getValue();
+        if (messages == null) {
+            return;
         }
+        messages.stream()
+            .filter(msg -> subject.equals(msg.getSubject())
+                && msg.getBodyPreview().equals(content))
+            .forEach(msg -> client.users().byUserId(userId).messages().byMessageId(msg.getId()).delete());
     }
 }
