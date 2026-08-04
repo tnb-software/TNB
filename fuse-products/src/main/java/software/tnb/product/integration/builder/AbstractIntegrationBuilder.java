@@ -77,7 +77,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
 
     private String integrationName;
 
-    private String startupRegex = DEFAULT_STARTUP_REGEX;
+    private String startupRegex;
 
     // use a random port locally if not specified otherwise
     private int port = OpenshiftConfiguration.isOpenshift() ? 8080 : NetworkUtils.getFreePort();
@@ -585,7 +585,9 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      * @return SELF
      */
     public SELF startupRegex(String regex) {
-        this.startupRegex = regex;
+        if (startupRegex == null) {
+            this.startupRegex = regex;
+        }
         return self();
     }
 
@@ -594,7 +596,7 @@ public abstract class AbstractIntegrationBuilder<SELF extends AbstractIntegratio
      * @return regex expected to be matched in the application log
      */
     public String getStartupRegex() {
-        return startupRegex;
+        return startupRegex == null ? DEFAULT_STARTUP_REGEX : startupRegex;
     }
 
     /**
