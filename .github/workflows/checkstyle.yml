@@ -15,4 +15,6 @@ jobs:
         reporter: 'github-pr-review'
         checkstyle_config: checkstyle/checkstyle.xml
         fail_on_error: true
+        fail_level: any
         filter_mode: 'file'
+        checkstyle_version: '10.3'
