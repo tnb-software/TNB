@@ -14,6 +14,9 @@ public class CxfSoapCustomizer extends ProductsCustomizer {
     public void customizeSpringboot() {
         getIntegrationBuilder().dependencies(
             Maven.createDependency("org.apache.cxf:cxf-spring-boot-starter-jaxws:" + CxfConfiguration.cxfVersion(),
-                "spring-boot-starter-tomcat"));
+                "spring-boot-starter-tomcat",
+                "org.opensaml:opensaml-saml-impl",
+                "org.opensaml:opensaml-xacml-impl",
+                "org.opensaml:opensaml-xacml-saml-impl"));
     }
 }
