@@ -287,10 +287,6 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
-            <artifactId>system-x-weaviate</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
             <artifactId>system-x-mina</artifactId>
         </dependency>
         <dependency>
@@ -400,6 +396,10 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-tempo</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-weaviate</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>

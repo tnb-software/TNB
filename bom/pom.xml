@@ -401,11 +401,6 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
-                <artifactId>system-x-weaviate</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
                 <artifactId>system-x-mina</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -557,6 +552,11 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-tempo</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
+                <artifactId>system-x-weaviate</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>
