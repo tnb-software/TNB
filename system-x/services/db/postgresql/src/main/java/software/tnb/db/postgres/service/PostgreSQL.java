@@ -11,7 +11,7 @@ public abstract class PostgreSQL extends SQL {
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/rhel8/postgresql-13:latest";
+        return "registry.redhat.io/rhel10/postgresql-18:latest";
     }
 
     @Override
