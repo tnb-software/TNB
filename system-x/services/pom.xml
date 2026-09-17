@@ -26,6 +26,7 @@
         <module>graphql</module>
         <module>google</module>
         <module>hashicorp-vault</module>
+        <module>cyberark-vault</module>
         <module>knative</module>
         <module>ldap</module>
         <module>slack</module>

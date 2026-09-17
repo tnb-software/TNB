@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>system-x-services</artifactId>
+        <groupId>software.tnb</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>system-x-cyberark-vault</artifactId>
+    <name>TNB :: System-X :: Services :: CyberArk Vault</name>
+
+    <dependencies>
+        <!-- CyberarkVault stores its data in a PostgreSQL database, deployed as a system-x service before CyberarkVault itself -->
+        <dependency>
+            <groupId>software.tnb</groupId>
+            <artifactId>system-x-postgresql</artifactId>
+            <version>1.0-SNAPSHOT</version>
+        </dependency>
+    </dependencies>
+
+</project>
