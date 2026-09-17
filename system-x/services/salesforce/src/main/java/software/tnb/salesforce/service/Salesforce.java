@@ -52,5 +52,8 @@ public class Salesforce extends Service<SalesforceAccount, ForceApi, SalesforceV
 
     @Override
     public void beforeAll(ExtensionContext extensionContext) throws Exception {
+        // Pre-load validation, as initializing `client` can take lot of time (more then few minutes) and that can lead to timeout issues during
+        // tests execution (as they usually use `awaitUntil` with lower timeout ~30s) while accessing the client() or validation()
+        validation();
     }
 }
