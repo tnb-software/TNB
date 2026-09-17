@@ -94,6 +94,11 @@ public final class HTTPUtils {
             }
             return new Response(response.code(), responseBody);
         } catch (IOException e) {
+            if (withRetry && attempts > 0 && retryAllowedMethods.contains(request.method())) {
+                LOG.warn("retrying the http call after connection error in 1 second: {}", e.getMessage());
+                WaitUtils.sleep(1000);
+                return execute(request, throwError, attempts - 1);
+            }
             if (throwError) {
                 throw new RuntimeException("Unable to execute request: ", e);
             } else {
