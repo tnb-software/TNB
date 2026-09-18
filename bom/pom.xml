@@ -181,6 +181,11 @@
             </dependency>
             <dependency>
                 <groupId>software.tnb</groupId>
+                <artifactId>system-x-cyberark-vault</artifactId>
+                <version>1.0-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>software.tnb</groupId>
                 <artifactId>system-x-db-common</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
@@ -297,11 +302,6 @@
             <dependency>
                 <groupId>software.tnb</groupId>
                 <artifactId>system-x-hashicorp-vault</artifactId>
-                <version>1.0-SNAPSHOT</version>
-            </dependency>
-            <dependency>
-                <groupId>software.tnb</groupId>
-                <artifactId>system-x-cyberark-vault</artifactId>
                 <version>1.0-SNAPSHOT</version>
             </dependency>
             <dependency>

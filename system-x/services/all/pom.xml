@@ -131,6 +131,10 @@
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
+            <artifactId>system-x-cyberark-vault</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>software.tnb</groupId>
             <artifactId>system-x-db-common</artifactId>
         </dependency>
         <dependency>
@@ -208,10 +212,6 @@
         <dependency>
             <groupId>software.tnb</groupId>
             <artifactId>system-x-hashicorp-vault</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>software.tnb</groupId>
-            <artifactId>system-x-cyberark-vault</artifactId>
         </dependency>
         <dependency>
             <groupId>software.tnb</groupId>
