@@ -86,7 +86,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <testcontainers.version>2.0.2</testcontainers.version>
         <xtf.version>1.0</xtf.version>
-        <maven.surefire.plugin.version>3.5.0</maven.surefire.plugin.version>
+        <maven.surefire.plugin.version>3.6.0</maven.surefire.plugin.version>
         <skip.tests>true</skip.tests>
         <jacoco.maven.plugin.version>0.8.12</jacoco.maven.plugin.version>
         <jgit.version>7.7.0.202606012155-r</jgit.version>
