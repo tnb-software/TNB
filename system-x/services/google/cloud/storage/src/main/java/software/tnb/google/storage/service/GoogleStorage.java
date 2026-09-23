@@ -6,7 +6,6 @@ import software.tnb.google.storage.validation.GoogleStorageValidation;
 
 import org.junit.jupiter.api.extension.ExtensionContext;
 
-import org.apache.commons.io.IOUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -14,8 +13,6 @@ import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auto.service.AutoService;
 import com.google.cloud.storage.Storage;
 import com.google.cloud.storage.StorageOptions;
-
-import java.util.Base64;
 
 @AutoService(GoogleStorage.class)
 public class GoogleStorage extends Service<GoogleCloudAccount, Storage, GoogleStorageValidation> {
@@ -25,9 +22,8 @@ public class GoogleStorage extends Service<GoogleCloudAccount, Storage, GoogleSt
         if (client == null) {
             LOG.debug("Creating new Google Storage client");
             try {
-                String decodedJson = new String(Base64.getDecoder().decode(account().serviceAccountKey()));
                 client = StorageOptions.newBuilder().setCredentials(
-                    ServiceAccountCredentials.fromStream(IOUtils.toInputStream(decodedJson, "UTF-8"))).build().getService();
+                    ServiceAccountCredentials.fromStream(account().serviceAccountKeyStream())).build().getService();
             } catch (Exception e) {
                 throw new RuntimeException("Unable to create new Google Storage client", e);
             }
