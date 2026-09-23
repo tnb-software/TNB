@@ -10,14 +10,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auto.service.AutoService;
 import com.google.cloud.secretmanager.v1.SecretManagerServiceClient;
 import com.google.cloud.secretmanager.v1.SecretManagerServiceSettings;
-
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.util.Base64;
 
 @AutoService(SecretManager.class)
 public class SecretManager extends Service<GoogleCloudAccount, SecretManagerServiceClient, SecretManagerValidation> {
@@ -39,8 +35,9 @@ public class SecretManager extends Service<GoogleCloudAccount, SecretManagerServ
 
     protected SecretManagerServiceClient client() {
         if (client == null) {
-            try (InputStream serviceAccountKey = new ByteArrayInputStream(Base64.getDecoder().decode(account().serviceAccountKey()))) {
-                FixedCredentialsProvider provider = FixedCredentialsProvider.create(GoogleCredentials.fromStream(serviceAccountKey));
+            try {
+                FixedCredentialsProvider provider =
+                    FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(account().serviceAccountKeyStream()));
                 SecretManagerServiceSettings settings = SecretManagerServiceSettings.newBuilder().setCredentialsProvider(provider).build();
                 LOG.debug("Creating Google Secret Manager client");
                 client = SecretManagerServiceClient.create(settings);
@@ -50,5 +47,4 @@ public class SecretManager extends Service<GoogleCloudAccount, SecretManagerServ
         }
         return client;
     }
-    
 }

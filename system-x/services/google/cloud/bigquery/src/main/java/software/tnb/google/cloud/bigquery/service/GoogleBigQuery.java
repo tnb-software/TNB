@@ -11,15 +11,12 @@ import org.slf4j.LoggerFactory;
 
 import com.google.api.gax.core.CredentialsProvider;
 import com.google.api.gax.core.FixedCredentialsProvider;
-import com.google.auth.oauth2.GoogleCredentials;
+import com.google.auth.oauth2.ServiceAccountCredentials;
 import com.google.auto.service.AutoService;
 import com.google.cloud.bigquery.BigQuery;
 import com.google.cloud.bigquery.BigQueryOptions;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.util.Base64;
 
 @AutoService(GoogleBigQuery.class)
 public class GoogleBigQuery extends Service<GoogleCloudAccount, BigQuery, BigQueryValidation> {
@@ -38,8 +35,7 @@ public class GoogleBigQuery extends Service<GoogleCloudAccount, BigQuery, BigQue
     }
 
     private CredentialsProvider credentialsProvider() throws IOException {
-        InputStream serviceAccountKey = new ByteArrayInputStream(Base64.getDecoder().decode(account().serviceAccountKey()));
-        return FixedCredentialsProvider.create(GoogleCredentials.fromStream(serviceAccountKey));
+        return FixedCredentialsProvider.create(ServiceAccountCredentials.fromStream(account().serviceAccountKeyStream()));
     }
 
     @Override
