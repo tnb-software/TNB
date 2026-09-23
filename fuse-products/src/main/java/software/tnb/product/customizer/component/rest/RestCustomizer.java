@@ -31,7 +31,7 @@ public class RestCustomizer extends ProductsCustomizer {
                     "org.springframework.boot:spring-boot-starter-tomcat")
                 )
                 .dependencies(
-                    Maven.createDependency("com.redhat.integration:spring-boot-starter-undertow")
+                    Maven.createDependency("io.undertow:undertow-spring-boot-starter")
                 );
         }
     }
