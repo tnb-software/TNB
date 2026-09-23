@@ -5,6 +5,9 @@ import software.tnb.common.account.WithId;
 
 import org.json.JSONObject;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
 public class GoogleCloudAccount implements Account, WithId {
@@ -17,11 +20,7 @@ public class GoogleCloudAccount implements Account, WithId {
     }
 
     private String fromJson(String key) {
-        try {
-            return new JSONObject(new String(Base64.getDecoder().decode(serviceAccountKey))).get(key).toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Unable to decode base64 service account json", e);
-        }
+        return new JSONObject(serviceAccountKey).get(key).toString();
     }
 
     public String projectId() {
@@ -40,8 +39,20 @@ public class GoogleCloudAccount implements Account, WithId {
         return fromJson("client_id");
     }
 
+    /**
+     * Get Google cloud service account as an InputStream
+     * @return InputStream representing the service account
+     */
+    public InputStream serviceAccountKeyStream() {
+        return new ByteArrayInputStream(serviceAccountKey.getBytes(StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Get Google cloud service account
+     * @return Base64 encoded service account JSON
+     */
     public String serviceAccountKey() {
-        return serviceAccountKey;
+        return new String(Base64.getEncoder().encode(serviceAccountKey.getBytes(StandardCharsets.UTF_8)));
     }
 
     public void setServiceAccountKey(String serviceAccountKey) {
