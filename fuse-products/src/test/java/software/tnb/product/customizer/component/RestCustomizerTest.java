@@ -38,8 +38,8 @@ public class RestCustomizerTest extends ProductCustomizerTestParent {
         assertThat(d.getExclusions().get(0).getArtifactId()).isEqualTo("spring-boot-starter-tomcat");
 
         d = ib.getDependencies().get(1);
-        assertThat(d.getGroupId()).isEqualTo("com.redhat.integration");
-        assertThat(d.getArtifactId()).isEqualTo("spring-boot-starter-undertow");
+        assertThat(d.getGroupId()).isEqualTo("io.undertow");
+        assertThat(d.getArtifactId()).isEqualTo("undertow-spring-boot-starter");
     }
 
     @Test

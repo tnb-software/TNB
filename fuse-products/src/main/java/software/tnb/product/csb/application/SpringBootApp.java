@@ -122,7 +122,7 @@ public abstract class SpringBootApp extends App {
         final List<String> artifactsToRemove = new ArrayList<>(List.of("camel-stream-starter"));
 
         if (!isOpenShift) {
-            artifactsToRemove.addAll(List.of("spring-boot-starter-web", "spring-boot-starter-undertow"
+            artifactsToRemove.addAll(List.of("spring-boot-starter-web", "spring-boot-starter-undertow", "undertow-spring-boot-starter"
                 , "spring-boot-starter-actuator"));
         }
         File pom = location.resolve("pom.xml").toFile();
