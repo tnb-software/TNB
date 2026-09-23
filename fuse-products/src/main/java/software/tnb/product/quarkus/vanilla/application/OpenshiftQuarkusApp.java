@@ -130,7 +130,7 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     }
 
     private void setOpenshiftProperties(Map<String, String> properties) {
-        properties.putAll(Map.of("quarkus.kubernetes-client.master-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
+        properties.putAll(Map.of("quarkus.kubernetes-client.api-server-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
             "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getAutoOAuthToken(),
             "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
             "quarkus.kubernetes-client.trust-certs", "true",
