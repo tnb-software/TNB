@@ -12,6 +12,7 @@ import software.tnb.product.customizer.byteman.BytemanCustomizer;
 import software.tnb.product.integration.Resource;
 import software.tnb.product.integration.builder.AbstractIntegrationBuilder;
 import software.tnb.product.quarkus.camel.customizer.ApplicationScopeCustomizer;
+import software.tnb.product.quarkus.camel.customizer.KubernetesClientCustomizer;
 import software.tnb.product.quarkus.vanilla.customizer.QuarkusEncodingCustomizer;
 import software.tnb.product.util.RemoveQuarkusAnnotationsCustomizer;
 import software.tnb.product.util.maven.Maven;
@@ -102,7 +103,8 @@ public final class IntegrationGenerator {
             new ComponentCustomizer(),
             new CamelMainCustomizer(),
             new BytemanCustomizer(),
-            new QuarkusEncodingCustomizer()
+            new QuarkusEncodingCustomizer(),
+            new KubernetesClientCustomizer()
         );
 
         // the http server port customizer should be added by default, however, if there is any other instance of that class already added

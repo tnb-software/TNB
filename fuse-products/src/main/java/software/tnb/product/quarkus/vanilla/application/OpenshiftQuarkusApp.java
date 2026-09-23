@@ -130,14 +130,12 @@ public class OpenshiftQuarkusApp extends QuarkusApp {
     }
 
     private void setOpenshiftProperties(Map<String, String> properties) {
-        properties.putAll(Map.of("quarkus.kubernetes-client.api-server-url", OpenshiftClient.get().getConfiguration().getMasterUrl(),
-            "quarkus.kubernetes-client.token", OpenshiftClient.get().getConfiguration().getAutoOAuthToken(),
-            "quarkus.kubernetes-client.namespace", OpenshiftClient.get().getNamespace(),
-            "quarkus.kubernetes-client.trust-certs", "true",
+        properties.putAll(Map.of(
             "quarkus.kubernetes.deploy", "true",
             "quarkus.native.container-build", "true",
             "quarkus.openshift.build-strategy", "docker",
-            "quarkus.openshift.service-account", getName()));
+            "quarkus.openshift.service-account", getName())
+        );
         boolean isMac = System.getProperty("os.name").toLowerCase().contains("mac");
         if (isMac) {
             properties.put("quarkus.native.container-runtime-options", "--platform=linux/amd64");
