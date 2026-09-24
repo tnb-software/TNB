@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Mina</name>
 
     <properties>
-        <ssh.client.version>0.40.0</ssh.client.version>
+        <ssh.client.version>0.41.1</ssh.client.version>
         <bouncycastle.version>1.85</bouncycastle.version>
     </properties>
 
