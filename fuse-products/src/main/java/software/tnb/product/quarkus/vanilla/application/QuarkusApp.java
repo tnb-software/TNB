@@ -23,12 +23,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.function.BooleanSupplier;
 import java.util.stream.Collectors;
 
@@ -50,6 +54,7 @@ public abstract class QuarkusApp extends App {
         if (integrationBuilder instanceof AbstractGitIntegrationBuilder<?> gitIntegrationBuilder) {
             Path gitClonedDirectory = new GitRepository(gitIntegrationBuilder).getPath();
             this.appDir = gitIntegrationBuilder.getSubDirectory().map(gitClonedDirectory::resolve).orElse(gitClonedDirectory);
+            IntegrationGenerator.processCustomizers(integrationBuilder, appDir);
         } else {
             this.appDir = TestConfiguration.appLocation().resolve(getName());
             if (integrationBuilder.usesCLI()) {
@@ -68,6 +73,12 @@ public abstract class QuarkusApp extends App {
         properties.putAll(QuarkusConfiguration.fromSystemProperties());
         if (integrationBuilder instanceof AbstractMavenGitIntegrationBuilder<?> gitIntegrationBuilder) {
             properties.putAll(gitIntegrationBuilder.getMavenProperties());
+
+            // Write application properties to the cloned project
+            Properties appProps = gitIntegrationBuilder.getApplicationProperties();
+            if (!appProps.isEmpty()) {
+                updateApplicationProperties(appProps);
+            }
         }
 
         BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
@@ -197,6 +208,43 @@ public abstract class QuarkusApp extends App {
             .map(c -> (software.tnb.product.quarkus.vanilla.customizer.QuarkusBomCustomizer) c)
             .findFirst()
             .orElseThrow(() -> new IllegalStateException("QuarkusBomCustomizer not found in integration builder customizers"));
+    }
+
+    /**
+     * Updates or creates application.properties file in the cloned project with the provided properties.
+     *
+     * @param newProperties properties to add/append to application.properties
+     */
+    private void updateApplicationProperties(Properties newProperties) {
+        Path resourcesDir = appDir.resolve("src/main/resources");
+        Path appPropertiesPath = resourcesDir.resolve("application.properties");
+
+        try {
+            // Create resources directory if it doesn't exist
+            Files.createDirectories(resourcesDir);
+
+            Properties existingProperties = new Properties();
+
+            // Load existing properties if the file exists
+            if (Files.exists(appPropertiesPath)) {
+                try (FileInputStream fis = new FileInputStream(appPropertiesPath.toFile())) {
+                    existingProperties.load(fis);
+                }
+            }
+
+            // Add/overwrite with new properties
+            existingProperties.putAll(newProperties);
+
+            // Write back to the file
+            try (FileOutputStream fos = new FileOutputStream(appPropertiesPath.toFile())) {
+                existingProperties.store(fos, "Updated by QuarkusApp");
+            }
+
+            LOG.info("Updated application.properties with {} properties", newProperties.size());
+        } catch (IOException e) {
+            LOG.error("Failed to update application.properties", e);
+            throw new RuntimeException("Failed to update application.properties", e);
+        }
     }
 
 }
