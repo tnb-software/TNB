@@ -19,6 +19,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.time.OffsetDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class StorageBlobValidation implements Validation {
@@ -75,6 +76,16 @@ public class StorageBlobValidation implements Validation {
         return client.getBlobContainerClient(blobContainer).listBlobs().stream().collect(Collectors.toList());
     }
 
+    public void setBlobTags(String blobContainer, String blob, Map<String, String> tags) {
+        LOG.debug("Setting the blob tags on {} with tags {}", blob, tags);
+        client.getBlobContainerClient(blobContainer).getBlobClient(blob).setTags(tags);
+    }
+
+    public Map<String, String> getBlobTags(String blobContainer, String blob) {
+        LOG.debug("Getting the blob tags from {}", blob);
+        return client.getBlobContainerClient(blobContainer).getBlobClient(blob).getTags();
+    }
+
     public boolean blobExists(String blobContainer, String blob) {
         return blobContainerExists(blobContainer) && client.getBlobContainerClient(blobContainer).getBlobClient(blob).exists();
     }
@@ -100,7 +111,8 @@ public class StorageBlobValidation implements Validation {
             .setCreatePermission(true)
             .setDeletePermission(true)
             .setAddPermission(true)
-            .setReadPermission(true);
+            .setReadPermission(true)
+            .setTagsPermission(true);
 
         BlobServiceSasSignatureValues sasSignatureValues = new BlobServiceSasSignatureValues(expiryTime, blobContainerSasPermission);
 
