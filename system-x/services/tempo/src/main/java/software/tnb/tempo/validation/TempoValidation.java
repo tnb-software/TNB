@@ -91,8 +91,8 @@ public abstract class TempoValidation implements Validation {
 
         AtomicReference<List<FoundTrace>> result = new AtomicReference<>();
         Awaitility.await("await for traces to be elaborated")
-            .atMost(30, TimeUnit.SECONDS)
-            .pollInterval(2, TimeUnit.SECONDS)
+            .atMost(120, TimeUnit.SECONDS)
+            .pollInterval(5, TimeUnit.SECONDS)
             .untilAsserted(() -> {
                 SearchResult res = search("{ resource.service.name = \"" + serviceName + "\" }");
                 result.set(res.getTraces());
