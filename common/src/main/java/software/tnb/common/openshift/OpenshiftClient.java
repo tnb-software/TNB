@@ -66,6 +66,8 @@ import io.fabric8.kubernetes.api.model.rbac.SubjectBuilder;
 import io.fabric8.kubernetes.client.Config;
 import io.fabric8.kubernetes.client.ResourceNotFoundException;
 import io.fabric8.kubernetes.client.dsl.RbacAPIGroupDSL;
+import io.fabric8.kubernetes.client.dsl.base.PatchContext;
+import io.fabric8.kubernetes.client.dsl.base.PatchType;
 import io.fabric8.kubernetes.client.dsl.base.ResourceDefinitionContext;
 import io.fabric8.openshift.api.model.SecurityContextConstraints;
 import io.fabric8.openshift.api.model.SecurityContextConstraintsBuilder;
@@ -581,8 +583,10 @@ public class OpenshiftClient extends OpenShift {
             SecurityContextConstraints existingScc = get().securityContextConstraints().withName(copyFromScc).get();
             scc = get().securityContextConstraints().create(
                 new SecurityContextConstraintsBuilder(existingScc)
-                    .withNewMetadata() // new metadata to override the existing annotations
+                    .withNewMetadata()
                     .withName(sccName)
+                    // The source SCC is returned by the API server and may contain managed fields that cannot be serialized.
+                    .withManagedFields(Collections.emptyList())
                     .endMetadata()
                     .addToDefaultAddCapabilities(defaultCapabilities)
                     .build());
@@ -596,7 +600,7 @@ public class OpenshiftClient extends OpenShift {
                 scc.getUsers().add(user);
             }
         }
-        get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+        patchSecurityContext(scc);
     }
 
     public void addGroupsToSecurityContext(SecurityContextConstraints scc, String... groups) {
@@ -605,7 +609,15 @@ public class OpenshiftClient extends OpenShift {
                 scc.getGroups().add(group);
             }
         }
-        get().securityContextConstraints().withName(scc.getMetadata().getName()).patch(scc);
+        patchSecurityContext(scc);
+    }
+
+    private void patchSecurityContext(SecurityContextConstraints scc) {
+        // SCCs read back from the API server carry server-managed metadata (managedFields) that cannot be
+        // re-serialized on patch; drop it and use a JSON merge patch so only our changes are applied.
+        scc.getMetadata().setManagedFields(null);
+        get().securityContextConstraints().withName(scc.getMetadata().getName())
+            .patch(PatchContext.of(PatchType.JSON_MERGE), scc);
     }
 
     public String getServiceAccountRef(String serviceAccountName) {
