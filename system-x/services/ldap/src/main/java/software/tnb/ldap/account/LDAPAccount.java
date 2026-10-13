@@ -1,9 +1,8 @@
 package software.tnb.ldap.account;
 
 import software.tnb.common.account.Account;
-import software.tnb.common.account.WithId;
 
-public class LDAPAccount implements Account, WithId {
+public class LDAPAccount implements Account {
     private String username = "cn=admin,dc=redhat,dc=com";
     private String password = "admin";
     private String host = "localhost";
@@ -30,10 +29,5 @@ public class LDAPAccount implements Account, WithId {
 
     public void setHost(String host) {
         this.host = host;
-    }
-
-    @Override
-    public String credentialsId() {
-        return "ldap";
     }
 }

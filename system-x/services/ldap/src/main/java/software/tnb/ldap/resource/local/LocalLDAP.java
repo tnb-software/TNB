@@ -8,22 +8,7 @@ import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 @AutoService(LDAP.class)
 public class LocalLDAP extends LDAP implements ContainerDeployable<LDAPContainer> {
-    private LDAPContainer ldapContainer;
-
-    @Override
-    public void deploy() {
-        if (!getConfiguration().isRemoteServer()) {
-            ldapContainer = new LDAPContainer(image(), PORT, environmentVariables());
-            ContainerDeployable.super.deploy();
-        }
-    }
-
-    @Override
-    public void undeploy() {
-        if (!getConfiguration().isRemoteServer()) {
-            ContainerDeployable.super.undeploy();
-        }
-    }
+    private final LDAPContainer ldapContainer = new LDAPContainer(image(), PORT, environmentVariables());
 
     @Override
     public LDAPConnectionPool client() {
@@ -32,12 +17,6 @@ public class LocalLDAP extends LDAP implements ContainerDeployable<LDAPContainer
 
     @Override
     public void openResources() {
-        boolean isRemoteServer = getConfiguration().isRemoteServer();
-        port = isRemoteServer ? PORT : ldapContainer.getMappedPort(PORT);
-        if (!isRemoteServer) {
-            account().setHost(ldapContainer.getHost());
-        }
-        initializeClient(account());
     }
 
     @Override
@@ -50,5 +29,20 @@ public class LocalLDAP extends LDAP implements ContainerDeployable<LDAPContainer
     @Override
     public LDAPContainer container() {
         return ldapContainer;
+    }
+
+    @Override
+    public String url() {
+        return String.format("ldap://%s:%d", host(), port());
+    }
+
+    @Override
+    protected String host() {
+        return container().getHost();
+    }
+
+    @Override
+    protected int port() {
+        return container().getMappedPort(PORT);
     }
 }

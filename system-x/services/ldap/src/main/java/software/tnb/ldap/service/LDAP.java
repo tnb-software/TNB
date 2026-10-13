@@ -1,10 +1,9 @@
 package software.tnb.ldap.service;
 
 import software.tnb.common.deployment.WithDockerImage;
-import software.tnb.common.service.ConfigurableService;
+import software.tnb.common.service.Service;
 import software.tnb.common.util.VersionUtils;
 import software.tnb.ldap.account.LDAPAccount;
-import software.tnb.ldap.service.configuration.LDAPConfiguration;
 import software.tnb.ldap.validation.LDAPValidation;
 
 import org.apache.commons.lang3.StringUtils;
@@ -18,8 +17,7 @@ import com.unboundid.ldap.sdk.LDAPException;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnectionPool, LDAPValidation, LDAPConfiguration> implements
-    WithDockerImage {
+public abstract class LDAP extends Service<LDAPAccount, LDAPConnectionPool, LDAPValidation> implements WithDockerImage {
     private static final Logger LOG = LoggerFactory.getLogger(LDAP.class);
     private static final Pattern VERSION_PATTERN = Pattern.compile("slapd (\\d[\\d.]*)");
 
@@ -29,36 +27,6 @@ public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnecti
     public String serviceVersion() {
         String version = VersionUtils.extractFromLogs(this, VERSION_PATTERN);
         return version != null ? version : super.serviceVersion();
-    }
-
-    protected boolean reachable = true;
-    protected String host;
-    protected int port;
-
-    @Override
-    protected void defaultConfiguration() {
-        getConfiguration().useRemoteServer(false);
-    }
-
-    @Override
-    public LDAPAccount account() {
-        if (account == null) {
-            if (getConfiguration().isRemoteServer()) {
-                account = super.account();
-            } else {
-                account = new LDAPAccount();
-            }
-        }
-
-        return account;
-    }
-
-    public String url() {
-        return String.format("ldap://%s:%s", host, port);
-    }
-
-    public boolean isReachable() {
-        return reachable;
     }
 
     public Map<String, String> environmentVariables() {
@@ -81,27 +49,19 @@ public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnecti
         return validation;
     }
 
-    protected void initializeClient(LDAPAccount account) {
-        final LDAPConnection ldapConnection = new LDAPConnection();
+    public abstract String url();
 
-        if (getConfiguration().isRemoteServer()) {
-            for (String remoteHost : account().host().split(",")) {
-                try {
-                    ldapConnection.connect(remoteHost, PORT, 20000);
-                    ldapConnection.bind(account().username(), account().password());
-                    client = new LDAPConnectionPool(ldapConnection, 1);
-                    host = remoteHost;
-                    reachable = true;
-                    break;
-                } catch (LDAPException e) {
-                    LOG.error("Error when connecting to LDAP server: {}", e.getMessage());
-                    reachable = false;
-                }
-            }
-        } else {
-            host = account.host();
+    protected abstract String host();
+
+    protected abstract int port();
+
+    @Override
+    public LDAPConnectionPool client() {
+        if (client == null) {
+            final LDAPConnection ldapConnection = new LDAPConnection();
+
             try {
-                ldapConnection.connect(host, port, 20000);
+                ldapConnection.connect(host(), port(), 20000);
                 ldapConnection.bind(account().username(), account().password());
                 client = new LDAPConnectionPool(ldapConnection, 1);
             } catch (LDAPException e) {
@@ -110,5 +70,6 @@ public abstract class LDAP extends ConfigurableService<LDAPAccount, LDAPConnecti
             }
         }
 
+        return client;
     }
 }
