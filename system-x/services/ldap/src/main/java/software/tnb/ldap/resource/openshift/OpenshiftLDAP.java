@@ -2,6 +2,7 @@ package software.tnb.ldap.resource.openshift;
 
 import software.tnb.common.config.OpenshiftConfiguration;
 import software.tnb.common.deployment.ReusableOpenshiftDeployable;
+import software.tnb.common.deployment.WithInClusterHostname;
 import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.IOUtils;
@@ -31,35 +32,27 @@ import io.fabric8.kubernetes.api.model.TCPSocketActionBuilder;
 import io.fabric8.kubernetes.client.PortForward;
 
 @AutoService(LDAP.class)
-public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, WithName {
+public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, WithName, WithInClusterHostname {
 
     private static final Logger LOG = LoggerFactory.getLogger(OpenshiftLDAP.class);
     private PortForward portForward;
     private String sccName;
     private String serviceAccountName;
+    private final int port = NetworkUtils.getFreePort();
 
     @Override
     public void undeploy() {
-        if (!getConfiguration().isRemoteServer()) {
-            LOG.info("Undeploying OpenShift LDAP");
-            OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
-            OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
-            OpenshiftClient.get().apps().deployments().withName(name()).delete();
-            OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
-            WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
-        }
+        LOG.info("Undeploying OpenShift LDAP");
+        OpenshiftClient.get().securityContextConstraints().withName(sccName).delete();
+        OpenshiftClient.get().serviceAccounts().withName(serviceAccountName).delete();
+        OpenshiftClient.get().apps().deployments().withName(name()).delete();
+        OpenshiftClient.get().services().withLabel(OpenshiftConfiguration.openshiftDeploymentLabel(), name()).delete();
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
     }
 
     @Override
     public void openResources() {
-        if (getConfiguration().isRemoteServer()) {
-            port = PORT;
-        } else {
-            port = NetworkUtils.getFreePort();
-            portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, port);
-        }
-
-        initializeClient(account());
+        portForward = OpenshiftClient.get().services().withName(name()).portForward(PORT, port);
     }
 
     @Override
@@ -77,44 +70,43 @@ public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, 
 
     @Override
     public void create() {
-        if (!getConfiguration().isRemoteServer()) {
-            sccName = "tnb-ldap-" + OpenshiftClient.get().getNamespace();
+        sccName = "tnb-ldap-" + OpenshiftClient.get().getNamespace();
 
-            serviceAccountName = name() + "-sa";
+        serviceAccountName = name() + "-sa";
 
-            OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
-                .withNewMetadata()
-                .withName(serviceAccountName)
-                .endMetadata()
-                .build()
-            ).serverSideApply();
+        OpenshiftClient.get().serviceAccounts().resource(new ServiceAccountBuilder()
+            .withNewMetadata()
+            .withName(serviceAccountName)
+            .endMetadata()
+            .build()
+        ).serverSideApply();
 
-            OpenshiftClient.get().addUsersToSecurityContext(
-                OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
-                OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
+        OpenshiftClient.get().addUsersToSecurityContext(
+            OpenshiftClient.get().createSecurityContext(sccName, "anyuid", "SYS_CHROOT"),
+            OpenshiftClient.get().getServiceAccountRef(serviceAccountName));
 
-            final Probe probe = new ProbeBuilder()
-                .withTcpSocket(new TCPSocketActionBuilder().withPort(new IntOrString(PORT)).build())
-                .withTimeoutSeconds(15)
-                .build();
+        final Probe probe = new ProbeBuilder()
+            .withTcpSocket(new TCPSocketActionBuilder().withPort(new IntOrString(PORT)).build())
+            .withTimeoutSeconds(15)
+            .build();
 
-            final List<ContainerPort> ports = List.of(
-                new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
-            );
+        final List<ContainerPort> ports = List.of(
+            new ContainerPortBuilder().withName(name()).withContainerPort(PORT).build()
+        );
 
-            OpenshiftClient.get().createDeployment(Map.of(
-                "name", name(),
-                "image", image(),
-                "env", environmentVariables(),
-                "ports", ports,
-                "scc", sccName,
-                "serviceAccount", serviceAccountName,
-                "capabilities", List.of("SYS_CHROOT"),
-                "readinessProbe", probe,
-                "livenessProbe", probe
-            ));
+        OpenshiftClient.get().createDeployment(Map.of(
+            "name", name(),
+            "image", image(),
+            "env", environmentVariables(),
+            "ports", ports,
+            "scc", sccName,
+            "serviceAccount", serviceAccountName,
+            "capabilities", List.of("SYS_CHROOT"),
+            "readinessProbe", probe,
+            "livenessProbe", probe
+        ));
 
-            // @formatter:off
+        // @formatter:off
         OpenshiftClient.get().services().resource(new ServiceBuilder()
             .editOrNewMetadata()
                 .withName(name())
@@ -132,7 +124,6 @@ public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, 
             .build())
             .serverSideApply();
         // @formatter:on
-        }
     }
 
     @Override
@@ -156,13 +147,17 @@ public class OpenshiftLDAP extends LDAP implements ReusableOpenshiftDeployable, 
 
     @Override
     public String url() {
-        return "ldap://" + (getConfiguration().isRemoteServer()
-            ? (host + ":" + port)
-            : String.format("%s.%s.svc.cluster.local:%d", name(), OpenshiftClient.get().getNamespace(), PORT));
+        return String.format("ldap://%s:%d", inClusterHostname(), PORT);
     }
 
     @Override
-    public boolean isReady() {
-        return getConfiguration().isRemoteServer() || ReusableOpenshiftDeployable.super.isReady();
+    protected String host() {
+        // this is where the validation client is connecting
+        return "localhost";
+    }
+
+    @Override
+    protected int port() {
+        return port;
     }
 }
