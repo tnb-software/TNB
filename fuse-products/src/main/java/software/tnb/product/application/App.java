@@ -203,7 +203,7 @@ public abstract class App {
                 + QuarkusConfiguration.quarkusRegistryUrl() + "/" + QuarkusConfiguration.quarkusRegistryPath());
         }
         cli.add("-jar");
-        cli.add(cliJar);
+        cli.add(convertBackslashes(cliJar));
 
         LOG.info("Creating {} application project for integration {} using Camel CLI {}", TestConfiguration.product(), getName(),
             CamelConfiguration.cliVersion());
@@ -327,7 +327,7 @@ public abstract class App {
         StringBuilder commandString = new StringBuilder("\"");
 
         if (targetDirectory != null) {
-            commandString.append("cd $(cygpath ").append(targetDirectory.toAbsolutePath().toString().replaceAll("\\\\", "/")).append(");");
+            commandString.append("cd $(cygpath ").append(convertBackslashes(targetDirectory.toAbsolutePath().toString())).append(");");
         }
 
         commandString.append(String.join(" ", command));
@@ -335,5 +335,9 @@ public abstract class App {
 
         cmd.add(commandString.toString());
         return cmd;
+    }
+
+    private String convertBackslashes(String s) {
+        return s.replaceAll("\\\\", "/");
     }
 }
