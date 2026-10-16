@@ -30,10 +30,16 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     private int localPort;
     private final SQL sqlService;
     private final int port;
+    private final String scc;
 
     public OpenshiftDB(SQL sqlService, int port) {
+        this(sqlService, port, "restricted");
+    }
+
+    public OpenshiftDB(SQL sqlService, int port, String scc) {
         this.sqlService = sqlService;
         this.port = port;
+        this.scc = scc;
     }
 
     protected String getSccName() {
@@ -43,7 +49,7 @@ public class OpenshiftDB implements OpenshiftDeployable, WithName {
     @Override
     public void create() {
         OpenshiftClient.get().addGroupsToSecurityContext(
-            OpenshiftClient.get().createSecurityContext(getSccName(), "restricted"),
+            OpenshiftClient.get().createSecurityContext(getSccName(), scc),
             "system:serviceaccounts:" + OpenshiftClient.get().getNamespace());
 
         List<ContainerPort> ports = List.of(
