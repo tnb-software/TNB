@@ -48,7 +48,7 @@ public abstract class Minio extends AWSService<AWSAccount, S3Client, S3Validatio
 
     @Override
     public String defaultImage() {
-        return "quay.io/minio/minio:RELEASE.2024-10-02T17-50-41Z";
+        return "pgsty/silo:RELEASE.2026-09-16T00-00-00Z";
     }
 
     protected Map<String, String> containerEnvironment() {
