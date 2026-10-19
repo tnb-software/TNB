@@ -43,7 +43,7 @@ public abstract class SFTP extends ConfigurableService<SFTPAccount, SFTPClient, 
                     LOG.trace("SFTP client heartbeat");
                     client.ls("/");
                 } catch (Exception ignored) { }
-            }, 0, 5, TimeUnit.MINUTES);
+            }, 0, 1, TimeUnit.MINUTES);
         }
         return client;
     }
