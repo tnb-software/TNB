@@ -1,5 +1,6 @@
 package software.tnb.splunk.resource.local;
 
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
@@ -14,6 +15,17 @@ public class SplunkContainer extends GenericContainer<SplunkContainer> {
         this.withEnv(env);
         this.withExposedPorts(ports.toArray(new Integer[0]));
         this.waitingFor(Wait.forLogMessage(".*Ansible playbook complete, will begin streaming.*", 1));
+        this.withFileSystemBind(
+            "/etc/localtime",
+            "/etc/localtime",
+            BindMode.READ_ONLY
+        );
+        this.withFileSystemBind(
+            "/etc/timezone",
+            "/etc/timezone",
+            BindMode.READ_ONLY
+        );
+
         // slower on MacOS + colima docker
         this.withStartupTimeout(Duration.ofMinutes(5));
     }
