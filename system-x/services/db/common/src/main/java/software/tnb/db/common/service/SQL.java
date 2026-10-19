@@ -99,7 +99,7 @@ public abstract class SQL extends ConfigurableService<SQLAccount, NoClient, SQLV
     protected String localConnectionUrl() {
         return OpenshiftConfiguration.isOpenshift()
             ? jdbcConnectionUrl()
-            .replace("://" + host(), "://" + externalHostname())
+            .replace("//" + host(), "//" + externalHostname())
             .replace(":" + port(), ":" + localPort())
             : jdbcConnectionUrl();
     }
