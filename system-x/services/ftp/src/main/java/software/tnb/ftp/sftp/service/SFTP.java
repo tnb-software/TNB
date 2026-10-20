@@ -37,7 +37,7 @@ public abstract class SFTP extends ConfigurableService<SFTPAccount, SFTPClient, 
             LOG.debug("Creating new SFTPClient instance");
             client = makeClient();
 
-            // Create a heartbeat that keeps the session alive, otherwise it would timeout after 10 minutes
+            // Create a heartbeat that keeps the session alive, otherwise it would timeout
             executor.scheduleAtFixedRate(() -> {
                 try {
                     LOG.trace("SFTP client heartbeat");
