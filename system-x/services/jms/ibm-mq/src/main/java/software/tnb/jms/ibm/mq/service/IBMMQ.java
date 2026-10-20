@@ -27,6 +27,8 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
     public static final String SSL_FOLDER = "/mnt/mqm/data/qmgrs/%s/ssl";
     public static final String MQSC_COMMAND_FILE_NAME = "99-tnb.mqsc";
     public static final String SSLCIPHERSUITE = "TLS_AES_128_GCM_SHA256";
+    // Channel heartbeat interval in seconds
+    private static final int HEARTBEAT_INTERVAL = 10;
 
     public Map<String, String> containerEnvironment() {
         return Map.of(
@@ -51,13 +53,17 @@ public abstract class IBMMQ extends ConfigurableService<IBMMQAccount, Connection
     /**
      * The user has only access to only pre-defined topics and queues. This adds permissions to user defined in the account to access all topics
      * and queues and it is later mounted to the container as a file that is executed by the startup script in the mq image.
+     * <p>
+     * It also lowers the heartbeat interval of the client channel. The default is 300s and with no traffic on the connection, idle connections are
+     * dropped by the openshift port-forward after ~60s (client then fails with MQRC_CONNECTION_BROKEN, 2009).
      *
      * @return mqsc configuration string
      */
     public String mqscConfig() {
         return "SET AUTHREC PROFILE('*') PRINCIPAL('" + account().username() + "') OBJTYPE(TOPIC) AUTHADD(ALL)\n"
             + "SET AUTHREC PROFILE('*') PRINCIPAL('" + account().username() + "') OBJTYPE(QUEUE) AUTHADD(ALL)\n"
-            + "SET AUTHREC PROFILE('SYSTEM.DEFAULT.MODEL.QUEUE') OBJTYPE(QUEUE) PRINCIPAL('" + account().username() + "') AUTHADD(ALL)\n";
+            + "SET AUTHREC PROFILE('SYSTEM.DEFAULT.MODEL.QUEUE') OBJTYPE(QUEUE) PRINCIPAL('" + account().username() + "') AUTHADD(ALL)\n"
+            + "ALTER CHANNEL('" + account().channel() + "') CHLTYPE(SVRCONN) HBINT(" + HEARTBEAT_INTERVAL + ")\n";
     }
 
     public void openResources() {
