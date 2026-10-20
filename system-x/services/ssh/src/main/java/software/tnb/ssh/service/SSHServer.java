@@ -12,16 +12,21 @@ import org.slf4j.LoggerFactory;
 import java.nio.file.Path;
 import java.security.Security;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import net.schmizz.sshj.SSHClient;
+import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.transport.verification.PromiscuousVerifier;
 import net.schmizz.sshj.userauth.keyprovider.PKCS8KeyFile;
 import net.schmizz.sshj.userauth.method.AuthPublickey;
 
-public abstract class SSHServer extends ConfigurableService<SSHAccount, SSHClient, SSHValidation, SSHConfiguration>
-    implements WithDockerImage {
+public abstract class SSHServer extends ConfigurableService<SSHAccount, SSHClient, SSHValidation, SSHConfiguration> implements WithDockerImage {
 
     private static final Logger LOG = LoggerFactory.getLogger(SSHServer.class);
+
+    protected final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
     public static final int SSHD_LISTENING_PORT = 22;
 
@@ -38,9 +43,9 @@ public abstract class SSHServer extends ConfigurableService<SSHAccount, SSHClien
         try {
             Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
 
-            SSHClient ssh = new SSHClient();
-            ssh.addHostKeyVerifier(new PromiscuousVerifier());
-            ssh.connect(clientHostname(), clientPort());
+            client = new SSHClient();
+            client.addHostKeyVerifier(new PromiscuousVerifier());
+            client.connect(clientHostname(), clientPort());
 
             Path privateKeyPath = getConfiguration().privateKeyPath();
             if (privateKeyPath != null) {
@@ -48,14 +53,23 @@ public abstract class SSHServer extends ConfigurableService<SSHAccount, SSHClien
                 LOG.debug("Connecting with SSH key authentication");
                 PKCS8KeyFile keyFile = new PKCS8KeyFile();
                 keyFile.init(privateKeyPath.toFile());
-                ssh.auth(account().username(), new AuthPublickey(keyFile));
+                client.auth(account().username(), new AuthPublickey(keyFile));
             } else {
                 // Use password authentication
                 LOG.debug("Connecting with password authentication");
-                ssh.authPassword(account().username(), account().password());
+                client.authPassword(account().username(), account().password());
             }
 
-            client = ssh;
+            // Create a heartbeat that keeps the session alive, otherwise it would timeout
+            executor.scheduleAtFixedRate(() -> {
+                try {
+                    LOG.trace("SSH client heartbeat");
+                    final Session session = client.startSession();
+                    session.exec(":");
+                    session.close();
+                } catch (Exception ignored) {
+                }
+            }, 0, 30, TimeUnit.SECONDS);
         } catch (Exception e) {
             throw new RuntimeException("Unable to create SSH client", e);
         }
@@ -65,6 +79,9 @@ public abstract class SSHServer extends ConfigurableService<SSHAccount, SSHClien
         if (validation != null) {
             validation = null;
         }
+
+        executor.shutdownNow();
+
         if (client != null && client.isConnected()) {
             try {
                 client.disconnect();

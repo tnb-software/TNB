@@ -2,9 +2,6 @@ package software.tnb.ssh.validation;
 
 import software.tnb.common.validation.Validation;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.util.concurrent.TimeUnit;
 
 import net.schmizz.sshj.SSHClient;
@@ -13,8 +10,6 @@ import net.schmizz.sshj.connection.channel.direct.Session;
 import net.schmizz.sshj.connection.channel.direct.Session.Command;
 
 public class SSHValidation implements Validation {
-
-    private static final Logger LOG = LoggerFactory.getLogger(SSHValidation.class);
 
     private final SSHClient sshClient;
 
