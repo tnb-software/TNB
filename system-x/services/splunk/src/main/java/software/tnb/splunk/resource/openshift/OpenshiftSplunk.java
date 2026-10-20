@@ -8,6 +8,7 @@ import software.tnb.common.deployment.WithName;
 import software.tnb.common.openshift.OpenshiftClient;
 import software.tnb.common.utils.HTTPUtils;
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.Splunk;
 import software.tnb.splunk.service.configuration.SplunkProtocol;
@@ -99,7 +100,7 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
     public void undeploy() {
         LOG.info("Undeploying Splunk resources");
         OpenshiftClient.get().genericKubernetesResources(apiVersion(), kind()).delete();
-        WaitUtils.waitFor(() -> servicePod() == null, "Waiting until the pod is removed");
+        WaitUtils.waitFor(new Waiter(() -> servicePod() == null, "Waiting until the pod is removed"));
         OpenshiftClient.get().resourceList(createdResources.stream().filter(res -> !(res instanceof CustomResourceDefinition
                 || res instanceof io.fabric8.kubernetes.api.model.apiextensions.v1beta1.CustomResourceDefinitionVersion
                 || res instanceof ClusterRole))
@@ -133,8 +134,8 @@ public class OpenshiftSplunk extends Splunk implements OpenshiftDeployable, With
                 .endSpec()
                 .build());
         }
-        WaitUtils.waitFor(() -> HTTPUtils.getInstance().get(getConfiguration().getProtocol().toString() + "://"
-            + apiRoute.getSpec().getHost(), false).isSuccessful(), "Waiting until the Splunk API route is ready");
+        WaitUtils.waitFor(new Waiter(() -> HTTPUtils.getInstance(HTTPUtils.trustAllSslClient()).get(getConfiguration().getProtocol().toString()
+            + "://" + apiRoute.getSpec().getHost(), false).isSuccessful(), "Waiting until the Splunk API route is ready"));
     }
 
     Route createReencryptedRoute(String routeName, String serviceTargetPort, String splunkCert) {
