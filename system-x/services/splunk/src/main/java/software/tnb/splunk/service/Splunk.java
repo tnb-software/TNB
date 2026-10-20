@@ -6,6 +6,7 @@ import software.tnb.splunk.account.SplunkAccount;
 import software.tnb.splunk.service.configuration.SplunkConfiguration;
 import software.tnb.splunk.validation.SplunkValidation;
 
+import com.splunk.HttpService;
 import com.splunk.Service;
 import com.splunk.ServiceArgs;
 
@@ -35,10 +36,13 @@ public abstract class Splunk extends ConfigurableService<SplunkAccount, Service,
 
     /**
      * Due to self sign certificate, the client is not able to communicate via localhost and port-forward.
-     * OCP external route with `reencrypt` is used. (Cluster needs to have valid certificate!)
+     * OCP external route with `reencrypt` is used.
      */
     protected com.splunk.Service client() {
         if (client == null) {
+            HttpService.setValidateCertificates(false);
+            HttpService.setSSLSocketFactory(HttpService.createSSLFactory());
+
             ServiceArgs loginArgs = new ServiceArgs();
             loginArgs.setUsername(account().username());
             loginArgs.setPassword(account().password());
