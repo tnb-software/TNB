@@ -15,12 +15,15 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.google.auto.service.AutoService;
+import com.mongodb.ConnectionString;
+import com.mongodb.MongoClientSettings;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoDatabase;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
 import io.fabric8.kubernetes.api.model.ContainerPort;
@@ -94,7 +97,15 @@ public class OpenshiftMongoDB extends MongoDB implements ReusableOpenshiftDeploy
         LOG.debug("Creating port-forward to {} for port {}", name(), port());
         portForward = OpenshiftClient.get().services().withName(name()).portForward(port(), localPort);
         LOG.debug("Creating new MongoClient instance");
-        client = MongoClients.create(replicaSetUrl().replace("@" + host(), "@" + externalHostname()).replace(PORT + "", localPort + ""));
+        String connectionString = replicaSetUrl().replace("@" + host(), "@" + externalHostname()).replace(PORT + "", localPort + "");
+
+        // Remove idle connections after 60s, so that after that time a new connection is created
+        MongoClientSettings settings = MongoClientSettings.builder()
+            .applyConnectionString(new ConnectionString(connectionString))
+            .applyToConnectionPoolSettings(builder ->
+                builder.maxConnectionIdleTime(60, TimeUnit.SECONDS))
+            .build();
+        client = MongoClients.create(settings);
     }
 
     @Override
