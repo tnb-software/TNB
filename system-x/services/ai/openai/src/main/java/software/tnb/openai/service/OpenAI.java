@@ -22,7 +22,7 @@ public class OpenAI extends Service<OpenAIAccount, NoClient, OpenAIValidation> {
 
     public OpenAIValidation validation() {
         if (validation == null) {
-            validation = new OpenAIValidation(account().chat(), account().embedding());
+            validation = new OpenAIValidation(account());
         }
         return validation;
     }

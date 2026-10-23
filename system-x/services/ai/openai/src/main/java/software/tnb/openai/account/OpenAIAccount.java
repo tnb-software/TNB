@@ -3,38 +3,29 @@ package software.tnb.openai.account;
 import software.tnb.common.account.Account;
 import software.tnb.common.account.WithId;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class OpenAIAccount implements Account, WithId {
 
-    private OpenAIEndpoint chat;
-    private OpenAIEndpoint embedding;
+    private String apiUrl;
+    private String apiKey;
 
     @Override
     public String credentialsId() {
-        return "tnb-openai";
+        return "litemaas";
     }
 
-    public OpenAIEndpoint chat() {
-        return chat;
+    public String getApiUrl() {
+        return apiUrl;
     }
 
-    public void setChat(OpenAIEndpoint chat) {
-        this.chat = chat;
+    public void setApiUrl(String apiUrl) {
+        this.apiUrl = apiUrl;
     }
 
-    public OpenAIEndpoint embedding() {
-        return embedding;
+    public String getApiKey() {
+        return apiKey;
     }
 
-    public void setEmbedding(OpenAIEndpoint embedding) {
-        this.embedding = embedding;
-    }
-
-    public record OpenAIEndpoint(
-        @JsonProperty("base-url") String baseUrl,
-        String model,
-        @JsonProperty("api-key") String apiKey
-    ) {
+    public void setApiKey(String apiKey) {
+        this.apiKey = apiKey;
     }
 }
