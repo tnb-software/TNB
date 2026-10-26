@@ -5,6 +5,7 @@ import software.tnb.common.utils.NetworkUtils;
 
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.TestcontainersConfiguration;
@@ -22,6 +23,17 @@ public class StrimziContainer extends GenericContainer<StrimziContainer> {
                 cmd.withHostName(CONTAINER_NAME);
                 cmd.withName(CONTAINER_NAME);
             }
+        );
+
+        this.withFileSystemBind(
+            "/etc/localtime",
+            "/etc/localtime",
+            BindMode.READ_ONLY
+        );
+        this.withFileSystemBind(
+            "/etc/timezone",
+            "/etc/timezone",
+            BindMode.READ_ONLY
         );
 
         String listenerAddress = "localhost";
