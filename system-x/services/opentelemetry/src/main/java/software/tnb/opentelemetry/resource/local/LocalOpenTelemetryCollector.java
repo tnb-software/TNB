@@ -36,7 +36,7 @@ public class LocalOpenTelemetryCollector extends OpenTelemetryCollector implemen
 
     @Override
     public String defaultImage() {
-        return "registry.redhat.io/rhosdt/opentelemetry-collector-rhel8:latest";
+        return "registry.redhat.io/rhosdt/opentelemetry-collector-rhel9:latest";
     }
 
     @Override
