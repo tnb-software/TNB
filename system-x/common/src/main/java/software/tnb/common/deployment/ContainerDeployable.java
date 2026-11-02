@@ -7,6 +7,14 @@ import org.slf4j.LoggerFactory;
 import org.testcontainers.containers.ContainerLaunchException;
 import org.testcontainers.containers.GenericContainer;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
+import java.util.Date;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -44,11 +52,29 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
 
     default void deploy() {
         LOG.info("Starting {} container", serviceName());
-        try {
-            container().start();
+        Path logFile = Paths.get("target", "container-deploy-" + serviceName() + new Date().getTime() + ".log");
+
+        try (BufferedWriter writer = Files.newBufferedWriter(logFile, StandardOpenOption.CREATE)) {
+            container().withLogConsumer(frame -> {
+                try {
+                    writer.write(frame.getUtf8String());
+                    writer.flush();
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            }).start();
         } catch (ContainerLaunchException e) {
+            LOG.error("Container did not start successfully: ", e);
+            try {
+                LOG.error(Files.readString(logFile));
+            } catch (IOException ex) {
+                LOG.warn("Unable to read log file {}:", logFile, ex);
+            }
             throw e;
+        } catch (IOException ioe) {
+            LOG.warn("Unable to create container log file", ioe);
         }
+
         LOG.info("{} container started", serviceName());
         resolveAndCacheServiceVersion();
     }
