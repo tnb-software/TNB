@@ -24,7 +24,7 @@ public class LocalDB2 extends DB2 implements ContainerDeployable<DBContainer> {
     public void deploy() {
         localDb = new LocalDB(this, PORT,
             Wait.forLogMessage(".*Setup has completed.*", 1)
-                .withStartupTimeout(Duration.ofMinutes(5)));
+                .withStartupTimeout(Duration.ofMinutes(10)));
         localDb.container().withPrivilegedMode(true);
         localDb.deploy();
     }
