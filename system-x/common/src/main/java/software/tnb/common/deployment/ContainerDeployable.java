@@ -59,8 +59,7 @@ public interface ContainerDeployable<T extends GenericContainer<?>> extends Depl
                 try {
                     writer.write(frame.getUtf8String());
                     writer.flush();
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
+                } catch (IOException ignored) {
                 }
             }).start();
         } catch (ContainerLaunchException e) {
