@@ -1,6 +1,7 @@
 package software.tnb.webhook.validation;
 
 import software.tnb.common.utils.HTTPUtils;
+import software.tnb.common.utils.WaitUtils;
 import software.tnb.common.validation.Validation;
 import software.tnb.webhook.validation.model.WebhookSiteRequest;
 import software.tnb.webhook.validation.model.WebhookSiteRequests;
@@ -34,9 +35,24 @@ public class WebhookValidation implements Validation {
     public String createEndpoint() {
         if (token == null) {
             LOG.debug("Creating new webhook endpoint");
-            final String body = client.post(WEBHOOK_ENDPOINT + "/token",
-                RequestBody.create("{}", MediaType.parse("application/json"))).getBody();
-            token = new JSONObject(body).getString("uuid");
+            boolean success = false;
+            JSONObject response = null;
+            while (!success) {
+                response = new JSONObject(client.post(WEBHOOK_ENDPOINT + "/token",
+                    RequestBody.create("{}", MediaType.parse("application/json"))).getBody());
+                // there is "success": false in case of error, otherwise "success" is not present at all
+                success = !response.has("success");
+                if (!success) {
+                    String errorMessage = response.getJSONObject("error").getString("message");
+                    if (errorMessage.contains("rate limited")) {
+                        LOG.debug("Webhook request rate limited, will retry in 1 minute");
+                        WaitUtils.sleep(60000L);
+                    } else {
+                        throw new RuntimeException("Unable to create new webhook endpoint: " + errorMessage);
+                    }
+                }
+            }
+            token = response.getString("uuid");
         }
         final String endpoint = String.format("%s/%s", WEBHOOK_ENDPOINT, token);
         LOG.debug("Webhook endpoint: {}", endpoint);
