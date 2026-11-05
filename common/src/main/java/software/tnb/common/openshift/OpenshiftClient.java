@@ -153,6 +153,19 @@ public class OpenshiftClient extends OpenShift {
         return clientWrapper.getClient();
     }
 
+    /**
+     * Gets the file with the CA certificates of the cluster, for the tools that connect to the cluster outside of this client and need to
+     * trust the (self-signed) certificates of the cluster. The certificate validation is not disabled.
+     * <p>
+     * It is empty unless enabled by {@link OpenshiftConfiguration#OPENSHIFT_CLUSTER_CA_FILE} or
+     * {@link OpenshiftConfiguration#OPENSHIFT_CLUSTER_CA_AUTOSET}. The file is created only once per JVM.
+     *
+     * @return path to the PEM file, empty if not configured
+     */
+    public Optional<Path> clusterCaFile() {
+        return ClusterCa.file(TestConfiguration.appLocation().resolve("cluster-ca.pem"));
+    }
+
     public String getOauthToken() {
         if (OpenshiftConfiguration.openshiftUrl() == null) {
             String token = OpenshiftClient.get().authorization().getConfiguration().getAutoOAuthToken();

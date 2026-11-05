@@ -22,6 +22,9 @@ public class OpenshiftConfiguration extends Configuration {
     public static final String XTF_OPENSHIFT_KUBECONFIG = "xtf.openshift.master.kubeconfig";
     public static final String XTF_OPENSHIFT_URL = "xtf.openshift.url";
 
+    public static final String OPENSHIFT_CLUSTER_CA_AUTOSET = "openshift.cluster.ca.autoset";
+    public static final String OPENSHIFT_CLUSTER_CA_FILE = "openshift.cluster.ca.file";
+
     public static final String OPENSHIFT_DEPLOY_STRATEGY = "openshift.deploy.strategy";
 
     public static final String NAMESPACE_PREFIX = "tnb-test-";
@@ -80,6 +83,25 @@ public class OpenshiftConfiguration extends Configuration {
 
     public static String openshiftDeploymentLabel() {
         return getProperty(OPENSHIFT_DEPLOYMENT_LABEL, "app");
+    }
+
+    /**
+     * Whether the CA certificates of the cluster should be read from the cluster and passed to the JKube plugin.
+     *
+     * @return true if enabled, false by default
+     */
+    public static boolean openshiftClusterCaAutoset() {
+        return getBoolean(OPENSHIFT_CLUSTER_CA_AUTOSET, false);
+    }
+
+    /**
+     * Returns the path to the file with the PEM encoded CA certificates of the cluster, that should be passed to the JKube plugin.
+     *
+     * @return path to the file or null if not set
+     */
+    public static Path openshiftClusterCaFile() {
+        String file = getProperty(OPENSHIFT_CLUSTER_CA_FILE);
+        return file == null ? null : Paths.get(file);
     }
 
     public static String getDeployStrategy() {
