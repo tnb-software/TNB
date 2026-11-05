@@ -4,16 +4,10 @@ import software.tnb.common.deployment.ContainerDeployable;
 import software.tnb.ldap.service.LDAP;
 
 import com.google.auto.service.AutoService;
-import com.unboundid.ldap.sdk.LDAPConnectionPool;
 
 @AutoService(LDAP.class)
 public class LocalLDAP extends LDAP implements ContainerDeployable<LDAPContainer> {
     private final LDAPContainer ldapContainer = new LDAPContainer(image(), PORT, environmentVariables());
-
-    @Override
-    public LDAPConnectionPool client() {
-        return client;
-    }
 
     @Override
     public void openResources() {
