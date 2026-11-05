@@ -49,6 +49,7 @@ import io.fabric8.openshift.api.model.RouteBuilder;
 public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
 
     public static final String OPENSHIFT_MAVEN_PLUGIN_AID = "openshift-maven-plugin";
+    private static final String JKUBE_CA_CERT_FILE = "jkube.caCertFile";
 
     private final String[] args;
     private final String[] profiles;
@@ -143,12 +144,16 @@ public class CustomJKubeStrategy extends OpenshiftCustomDeployer {
             && ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties() != null) {
             mvnProps = ((AbstractMavenGitIntegrationBuilder<?>) integrationBuilder).getMavenProperties();
         }
+        final Map<String, String> properties = Stream.concat(getOmpProperties().entrySet().stream()
+                , mvnProps.entrySet().stream())
+            .collect(Collectors
+                .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k));
+        if (!properties.containsKey(JKUBE_CA_CERT_FILE)) {
+            OpenshiftClient.get().clusterCaFile().ifPresent(file -> properties.put(JKUBE_CA_CERT_FILE, file.toAbsolutePath().toString()));
+        }
         final BuildRequest.Builder requestBuilder = new BuildRequest.Builder()
             .withBaseDirectory(baseDirectory)
-            .withProperties(Stream.concat(getOmpProperties().entrySet().stream()
-                    , mvnProps.entrySet().stream())
-                .collect(Collectors
-                    .toMap(Map.Entry::getKey, Map.Entry::getValue, (k, v) -> k)))
+            .withProperties(properties)
             .withArgs(args)
             .withProfiles(profiles)
             .withLogFile(TestConfiguration.appLocation().resolve(String.format("%s-%s-deploy.log", name, System.currentTimeMillis())))
