@@ -1,6 +1,7 @@
 package software.tnb.aws.dynamodb.validation;
 
 import software.tnb.common.utils.WaitUtils;
+import software.tnb.common.utils.waiter.Waiter;
 import software.tnb.common.validation.Validation;
 
 import org.slf4j.Logger;
@@ -14,6 +15,7 @@ import java.util.stream.Collectors;
 import software.amazon.awssdk.services.dynamodb.DynamoDbClient;
 import software.amazon.awssdk.services.dynamodb.model.AttributeDefinition;
 import software.amazon.awssdk.services.dynamodb.model.AttributeValue;
+import software.amazon.awssdk.services.dynamodb.model.IndexStatus;
 import software.amazon.awssdk.services.dynamodb.model.KeySchemaElement;
 import software.amazon.awssdk.services.dynamodb.model.KeyType;
 import software.amazon.awssdk.services.dynamodb.model.ListTablesRequest;
@@ -55,12 +57,12 @@ public class DynamoDBValidation implements Validation {
         }
         client.createTable(b ->
             b.tableName(tableName)
-            .provisionedThroughput(ProvisionedThroughput.builder()
-                .readCapacityUnits(5L)
-                .writeCapacityUnits(5L)
-                .build())
-            .keySchema(KeySchemaElement.builder().attributeName(primaryKey).keyType(KeyType.HASH).build())
-            .attributeDefinitions(AttributeDefinition.builder().attributeType(ScalarAttributeType.S).attributeName(primaryKey).build())
+                .provisionedThroughput(ProvisionedThroughput.builder()
+                    .readCapacityUnits(5L)
+                    .writeCapacityUnits(5L)
+                    .build())
+                .keySchema(KeySchemaElement.builder().attributeName(primaryKey).keyType(KeyType.HASH).build())
+                .attributeDefinitions(AttributeDefinition.builder().attributeType(ScalarAttributeType.S).attributeName(primaryKey).build())
         );
 
         client.waiter().waitUntilTableExists(b -> b.tableName(tableName));
@@ -73,6 +75,14 @@ public class DynamoDBValidation implements Validation {
             () -> "enabled".equalsIgnoreCase(streamsClient.describeStream(b -> b.streamArn(streamArn)).streamDescription().streamStatusAsString()),
             6, 5000L, "Waiting until the stream for DynamoDB table " + tableName + " is enabled");
         return streamArn;
+    }
+
+    public void waitForGlobalSecondaryIndexes(String tableName) {
+        WaitUtils.waitFor(new Waiter(() -> client.describeTable(b -> b.tableName(tableName)).table().hasGlobalSecondaryIndexes(),
+            "Waiting until the table " + tableName + " has global secondary indexes").timeout(60, 60000L));
+        WaitUtils.waitFor(new Waiter(() -> client.describeTable(b -> b.tableName(tableName)).table().globalSecondaryIndexes()
+            .stream().allMatch(i -> i.indexStatus() == IndexStatus.ACTIVE),
+            "Waiting until the table " + tableName + " global secondary indexes are active").timeout(60, 60000L));
     }
 
     public void insert(String tableName, Map<String, String> record) {
