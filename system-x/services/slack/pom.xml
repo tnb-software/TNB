@@ -14,7 +14,7 @@
     <name>TNB :: System-X :: Services :: Slack</name>
 
     <properties>
-        <slack.client.version>1.53.0</slack.client.version>
+        <slack.client.version>1.54.0</slack.client.version>
     </properties>
 
     <dependencies>
