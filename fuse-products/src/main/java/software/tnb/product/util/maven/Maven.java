@@ -147,6 +147,9 @@ public class Maven {
             .setOutputHandler(buildRequest.getOutputHandler())
             .setErrorHandler(buildRequest.getOutputHandler());
 
+        // very rarely the request can get stuck, so make sure it does not hang indefinitely
+        request.setTimeoutInSeconds((int) (TestConfiguration.mavenInvocationTimeout().toSeconds()));
+
         //add extra args
         final String mavenExtraArgs = TestConfiguration.mavenExtraArgs();
         Arrays.stream(mavenExtraArgs.split(" ")).filter((arg) -> !arg.isBlank()).forEach(request::addArg);
@@ -212,6 +215,12 @@ public class Maven {
                     LOG.warn("Can't close log file stream", e);
                 }
             }
+        }
+
+        // The invoker doesn't throw an exception when the timeout is reached, but stores it in the result
+        if (result.getExecutionException() != null && result.getExecutionException().getMessage().contains("timed out")) {
+            throw new RuntimeException("Maven execution timed out after " + TestConfiguration.mavenInvocationTimeout().toMinutes()
+                + " minutes");
         }
 
         // Don't throw exception in case the exit code is less than zero (happens when killing the process through executorservice)
