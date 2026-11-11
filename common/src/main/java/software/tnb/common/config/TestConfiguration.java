@@ -27,7 +27,7 @@ public class TestConfiguration extends Configuration {
     public static final String APP_LOCATION = "test.app.location";
     public static final String APP_TEMPLATE_NAME = "app.template.name";
     public static final String TEST_WAIT_TIME = "test.wait.time";
-    public static final String TEST_WAIT_KILL_TIMEOUT = "test.wait.kill.timeout";
+    public static final String TEST_WAIT_KILL_TIMEOUT = "test.wait.kill.timeout.minutes";
     public static final String TEST_SKIP_TEARDOWN = "test.skip.teardown";
     public static final String TEST_SKIP_TEARDOWN_OPENSHIFT_AMQSTREAMS = "test.skip.teardown.openshift.amqstreams";
     public static final String MAVEN_REPOSITORY = "test.maven.repository";
@@ -36,6 +36,7 @@ public class TestConfiguration extends Configuration {
     public static final String MAVEN_REPOSITORY_ID = "test.maven.repository.id";
     public static final String MAVEN_EXTRA_ARGS = "test.maven.extra.args";
     public static final String MAVEN_TRANSFER_PROGRESS = "test.maven.transfer.progress";
+    public static final String MAVEN_INVOCATION_TIMEOUT = "test.maven.invocation.timeout.minutes";
     public static final String ARTIFACTS_ENABLED = "test.artifacts.enabled";
     public static final String ODO_PATH = "odo.path";
     public static final String STREAM_LOGS = "stream.logs";
@@ -144,6 +145,10 @@ public class TestConfiguration extends Configuration {
 
     public static boolean mavenTransferProgress() {
         return getBoolean(MAVEN_TRANSFER_PROGRESS, false);
+    }
+
+    public static Duration mavenInvocationTimeout() {
+        return Duration.of(getInteger(MAVEN_INVOCATION_TIMEOUT, (int) testWaitKillTimeout().toMinutes()), ChronoUnit.MINUTES);
     }
 
     public static boolean isMavenMirror() {
