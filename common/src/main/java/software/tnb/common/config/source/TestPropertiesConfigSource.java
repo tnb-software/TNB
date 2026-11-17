@@ -1,6 +1,7 @@
 package software.tnb.common.config.source;
 
 import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.SensitiveValues;
 
 import org.eclipse.microprofile.config.spi.ConfigSource;
 import org.slf4j.Logger;
@@ -40,7 +41,7 @@ public class TestPropertiesConfigSource implements ConfigSource {
 
         LOG.info("Loading properties from {}", testProperties.getAbsolutePath());
         properties.putAll(PropertiesUtils.toMap(PropertiesUtils.fromFile(testProperties.getAbsolutePath())));
-        properties.forEach((key, value) -> LOG.trace("  {}={}", key, value));
+        properties.forEach((key, value) -> LOG.trace("  {}={}", key, SensitiveValues.mask(key, value)));
     }
 
     @Override

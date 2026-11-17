@@ -4,6 +4,7 @@ import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.exception.FailureCauseException;
 import software.tnb.common.product.ProductType;
 import software.tnb.common.utils.IOUtils;
+import software.tnb.common.utils.SensitiveValues;
 import software.tnb.product.application.Phase;
 import software.tnb.product.log.artifacts.Artifacts;
 import software.tnb.product.log.stream.FileLogStream;
@@ -185,13 +186,14 @@ public class Maven {
 
         if (StringUtils.isNotBlank(mavenExtraArgs)) {
             propertiesLog.append("  Extra args: ")
-                .append(mavenExtraArgs)
+                .append(SensitiveValues.maskArguments(mavenExtraArgs))
                 .append("\n");
         }
 
         if (!properties.isEmpty()) {
             propertiesLog.append("  Properties:").append("\n");
-            properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ").append(value).append("\n"));
+            properties.forEach((key, value) -> propertiesLog.append("    ").append(key).append(": ")
+                .append(SensitiveValues.mask(String.valueOf(key), String.valueOf(value))).append("\n"));
         }
         LOG.debug(propertiesLog.substring(0, propertiesLog.length() - 1));
 
