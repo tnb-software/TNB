@@ -3,6 +3,7 @@ package software.tnb.product.integration.generator;
 import software.tnb.common.config.TestConfiguration;
 import software.tnb.common.utils.IOUtils;
 import software.tnb.common.utils.PropertiesUtils;
+import software.tnb.common.utils.SensitiveValues;
 import software.tnb.product.csb.customizer.CamelMainCustomizer;
 import software.tnb.product.csb.customizer.ComponentCustomizer;
 import software.tnb.product.customizer.Customizer;
@@ -196,7 +197,7 @@ public final class IntegrationGenerator {
 
         String content = PropertiesUtils.toString(integrationBuilder.getApplicationProperties());
         if (!content.trim().isEmpty()) {
-            LOG.debug("Application properties:\n{}", content);
+            LOG.debug("Application properties:\n{}", SensitiveValues.toMaskedString(integrationBuilder.getApplicationProperties()));
             // Properties#store() escapes stuff by default, so construct the property file manually
             IOUtils.appendFile(propertiesFile, content);
         }
